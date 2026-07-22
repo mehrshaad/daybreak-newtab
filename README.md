@@ -1,18 +1,26 @@
-# New Tab By Mehrshad
+# Daybreak — New Tab
 
-A customizable new tab page for Chrome, built with React and Vite. Replaces the
-default new tab with a clean start page featuring a wallpaper, clock, weather,
-a todo list, quick shortcuts, and a Google apps launcher.
+**Start every tab fresh.** Daybreak replaces Chrome's new tab page with a calm,
+customizable start page — a wallpaper, clock, weather, a to‑do list, quick
+shortcuts, and a Google apps launcher. Built with React and Vite.
 
 ## Features
 
-- 🖼️ **Wallpapers** — pick from a built-in gallery of backgrounds.
-- 🕐 **Clock & Weather** — show the time and current weather for multiple cities.
-- ✅ **Todo list** — a simple task list that lives in the new tab.
+- 🌅 **Wallpapers** — pick from a built-in gallery of backgrounds.
+- 🕐 **Clock & weather** — show the time and current weather for multiple cities.
+- ✅ **To‑do list** — a simple task list that lives in your new tab.
 - 🔖 **Shortcuts** — customizable quick links with logos, labels, and colors.
-- 🟦 **Google launcher** — quick access to Google apps.
-- ⚙️ **Settings** — configure the left panel, wallpaper, and shortcuts. All
-  preferences are stored locally in the browser (`localStorage`).
+- 🟦 **Google launcher & search** — quick access to Google apps and search.
+- ⚙️ **Settings** — configure the side panel, wallpaper, and shortcuts. All
+  preferences are stored locally in your browser (`localStorage`).
+
+## Privacy
+
+Daybreak keeps your data on your device. Settings live in `localStorage` and are
+never sent to the developer. The only outbound requests are your configured
+**city names** to OpenWeatherMap (for weather) and your **search queries** to
+Google (when you use the search box). Full policy:
+[privacy-policy](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html).
 
 ## Install
 
@@ -52,13 +60,13 @@ The production build in `dist/` is a complete, loadable Chrome extension
 ## Repository layout
 
 - **`codes` branch** — the source code (this branch).
-- **`main` branch** — the built extension output.
+- **`main` branch** — the built extension output, plus the hosted privacy policy.
 
 ## Tech stack
 
 - [React](https://react.dev/) + [Vite](https://vite.dev/)
 - [Ant Design](https://ant.design/)
-- Sass, Weather via [OpenWeatherMap](https://openweathermap.org/)
+- Sass, weather via [OpenWeatherMap](https://openweathermap.org/)
 
 ## License
 

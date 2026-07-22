@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "New Tab By Mehrshad",
-  "version": "1.0.1",
-  "description": "A custom new tab page extension developed with ❤️ by Mehrshad!",
+  "name": "Daybreak — New Tab",
+  "version": "1.0.2",
+  "description": "Start every tab fresh: a customizable start page with wallpapers, weather, a clock, to-dos, and quick shortcuts.",
   "author": "Ali Dadashzadeh",
   "icons": {
     "64": "icon-home-64.png",
@@ -11,7 +11,7 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "homepage_url": "https://github.com/mehrshaad/new-tab-chrome-extension",
+  "homepage_url": "https://github.com/mehrshaad/daybreak-newtab",
   "offline_enabled": true,
   "incognito": "split"
 }
