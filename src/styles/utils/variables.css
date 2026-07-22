@@ -1,0 +1,134 @@
+:root {
+    /* Global Variables */
+    --border-radius: 10px;
+    --blur-amount: 10px;
+    --primary-text-color: #000000;
+    --secondary-text-color: #464646;
+    --home-picture-bg-color: rgba(255, 255, 255, 0.4);
+    --home-search-bg-color: rgba(255, 255, 255, 0.4);
+    --home-search-bg-color-hover: rgba(255, 255, 255, 0.6);
+    --home-search-button-bg-color: rgba(255, 255, 255, 0.8);
+    --box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    --text-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    --text-title-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    --text-header-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px,
+        rgba(0, 0, 0, 0.23) 0px 6px 6px;
+    --wallpaper-border-color: rgba(0, 0, 0, 0.2);
+    --wallpaper-border-color-hover: rgba(0, 0, 0, 0.7);
+    --anticon-size: 28px;
+    --popover-bg-color: rgba(255, 255, 255, 0.7);
+
+    /* Body Variables */
+    --body-padding-top: 10px;
+    --body-margin: 25px;
+    --body-bg-color: rgb(255, 255, 255);
+    --body-bg-filter-color: rgba(0, 0, 0, 0.1);
+
+    /* Scrollbar Variables */
+    --scrollbar-width: 10px;
+    --scrollbar-track-color: rgba(0, 0, 0, 0.1);
+    --scrollbar-thumb-color: rgba(0, 0, 0, 0.2);
+    --scrollbar-thumb-hover-color: rgba(0, 0, 0, 0.8);
+
+    /* Bookmark Variables */
+    --bookmark-text-color: rgb(255, 255, 255);
+    --bookmark-padding: 0px;
+    --bookmark-padding-hover: 0px;
+    --bookmark-img-size: 58px;
+    --bookmark-bg-color: rgba(255, 255, 255, 0.6);
+    --bookmark-gradient-bg-color: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.8));
+
+    /* City Variables */
+    --city-padding: 12px;
+    --city-text-color: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, .8));
+    --city-text-color-night: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgb(255, 255, 255));
+    --city-color: rgb(255, 255, 255, 0.4);
+    --city-color-night: rgba(0, 0, 0, 0.4);
+    --clock-bg-color: rgba(0, 0, 0, .8);
+    --clock-bg-color-night: rgba(255, 255, 255, 0.8);
+
+    /* Todo Variables */
+    --todo-border-color: rgba(0, 0, 0, 0.5);
+    --todo-checkbox-color: rgba(255, 255, 255, 0.9);
+    --todo-checkbox-checked-color: #ffc53d;
+    --todo-button-color: 255, 197, 61;
+    --todo-button-clear-color: 255, 0, 49;
+    --todo-bg-color: rgba(255, 255, 255, 0.7);
+    --todo-divider-border-color: rgba(20, 20, 20, 0.5);
+
+    /* Google Variables */
+    --google-app-bg-color: rgba(255, 255, 255, 0.7);
+    --google-button-bg-color: rgba(255, 255, 255, 0.8);
+    --google-button-bg-color-hover: rgba(0, 0, 0, 0.1);
+    --google-button-border-color: rgba(0, 0, 0, 0.7);
+
+    /* Settings Variables */
+    --settings-title-color: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, .8));
+    --settings-button-bg-color: 255, 255, 255;
+    --settings-button-color-hover: #fa541c;
+    --settings-check-color: rgba(0, 0, 0, 0.8);
+    --settings-select-icon-color: rgba(0, 0, 0, 0.45);
+    --settings-dropdown-selected: #ffbb96;
+    --settings-leftbar-color: rgba(0, 0, 0, 0.88);
+    --settings-bookmarks-check-color: #1890ff;
+    --settings-bookmarks-trash-color: #f5222d;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Global Variables */
+        --primary-text-color: #dedede;
+        --secondary-text-color: #b9b9b9;
+        --home-picture-bg-color: rgba(230, 230, 230, 0.4);
+        --home-search-bg-color: rgba(230, 230, 230, 0.4);
+        --home-search-bg-color-hover: rgba(200, 200, 200, 0.8);
+        --home-search-button-bg-color: rgba(230, 230, 230, 0.8);
+        --wallpaper-border-color: rgba(255, 255, 255, 0.2);
+        --wallpaper-border-color-hover: rgba(255, 255, 255, 0.7);
+        --popover-bg-color: rgba(150, 150, 150, 0.5);
+
+        /* Body Variables */
+        --body-bg-color: rgb(30, 30, 30);
+        --body-bg-filter-color: rgba(0, 0, 0, 0.25);
+
+        /* Scrollbar Variables */
+        --scrollbar-track-color: rgba(255, 255, 255, 0.1);
+        --scrollbar-thumb-color: rgba(255, 255, 255, 0.1);
+        --scrollbar-thumb-hover-color: rgba(255, 255, 255, 0.8);
+
+        /* Bookmark Variables */
+        --bookmark-text-color: white;
+        --bookmark-bg-color: rgba(255, 255, 255, 0.5);
+        --bookmark-gradient-bg-color: linear-gradient(180deg, rgba(200, 200, 200, 0.5), rgba(100, 100, 100, 0.7));
+
+        /* Todo Variables */
+        --todo-border-color: rgba(80, 80, 80, 0.7);
+        --todo-checkbox-color: rgba(255, 255, 255, 0.2);
+        --todo-checkbox-checked-color: #d4b106;
+        --todo-divider-border-color: rgba(50, 50, 50, 0.7);
+        --todo-bg-color: rgba(0, 0, 0, 0.5);
+
+        /* Google Variables */
+        --google-app-bg-color: rgba(0, 0, 0, 0.5);
+        --google-button-bg-color: rgba(0, 0, 0, 0.4);
+        --google-button-bg-color-hover: rgba(255, 255, 255, 0.2);
+        --google-button-border-color: rgba(255, 255, 255, 0.7);
+
+        /* Settings Variables */
+        --settings-title-color: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgb(255, 255, 255));
+        --settings-button-bg-color: 0, 0, 0;
+        --settings-check-color: rgba(255, 255, 255, 0.8);
+        --settings-select-icon-color: rgba(28, 28, 28, 0.45);
+        --settings-button-color-hover: rgb(215, 174, 12);
+        --settings-dropdown-selected: rgb(118, 95, 4);
+        --settings-leftbar-color: rgba(255, 255, 255, 0.88);
+        --settings-bookmarks-check-color: #4096ff;
+        --settings-bookmarks-trash-color: #ff7875;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    :root {
+        --modal-border: none;
+    }
+}

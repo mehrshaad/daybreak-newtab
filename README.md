@@ -1,45 +1,65 @@
-# New Tab Chrome Extension
+# New Tab By Mehrshad
 
-A modern browser extension that transforms your new tab experience with a beautiful and functional interface. This extension replaces Chrome's default new tab page with a customizable dashboard that adapts to your needs.
+A customizable new tab page for Chrome, built with React and Vite. Replaces the
+default new tab with a clean start page featuring a wallpaper, clock, weather,
+a todo list, quick shortcuts, and a Google apps launcher.
 
 ## Features
 
-- 🌓 Automatic Light/Dark mode that syncs with your system preferences
-- 🖼️ Collection of stunning wallpapers to personalize your experience
-- ✅ Built-in Todo list to stay organized
-- 🌍 City list with real-time weather updates and time zones
-- ⭐ Customizable favorite pages for quick access
-- 🎨 Clean and minimal interface
+- 🖼️ **Wallpapers** — pick from a built-in gallery of backgrounds.
+- 🕐 **Clock & Weather** — show the time and current weather for multiple cities.
+- ✅ **Todo list** — a simple task list that lives in the new tab.
+- 🔖 **Shortcuts** — customizable quick links with logos, labels, and colors.
+- 🟦 **Google launcher** — quick access to Google apps.
+- ⚙️ **Settings** — configure the left panel, wallpaper, and shortcuts. All
+  preferences are stored locally in the browser (`localStorage`).
 
-## Installation
+## Install
 
-### Local Installation
+### From the Chrome Web Store
 
-1. Clone this repository or download it as a ZIP file.
-2. If downloaded as ZIP, extract the contents to a folder.
-3. Open Chrome and navigate to `chrome://extensions/`.
-4. Enable **Developer mode** in the top right corner.
-5. Click **Load unpacked** button.
-6. Navigate to and select the folder containing the extension files you extracted or cloned.
-7. The extension should now be installed and active in your browser!
+_Coming soon._
 
-### Chrome Web Store
+### Load unpacked (from a build)
 
-Available soon on Chrome Web Store!
+1. Download or build the `dist/` output (see [Development](#development)).
+2. Open `chrome://extensions`.
+3. Enable **Developer mode** (top-right).
+4. Click **Load unpacked** and select the build output folder.
+5. Open a new tab.
 
-## Upcoming Features
+## Development
 
-- 🖼️ Support for custom wallpaper uploads
-- 📁 Categorized wallpaper collections for better organization
-- 🤖 ChatGPT integration in the left sidebar for quick AI assistance
+Requires [Node.js](https://nodejs.org/) 18+.
 
-## Feedback
+```bash
+# install dependencies
+npm install
 
-Your feedback is valuable! Please feel free to open issues or submit pull requests to help improve this extension.
+# start the dev server (regular web page, for fast iteration)
+npm run dev
 
-## Credits
+# lint
+npm run lint
 
-- Weather data provided by [OpenWeather API](https://openweathermap.org/api)
-- Wallpapers sourced from [UHD Wallpapers](https://www.uhdpaper.com/)
-- Icons from [React Icons](https://react-icons.github.io/react-icons/), [Ant Icons](https://ant.design/components/icon) and [Icons8](https://icons8.com/)
-- Built with [React](https://reactjs.org) and [Vite](https://vitejs.dev)
+# production build -> dist/
+npm run build
+```
+
+The production build in `dist/` is a complete, loadable Chrome extension
+(`manifest.json` is bundled from `public/`).
+
+## Repository layout
+
+- **`codes` branch** — the source code (this branch).
+- **`main` branch** — the built extension output.
+
+## Tech stack
+
+- [React](https://react.dev/) + [Vite](https://vite.dev/)
+- [Ant Design](https://ant.design/)
+- Sass, Weather via [OpenWeatherMap](https://openweathermap.org/)
+
+## License
+
+[MIT](./LICENSE) © Ali Dadashzadeh (Mehrshad)

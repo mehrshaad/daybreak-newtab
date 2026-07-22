@@ -1,0 +1,190 @@
+.bookmarks-container {
+  position: absolute !important;
+  bottom: 50px !important;
+  padding-top: 20px;
+  left: 50% !important;
+  max-height: 50vh;
+  overflow: auto;
+  transform: translateX(-50%) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.bookmark {
+  .iOS {
+    display: flex;
+    padding: 0 var(--bookmark-padding);
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    * {
+      outline: none !important;
+    }
+
+    &:hover,
+    &:focus {
+      padding: 0 var(--bookmark-padding-hover);
+      .avatar {
+        box-shadow: rgba(0, 0, 0, 0.15) 0px 15px 25px,
+          rgba(0, 0, 0, 0.05) 0px 5px 10px;
+        transform: translateY(-4px) scale(1.1);
+        ~ .avatar {
+          transform: scale(0.5);
+        }
+      }
+    }
+
+    .avatar {
+      width: var(--bookmark-img-size);
+      height: var(--bookmark-img-size);
+      border-radius: 27%;
+      text-transform: uppercase;
+      border: none !important;
+      outline: none !important;
+      transition: inherit;
+      font-size: 32px;
+      padding: 2px;
+      backdrop-filter: blur(var(--blur-amount));
+      background: var(--bookmark-gradient-bg-color) !important;
+      box-shadow: var(--box-shadow);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      @media (prefers-color-scheme: dark) {
+        filter: brightness(0.8);
+      }
+      img {
+        width: 100%;
+      }
+    }
+
+    p {
+      font-size: clamp(10px, 11px, 14px);
+      font-weight: 500;
+      text-align: center;
+      overflow-wrap: break-word;
+      width: calc(var(--bookmark-img-size) + var(--bookmark-padding));
+      margin: 0.4em 0;
+      color: var(--bookmark-text-color);
+      text-shadow: var(--text-shadow);
+      transition: inherit;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      &.move-in-text {
+        transform: translateY(0px) scale(1);
+      }
+      &.move-out-text {
+        height: 0;
+        transform: translateY(-5px) scale(0);
+      }
+    }
+  }
+}
+.bookmark-container {
+  background: rgba(var(--settings-button-bg-color), 0.9);
+  color: var(--primary-text-color) !important;
+  padding: 10px 15px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--text-shadow);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  .delete-bookmark {
+    position: absolute;
+    top: 0px;
+    right: 6px;
+    color: var(--settings-bookmarks-trash-color);
+    padding: 10px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    &:hover {
+      scale: 1.15;
+      opacity: 1;
+    }
+  }
+  &.add-bookmark {
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: capitalize;
+    background: rgba(var(--settings-button-bg-color), 0.1);
+    border: 2px dashed var(--settings-bookmarks-check-color);
+    padding: 10px;
+    transition: all 0.2s;
+    h3 {
+      color: var(--settings-bookmarks-check-color) !important;
+      margin: 0 !important;
+    }
+    .anticon {
+      transform: translateY(0.5px) scale(1.3);
+      margin-right: 5px;
+    }
+    &:hover {
+      background: rgba(var(--settings-button-bg-color), 0.3);
+      border-color: var(--settings-bookmarks-check-color);
+    }
+  }
+  &.show-bookmarks {
+    .ant-checkbox-wrapper {
+      margin-right: 10px !important;
+      transition: opacity 0.2s;
+      .ant-checkbox-inner {
+        background: transparent;
+        border-color: var(--settings-bookmarks-check-color) !important;
+        &:after {
+          border-color: white !important;
+        }
+      }
+      .ant-checkbox-checked .ant-checkbox-inner {
+        background: var(--settings-bookmarks-check-color) !important;
+      }
+      &-disabled {
+        opacity: 0.5;
+      }
+    }
+    h3 {
+      margin: 0 !important;
+    }
+  }
+  h3 {
+    margin: 4px 0;
+    margin-top: 0;
+    color: var(--secondary-text-color);
+    &:nth-child(3) {
+      margin-top: 10px !important;
+    }
+  }
+  .ant-typography {
+    text-shadow: none;
+    margin: 0;
+    font-size: 15px;
+    color: var(--primary-text-color);
+    button {
+      margin-left: 10px;
+    }
+    &.ant-typography-edit-content {
+      margin-left: 12px;
+      width: 100%;
+      textarea {
+        padding: 0px 2px;
+        align-content: center;
+        font-size: 14px;
+        color: var(--primary-text-color);
+        background: rgba(255, 255, 255, 0.15) !important;
+      }
+      .ant-typography-edit-content-confirm {
+        opacity: 0.6;
+        color: var(--secondary-text-color) !important;
+      }
+    }
+  }
+  .bookmark-url,
+  .bookmark-url textarea {
+    align-content: center;
+    font-size: 12px !important;
+  }
+}

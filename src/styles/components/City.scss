@@ -1,0 +1,93 @@
+.cities {
+  position: absolute;
+  height: auto;
+  top: var(--body-margin);
+  left: var(--body-margin);
+  height: calc(100vh - var(--body-margin) * 4);
+  z-index: 1;
+  .city {
+    h2 {
+      font-size: clamp(18px, 2.5vw, 25px);
+      text-shadow: var(--text-title-shadow);
+      font-weight: 900;
+      margin-top: 0;
+      margin-bottom: calc(var(--city-padding) / 2);
+    }
+    box-shadow: var(--box-shadow);
+    margin-top: var(--city-padding);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 140px;
+    backdrop-filter: blur(var(--blur-amount));
+    padding: var(--city-padding) calc(var(--city-padding) * 2);
+    border-radius: var(--border-radius);
+    &.day {
+      background-color: var(--city-color);
+      h2 {
+        background: var(--city-text-color);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    }
+    &.night {
+      background-color: var(--city-color-night);
+      h2 {
+        background: var(--city-text-color-night);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    }
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
+}
+.weather {
+  font-size: clamp(12px, 1.5vw, 14px);
+  font-weight: 600;
+  text-shadow: var(--text-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  .icon {
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(var(--text-shadow));
+    object-fit: contain;
+    margin-bottom: calc(var(--city-padding) / 3);
+  }
+  &.day,
+  * .day {
+    color: var(--clock-bg-color);
+  }
+  &.night,
+  * .night {
+    color: var(--clock-bg-color-night);
+  }
+}
+.clock {
+  font-size: clamp(14px, 2vw, 18px);
+  margin-top: var(--city-padding);
+  font-weight: 600;
+  text-shadow: var(--text-shadow);
+  &.day {
+    background: var(--clock-bg-color);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  &.night {
+    background: var(--clock-bg-color-night);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}

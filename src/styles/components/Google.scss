@@ -1,0 +1,98 @@
+.google-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: var(--body-margin);
+  right: var(--body-margin);
+  z-index: 10;
+  padding: 5px;
+  background-color: var(--google-button-bg-color);
+  backdrop-filter: blur(var(--blur-amount));
+  border-radius: var(--border-radius);
+  box-shadow: var(--text-shadow);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  .anticon {
+    font-size: var(--anticon-size);
+    opacity: 0.7;
+    transition: all 0.3s ease;
+  }
+  &:hover,
+  &.active {
+    box-shadow: var(--box-shadow);
+    transform: scale(1.1);
+    .anticon {
+      transform: rotate(-90deg) scale(0.9);
+      opacity: 1;
+    }
+  }
+}
+
+.google-apps {
+  $icon-size: 50px;
+  $icon-margin: 10px;
+  $icon-padding: 5px;
+  $apps-size: ($icon-size + $icon-margin * 3 + $icon-padding * 2) * 3 +
+    $icon-margin + 7px;
+  $apps-height: ($icon-size + $icon-margin * 2 + $icon-padding * 2 + 7px) * 4;
+  position: absolute;
+  display: flex;
+  width: $apps-size;
+  max-height: min($apps-height, calc(100vh - var(--body-margin) * 5 - 50px));
+  z-index: 9;
+  flex-flow: row wrap;
+  overflow: auto;
+  align-items: center;
+  justify-content: center;
+  padding: calc($icon-margin / 2);
+  top: calc(var(--body-margin) + 50px);
+  right: var(--body-margin);
+  backdrop-filter: blur(var(--blur-amount));
+  box-shadow: var(--box-shadow);
+  background: var(--google-app-bg-color);
+  border: 2px solid var(--google-button-border-color);
+  border-radius: var(--border-radius);
+  .app {
+    cursor: pointer;
+    margin: calc($icon-margin / 2);
+    text-wrap: wrap;
+    padding: 5px;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+    .anticon {
+      flex-flow: row wrap;
+    }
+    .icon {
+      margin: 0px $icon-margin;
+      height: $icon-size;
+      width: $icon-size;
+      object-fit: contain;
+      object-position: center;
+    }
+    .text {
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      text-transform: capitalize;
+    }
+    &:hover {
+      background: var(--google-button-bg-color-hover);
+      transform: scale(1.05) translateY(-2px);
+    }
+  }
+  .more {
+    cursor: pointer;
+    border-radius: 50px;
+    margin: $icon-margin * 1 0 $icon-margin * 1.5;
+    padding: $icon-padding * 1.5 $icon-padding * 2;
+    background: var(--google-app-bg-color);
+    border: 2px solid transparent;
+    box-shadow: var(--text-shadow);
+    transition: all 0.2s ease;
+    &:hover {
+      border-color: var(--google-button-border-color);
+      background: var(--google-button-bg-color);
+    }
+  }
+}

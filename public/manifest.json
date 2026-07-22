@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "New Tab By Mehrshad",
+  "version": "1.0.1",
+  "description": "A custom new tab page extension developed with ❤️ by Mehrshad!",
+  "author": "Ali Dadashzadeh",
+  "icons": {
+    "64": "icon-home-64.png",
+    "128": "icon-home-128.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "homepage_url": "https://github.com/mehrshaad/chrome-extention-new-tab",
+  "offline_enabled": true,
+  "incognito": "split"
+}

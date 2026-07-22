@@ -1,0 +1,126 @@
+.home-sign {
+  position: absolute;
+  bottom: var(--body-margin);
+  left: var(--body-margin);
+  width: 80px;
+  cursor: pointer;
+  opacity: 0.8;
+  z-index: 1;
+  filter: invert(1);
+  transition: all 0.2s;
+  &:hover {
+    opacity: 1;
+  }
+  @media screen and (max-width: 768px) {
+    top: var(--body-margin);
+  }
+}
+.home-container {
+  width: 100dvw !important;
+  padding: 0;
+  padding-top: calc(10vh + var(--body-margin));
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .picture-container {
+    width: min(300px, calc(120px + 4dvw + 2lvh));
+    height: min(300px, calc(120px + 4dvw + 2lvh));
+    background: var(--home-picture-bg-color);
+    backdrop-filter: blur(var(--blur-amount));
+    padding: 0px;
+    margin-bottom: 2em;
+    border-radius: 100%;
+    display: flex;
+    box-shadow: var(--box-shadow);
+    filter: blur(var(--blur-amount));
+    animation: blur_in 1s forwards;
+
+    img {
+      border-radius: 100%;
+      opacity: 1;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  h1 {
+    margin: 0;
+    text-shadow: var(--text-title-shadow);
+    font-size: 50px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.5;
+    letter-spacing: 1px;
+    font-weight: 700;
+    filter: blur(var(--blur-amount));
+    animation: blur_in 1s forwards 0.5s;
+
+    span {
+      color: var(--secondary-text-color);
+      font-weight: 600;
+    }
+  }
+}
+.input-search {
+  margin-top: 20px;
+  width: 500px;
+  * {
+    outline: none !important;
+    border: none !important;
+  }
+
+  // input,
+  .ant-input-affix-wrapper {
+    border-radius: 50px 0 0 50px;
+    background-color: var(--home-search-bg-color);
+    backdrop-filter: blur(var(--blur-amount));
+    padding: 10px 15px;
+    outline: none !important;
+    border: none !important;
+    font-size: 20px;
+    transition: background-color 0.2s;
+
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: var(--home-search-button-bg-color);
+      & + .ant-input-group-addon {
+        padding: 0 30px;
+      }
+    }
+    .ant-input-prefix {
+      opacity: 0.5;
+      margin-right: 15px;
+    }
+    .ant-input-suffix {
+      opacity: 0.5;
+      margin-left: 15px;
+    }
+  }
+
+  .ant-input-group-addon {
+    cursor: pointer;
+    padding: 0 50px;
+    border-radius: 0 50px 50px 0;
+    border: none;
+    backdrop-filter: blur(var(--blur-amount));
+    background-color: var(--home-search-bg-color-hover);
+    transition: all 0.2s;
+    overflow: hidden;
+
+    img {
+      width: 35px;
+      transition: all 0.2s;
+    }
+
+    &:hover {
+      background-color: var(--home-search-button-bg-color);
+      padding: 0 50px !important;
+      img {
+        transform: scale(1.15);
+        filter: drop-shadow(var(--text-shadow));
+      }
+    }
+  }
+}
