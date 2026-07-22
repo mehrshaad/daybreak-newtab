@@ -4,7 +4,7 @@ import { IconBookmark } from "../components/Icon";
 const SettingsContext = createContext();
 
 export function SettingsProvider({ children }) {
-  // localStorage.removeItem("newTabMehrshadSettings");
+  // localStorage.removeItem("daybreakSettings");
 
   const defaultSettings = {
     wallpaper: defaultWallpaper,
@@ -108,13 +108,13 @@ export function SettingsProvider({ children }) {
 
   const [settings, setSettings] = useState(() => {
     const savedSettings =
-      JSON.parse(localStorage.getItem("newTabMehrshadSettings")) || {};
+      JSON.parse(localStorage.getItem("daybreakSettings")) || {};
     return { ...defaultSettings, ...savedSettings };
   });
 
   const updateSettings = (key, value) => {
     const newSettings = { ...settings, [key]: value };
-    localStorage.setItem("newTabMehrshadSettings", JSON.stringify(newSettings));
+    localStorage.setItem("daybreakSettings", JSON.stringify(newSettings));
     setSettings(newSettings);
   };
 
