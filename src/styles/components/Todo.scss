@@ -173,37 +173,21 @@
       margin-bottom: 16px;
     }
     .todo-task-add-popover {
-      button,
-      input {
-        outline: none !important;
-        width: 100%;
-        border: none !important;
-        border-radius: var(--border-radius) !important;
-        backdrop-filter: blur(var(--blur-amount));
-        background: rgba(var(--todo-button-color), 0.9) !important;
-        color: rgba(0, 0, 0, 0.88) !important;
-        box-shadow: var(--text-shadow);
-        .anticon {
-          transition: all 0.3s ease;
-          opacity: 0.8;
-        }
-      }
       button {
-        &:hover,
-        &:focus {
-          background: rgba(var(--todo-button-color), 1) !important;
-          box-shadow: var(--box-shadow);
-          .anticon {
-            opacity: 1;
-            transition: all 0.3s ease;
-          }
-        }
+        width: 100%;
       }
-      input {
+      input,
+      .ant-picker {
+        width: 100%;
+        border-radius: var(--border-radius) !important;
+        border: none !important;
         background: rgba(255, 255, 255, 0.2) !important;
-        &:focus {
-          box-shadow: var(--box-shadow);
-          background: rgba(255, 255, 255, 0.5) !important;
+        color: var(--primary-text-color) !important;
+        box-shadow: var(--text-shadow);
+        &:hover,
+        &:focus,
+        &:focus-within {
+          background: rgba(255, 255, 255, 0.4) !important;
         }
       }
     }

@@ -56,7 +56,7 @@ function Home() {
                 (e.key === "Enter" || e.key === " ") && handleSearch()
               }
             >
-              <IconTile name={engineKey} size={26} />
+              <IconTile name={engineKey} size={22} bare />
             </span>
           }
           onPressEnter={handleSearch}

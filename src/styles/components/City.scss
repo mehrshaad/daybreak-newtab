@@ -19,9 +19,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 140px;
+    gap: 5px;
+    min-height: 150px;
+    height: auto;
     backdrop-filter: blur(var(--blur-amount));
-    padding: var(--city-padding) calc(var(--city-padding) * 2);
+    padding: 18px 20px;
     border-radius: var(--border-radius);
     &.day {
       background-color: var(--city-color);
@@ -57,6 +59,19 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 3px;
+  text-align: center;
+  .weather-main {
+    font-weight: 700;
+  }
+  .weather-detail {
+    font-size: 0.82em;
+    font-weight: 500;
+    opacity: 0.72;
+  }
+  .weather-error {
+    opacity: 0.8;
+  }
   .icon {
     width: 40px;
     height: 40px;

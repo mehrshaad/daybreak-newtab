@@ -3,11 +3,13 @@ import {
   ReloadOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
-import { Button, Popconfirm, Space, Upload, message } from "antd";
+import { Button, Col, Popconfirm, Row, message } from "antd";
+import { useRef } from "react";
 import { useSettings } from "../../context/SettingsContext";
 
 function Backup() {
   const { settings, replaceSettings, resetSettings } = useSettings();
+  const fileRef = useRef();
 
   const exportSettings = () => {
     const blob = new Blob([JSON.stringify(settings, null, 2)], {
@@ -23,7 +25,10 @@ function Backup() {
     URL.revokeObjectURL(url);
   };
 
-  const beforeUpload = (file) => {
+  const onFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -38,30 +43,54 @@ function Backup() {
       }
     };
     reader.readAsText(file);
-    return false; // prevent antd from uploading anywhere
   };
 
   return (
-    <Space direction="vertical" style={{ width: "100%" }}>
-      <Button block icon={<DownloadOutlined />} onClick={exportSettings}>
-        Export settings
-      </Button>
-      <Upload accept=".json" showUploadList={false} beforeUpload={beforeUpload}>
-        <Button block icon={<UploadOutlined />}>
-          Import settings
+    <Row gutter={[10, 10]}>
+      <Col span={12}>
+        <Button
+          block
+          type="primary"
+          icon={<DownloadOutlined />}
+          onClick={exportSettings}
+        >
+          Export
         </Button>
-      </Upload>
-      <Popconfirm
-        title="Reset all settings to defaults?"
-        onConfirm={resetSettings}
-        okText="Reset"
-        cancelText="Cancel"
-      >
-        <Button block danger icon={<ReloadOutlined />}>
-          Reset to defaults
+      </Col>
+      <Col span={12}>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".json"
+          style={{ display: "none" }}
+          onChange={onFile}
+        />
+        <Button
+          block
+          icon={<UploadOutlined />}
+          onClick={() => fileRef.current?.click()}
+          style={{
+            background: "#2fa25a",
+            borderColor: "#2fa25a",
+            color: "#fff",
+          }}
+        >
+          Import
         </Button>
-      </Popconfirm>
-    </Space>
+      </Col>
+      <Col span={24}>
+        <Popconfirm
+          title="Reset all settings to defaults?"
+          onConfirm={resetSettings}
+          okText="Reset"
+          cancelText="Cancel"
+        >
+          <Button block danger type="primary" icon={<ReloadOutlined />}>
+            Reset to defaults
+          </Button>
+        </Popconfirm>
+      </Col>
+    </Row>
   );
 }
 

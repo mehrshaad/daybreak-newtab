@@ -1,4 +1,4 @@
-import { Col, Row, Typography, Checkbox, Tooltip } from "antd";
+import { Button, Col, Row, Typography, Checkbox, Tooltip } from "antd";
 import { useState } from "react";
 import { useSettings } from "../../context/SettingsContext";
 import { LuPlus, LuTrash2 } from "react-icons/lu";
@@ -237,15 +237,14 @@ function Bookmarks({ open }) {
           open && "animate__fadeIn"
         )}
       >
-        <div
-          className={classNames("bookmark-container add-bookmark")}
+        <Button
+          block
+          type="dashed"
+          icon={<LuPlus />}
           onClick={handleBookmarkAdd}
         >
-          <h3>
-            <Icon Component={LuPlus} />
-            Add new favorite page
-          </h3>
-        </div>
+          Add new favorite page
+        </Button>
       </Col>
     </Row>
   );

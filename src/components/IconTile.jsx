@@ -118,29 +118,56 @@ function hashHue(str) {
 }
 
 // A rounded "app icon" tile with a brand glyph or a monogram fallback.
-function IconTile({ name = "", size = 56, colorful = true, showGlyph = true }) {
+function IconTile({
+  name = "",
+  size = 56,
+  colorful = true,
+  showGlyph = true,
+  bare = false,
+}) {
   const key = name.toLowerCase().trim();
-  const brand = BRANDS[key] || BRANDS[key.replace(/\s+/g, " ")];
-
+  const brand = BRANDS[key];
   const hue = hashHue(key || "?");
+  const Glyph = brand?.Glyph;
+  const letter = (name || "?").trim()[0]?.toUpperCase() || "?";
+
+  // "bare" = just the coloured glyph, no tile background (used in the search box).
+  if (bare) {
+    const color = brand ? brand.to : `hsl(${hue} 70% 52%)`;
+    return Glyph ? (
+      <Glyph size={size} color={color} aria-hidden />
+    ) : (
+      <span
+        className="icon-tile-letter"
+        style={{ fontSize: size, color, textShadow: "none" }}
+      >
+        {letter}
+      </span>
+    );
+  }
+
   const gradient = !colorful
     ? "linear-gradient(160deg, rgba(255,255,255,0.85), rgba(235,235,235,0.85))"
     : brand
     ? `linear-gradient(160deg, ${brand.from}, ${brand.to})`
     : `linear-gradient(160deg, hsl(${hue} 72% 64%), hsl(${(hue + 28) % 360} 68% 48%))`;
-
-  const Glyph = showGlyph && colorful ? brand?.Glyph : null;
+  const TileGlyph = showGlyph && colorful ? Glyph : null;
 
   return (
     <div
       className="icon-tile"
-      style={{ width: size, height: size, borderRadius: size * 0.28, background: gradient }}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.28,
+        background: gradient,
+      }}
     >
-      {Glyph ? (
-        <Glyph size={Math.round(size * 0.5)} color="#fff" aria-hidden />
+      {TileGlyph ? (
+        <TileGlyph size={Math.round(size * 0.5)} color="#fff" aria-hidden />
       ) : (
         <span className="icon-tile-letter" style={{ fontSize: size * 0.42 }}>
-          {(name || "?").trim()[0]?.toUpperCase() || "?"}
+          {letter}
         </span>
       )}
     </div>

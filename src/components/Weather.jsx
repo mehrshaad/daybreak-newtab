@@ -70,15 +70,13 @@ function Weather({ geo, day, unit = "c" }) {
   return (
     <div className={classNames("weather", dayClass)}>
       <IconWeather weatherCondition={weather.condition} day={day} />
-      <span className="weather-temp">
+      <div className="weather-main">
         {weather.temp}
-        {deg}
-      </span>
-      <span className="weather-label"> - {weather.label}</span>
-      <span className="weather-detail">
-        {" "}
-        (H:{weather.high}° L:{weather.low}° · feels {weather.feels}°)
-      </span>
+        {deg} · {weather.label}
+      </div>
+      <div className="weather-detail">
+        H {weather.high}° · L {weather.low}° · feels {weather.feels}°
+      </div>
     </div>
   );
 }
