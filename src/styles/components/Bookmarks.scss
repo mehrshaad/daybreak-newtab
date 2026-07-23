@@ -1,11 +1,15 @@
 .bookmarks-container {
-  position: absolute !important;
-  bottom: 50px !important;
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 90vw;
   padding-top: 20px;
-  left: 50% !important;
-  max-height: 50vh;
-  overflow: auto;
-  transform: translateX(-50%) !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -168,5 +172,69 @@
   .bookmark-url textarea {
     align-content: center;
     font-size: 12px !important;
+  }
+}
+.more-tile {
+  background: linear-gradient(160deg, #9aa3b2, #5b6472);
+}
+.bookmarks-drawer {
+  .ant-drawer-content {
+    background: var(--google-app-bg-color);
+    backdrop-filter: blur(var(--blur-amount));
+  }
+  .ant-drawer-header {
+    border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+  }
+  .ant-drawer-title,
+  .ant-drawer-close {
+    color: var(--primary-text-color);
+  }
+  .ant-drawer-title {
+    font-weight: 700;
+  }
+  .drawer-section {
+    color: var(--secondary-text-color);
+    margin: 16px 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .drawer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    .bookmark .iOS p {
+      font-size: 10px;
+      width: auto;
+    }
+  }
+  .drawer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .drawer-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--primary-text-color);
+    transition: background 0.15s ease;
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    &:hover {
+      background: rgba(127, 127, 127, 0.16);
+    }
+  }
+  .drawer-empty {
+    color: var(--secondary-text-color);
+    text-align: center;
+    margin-top: 24px;
   }
 }
