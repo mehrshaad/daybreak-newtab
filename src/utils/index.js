@@ -84,6 +84,22 @@ export function wmoWeather(code) {
   return { condition, label };
 }
 
+// Supported web-search engines for the search box.
+export const SEARCH_ENGINES = {
+  google: { label: "Google", url: "https://www.google.com/search?q=" },
+  bing: { label: "Bing", url: "https://www.bing.com/search?q=" },
+  duckduckgo: { label: "DuckDuckGo", url: "https://duckduckgo.com/?q=" },
+};
+
+// Time-of-day greeting, optionally personalized with a name.
+export const greeting = (name) => {
+  const h = new Date().getHours();
+  const part =
+    h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const who = (name || "").trim();
+  return who ? `${part}, ${who}!` : `${part}!`;
+};
+
 // Build a Google favicon URL for a site (used as a fallback shortcut icon).
 export const getIcon = (url, size = "64") => {
   return `https://www.google.com/s2/favicons?domain=${url}&sz=${size}`;

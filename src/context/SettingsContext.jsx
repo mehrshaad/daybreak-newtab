@@ -68,6 +68,10 @@ export function SettingsProvider({ children }) {
     wallpaper: defaultWallpaper,
     tour: true,
     leftbar: "todo", // cities, todo, nothing
+    general: {
+      name: "",
+      searchEngine: "google",
+    },
     cities: {
       cityList: [
         {

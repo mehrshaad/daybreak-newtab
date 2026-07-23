@@ -3,40 +3,51 @@ import { Collapse, Divider } from "antd";
 import { useEffect, useRef, useState } from "react";
 import "../styles/components/Settings.scss";
 import { classNames } from "../utils/index";
-import Wallpapers from "./settings/Wallpapers";
-import Leftbar from "./settings/Leftbar";
 import Bookmarks from "./settings/Bookmarks";
-
-const panelContext = [
-  {
-    key: "Favorite Pages",
-    label: "Favorite Pages",
-    children: (
-      <>
-        <Bookmarks open={open} />
-        <Divider />
-      </>
-    ),
-  },
-  {
-    key: "Left Bar Content",
-    label: "Left Bar Content",
-    children: (
-      <>
-        <Leftbar open={open} />
-        <Divider />
-      </>
-    ),
-  },
-  {
-    key: "Wallpapers",
-    label: "Wallpapers",
-    children: <Wallpapers open={open} />,
-  },
-];
+import General from "./settings/General";
+import Leftbar from "./settings/Leftbar";
+import Wallpapers from "./settings/Wallpapers";
 
 function Panel({ active, open }) {
   const panelRef = useRef(null);
+
+  const panelContext = [
+    {
+      key: "General",
+      label: "General",
+      children: (
+        <>
+          <General open={open} />
+          <Divider />
+        </>
+      ),
+    },
+    {
+      key: "Favorite Pages",
+      label: "Favorite Pages",
+      children: (
+        <>
+          <Bookmarks open={open} />
+          <Divider />
+        </>
+      ),
+    },
+    {
+      key: "Left Bar Content",
+      label: "Left Bar Content",
+      children: (
+        <>
+          <Leftbar open={open} />
+          <Divider />
+        </>
+      ),
+    },
+    {
+      key: "Wallpapers",
+      label: "Wallpapers",
+      children: <Wallpapers open={open} />,
+    },
+  ];
 
   return (
     active && (
@@ -72,10 +83,15 @@ function Settings() {
         setOpen(false);
       }
     };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
 
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
 
@@ -84,6 +100,9 @@ function Settings() {
       <div
         ref={buttonRef}
         className="settings-button"
+        role="button"
+        tabIndex={0}
+        aria-label="Open settings"
         onClick={() => {
           setActive(true);
           setOpen(!open);
