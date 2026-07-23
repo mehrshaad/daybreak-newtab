@@ -206,11 +206,27 @@ export function SettingsProvider({ children }) {
     });
   };
 
+  // Merge an imported settings object over the current settings.
+  const replaceSettings = (incoming) => {
+    setSettings((prev) => {
+      const next = { ...prev, ...incoming };
+      storage.set(next);
+      return next;
+    });
+  };
+
+  const resetSettings = () => {
+    storage.set(defaultSettings);
+    setSettings(defaultSettings);
+  };
+
   // Wait for stored settings to load before rendering the page.
   if (!settings) return null;
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider
+      value={{ settings, updateSettings, replaceSettings, resetSettings }}
+    >
       {children}
     </SettingsContext.Provider>
   );

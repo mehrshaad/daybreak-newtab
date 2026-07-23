@@ -3,6 +3,7 @@ import { Collapse, Divider } from "antd";
 import { useEffect, useRef, useState } from "react";
 import "../styles/components/Settings.scss";
 import { classNames } from "../utils/index";
+import Backup from "./settings/Backup";
 import Bookmarks from "./settings/Bookmarks";
 import General from "./settings/General";
 import Leftbar from "./settings/Leftbar";
@@ -45,7 +46,17 @@ function Panel({ active, open }) {
     {
       key: "Wallpapers",
       label: "Wallpapers",
-      children: <Wallpapers open={open} />,
+      children: (
+        <>
+          <Wallpapers open={open} />
+          <Divider />
+        </>
+      ),
+    },
+    {
+      key: "Backup & Reset",
+      label: "Backup & Reset",
+      children: <Backup />,
     },
   ];
 
