@@ -1,4 +1,4 @@
-# Daybreak — New Tab
+# Daybreak - New Tab
 
 **Start every tab fresh.** Daybreak replaces Chrome's new tab page with a calm,
 customizable start page — a wallpaper, clock, weather, a to‑do list, quick
