@@ -72,6 +72,9 @@ export function SettingsProvider({ children }) {
       name: "",
       searchEngine: "google",
     },
+    notes: {
+      text: "",
+    },
     cities: {
       cityList: [
         {

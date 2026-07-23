@@ -1,7 +1,7 @@
 import { Button, Checkbox, Col, Row, Segmented, Select, Tag } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { LuGlobe, LuListTodo } from "react-icons/lu";
+import { LuGlobe, LuListTodo, LuQuote, LuStickyNote, LuTimer } from "react-icons/lu";
 import { RiRobot2Line } from "react-icons/ri";
 import { RxCross2 } from "react-icons/rx";
 import { useSettings } from "../../context/SettingsContext";
@@ -200,6 +200,27 @@ function Leftbar({ open }) {
       span: 8,
       icon: RiRobot2Line,
       children: <h2 className="note">Opens ChatGPT in a new tab.</h2>,
+    },
+    {
+      key: "notes",
+      label: "Notes",
+      span: 8,
+      icon: LuStickyNote,
+      children: <h2 className="note">A quick scratchpad in your new tab.</h2>,
+    },
+    {
+      key: "pomodoro",
+      label: "Focus Timer",
+      span: 8,
+      icon: LuTimer,
+      children: <h2 className="note">A 25 / 5 Pomodoro focus timer.</h2>,
+    },
+    {
+      key: "quote",
+      label: "Quote",
+      span: 8,
+      icon: LuQuote,
+      children: <h2 className="note">A fresh quote each day.</h2>,
     },
     {
       key: "nothing",

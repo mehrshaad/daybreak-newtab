@@ -1,0 +1,73 @@
+.widget-wrapper {
+  position: absolute;
+  top: var(--body-margin);
+  left: var(--body-margin);
+  height: calc(100vh - var(--body-margin) * 4);
+  width: max(155px, min(20vw, 300px));
+  z-index: 1;
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
+}
+
+.widget-container {
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  backdrop-filter: blur(var(--blur-amount));
+  border-radius: var(--border-radius);
+  background-color: var(--todo-bg-color);
+  color: var(--primary-text-color);
+  padding: 16px;
+  text-align: center;
+
+  h2 {
+    text-shadow: var(--text-title-shadow);
+    font-weight: 900;
+    margin: 0 0 12px;
+  }
+}
+
+.notes-widget .notes-textarea {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: var(--primary-text-color) !important;
+  border: none !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--text-shadow);
+  resize: none;
+}
+
+.pomodoro-widget {
+  .pomodoro-mode {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 12px;
+    opacity: 0.8;
+    text-shadow: var(--text-shadow);
+  }
+  .pomodoro-time {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 900;
+    text-shadow: var(--text-title-shadow);
+    margin: 8px 0 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pomodoro-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+}
+
+.quote-widget {
+  .quote-text {
+    font-size: clamp(15px, 1.6vw, 18px);
+    line-height: 1.5;
+    text-shadow: var(--text-shadow);
+  }
+  .quote-author {
+    margin-top: 12px;
+    opacity: 0.8;
+    font-style: italic;
+    text-shadow: var(--text-shadow);
+  }
+}
