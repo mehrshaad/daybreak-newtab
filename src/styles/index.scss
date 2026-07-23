@@ -18,9 +18,13 @@ html {
   -webkit-user-drag: none;
   -webkit-user-select: none;
   -moz-user-drag: none !important;
-  &:focus {
-    outline-color: var(--lottie-load-fill-color) !important;
-  }
+}
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+*:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
 }
 ::-webkit-scrollbar {
   width: var(--scrollbar-width);
@@ -35,5 +39,15 @@ html {
     &:hover {
       background: var(--scrollbar-thumb-hover-color);
     }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
