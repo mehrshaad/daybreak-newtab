@@ -49,6 +49,17 @@ function Google() {
     <>
       <div
         className={classNames("google-button", open && "active")}
+        role="button"
+        tabIndex={0}
+        aria-label="Google apps"
+        aria-expanded={open}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen(!open);
+            setActive(true);
+          }
+        }}
         onClick={(e) => {
           e.stopPropagation();
           setOpen(!open);

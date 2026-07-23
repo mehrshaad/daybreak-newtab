@@ -1,0 +1,30 @@
+name: Release
+
+# Push a tag like v1.1.0 to build the extension from the `codes` branch and
+# attach the packaged zip to a GitHub Release.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codes
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Package extension
+        run: cd dist && zip -r "../daybreak-newtab-${{ github.ref_name }}.zip" . && cd ..
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: daybreak-newtab-${{ github.ref_name }}.zip
+          generate_release_notes: true
