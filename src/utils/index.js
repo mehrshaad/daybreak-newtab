@@ -100,9 +100,14 @@ export const greeting = (name) => {
   return who ? `${part}, ${who}!` : `${part}!`;
 };
 
-// Build a Google favicon URL for a site (used as a fallback shortcut icon).
-export const getIcon = (url, size = "64") => {
-  return `https://www.google.com/s2/favicons?domain=${url}&sz=${size}`;
+// Derive a site's own favicon URL, used as a fallback shortcut icon. Kept
+// first-party (the bookmarked site itself) so no data goes to a third party.
+export const faviconFromUrl = (url) => {
+  try {
+    return `${new URL(url).origin}/favicon.ico`;
+  } catch {
+    return null;
+  }
 };
 
 export const formatDate = (date) => {

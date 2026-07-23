@@ -1,4 +1,5 @@
 import { Col, Row, Typography, Checkbox, Tooltip } from "antd";
+import { useState } from "react";
 import { useSettings } from "../../context/SettingsContext";
 import { LuPlus, LuTrash2 } from "react-icons/lu";
 import { Icon } from "../Icon";
@@ -17,6 +18,15 @@ function Bookmarks({ open }) {
     showBookmarksText,
     bookmarksList,
   } = bookmarks;
+
+  const [dragIndex, setDragIndex] = useState(null);
+  const moveBookmark = (from, to) => {
+    if (from === null || from === to) return;
+    const list = [...bookmarksList];
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    updateSettings("bookmarks", { ...bookmarks, bookmarksList: list });
+  };
 
   const handleUrlChange = (value, index, key) => {
     if (key === "name")
@@ -166,9 +176,18 @@ function Bookmarks({ open }) {
         <Col
           key={index}
           span={8}
+          draggable
+          onDragStart={() => setDragIndex(index)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => {
+            moveBookmark(dragIndex, index);
+            setDragIndex(null);
+          }}
+          onDragEnd={() => setDragIndex(null)}
           className={classNames(
             "animate__animated animate__faster",
-            open && "animate__fadeIn"
+            open && "animate__fadeIn",
+            dragIndex === index && "dragging"
           )}
           style={{
             animationDelay: `${(index + 1) * 0.1}s`,

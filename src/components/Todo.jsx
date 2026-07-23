@@ -3,6 +3,7 @@ import {
   Button,
   Checkbox,
   Col,
+  DatePicker,
   Divider,
   Input,
   Popover,
@@ -14,75 +15,130 @@ import { useSettings } from "../context/SettingsContext";
 import "../styles/components/Todo.scss";
 import { classNames, formatDate } from "../utils";
 
+function AddTaskForm({ onAdd }) {
+  const [task, setTask] = useState("");
+  const [due, setDue] = useState(null);
+
+  const submit = () => {
+    if (!task.trim()) return;
+    onAdd(task.trim(), due ? due.format("YYYY-MM-DD") : null);
+    setTask("");
+    setDue(null);
+  };
+
+  return (
+    <Row className="todo-task-add-popover" justify="center" gutter={[10, 10]}>
+      <Col span={24}>
+        <Input
+          autoFocus
+          maxLength={100}
+          placeholder="Enter a new task..."
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          onPressEnter={submit}
+        />
+      </Col>
+      <Col span={24}>
+        <DatePicker
+          style={{ width: "100%" }}
+          placeholder="Due date (optional)"
+          value={due}
+          onChange={setDue}
+        />
+      </Col>
+      <Col span={24}>
+        <Button block type="primary" icon={<PlusOutlined />} onClick={submit}>
+          Add Task
+        </Button>
+      </Col>
+    </Row>
+  );
+}
+
 function Todo() {
   const [taskPopoverOpen, setTaskPopoverOpen] = useState(false);
+  const [dragIndex, setDragIndex] = useState(null);
   const {
     settings: { todo, leftbar },
     updateSettings,
   } = useSettings();
   const { showCompleted, showDate, todoList } = todo;
   const [completedCount, setCompletedCount] = useState(
-    todoList.filter((todo) => todo.completed).length
+    todoList.filter((t) => t.completed).length
   );
 
   useEffect(() => {
-    setCompletedCount(todoList.filter((todo) => todo.completed).length);
+    setCompletedCount(todoList.filter((t) => t.completed).length);
   }, [todoList]);
 
+  const today = formatDate(new Date());
+  const isOverdue = (t) => t.due && !t.completed && t.due < today;
+
+  const saveList = (list) => updateSettings("todo", { ...todo, todoList: list });
+
   const handleTodoToggle = (value, taskId) => {
-    const updatedTodoList = todoList.map((todo) =>
-      todo.id === taskId ? { ...todo, completed: value } : todo
+    saveList(
+      todoList.map((t) => (t.id === taskId ? { ...t, completed: value } : t))
     );
-    updateSettings("todo", {
-      ...todo,
-      todoList: updatedTodoList,
-    });
   };
-  const handleAddTodo = (task) => {
+  const handleAddTodo = (task, due) => {
     if (!task.trim()) return;
     const newTodo = {
       id: crypto.randomUUID(),
       task,
       completed: false,
       date: new Date().toISOString(),
+      due: due || null,
     };
-    updateSettings("todo", {
-      ...todo,
-      todoList: [...todoList, newTodo],
-    });
+    saveList([...todoList, newTodo]);
     setTaskPopoverOpen(false);
   };
   const handleDeleteCompleted = () => {
-    const updatedTodoList = todoList.filter((todo) => !todo.completed);
-    updateSettings("todo", {
-      ...todo,
-      todoList: updatedTodoList,
-    });
+    saveList(todoList.filter((t) => !t.completed));
   };
-  const addNewTask = () => {
-    return (
-      <Row className="todo-task-add-popover" justify="center" gutter={[10, 10]}>
-        <Input
-          ref={(input) => input && input.focus()}
-          maxLength={100}
-          name="todoInput"
-          placeholder="Enter a new task..."
-          onPressEnter={(e) => handleAddTodo(e.target.value)}
-        />
-        <Button
-          block
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            const input = document.getElementsByName("todoInput")[0];
-            handleAddTodo(input.value);
-          }}
+
+  const active = todoList.filter((t) => !t.completed);
+  const completed = todoList.filter((t) => t.completed);
+
+  const handleDrop = (dropIndex) => {
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null);
+      return;
+    }
+    const reordered = [...active];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(dropIndex, 0, moved);
+    saveList([...reordered, ...completed]);
+    setDragIndex(null);
+  };
+
+  const renderDate = (t) => {
+    if (t.due) {
+      return (
+        <span
+          className={classNames("todo-task-date", isOverdue(t) && "overdue")}
         >
-          Add Task
-        </Button>
-      </Row>
-    );
+          ⏰ {t.due}
+        </span>
+      );
+    }
+    if (t.date) {
+      return (
+        <span
+          className={classNames(
+            "todo-task-date animate__animated",
+            showDate
+              ? "animate__fadeIn"
+              : "animate__fadeOut animate__faster"
+          )}
+        >
+          ({formatDate(t.date)})
+        </span>
+      );
+    }
+    return null;
   };
+
   return (
     leftbar === "todo" && (
       <div className="todo-wrapper">
@@ -99,39 +155,30 @@ function Todo() {
           </div>
           <div className="todo-tasks">
             <Row>
-              {todoList
-                .filter((todo) => !todo.completed)
-                .map((todo) => (
-                  <Col span={24} key={todo.id}>
-                    <div
-                      className={classNames(
-                        "todo-task animate__animated animate__slideInLeft animate__faster",
-                        showDate && "todo-with-date"
-                      )}
-                    >
-                      <Checkbox
-                        checked={todo.completed}
-                        onChange={(e) =>
-                          handleTodoToggle(e.target.checked, todo.id)
-                        }
-                      />
-                      <span className="todo-text">{todo.task}</span>
-                      {todo.date && (
-                        <span
-                          className={classNames(
-                            "todo-task-date animate__animated",
-                            showDate
-                              ? "animate__fadeIn"
-                              : "animate__fadeOut animate__faster"
-                          )}
-                        >
-                          ({formatDate(todo.date)})
-                        </span>
-                      )}
-                    </div>
-                  </Col>
-                ))}
-              {showCompleted && todoList.some((todo) => todo.completed) && (
+              {active.map((t, i) => (
+                <Col span={24} key={t.id}>
+                  <div
+                    draggable
+                    onDragStart={() => setDragIndex(i)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDrop(i)}
+                    onDragEnd={() => setDragIndex(null)}
+                    className={classNames(
+                      "todo-task draggable animate__animated animate__slideInLeft animate__faster",
+                      showDate && "todo-with-date",
+                      dragIndex === i && "dragging"
+                    )}
+                  >
+                    <Checkbox
+                      checked={t.completed}
+                      onChange={(e) => handleTodoToggle(e.target.checked, t.id)}
+                    />
+                    <span className="todo-text">{t.task}</span>
+                    {renderDate(t)}
+                  </div>
+                </Col>
+              ))}
+              {showCompleted && completed.length > 0 && (
                 <>
                   <Divider
                     orientation="center"
@@ -141,44 +188,31 @@ function Todo() {
                   >
                     Completed
                   </Divider>
-                  {todoList
-                    .filter((todo) => todo.completed)
-                    .map((todo) => (
-                      <Col span={24} key={todo.id}>
-                        <div
-                          className={classNames(
-                            "todo-task completed animate__animated animate__slideInLeft animate__faster",
-                            showDate && "todo-with-date"
-                          )}
-                        >
-                          <Checkbox
-                            checked={todo.completed}
-                            onChange={(e) =>
-                              handleTodoToggle(e.target.checked, todo.id)
-                            }
-                          />
-                          <span className="todo-text">{todo.task}</span>
-                          {todo.date && (
-                            <span
-                              className={classNames(
-                                "todo-task-date animate__animated",
-                                showDate
-                                  ? "animate__fadeIn"
-                                  : "animate__fadeOut animate__faster"
-                              )}
-                            >
-                              ({formatDate(todo.date)})
-                            </span>
-                          )}
-                        </div>
-                      </Col>
-                    ))}
+                  {completed.map((t) => (
+                    <Col span={24} key={t.id}>
+                      <div
+                        className={classNames(
+                          "todo-task completed animate__animated animate__slideInLeft animate__faster",
+                          showDate && "todo-with-date"
+                        )}
+                      >
+                        <Checkbox
+                          checked={t.completed}
+                          onChange={(e) =>
+                            handleTodoToggle(e.target.checked, t.id)
+                          }
+                        />
+                        <span className="todo-text">{t.task}</span>
+                        {renderDate(t)}
+                      </div>
+                    </Col>
+                  ))}
                 </>
               )}
             </Row>
           </div>
           <Popover
-            content={addNewTask}
+            content={<AddTaskForm onAdd={handleAddTodo} />}
             title="Add New Task"
             destroyTooltipOnHide={true}
             open={taskPopoverOpen}
@@ -188,10 +222,7 @@ function Todo() {
           >
             <Tooltip title="Add New Task" placement="right">
               <Button
-                className={classNames(
-                  "todo-task-add",
-                  taskPopoverOpen && "active"
-                )}
+                className={classNames("todo-task-add", taskPopoverOpen && "active")}
                 type="primary"
                 icon={<PlusOutlined />}
               />

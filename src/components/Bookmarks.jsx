@@ -1,8 +1,8 @@
 import { Avatar, Col, Row } from "antd";
 import { useSettings } from "../context/SettingsContext";
 import "../styles/components/Bookmarks.scss";
-import { classNames } from "../utils";
-import { IconImg } from "./Icon";
+import { classNames, faviconFromUrl } from "../utils";
+import { IconBookmark } from "./Icon";
 
 function Bookmarks() {
   const { settings } = useSettings();
@@ -43,7 +43,6 @@ function Bookmark({
   name,
   url,
   color,
-  icon,
   showBookmarks,
   showBookmarksText,
   showBookmarksLogo,
@@ -52,39 +51,52 @@ function Bookmark({
   const openLink = () => {
     window.open(url, "_self");
   };
+
+  // Resolve the icon fresh from the name (a built-in logo) and fall back to the
+  // site's own favicon; Avatar shows the first letter if neither loads. This
+  // avoids relying on a stored asset path that changes between builds.
+  const resolvedIcon = IconBookmark(name);
+  const iconSrc = showBookmarksLogo
+    ? resolvedIcon || faviconFromUrl(url)
+    : undefined;
+
   return (
-    <>
+    <div
+      className={classNames(
+        "bookmark animate__animated",
+        !showBookmarks ? "animate__scaleOut" : "animate__scaleIn"
+      )}
+      style={{ animationDelay: `${index * 0.05}s` }}
+    >
       <div
-        className={classNames(
-          "bookmark animate__animated",
-          !showBookmarks ? "animate__scaleOut" : "animate__scaleIn"
-        )}
-        style={{ animationDelay: `${index * 0.05}s` }}
+        className="iOS"
+        onClick={openLink}
+        role="button"
+        tabIndex={0}
+        aria-label={name}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openLink()}
       >
-        <div className="iOS" onClick={openLink}>
-          <Avatar
-            className="avatar"
-            shape="square"
-            style={{
-              background:
-                // !(icon && showBookmarksLogo) &&
-                showBookmarksColors &&
-                `linear-gradient(180deg, var(--bookmark-bg-color), ${color}) !important`,
-            }}
-            src={showBookmarksLogo && icon && <IconImg src={icon} />}
-          >
-            {name[0]}
-          </Avatar>
-          <p
-            className={classNames(
-              showBookmarksText ? "move-in-text" : "move-out-text"
-            )}
-          >
-            {name}
-          </p>
-        </div>
+        <Avatar
+          className="avatar"
+          shape="square"
+          style={{
+            background:
+              showBookmarksColors &&
+              `linear-gradient(180deg, var(--bookmark-bg-color), ${color}) !important`,
+          }}
+          src={iconSrc || undefined}
+        >
+          {name?.[0]}
+        </Avatar>
+        <p
+          className={classNames(
+            showBookmarksText ? "move-in-text" : "move-out-text"
+          )}
+        >
+          {name}
+        </p>
       </div>
-    </>
+    </div>
   );
 }
 
