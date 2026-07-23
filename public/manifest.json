@@ -4,6 +4,7 @@
   "version": "1.0.2",
   "description": "Start every tab fresh: a customizable start page with wallpapers, weather, a clock, to-dos, and quick shortcuts.",
   "author": "Ali Dadashzadeh",
+  "permissions": ["storage"],
   "icons": {
     "64": "icon-home-64.png",
     "128": "icon-home-128.png"

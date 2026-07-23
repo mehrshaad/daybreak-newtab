@@ -1,11 +1,69 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import defaultWallpaper from "../assets/backgrounds/1.jpg";
 import { IconBookmark } from "../components/Icon";
+
 const SettingsContext = createContext();
+const STORAGE_KEY = "daybreakSettings";
+
+const hasChromeSync = () =>
+  typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync;
+
+// Storage abstraction. In the packaged extension it uses chrome.storage.sync so
+// settings follow the user across devices; running as a plain web page (e.g.
+// `npm run dev`) it falls back to localStorage. On first run in the extension it
+// migrates any settings previously saved in localStorage.
+const storage = {
+  get() {
+    if (hasChromeSync()) {
+      return new Promise((resolve) => {
+        chrome.storage.sync.get(STORAGE_KEY, (data) => {
+          const synced = data && data[STORAGE_KEY];
+          if (synced) {
+            resolve(synced);
+            return;
+          }
+          let legacy = null;
+          try {
+            legacy = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          } catch {
+            legacy = null;
+          }
+          if (legacy) chrome.storage.sync.set({ [STORAGE_KEY]: legacy });
+          resolve(legacy || {});
+        });
+      });
+    }
+    try {
+      return Promise.resolve(
+        JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
+      );
+    } catch {
+      return Promise.resolve({});
+    }
+  },
+  set(value) {
+    if (hasChromeSync()) {
+      chrome.storage.sync.set({ [STORAGE_KEY]: value }, () => {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          // e.g. sync quota exceeded — keep a local copy so nothing is lost.
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+          } catch {
+            /* ignore */
+          }
+        }
+      });
+      return;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    } catch {
+      /* ignore */
+    }
+  },
+};
 
 export function SettingsProvider({ children }) {
-  // localStorage.removeItem("daybreakSettings");
-
   const defaultSettings = {
     wallpaper: defaultWallpaper,
     tour: true,
@@ -111,28 +169,38 @@ export function SettingsProvider({ children }) {
         },
         {
           id: "2b3d4d5e-6f7g-8h9i-0j1k-2l3m4n5o6p7q",
-          task: "Install this extention!",
+          task: "Install this extension!",
           completed: true,
           date: new Date().toISOString().split("T")[0],
         },
       ],
     },
-    chatgpt: {
-      chatgpt: "Hello, how can I help you?",
-    },
   };
 
-  const [settings, setSettings] = useState(() => {
-    const savedSettings =
-      JSON.parse(localStorage.getItem("daybreakSettings")) || {};
-    return { ...defaultSettings, ...savedSettings };
-  });
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    storage.get().then((saved) => {
+      if (active) setSettings({ ...defaultSettings, ...saved });
+    });
+    return () => {
+      active = false;
+    };
+    // Load once on mount; defaultSettings is only used to seed missing keys.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateSettings = (key, value) => {
-    const newSettings = { ...settings, [key]: value };
-    localStorage.setItem("daybreakSettings", JSON.stringify(newSettings));
-    setSettings(newSettings);
+    setSettings((prev) => {
+      const next = { ...prev, [key]: value };
+      storage.set(next);
+      return next;
+    });
   };
+
+  // Wait for stored settings to load before rendering the page.
+  if (!settings) return null;
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>
