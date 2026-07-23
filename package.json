@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "optimize:wallpapers": "node scripts/optimize-wallpapers.mjs"
   },
   "dependencies": {
     "animate.css": "^4.1.1",
@@ -29,6 +30,7 @@
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.13.0",
     "sass-embedded": "^1.83.0",
+    "sharp": "^0.35.3",
     "vite": "^6.0.3"
   }
 }

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import defaultWallpaper from "../assets/backgrounds/1.jpg";
 import { IconBookmark } from "../components/Icon";
+import { DEFAULT_WALLPAPER_KEY } from "../utils/wallpapers";
 
 const SettingsContext = createContext();
 const STORAGE_KEY = "daybreakSettings";
@@ -65,7 +65,7 @@ const storage = {
 
 export function SettingsProvider({ children }) {
   const defaultSettings = {
-    wallpaper: defaultWallpaper,
+    wallpaper: DEFAULT_WALLPAPER_KEY,
     tour: true,
     leftbar: "todo", // cities, todo, nothing
     general: {
