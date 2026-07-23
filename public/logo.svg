@@ -1,0 +1,24 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="daybreakSky" x1="64" y1="0" x2="64" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8FD3F4" />
+      <stop offset="0.48" stop-color="#FFD79A" />
+      <stop offset="1" stop-color="#FF8FA3" />
+    </linearGradient>
+    <linearGradient id="daybreakSun" x1="64" y1="37" x2="64" y2="83" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7E6" />
+      <stop offset="1" stop-color="#FFB43F" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="29" fill="url(#daybreakSky)" />
+  <g stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="5" stroke-linecap="round">
+    <line x1="64" y1="15" x2="64" y2="27" />
+    <line x1="33" y1="25" x2="41" y2="36" />
+    <line x1="95" y1="25" x2="87" y2="36" />
+    <line x1="15" y1="54" x2="28" y2="54" />
+    <line x1="113" y1="54" x2="100" y2="54" />
+  </g>
+  <circle cx="64" cy="60" r="23" fill="url(#daybreakSun)" />
+  <rect x="14" y="92" width="100" height="7" rx="3.5" fill="#FFFFFF" fill-opacity="0.72" />
+  <rect x="31" y="106" width="66" height="6" rx="3" fill="#FFFFFF" fill-opacity="0.46" />
+</svg>

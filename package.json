@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "optimize:wallpapers": "node scripts/optimize-wallpapers.mjs",
+    "gen:icons": "node scripts/gen-icons.mjs",
     "test": "vitest run"
   },
   "dependencies": {

@@ -6,8 +6,10 @@
   "author": "Ali Dadashzadeh",
   "permissions": ["storage"],
   "icons": {
-    "64": "icon-home-64.png",
-    "128": "icon-home-128.png"
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
   },
   "chrome_url_overrides": {
     "newtab": "index.html"

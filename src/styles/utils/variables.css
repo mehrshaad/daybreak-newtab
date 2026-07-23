@@ -1,7 +1,23 @@
 :root {
     /* Global Variables */
-    --border-radius: 10px;
-    --blur-amount: 10px;
+    --border-radius: 14px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --blur-amount: 14px;
+
+    /* Spacing scale (8pt-based) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* Daybreak accent */
+    --accent: #ff9a62;
+    --accent-strong: #ff7a5c;
+    --accent-soft: rgba(255, 138, 91, 0.16);
+    --accent-gradient: linear-gradient(135deg, #ffb347 0%, #ff7a90 100%);
     --primary-text-color: #000000;
     --secondary-text-color: #464646;
     --home-picture-bg-color: rgba(255, 255, 255, 0.4);

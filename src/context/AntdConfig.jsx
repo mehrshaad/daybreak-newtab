@@ -1,11 +1,29 @@
 import { ConfigProvider } from "antd";
+
 function AntdConfig({ children }) {
   return (
     <ConfigProvider
       theme={{
         token: {
+          colorPrimary: "#ff7a5c",
+          borderRadius: 14,
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+          controlHeight: 38,
+        },
+        components: {
+          Button: {
+            borderRadius: 14,
+            controlHeight: 38,
+            fontWeight: 600,
+            primaryShadow: "none",
+            defaultShadow: "none",
+          },
+          Segmented: {
+            borderRadius: 12,
+            trackBg: "rgba(var(--settings-button-bg-color), 0.2)",
+          },
           Select: {
-            // colorBgContainer: "transparent",
             colorPrimary: "var(--settings-button-color-hover)",
             colorBgElevated: "rgba(var(--settings-button-bg-color),0.6)",
             activeBorderColor: "transparent",
