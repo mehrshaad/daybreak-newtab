@@ -27,36 +27,18 @@
     &:hover,
     &:focus {
       padding: 0 var(--bookmark-padding-hover);
-      .avatar {
-        box-shadow: rgba(0, 0, 0, 0.15) 0px 15px 25px,
-          rgba(0, 0, 0, 0.05) 0px 5px 10px;
-        transform: translateY(-4px) scale(1.1);
-        ~ .avatar {
-          transform: scale(0.5);
-        }
+      .icon-tile {
+        box-shadow: rgba(0, 0, 0, 0.2) 0px 14px 24px,
+          rgba(0, 0, 0, 0.08) 0px 5px 10px,
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        transform: translateY(-4px) scale(1.08);
       }
     }
 
-    .avatar {
-      width: var(--bookmark-img-size);
-      height: var(--bookmark-img-size);
-      border-radius: 27%;
-      text-transform: uppercase;
-      border: none !important;
-      outline: none !important;
+    .icon-tile {
       transition: inherit;
-      font-size: 32px;
-      padding: 2px;
-      backdrop-filter: blur(var(--blur-amount));
-      background: var(--bookmark-gradient-bg-color) !important;
-      box-shadow: var(--box-shadow);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
       @media (prefers-color-scheme: dark) {
-        filter: brightness(0.8);
-      }
-      img {
-        width: 100%;
+        filter: brightness(0.95);
       }
     }
 

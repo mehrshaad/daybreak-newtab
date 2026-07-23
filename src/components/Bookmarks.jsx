@@ -1,8 +1,8 @@
-import { Avatar, Col, Row } from "antd";
+import { Col, Row } from "antd";
 import { useSettings } from "../context/SettingsContext";
 import "../styles/components/Bookmarks.scss";
-import { classNames, faviconFromUrl } from "../utils";
-import { IconBookmark } from "./Icon";
+import { classNames } from "../utils";
+import IconTile from "./IconTile";
 
 function Bookmarks() {
   const { settings } = useSettings();
@@ -42,7 +42,6 @@ function Bookmark({
   index,
   name,
   url,
-  color,
   showBookmarks,
   showBookmarksText,
   showBookmarksLogo,
@@ -51,14 +50,6 @@ function Bookmark({
   const openLink = () => {
     window.open(url, "_self");
   };
-
-  // Resolve the icon fresh from the name (a built-in logo) and fall back to the
-  // site's own favicon; Avatar shows the first letter if neither loads. This
-  // avoids relying on a stored asset path that changes between builds.
-  const resolvedIcon = IconBookmark(name);
-  const iconSrc = showBookmarksLogo
-    ? resolvedIcon || faviconFromUrl(url)
-    : undefined;
 
   return (
     <div
@@ -76,18 +67,12 @@ function Bookmark({
         aria-label={name}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openLink()}
       >
-        <Avatar
-          className="avatar"
-          shape="square"
-          style={{
-            background:
-              showBookmarksColors &&
-              `linear-gradient(180deg, var(--bookmark-bg-color), ${color}) !important`,
-          }}
-          src={iconSrc || undefined}
-        >
-          {name?.[0]}
-        </Avatar>
+        <IconTile
+          name={name}
+          size={56}
+          colorful={showBookmarksColors}
+          showGlyph={showBookmarksLogo}
+        />
         <p
           className={classNames(
             showBookmarksText ? "move-in-text" : "move-out-text"

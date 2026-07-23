@@ -2,7 +2,7 @@ import { SearchOutlined } from "@ant-design/icons";
 import { Input } from "antd";
 import { useEffect, useRef, useState } from "react";
 import sign from "../assets/images/sign.png";
-import { IconBookmark, IconImg } from "../components/Icon";
+import IconTile from "./IconTile";
 import { useSettings } from "../context/SettingsContext";
 import "../styles/components/Home.scss";
 import { greeting, SEARCH_ENGINES } from "../utils";
@@ -16,7 +16,6 @@ function Home() {
 
   const engineKey = general?.searchEngine || "google";
   const engine = SEARCH_ENGINES[engineKey] || SEARCH_ENGINES.google;
-  const engineIcon = IconBookmark(engineKey);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -47,19 +46,18 @@ function Home() {
           onChange={(e) => setSearchQuery(e.target.value)}
           prefix={<SearchOutlined />}
           addonAfter={
-            engineIcon ? (
-              <IconImg src={engineIcon} onClick={handleSearch} />
-            ) : (
-              <span
-                className="anticon search-go"
-                role="button"
-                tabIndex={0}
-                aria-label={`Search ${engine.label}`}
-                onClick={handleSearch}
-              >
-                <SearchOutlined />
-              </span>
-            )
+            <span
+              className="search-go"
+              role="button"
+              tabIndex={0}
+              aria-label={`Search ${engine.label}`}
+              onClick={handleSearch}
+              onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") && handleSearch()
+              }
+            >
+              <IconTile name={engineKey} size={26} />
+            </span>
           }
           onPressEnter={handleSearch}
           type="search"

@@ -52,6 +52,7 @@ import snow from "../assets/weather/snow.png";
 import squall from "../assets/weather/squall.png";
 import thunderstorm from "../assets/weather/thunderstorm.png";
 import tornado from "../assets/weather/tornado.png";
+import IconTile from "./IconTile";
 
 function Icon({ Component, className }) {
   return (
@@ -166,12 +167,19 @@ function IconGoogle() {
     jamboard: { icon: jamboard, link: "https://jamboard.google.com/" },
   };
 
-  return Object.entries(googleIcons).map(([app, { icon, link }]) => (
+  return Object.entries(googleIcons).map(([app, { link }]) => (
     <div key={app} className={"app"}>
-      <div onClick={() => window.open(link, "_self", "noopener,noreferrer")}>
-        <div className={"anticon"}>
-          <img src={icon} className={"icon"} />
-        </div>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={app}
+        onClick={() => window.open(link, "_self", "noopener,noreferrer")}
+        onKeyDown={(e) =>
+          (e.key === "Enter" || e.key === " ") &&
+          window.open(link, "_self", "noopener,noreferrer")
+        }
+      >
+        <IconTile name={app} size={48} />
         <div className={"text"}>{app}</div>
       </div>
     </div>
