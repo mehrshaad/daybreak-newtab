@@ -1,45 +1,40 @@
 import { useEffect, useState } from "react";
-import { classNames, getTimezone } from "../utils";
+import { classNames } from "../utils";
 
-function Clock({ city, setDay }) {
+function Clock({ timezone, setDay }) {
   const [time, setTime] = useState("");
   const [dayState, setDayState] = useState(true);
 
   useEffect(() => {
-    const getTime = () => {
-      const date = new Date();
-      let options = {
-        timeZone: getTimezone(city),
-        hour: "2-digit",
-        minute: "2-digit",
-      };
-      setTime(date.toLocaleTimeString("en-US", options));
+    if (!timezone) return;
+    const tick = () => {
+      const now = new Date();
+      setTime(
+        now.toLocaleTimeString("en-US", {
+          timeZone: timezone,
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
+      const hour = parseInt(
+        now.toLocaleString("en-US", {
+          timeZone: timezone,
+          hour: "numeric",
+          hour12: false,
+        }),
+        10
+      );
+      const isDay = hour >= 6 && hour < 18;
+      setDayState(isDay);
+      if (setDay) setDay(isDay);
     };
-
-    getTime();
-    const timer = setInterval(getTime, 1000);
-
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [city, setDay]);
-
-  useEffect(() => {
-    const date = new Date();
-    const hour = parseInt(
-      date.toLocaleString("en-US", {
-        timeZone: getTimezone(city),
-        hour: "numeric",
-        hour12: false,
-      })
-    );
-    const dayHour = hour >= 6 && hour < 18;
-    setDay(dayHour);
-    setDayState(dayHour);
-  }, [city]);
+  }, [timezone, setDay]);
 
   return (
-    <div className={classNames("clock", dayState ? "day" : "night")}>
-      {time}
-    </div>
+    <div className={classNames("clock", dayState ? "day" : "night")}>{time}</div>
   );
 }
 

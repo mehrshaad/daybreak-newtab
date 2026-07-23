@@ -1,54 +1,84 @@
 import LoadingOutlined from "@ant-design/icons/LoadingOutlined";
 import { useEffect, useState } from "react";
 import { IconWeather } from "../components/Icon";
-import { classNames } from "../utils";
+import { classNames, wmoWeather } from "../utils";
 
-function Weather({ city, day }) {
-  const [temperature, setTemperature] = useState(null);
-  const [weatherCondition, setWeatherCondition] = useState(null);
-  const API_KEY = "0b680b9c553380559ca29e28a2295d42";
+function Weather({ geo, day, unit = "c" }) {
+  const [status, setStatus] = useState("loading"); // loading | ok | error
+  const [weather, setWeather] = useState(null);
+
   useEffect(() => {
-    const getWeather = async () => {
-      try {
-        if (city) {
-          const response = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
-          );
-          const data = await response.json();
-          setTemperature(Math.round(data.main.temp));
-          setWeatherCondition(data.weather[0].main);
-        } else {
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-          });
+    if (!geo || geo.latitude == null) return;
+    let active = true;
+    setStatus("loading");
 
-          const response = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&units=metric&appid=${API_KEY}`
-          );
-          const data = await response.json();
-          setTemperature(Math.round(data.main.temp));
-          setWeatherCondition(data.weather[0].main);
+    const temperatureUnit = unit === "f" ? "fahrenheit" : "celsius";
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}` +
+      `&longitude=${geo.longitude}` +
+      `&current=temperature_2m,apparent_temperature,weather_code` +
+      `&daily=temperature_2m_max,temperature_2m_min` +
+      `&timezone=auto&temperature_unit=${temperatureUnit}`;
+
+    fetch(url)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!active) return;
+        if (!d || !d.current) {
+          setStatus("error");
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching weather:", error);
-      }
-    };
+        const { condition, label } = wmoWeather(d.current.weather_code);
+        setWeather({
+          temp: Math.round(d.current.temperature_2m),
+          feels: Math.round(d.current.apparent_temperature),
+          high: Math.round(d.daily?.temperature_2m_max?.[0]),
+          low: Math.round(d.daily?.temperature_2m_min?.[0]),
+          condition,
+          label,
+        });
+        setStatus("ok");
+      })
+      .catch(() => {
+        if (active) setStatus("error");
+      });
 
-    getWeather();
-  }, [city]);
+    return () => {
+      active = false;
+    };
+  }, [geo, unit]);
+
+  const deg = unit === "f" ? "°F" : "°C";
+  const dayClass = day ? "day" : "night";
+
+  if (!geo || status === "loading") {
+    return (
+      <div className={classNames("weather", dayClass)}>
+        <LoadingOutlined className={classNames("loader", dayClass)} />
+      </div>
+    );
+  }
+
+  if (status === "error" || !weather) {
+    return (
+      <div className={classNames("weather", dayClass)}>
+        <span className="weather-error">Weather unavailable</span>
+      </div>
+    );
+  }
 
   return (
-    <div className={classNames("weather", day ? "day" : "night")}>
-      {temperature !== null ? (
-        <>
-          <IconWeather weatherCondition={weatherCondition} day={day} />
-          {temperature}°C - {weatherCondition}
-        </>
-      ) : (
-        <LoadingOutlined
-          className={classNames("loader", day ? "day" : "night")}
-        />
-      )}
+    <div className={classNames("weather", dayClass)}>
+      <IconWeather weatherCondition={weather.condition} day={day} />
+      <span className="weather-temp">
+        {weather.temp}
+        {deg}
+      </span>
+      <span className="weather-label"> - {weather.label}</span>
+      <span className="weather-detail">
+        {" "}
+        (H:{weather.high}° L:{weather.low}° · feels {weather.feels}°)
+      </span>
     </div>
   );
 }

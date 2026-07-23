@@ -9,11 +9,27 @@ export function SettingsProvider({ children }) {
   const defaultSettings = {
     wallpaper: defaultWallpaper,
     tour: true,
-    leftbar: "todo", //cities, todo, chatgpt, bookmarks, nothing
+    leftbar: "todo", // cities, todo, nothing
     cities: {
-      cityList: ["Tehran", "Toronto"],
+      cityList: [
+        {
+          name: "Tehran",
+          country: "Iran",
+          latitude: 35.6944,
+          longitude: 51.4215,
+          timezone: "Asia/Tehran",
+        },
+        {
+          name: "Toronto",
+          country: "Canada",
+          latitude: 43.7001,
+          longitude: -79.4163,
+          timezone: "America/Toronto",
+        },
+      ],
       showClock: true,
       showWeather: true,
+      unit: "c",
     },
     bookmarks: {
       showBookmarks: true,
