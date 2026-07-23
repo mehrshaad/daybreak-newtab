@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Daybreak — New Tab",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Start every tab fresh: a customizable start page with wallpapers, weather, a clock, to-dos, and quick shortcuts.",
   "author": "Ali Dadashzadeh",
   "permissions": ["storage"],
