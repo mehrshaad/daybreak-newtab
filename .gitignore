@@ -18,8 +18,9 @@ dist-ssr
 # Local env
 *.local
 
-# v2 implementation plan (local working doc, deliberately untracked)
-/V2-PLAN.md
+# v2 implementation plan (local working doc, deliberately untracked). Not
+# anchored to the root: a copy moved into a subfolder should stay ignored too.
+V2-PLAN.md
 
 # Store upload artifact: rebuilt from dist/ whenever it changes.
 /store-assets/*.zip
