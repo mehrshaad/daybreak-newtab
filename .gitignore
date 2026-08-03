@@ -21,6 +21,9 @@ dist-ssr
 # v2 implementation plan (local working doc, deliberately untracked)
 /V2-PLAN.md
 
+# Store upload artifact: rebuilt from dist/ whenever it changes.
+/store-assets/*.zip
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json

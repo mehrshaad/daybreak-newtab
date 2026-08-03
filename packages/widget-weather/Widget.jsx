@@ -2,8 +2,39 @@ import { useEffect, useState } from "react";
 import { CitySearch, MONO, useWidgetLocal } from "@daybreak/sdk";
 import ConditionIcon from "./ConditionIcon";
 import { forecastUrl, parseForecast } from "./forecast";
+import { layoutFor } from "./layout";
 
-function Weather({ id, options, config, setConfig, refreshKey, focused }) {
+function Detail({ label, value }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+        padding: "8px 10px",
+        borderRadius: 10,
+        background: "var(--panel)",
+        border: "1px solid var(--line)",
+        minWidth: 0,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: 9,
+          letterSpacing: ".12em",
+          textTransform: "uppercase",
+          color: "var(--faint)",
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: 14, color: "var(--fg)" }}>{value}</span>
+    </div>
+  );
+}
+
+function Weather({ id, options, config, setConfig, refreshKey, focused, size }) {
   const { fahrenheit, hour24, showHourly } = options;
   const city = config.city;
   // Cache the last good reading so a refresh (or being offline) shows the
@@ -75,6 +106,8 @@ function Weather({ id, options, config, setConfig, refreshKey, focused }) {
   }
 
   const deg = fahrenheit ? "°F" : "°C";
+  const view = layoutFor(size, focused);
+  const hours = data.hours?.slice(0, view.hours) || [];
 
   return (
     <div
@@ -91,7 +124,11 @@ function Weather({ id, options, config, setConfig, refreshKey, focused }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              fontSize: focused ? "clamp(48px, 7vw, 76px)" : "clamp(30px, 3.4vw, 40px)",
+              fontSize: focused
+                ? "clamp(48px, 7vw, 76px)"
+                : view.tall
+                ? "clamp(38px, 4.4vw, 54px)"
+                : "clamp(30px, 3.4vw, 40px)",
               fontWeight: 500,
               letterSpacing: "-.03em",
               lineHeight: 1,
@@ -104,7 +141,7 @@ function Weather({ id, options, config, setConfig, refreshKey, focused }) {
           <ConditionIcon
             condition={data.condition}
             day={data.isDay}
-            size={focused ? 44 : 30}
+            size={focused ? 44 : view.tall ? 38 : 30}
           />
         </div>
         <div
@@ -119,7 +156,7 @@ function Weather({ id, options, config, setConfig, refreshKey, focused }) {
         >
           {data.label} · {city?.name || data.city}
         </div>
-        {focused ? (
+        {view.stats && !view.details ? (
           <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 8 }}>
             H {data.high}
             {deg} · L {data.low}
@@ -134,18 +171,35 @@ function Weather({ id, options, config, setConfig, refreshKey, focused }) {
         ) : null}
       </div>
 
-      {showHourly && data.hours?.length ? (
+      {/* Taller tiles get the same three numbers as a labelled grid, which is
+          what the height is good for. */}
+      {view.details ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: 8,
+          }}
+        >
+          <Detail label="High" value={`${data.high}${deg}`} />
+          <Detail label="Low" value={`${data.low}${deg}`} />
+          <Detail label="Feels" value={`${data.feels}${deg}`} />
+        </div>
+      ) : null}
+
+      {showHourly && hours.length ? (
         <div
           style={{
             display: "flex",
-            gap: 14,
+            gap: view.hourIcons ? 10 : 14,
+            justifyContent: "space-between",
             fontFamily: MONO,
             fontSize: 11,
             color: "var(--faint)",
             flexWrap: "wrap",
           }}
         >
-          {data.hours.map((h) => (
+          {hours.map((h) => (
             <div
               key={h.t}
               style={{
@@ -156,6 +210,9 @@ function Weather({ id, options, config, setConfig, refreshKey, focused }) {
               }}
             >
               <span>{h.t}</span>
+              {view.hourIcons && h.c ? (
+                <ConditionIcon condition={h.c} day={data.isDay} size={18} />
+              ) : null}
               <span style={{ color: "var(--fg)" }}>{h.v}</span>
             </div>
           ))}

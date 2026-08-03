@@ -43,6 +43,7 @@ function Task({ task, showDates, onToggle, onRemove }) {
         }}
       />
       <span
+        className="db-selectable"
         style={{
           fontSize: 13,
           flex: 1,

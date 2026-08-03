@@ -17,12 +17,11 @@ import { PRESETS, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
-import { background, tokens } from "./core/tokens";
+import { background, baseColor, tokens } from "./core/tokens";
 import { useColumns } from "./core/useColumns";
-import { usePresence } from "./core/usePresence";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { resolveTheme, useSystemTheme } from "./core/useSystemTheme";
-import { animateExit, clearBucket, hasPermissionsApi, moveItem, requestAllPermissions } from "@daybreak/sdk";
+import { animateExit, clearBucket, hasPermissionsApi, moveItem, requestAllPermissions, usePresence } from "@daybreak/sdk";
 import {
   getWidget,
   knownIds,
@@ -467,33 +466,24 @@ function App() {
     [theme, accent, appearance.blur, shift]
   );
 
-  // The page background is painted on the root element, not on a layer inside
-  // the app.
+  // <html> carries the flat base colour only. The gradient stack lives in
+  // <Backdrop>, which can crossfade it; here it just needs to match so the
+  // overscroll area and any gap before the first paint are the right colour.
   //
-  // It used to be a fixed div at z-index -1, which never showed at all: base
-  // styles give <html> its own background, so <body>'s background stops being
-  // propagated to the canvas and instead paints as an ordinary block
-  // background — and in the root stacking context that lands *above* negative
-  // z-index descendants. The layer was permanently hidden, which is why none of
-  // the background options appeared to do anything.
-  //
-  // Painting on <html> sidesteps stacking order entirely: it is the canvas, so
-  // it is always behind everything, needs no z-index, and covers the overscroll
-  // area for free.
+  // Body must stay transparent: a background on body paints over the negative
+  // z-index backdrop layers, which is what once made every wallpaper option
+  // look like it did nothing.
   useEffect(() => {
     const html = document.documentElement;
-    html.style.background = background(theme, accent, wall);
-    html.style.backgroundAttachment = "fixed";
-    // Body must stay clear or it would cover the canvas again.
+    html.style.backgroundColor = baseColor(theme);
     document.body.style.background = "transparent";
     // Tells Chrome to theme form controls and scrollbars to match.
     html.style.colorScheme = theme;
     return () => {
-      html.style.background = "";
-      html.style.backgroundAttachment = "";
+      html.style.backgroundColor = "";
       html.style.colorScheme = "";
     };
-  }, [theme, accent, wall]);
+  }, [theme]);
 
   // Chrome that only exists in a mode has to outlive the mode by the length of
   // its exit animation.

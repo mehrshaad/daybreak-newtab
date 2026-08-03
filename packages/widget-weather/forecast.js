@@ -12,7 +12,13 @@ export function pickNextHours(hourly, currentTime, count = 5) {
   for (let i = start; i < hourly.time.length && out.length < count; i += 1) {
     const temp = hourly.temperature_2m?.[i];
     if (temp == null) continue;
-    out.push({ time: hourly.time[i], temp: Math.round(temp) });
+    out.push({
+      time: hourly.time[i],
+      temp: Math.round(temp),
+      // Undefined for a payload that predates the hourly codes being asked
+      // for; the caller draws no icon rather than the wrong one.
+      code: hourly.weather_code?.[i],
+    });
   }
   return out;
 }
@@ -37,7 +43,7 @@ export function forecastUrl({ latitude, longitude }, fahrenheit) {
     `https://api.open-meteo.com/v1/forecast?latitude=${latitude}` +
     `&longitude=${longitude}` +
     `&current=temperature_2m,apparent_temperature,weather_code,is_day` +
-    `&hourly=temperature_2m` +
+    `&hourly=temperature_2m,weather_code` +
     `&daily=temperature_2m_max,temperature_2m_min` +
     `&forecast_days=2&timezone=auto&temperature_unit=${unit}`
   );
@@ -56,9 +62,12 @@ export function parseForecast(data, hour24) {
     low: Math.round(data.daily?.temperature_2m_min?.[0]),
     condition,
     label,
-    hours: pickNextHours(data.hourly, data.current.time).map((h) => ({
+    // A full run is parsed once and the widget takes the slice its size has room
+    // for, so growing the tile never needs another request.
+    hours: pickNextHours(data.hourly, data.current.time, 8).map((h) => ({
       t: formatHour(h.time, hour24),
       v: `${h.temp}°`,
+      c: h.code == null ? null : wmoWeather(h.code).condition,
     })),
   };
 }

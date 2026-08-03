@@ -18,6 +18,7 @@ function Quote({ options }) {
       }}
     >
       <p
+        className="db-selectable"
         style={{
           margin: 0,
           fontSize: 14,

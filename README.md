@@ -12,8 +12,9 @@ Vite.
 - 🔍 **Click to focus** — click a tile to zoom into it. Four behaviours to
   choose from, including a camera zoom that scales the whole board toward the
   tile you picked.
-- 🎨 **Themed end to end** — dark and light, six accent colours, four generated
-  backgrounds, and sliders for grid spacing, corner radius and tile opacity.
+- 🎨 **Themed end to end** — dark and light (or follow your system), six accent
+  colours, eight generated backgrounds, and sliders for corner radius, tile
+  opacity and page zoom. Frosted glass on, or solid surfaces off.
 - 🛍️ **A widget browser** — search the catalog by name or category, read what
   each widget does and what it can access, and add or remove it in a click.
 - ⌨️ **Right-click anything** — per-widget menus with sizes and actions, a board
@@ -25,17 +26,20 @@ Vite.
 
 | Widget | What it does |
 | --- | --- |
-| Clock | Time and today's date, optionally with seconds |
-| World Clocks | Two to four cities at once, with a day-offset badge |
-| Weather | Current conditions and the next few hours |
+| Clock | Time and today's date, digital or as an analog face |
+| World Clocks | Up to four cities at once, reorderable, with a day-offset badge |
+| Weather | Conditions and the hours ahead; bigger sizes show more, not just larger |
 | Tasks | A to-do list with optional due dates |
 | Quick Links | Pinned shortcuts with generated app-style icons |
 | Google Apps | The launcher grid, without the extra click |
 | Scratchpad | One text field that saves as you type |
 | Focus Timer | Pomodoro rounds with a long break every fourth |
-| Habits | A seven-day dot grid per habit |
+| Habits | A seven-day dot grid per habit, each with its own weekly target and goal |
 | Quote of the day | One line, changed daily |
 | Recent Tabs | Reopen what you closed by accident (optional permission) |
+
+New widgets arrive with extension updates — see
+[Writing a widget](#writing-a-widget) for why.
 
 ## Privacy
 
@@ -45,16 +49,27 @@ scratchpad text and habit history stays local. Nothing is sent to the
 developer — no analytics, no tracking, no accounts.
 
 The extension requests **one** permission up front: `storage`, to save your
-settings. One more is **optional** and only requested if you add the widget
-that needs it: `sessions`, for Recent Tabs. It does not ask for your bookmarks,
-your history, or the content of sites you visit.
+settings. Four more are **optional**, each requested only when you turn on the
+feature that needs it, and revocable at any time:
+
+| Permission | Used by |
+| --- | --- |
+| `sessions` | Recent Tabs, to list and reopen what you closed |
+| `tabs` | search suggestions from the tabs you already have open |
+| `history` | search suggestions from pages you have visited |
+| `bookmarks` | the bookmark panel and bookmark search suggestions (read-only) |
+
+It never asks for access to the content of the sites you visit, and declares no
+host permissions.
 
 The only outbound requests are your chosen **city** to
 [Open-Meteo](https://open-meteo.com/) for weather — no API key and no account —
 and your **search queries** to whichever engine you've selected. Icons and
 backgrounds are bundled or generated, so simply opening a new tab contacts
 nobody. Full policy:
-[Privacy Policy](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html).
+[Privacy Policy](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy-v2.html)
+(v1's is still at
+[privacy-policy.html](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html)).
 
 ## Install
 
@@ -72,9 +87,9 @@ _Coming soon._
 4. Click **Load unpacked** and select the unzipped folder.
 5. Open a new tab.
 
-Upgrading from v1 keeps your settings: your name, search engine, city, to-dos
-and shortcuts are migrated the first time v2 runs, and both of your v1 cities
-become world clocks.
+v2 is a **separate** Web Store item, not an update to v1, so the two can be
+installed side by side and v1 keeps working untouched. Because each extension has
+its own storage, v2 starts fresh rather than inheriting a v1 board.
 
 ## Development
 
@@ -96,24 +111,35 @@ Chrome API say so instead of breaking.
 
 ### Writing a widget
 
-A widget is a folder. The catalog builds itself from the folders in
-`src/widgets/`, so adding one means dropping it in and rebuilding — there is no
+A widget is a workspace package. The catalog builds itself from the folders in
+`packages/`, so adding one means dropping it in and rebuilding — there is no
 registry to edit:
 
 ```
-src/widgets/my-widget/
+packages/widget-my-widget/
+  package.json    name + version
   manifest.js     name, sizes, options, permissions
   Widget.jsx      the component
 ```
 
-The full contract — every manifest field, the props a widget receives, and
-where to keep its data — is in [`src/sdk/types.md`](./src/sdk/types.md).
+The full contract — every manifest field, the props a widget receives, and where
+to keep its data — is in [`packages/sdk/README.md`](./packages/sdk/README.md).
+
+**Widgets ship with the extension.** Chrome extensions may not execute code they
+fetched at runtime, so there is no way to install a widget into a published build
+— a new or updated widget means a new extension version in the Web Store. The
+package boundary is still worth having: a widget can live in its own repository
+and be vendored in or added as a workspace dependency, and the host does not
+change either way. What it cannot do is arrive on its own after publishing.
 
 ## Repository layout
 
-- `main` branch (default) — the source code, plus the hosted privacy policy.
+- `main` branch (default) — v1's source, plus the hosted privacy policies.
 - `v1` branch — frozen archive of the released v1.1.0.
-- `v2` branch — the widget dashboard rebuild.
+- `v2` branch — this rebuild.
+- `packages/` — the sdk and one workspace per widget.
+- `src/` — the host: board, store, settings, design tokens.
+- `store-assets/` — the Web Store listing images and `SUBMISSION.md`.
 - `design/Daybreak.dc.html` — the v2 design prototype this was built from.
 
 ## Credits

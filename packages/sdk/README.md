@@ -1,20 +1,26 @@
 # Daybreak widget contract
 
-A widget is a folder under `src/widgets/<id>/` containing a `manifest.js` and a
-component. The registry (`src/widgets/registry.js`) discovers folders with
-`import.meta.glob`, so **adding a widget is dropping in a folder and
-rebuilding** — nothing to register by hand.
+A widget is a workspace package under `packages/widget-<id>/` containing a
+`manifest.js` and a component. The registry (`src/widgets/registry.js`)
+discovers them with `import.meta.glob`, so **adding a widget is dropping in a
+folder and rebuilding** — nothing to register by hand.
 
-This contract is deliberately transport-agnostic. Today the manifest is a JS
-module found on disk; a future release will let you install a widget from
-another repo, where the same fields arrive as JSON and the component runs in a
-sandboxed iframe instead of in-process. Widgets that stick to this contract
-work in both worlds.
+Each widget is its own npm workspace with its own `package.json` and version, so
+it can be developed and versioned on its own and moved to a separate repository
+without touching the host.
+
+It cannot, however, be *delivered* on its own. A Chrome extension may not run
+code it downloaded, so every widget ships inside the extension package and a new
+widget means a new extension version. What the contract buys is that the code
+does not have to live here: a widget from another repo can be vendored in (or
+added as a workspace dependency) and picked up by the same glob, with no change
+to the host.
 
 ## Folder layout
 
 ```
-src/widgets/clock/
+packages/widget-clock/
+  package.json    name + version, so the widget is its own workspace
   manifest.js     what the widget is, how it can be configured
   Widget.jsx      the component (default export)
 ```

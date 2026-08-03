@@ -3,12 +3,14 @@ export default {
   name: "Weather",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.1.0",
   tagline: "Current conditions and the next few hours.",
   description:
     "Weather from Open-Meteo — no API key, no account, no tracking. Only the " +
     "coordinates of the city you pick are sent, and the last successful " +
-    "reading is cached so the tile still shows something offline.",
+    "reading is cached so the tile still shows something offline. Each size " +
+    "earns its space: wider adds the high, low and how it feels; taller adds " +
+    "a detail grid and an icon on every hour.",
   sizes: [
     [3, 2],
     [4, 2],

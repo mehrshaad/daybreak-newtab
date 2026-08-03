@@ -12,6 +12,7 @@ const hourly = {
     "2026-08-03T02:00",
   ],
   temperature_2m: [21.4, 20.8, 20.2, 19.6, 19.1, 18.7, 18.2],
+  weather_code: [2, 3, 61, 61, 0, 0, 45],
 };
 
 describe("pickNextHours", () => {
@@ -26,6 +27,17 @@ describe("pickNextHours", () => {
 
   it("rounds temperatures", () => {
     expect(pickNextHours(hourly, "2026-08-02T20:00", 1)[0].temp).toBe(21);
+  });
+
+  it("carries each hour's condition code for the taller layouts", () => {
+    expect(pickNextHours(hourly, "2026-08-02T22:00", 2).map((h) => h.code)).toEqual([
+      61, 61,
+    ]);
+  });
+
+  it("leaves the code undefined when the series does not have one", () => {
+    const noCodes = { time: hourly.time, temperature_2m: hourly.temperature_2m };
+    expect(pickNextHours(noCodes, "2026-08-02T22:00", 1)[0].code).toBeUndefined();
   });
 
   it("crosses midnight without wrapping back", () => {
@@ -91,6 +103,12 @@ describe("forecastUrl", () => {
     expect(forecastUrl({ latitude: 1, longitude: 2 }, false)).toContain("is_day");
   });
 
+  it("asks for hourly codes, for the per-hour icons", () => {
+    expect(forecastUrl({ latitude: 1, longitude: 2 }, false)).toContain(
+      "hourly=temperature_2m,weather_code"
+    );
+  });
+
   it("only ever targets Open-Meteo", () => {
     expect(forecastUrl({ latitude: 1, longitude: 2 }, false)).toMatch(
       /^https:\/\/api\.open-meteo\.com\//
@@ -118,7 +136,9 @@ describe("parseForecast", () => {
     expect(f.low).toBe(17);
     expect(f.label).toBe("Partly cloudy");
     expect(f.condition).toBe("clouds");
-    expect(f.hours[0]).toEqual({ t: "10p", v: "20°" });
+    expect(f.hours[0]).toEqual({ t: "10p", v: "20°", c: "rain" });
+    // A full run is parsed so the bigger sizes have hours to show; this fixture
+    // only carries five from 22:00.
     expect(f.hours).toHaveLength(5);
   });
 

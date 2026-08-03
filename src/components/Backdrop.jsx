@@ -1,66 +1,79 @@
 import { useEffect, useRef, useState } from "react";
 
-// Crossfades the page background.
+// The page background, and the crossfade between two of them.
 //
-// The live background is painted on <html> (see App) because that element is
-// the canvas and therefore always behind everything. CSS cannot transition it:
-// the value is a gradient stack, and gradients do not interpolate — a theme or
-// wallpaper change snaps.
+// The background is a stack of radial gradients, which CSS cannot transition —
+// gradients do not interpolate. So each background is its own fixed layer and a
+// change fades the new one in over the old, then drops the old one.
 //
-// So the *previous* background lingers here as a fixed layer sitting above the
-// canvas but below all content, and fades out. The new background is revealed
-// through it, which reads as a crossfade without needing two live layers or a
-// wrapper around the app.
+// Both layers sit at a negative z-index: behind every bit of in-flow content,
+// above the canvas. That is only safe because <body> is transparent — a
+// background on body paints over negative-z-index content, which is exactly the
+// bug that once made the wallpaper options look like they did nothing.
 //
-// z-index: -1 is safe now that <body> is transparent — a background on body
-// would paint over this layer (which is exactly the bug that made the wallpaper
-// options look broken).
+// Why the layer owns the gradient rather than <html>:
+//
+// Painting the live background on the canvas and fading the *outgoing* one on a
+// layer meant every change rasterised two full-viewport gradient stacks — one
+// for the canvas, one for the layer. That showed up as a hitch at the start of a
+// wallpaper or accent change. Keeping the background here means the old one is
+// already rasterised and only the incoming one is new: one rasterisation per
+// change instead of two. <html> keeps a flat base colour, which is what the
+// overscroll area needs anyway.
 
-const FADE = 340;
+const FADE = 320;
+
+let seq = 0;
 
 function Backdrop({ background }) {
+  // Oldest first. One layer at rest, two mid-fade.
+  const [layers, setLayers] = useState(() => [{ key: seq++, css: background }]);
   const shown = useRef(background);
-  const [outgoing, setOutgoing] = useState(null);
 
   useEffect(() => {
     if (shown.current === background) return;
-    setOutgoing({ key: background, css: shown.current });
     shown.current = background;
+    setLayers((prev) => [
+      // Only ever keep the one visible layer underneath, so flicking through
+      // the wallpaper picker cannot stack up eight gradients.
+      prev[prev.length - 1],
+      { key: seq++, css: background },
+    ]);
   }, [background]);
 
-  // A timer, not just onAnimationEnd: animationend does not arrive while the
-  // tab is throttled or occluded, and the layer would then sit there forever
-  // holding a composited copy of a background nobody can see.
+  // A timer rather than onAnimationEnd: animationend does not arrive while the
+  // tab is throttled or occluded, and the spent layer would sit there forever.
   useEffect(() => {
-    if (!outgoing) return undefined;
-    const t = setTimeout(() => setOutgoing(null), FADE + 80);
+    if (layers.length < 2) return undefined;
+    const t = setTimeout(() => setLayers((prev) => prev.slice(-1)), FADE + 60);
     return () => clearTimeout(t);
-  }, [outgoing]);
+  }, [layers]);
 
-  if (!outgoing) return null;
-
-  return (
-    <div
-      key={outgoing.key}
-      aria-hidden="true"
-      // Remove the layer as soon as it is invisible so nothing accumulates.
-      // Under prefers-reduced-motion the duration collapses and this fires at
-      // once, which is the intended behaviour.
-      onAnimationEnd={() => setOutgoing(null)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: -1,
-        pointerEvents: "none",
-        background: outgoing.css,
-        backgroundAttachment: "fixed",
-        // Its own compositor layer, so fading a full-screen gradient underneath
-        // a dozen backdrop-filter tiles stays on the GPU.
-        willChange: "opacity",
-        animation: `db-out ${FADE}ms ease forwards`,
-      }}
-    />
-  );
+  return layers.map((layer, i) => {
+    const incoming = layers.length > 1 && i === layers.length - 1;
+    return (
+      <div
+        key={layer.key}
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          inset: 0,
+          // Incoming sits above outgoing; both stay behind the app.
+          zIndex: incoming ? -1 : -2,
+          pointerEvents: "none",
+          background: layer.css,
+          backgroundAttachment: "fixed",
+          ...(incoming
+            ? {
+                // Compositor-only fade, and the hint is dropped with the layer.
+                willChange: "opacity",
+                animation: `db-fade ${FADE}ms ease both`,
+              }
+            : null),
+        }}
+      />
+    );
+  });
 }
 
 export default Backdrop;

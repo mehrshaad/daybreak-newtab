@@ -72,6 +72,7 @@ export {
   usePointerReorder,
 } from "./usePointerReorder";
 export { useHover } from "./useHover";
+export { usePresence } from "./usePresence";
 
 // Small utilities.
 export {
@@ -88,6 +89,7 @@ export {
 } from "./utils";
 
 // Shared components.
+export { APPEAR_MS, default as Appear } from "./components/Appear";
 export { default as CitySearch } from "./components/CitySearch";
 export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";

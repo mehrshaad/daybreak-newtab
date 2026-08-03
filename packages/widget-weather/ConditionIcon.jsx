@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 // Icons for the WMO condition groups that utils' wmoWeather() maps to.
 //
 // Drawn here rather than pulled from an icon set so they share one visual
@@ -39,16 +41,21 @@ function Sun({ cx = 12, cy = 11, r = 5 }) {
 }
 
 function Moon({ cx = 12, cy = 11, r = 5.5 }) {
-  // Crescent by subtraction, so it reads at small sizes.
+  // Crescent by subtraction, so it reads at small sizes. The mask id has to be
+  // unique: the hourly strip puts several icons on the page at once, and a fixed
+  // id would make every crescent use the first mask's geometry.
+  // useId's value contains colons; they are legal in an id but not worth
+  // relying on inside a url() reference, so they come out.
+  const maskId = `db-moon-${useId().replace(/[^\w-]/g, "")}`;
   return (
     <g>
       <defs>
-        <mask id="db-moon">
+        <mask id={maskId}>
           <rect width="24" height="24" fill="#fff" />
           <circle cx={cx + r * 0.75} cy={cy - r * 0.6} r={r} fill="#000" />
         </mask>
       </defs>
-      <circle cx={cx} cy={cy} r={r} fill={MOON} mask="url(#db-moon)" />
+      <circle cx={cx} cy={cy} r={r} fill={MOON} mask={`url(#${maskId})`} />
     </g>
   );
 }

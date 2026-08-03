@@ -3,7 +3,9 @@ import { mark, MONO, pill, primaryButton, seedFor } from "@daybreak/sdk";
 import { WIDGETS, categories, getWidget, typeOf } from "../widgets/registry";
 import { Pill } from "./primitives";
 
-const TABS = ["Discover", "Installed", "Add widgets"];
+const TABS = ["Discover", "Installed"];
+
+const REPO_URL = "https://github.com/mehrshaad/daybreak-newtab/issues";
 
 function Card({ widget, installed, onOpen, onToggle }) {
   const [hovered, setHovered] = useState(false);
@@ -257,56 +259,6 @@ function Detail({ widget, installed, onBack, onToggle }) {
   );
 }
 
-// Replaces the design's "Publish" tab, which pitched a marketplace and an SDK
-// that do not exist. This documents the mechanism that does.
-function AddWidgets() {
-  return (
-    <div style={{ maxWidth: 720 }}>
-      <div style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-.02em", marginBottom: 6 }}>
-        Adding your own widgets
-      </div>
-      <p style={{ fontSize: 13, color: "var(--dim)", lineHeight: 1.7, marginBottom: 24 }}>
-        Every widget in this list is just a folder in the repository. The
-        catalog builds itself from those folders, so adding one means dropping
-        it in and rebuilding — there is no registry to edit.
-      </p>
-
-      <div
-        style={{
-          padding: 20,
-          borderRadius: 16,
-          background: "var(--codeBg)",
-          border: "1px solid var(--line)",
-          fontFamily: MONO,
-          fontSize: 12,
-          lineHeight: 1.9,
-          color: "var(--dim)",
-          whiteSpace: "pre",
-          overflow: "auto",
-        }}
-      >
-        {`src/widgets/my-widget/
-  manifest.js     name, sizes, options, permissions
-  Widget.jsx      the component
-
-npm run build     the widget now appears here`}
-      </div>
-
-      <p style={{ fontSize: 13, color: "var(--dim)", lineHeight: 1.7, margin: "24px 0 0" }}>
-        The full contract — every manifest field, the props a widget receives,
-        and where to keep its data — is documented in{" "}
-        <code style={{ fontFamily: MONO }}>src/sdk/types.md</code>.
-      </p>
-      <p style={{ fontSize: 13, color: "var(--faint)", lineHeight: 1.7, marginTop: 16 }}>
-        Installing a widget straight from another repository, without a
-        rebuild, is planned for a later release. It will use this same manifest
-        shape, running the widget in a sandboxed frame — Chrome extensions may
-        not execute remotely-hosted code in the extension itself.
-      </p>
-    </div>
-  );
-}
-
 const EXIT_MS = 220;
 
 function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
@@ -352,7 +304,7 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
   }, [category, query, tab, onBoard]);
 
   const detailWidget = detail ? getWidget(detail) : null;
-  const showBrowse = tab !== "Add widgets" && !detailWidget;
+  const showBrowse = !detailWidget;
 
   if (!present) return null;
 
@@ -408,8 +360,7 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
           ))}
         </div>
         <div style={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 200 }}>
-          {tab !== "Add widgets" ? (
-            <input
+          <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search widgets…"
@@ -424,9 +375,8 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
                 outline: "none",
                 fontSize: 13,
                 color: "var(--fg)",
-              }}
-            />
-          ) : null}
+            }}
+          />
         </div>
         <button
           type="button"
@@ -449,60 +399,56 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
       </div>
 
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
-        {tab !== "Add widgets" ? (
-          <div
-            style={{
-              width: 210,
-              padding: "22px 16px",
-              borderRight: "1px solid var(--line)",
-              overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              flex: "none",
-            }}
-          >
-            <div className="db-label" style={{ padding: "0 12px 10px" }}>
-              Categories
-            </div>
-            {[{ name: "All", count: WIDGETS.length }, ...cats].map((c) => {
-              const on = category === c.name;
-              return (
-                <button
-                  key={c.name}
-                  type="button"
-                  onClick={() => {
-                    setCategory(c.name);
-                    setDetail(null);
-                  }}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "9px 12px",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    border: 0,
-                    textAlign: "left",
-                    background: on ? "var(--accentSoft)" : "transparent",
-                    color: on ? "var(--accent)" : "var(--dim)",
-                  }}
-                >
-                  <span>{c.name}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 11, opacity: 0.55 }}>
-                    {c.count}
-                  </span>
-                </button>
-              );
-            })}
+        <div
+          style={{
+            width: 210,
+            padding: "22px 16px",
+            borderRight: "1px solid var(--line)",
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            flex: "none",
+          }}
+        >
+          <div className="db-label" style={{ padding: "0 12px 10px" }}>
+            Categories
           </div>
-        ) : null}
+          {[{ name: "All", count: WIDGETS.length }, ...cats].map((c) => {
+            const on = category === c.name;
+            return (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => {
+                  setCategory(c.name);
+                  setDetail(null);
+                }}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "9px 12px",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  border: 0,
+                  textAlign: "left",
+                  background: on ? "var(--accentSoft)" : "transparent",
+                  color: on ? "var(--accent)" : "var(--dim)",
+                }}
+              >
+                <span>{c.name}</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, opacity: 0.55 }}>
+                  {c.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         <div style={{ flex: 1, overflow: "auto", padding: "24px 32px 40px" }}>
-          {tab === "Add widgets" ? <AddWidgets /> : null}
-
           {detailWidget ? (
             <Detail
               widget={detailWidget}
@@ -558,6 +504,32 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
                   Nothing matches that.
                 </div>
               )}
+
+              {/* Says the one thing a user of this list might wonder. Chrome
+                  extensions cannot load code at runtime, so a new widget
+                  genuinely does arrive with an update — better to say so than
+                  to leave the list looking like it might grow on its own. */}
+              <div
+                style={{
+                  marginTop: 28,
+                  paddingTop: 18,
+                  borderTop: "1px solid var(--line)",
+                  fontSize: 12,
+                  color: "var(--faint)",
+                  lineHeight: 1.7,
+                }}
+              >
+                New widgets arrive with extension updates. Missing one?{" "}
+                <a
+                  href={REPO_URL}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Request it on GitHub
+                </a>
+                .
+              </div>
             </div>
           ) : null}
         </div>

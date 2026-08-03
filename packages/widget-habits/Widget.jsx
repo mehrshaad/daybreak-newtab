@@ -145,7 +145,10 @@ function Habits({ id, options, config, setConfig, size }) {
                   }}
                 >
                   {/* Wraps instead of being truncated, however long the name. */}
-                  <span style={{ overflowWrap: "anywhere", minWidth: 0 }}>
+                  <span
+                    className="db-selectable"
+                    style={{ overflowWrap: "anywhere", minWidth: 0 }}
+                  >
                     {habit.name}
                   </span>
                   <LuSettings2

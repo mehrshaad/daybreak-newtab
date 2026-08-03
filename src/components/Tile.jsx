@@ -1,10 +1,9 @@
 import { Suspense, lazy, useMemo } from "react";
 import { LuSettings2, LuX } from "react-icons/lu";
-import { mark, MONO, seedFor, useRefresh } from "@daybreak/sdk";
+import { Appear, mark, MONO, seedFor, useRefresh } from "@daybreak/sdk";
 import { tileStyle } from "../core/tileStyle";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
-import { Appear } from "./primitives";
 
 // One lazy component per widget type, memoized so remounting a tile does not
 // re-trigger the dynamic import.

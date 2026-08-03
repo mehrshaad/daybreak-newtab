@@ -21,6 +21,10 @@ body {
 // would hide anything drawn behind the app.
 html {
   background: #0a0b0e;
+  // Always reserve the scrollbar's width. Without it the whole board shifts
+  // sideways the moment the page becomes scrollable — adding a tile, opening the
+  // dock, anything that grows the page by a row.
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -31,6 +35,20 @@ body {
   font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  // A new tab page is a control surface, not a document: dragging across it
+  // should never leave a blue smear over the labels and clock. Anything the user
+  // actually authored opts back in below.
+  user-select: none;
+}
+
+// Typing is unaffected by user-select: none, but selecting inside a field is
+// not, so every editable surface has to say so explicitly. Widgets that show
+// text worth copying — a note, a quote — carry .db-selectable.
+input,
+textarea,
+[contenteditable="true"],
+.db-selectable {
+  user-select: text;
 }
 
 #root {
@@ -266,16 +284,20 @@ button {
   }
 }
 
-// Theme and accent changes crossfade rather than snapping. Colours are the only
-// thing transitioned here — transitioning `all` would fight the FLIP transforms
-// on the board and the drag positioning.
+// Theme and accent changes ease rather than snapping.
 //
-// Scoped to a class the app adds after first paint, so the initial render is not
-// itself animated (which would look like the page fading in on every new tab).
-.db-themed,
-.db-themed * {
-  transition: background-color 0.34s ease, border-color 0.34s ease,
-    color 0.34s ease, fill 0.34s ease, box-shadow 0.34s ease;
+// Deliberately only on the root, and only inherited properties. `color` and
+// `fill` inherit, so animating them here animates every descendant that has not
+// set its own — one transition instead of one per element. The earlier `*`
+// version started five transitions on every element in the tree, several
+// thousand of them, all ticking on the main thread; that was the lag on an
+// accent or wallpaper change. Surfaces that need their own (tiles, buttons, the
+// header, sheets) carry it in their own styles.
+//
+// The class is added a frame after mount so the first paint is not animated,
+// which would read as the page fading in on every new tab.
+.db-themed {
+  transition: color 0.34s ease, fill 0.34s ease;
 }
 
 // Sliders are dragged, so say so.

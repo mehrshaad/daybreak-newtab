@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CONTROL_TRANSITION, pill, toggleStyles, useHover } from "@daybreak/sdk";
-import { usePresence } from "../core/usePresence";
+import { CONTROL_TRANSITION, pill, toggleStyles, useHover, usePresence } from "@daybreak/sdk";
 
 // Height-animated show/hide for content in normal flow.
 //
@@ -30,28 +29,6 @@ export function Collapse({ open, children }) {
       >
         {children}
       </div>
-    </div>
-  );
-}
-
-const APPEAR_MS = 180;
-
-// Fades and scales a group in, and — unlike a bare ternary — back out again.
-// Used for chrome that only exists in a particular mode, such as a tile's
-// resize and remove buttons.
-export function Appear({ open, style, children }) {
-  const [present, closing] = usePresence(open, APPEAR_MS);
-  if (!present) return null;
-  return (
-    <div
-      style={{
-        ...style,
-        animation: closing
-          ? `db-pop-out ${APPEAR_MS}ms ease both`
-          : `db-menu ${APPEAR_MS}ms cubic-bezier(.2,.8,.2,1) both`,
-      }}
-    >
-      {children}
     </div>
   );
 }
