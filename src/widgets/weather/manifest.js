@@ -23,4 +23,9 @@ export default {
   refresh: ["Live", "5 min", "1 hr"],
   permissions: { chrome: [], hosts: ["api.open-meteo.com", "geocoding-api.open-meteo.com"] },
   load: () => import("./Widget.jsx"),
+  // Optional: a richer settings control than the manifest's option toggles.
+  settingsPanel: {
+    title: "City",
+    load: () => import("./Settings.jsx"),
+  },
 };

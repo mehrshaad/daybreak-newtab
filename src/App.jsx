@@ -3,7 +3,11 @@ import Board from "./components/Board";
 import ContextMenu from "./components/ContextMenu";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
+import PresetsDock from "./components/PresetsDock";
+import SettingsDrawer from "./components/SettingsDrawer";
+import Store from "./components/Store";
 import Toast from "./components/Toast";
+import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { boardMenu, widgetMenu } from "./core/menus";
 import { PRESETS } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
@@ -11,6 +15,7 @@ import { cameraFor } from "./core/tileStyle";
 import { background, baseColor, tokens } from "./core/tokens";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { clearBucket } from "./sdk/bucket";
+import { hasPermissionsApi, requestAllPermissions } from "./sdk/permissions";
 import {
   getWidget,
   knownIds,
@@ -22,7 +27,8 @@ import {
 const HEADER_HEIGHT = 78;
 
 function App() {
-  const { settings, update, updateWidget } = useSettings();
+  const { settings, update, updateWidget, replaceSettings, resetSettings } =
+    useSettings();
   const { appearance, behavior, board, widgets, profile } = settings;
   const { theme, accent, wall } = appearance;
 
@@ -266,6 +272,45 @@ function App() {
     [toast]
   );
 
+  // Add or remove a widget type from the board, from the store.
+  // The permission request must run inside this click: Chrome rejects one
+  // that is not tied to a user gesture.
+  const toggleFromStore = useCallback(
+    async (manifest) => {
+      const present = board.ids.filter((x) => typeOf(x) === manifest.id);
+      if (present.length) {
+        update("board", {
+          ids: board.ids.filter((x) => typeOf(x) !== manifest.id),
+          layoutName: "Custom",
+        });
+        present.forEach(clearBucket);
+        toast(`${manifest.name} removed`);
+        return;
+      }
+
+      // Gate only where the API exists. In the packaged extension it always
+      // does, so behaviour there is unchanged; run as a plain page there is
+      // nothing to grant, and the widget renders its own explanation rather
+      // than being unaddable.
+      const needed = manifest.permissions?.chrome || [];
+      if (needed.length && hasPermissionsApi()) {
+        const granted = await requestAllPermissions(needed);
+        if (!granted) {
+          toast(`${manifest.name} needs the ${needed.join(", ")} permission`);
+          return;
+        }
+      }
+
+      update("board", {
+        ids: [...board.ids, manifest.id],
+        installed: [...new Set([...board.installed, manifest.id])],
+        layoutName: "Custom",
+      });
+      toast(`${manifest.name} added`);
+    },
+    [board.ids, board.installed, update, toast]
+  );
+
   const openSettingsAt = useCallback(
     (section) => {
       if (section === "theme") {
@@ -440,16 +485,54 @@ function App() {
 
       <Toast message={toastMsg} hidden={editing} />
 
+      {editing ? (
+        <PresetsDock
+          layoutName={board.layoutName}
+          onPreset={applyPreset}
+          onAddWidget={openStore}
+          onDone={toggleEdit}
+        />
+      ) : null}
+
+      {panel ? (
+        <WidgetSettingsDrawer
+          instanceId={panel}
+          board={board}
+          widgets={widgets}
+          onClose={() => setPanel(null)}
+          onSize={(size) => setSize(panel, size)}
+          onOptions={(patch) => setWidgetOptions(panel, patch)}
+          onConfig={(patch) => setWidgetConfig(panel, patch)}
+          onRate={(rate) => updateWidget(panel, { rate })}
+          onRemove={() => removeTile(panel)}
+        />
+      ) : null}
+
       {settingsOpen ? (
-        <div style={{ position: "fixed", bottom: 20, left: 20, color: "var(--faint)" }}>
-          settings drawer (M7) — press Esc
-        </div>
+        <SettingsDrawer
+          settings={settings}
+          update={update}
+          onClose={() => setSettingsOpen(false)}
+          onReset={() => {
+            resetSettings();
+            setSettingsOpen(false);
+          }}
+          onRestore={(incoming) => {
+            replaceSettings(incoming);
+            setSettingsOpen(false);
+          }}
+          toast={toast}
+        />
       ) : null}
+
       {storeOpen ? (
-        <div style={{ position: "fixed", bottom: 44, left: 20, color: "var(--faint)" }}>
-          store (M8) — press Esc
-        </div>
+        <Store
+          boardIds={board.ids}
+          onClose={() => setStoreOpen(false)}
+          onToggle={toggleFromStore}
+        />
       ) : null}
+
       {menu && menuModel ? (
         <ContextMenu
           menu={menu}
