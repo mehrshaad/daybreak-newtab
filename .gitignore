@@ -18,6 +18,9 @@ dist-ssr
 # Local env
 *.local
 
+# v2 implementation plan (local working doc, deliberately untracked)
+/V2-PLAN.md
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json

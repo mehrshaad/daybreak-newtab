@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0b0c0f; }
+  * { box-sizing: border-box; }
+  a { color: var(--accent, #6f9bff); text-decoration: none; }
+  a:hover { color: var(--fg, #fff); }
+  input, textarea, button { font: inherit; color: inherit; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--line, rgba(255,255,255,.12)); border-radius: 99px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  @keyframes db-in { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+  @keyframes db-menu { from { opacity: 0; transform: scale(.96) } to { opacity: 1; transform: none } }
+</style>
+</helmet>
+
+<div style="{{ rootStyle }}">
+
+  <header style="{{ headerStyle }}">
+    <div style="display:flex; align-items:baseline; gap:10px; min-width:190px;">
+      <span style="{{ brandStyle }}">Daybreak</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85);">{{ clockShort }}</span>
+    </div>
+
+    <div style="flex:1; display:flex; justify-content:center;">
+      <div style="{{ searchStyle }}">
+        <div style="width:13px; height:13px; border-radius:99px; border:1.5px solid var(--faint,#767a85); flex:none;"></div>
+        <input placeholder="Search the web, your tabs, or widgets…" style="flex:1; background:transparent; border:0; outline:none; font-size:14px;" />
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--faint,#767a85); border:1px solid var(--line,rgba(255,255,255,.09)); border-radius:5px; padding:2px 6px;">⌘K</span>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; min-width:190px; justify-content:flex-end;">
+      <button onClick="{{ toggleEdit }}" style="{{ editBtnStyle }}" style-hover="opacity:.85">{{ editLabel }}</button>
+      <button onClick="{{ openStore }}" style="padding:9px 14px; border-radius:999px; font-size:13px; cursor:pointer; background:var(--panel,rgba(255,255,255,.05)); border:1px solid var(--line,rgba(255,255,255,.09));" style-hover="background:var(--panel2,rgba(255,255,255,.09))">Store</button>
+      <button onClick="{{ toggleTheme }}" title="Theme" style="width:36px; height:36px; border-radius:999px; cursor:pointer; background:var(--panel,rgba(255,255,255,.05)); border:1px solid var(--line,rgba(255,255,255,.09)); display:grid; place-items:center;" style-hover="background:var(--panel2,rgba(255,255,255,.09))">{{ themeGlyph }}</button>
+      <button onClick="{{ openSettings }}" title="Settings" style="width:36px; height:36px; border-radius:999px; cursor:pointer; background:var(--panel,rgba(255,255,255,.05)); border:1px solid var(--line,rgba(255,255,255,.09)); display:grid; place-items:center;" style-hover="background:var(--panel2,rgba(255,255,255,.09))">
+        <div style="width:14px; height:14px; border-radius:99px; border:1.5px solid currentColor;"></div>
+      </button>
+    </div>
+  </header>
+
+  <sc-if value="{{ showHero }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:16px 28px 22px; display:flex; align-items:flex-end; justify-content:space-between; gap:24px;">
+      <div>
+        <div style="font-size:34px; font-weight:500; letter-spacing:-.02em;">{{ greeting }}</div>
+        <div style="font-size:14px; color:var(--dim,#9aa0ab); margin-top:4px;">{{ heroSub }}</div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85); text-align:right; line-height:1.7;">
+        <div>{{ layoutName }} layout · {{ tileCount }} widgets</div>
+        <div>right-click a tile for its menu · esc to close</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="{{ stageStyle }}" onContextMenu="{{ onBoardMenu }}">
+    <div style="{{ cameraStyle }}">
+      <div style="{{ gridStyle }}">
+        <sc-for list="{{ tiles }}" as="item" hint-placeholder-count="10">
+          <div style="{{ item.wrapStyle }}" ref="{{ item.ref }}" draggable="{{ item.draggable }}" onDragStart="{{ item.onDragStart }}" onDragOver="{{ item.onDragOver }}" onDrop="{{ item.onDrop }}" onClick="{{ item.onOpen }}" onContextMenu="{{ item.onMenu }}">
+
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="{{ item.markStyle }}"></div>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint,#767a85);">{{ item.name }}</span>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <sc-if value="{{ item.focused }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ item.onSettings }}" title="Widget settings" style="display:flex; align-items:center; gap:7px; font-size:12px; padding:5px 11px; border-radius:999px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09));" style-hover="background:var(--accentSoft,rgba(111,155,255,.16)); border-color:var(--accentLine,rgba(111,155,255,.4))">
+                    <div style="width:11px; height:11px; border-radius:99px; border:1.5px solid currentColor;"></div>
+                    <span>Settings</span>
+                  </button>
+                  <button onClick="{{ closeZoom }}" title="Close" style="width:27px; height:27px; border-radius:999px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09)); line-height:1;">×</button>
+                </sc-if>
+                <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ item.onResize }}" title="Resize" style="font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 7px; border-radius:6px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09));">{{ item.sizeLabel }}</button>
+                  <button onClick="{{ item.onRemove }}" title="Remove" style="font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 8px; border-radius:6px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09));">×</button>
+                </sc-if>
+              </div>
+            </div>
+
+            <sc-if value="{{ item.isClock }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; justify-content:center; flex:1;">
+                <div style="display:flex; align-items:baseline; gap:8px;">
+                  <span style="font-size:56px; font-weight:500; letter-spacing:-.035em; line-height:1;">{{ item.d.time }}</span>
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--faint,#767a85);">{{ item.d.ampm }}</span>
+                </div>
+                <div style="font-size:13px; color:var(--dim,#9aa0ab); margin-top:10px;">{{ item.d.date }}</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isWeather }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; justify-content:space-between; flex:1;">
+                <div>
+                  <div style="font-size:40px; font-weight:500; letter-spacing:-.03em; line-height:1;">{{ item.d.temp }}</div>
+                  <div style="font-size:13px; color:var(--dim,#9aa0ab); margin-top:6px;">{{ item.d.cond }} · {{ item.d.city }}</div>
+                </div>
+                <div style="display:flex; gap:14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85);">
+                  <sc-for list="{{ item.d.hours }}" as="h" hint-placeholder-count="4">
+                    <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+                      <span>{{ h.t }}</span>
+                      <span style="color:var(--fg,#eef0f3);">{{ h.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isCalendar }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:12px; flex:1;">
+                <div onClick="{{ item.d.onJoin }}" style="display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; cursor:pointer; background:var(--accentSoft,rgba(111,155,255,.12)); border:1px solid var(--accentLine,rgba(111,155,255,.25));" style-hover="background:var(--accentLine,rgba(111,155,255,.28))">
+                  <div style="width:3px; align-self:stretch; border-radius:99px; background:var(--accent,#6f9bff);"></div>
+                  <div style="flex:1;">
+                    <div style="font-size:14px; font-weight:500;">{{ item.d.next }}</div>
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim,#9aa0ab); margin-top:3px;">{{ item.d.time }}</div>
+                  </div>
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent,#6f9bff);">{{ item.d.in }}</span>
+                </div>
+                <sc-for list="{{ item.d.rest }}" as="ev" hint-placeholder-count="2">
+                  <div style="display:flex; gap:12px; align-items:center; font-size:13px;">
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85); width:64px;">{{ ev.t }}</span>
+                    <span style="color:var(--dim,#9aa0ab);">{{ ev.n }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isTodo }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                <sc-for list="{{ item.d.items }}" as="t" hint-placeholder-count="5">
+                  <div onClick="{{ t.onToggle }}" style="display:flex; align-items:center; gap:10px; padding:5px 8px; margin:0 -8px; border-radius:8px; cursor:pointer;" style-hover="background:var(--panel2,rgba(255,255,255,.09))">
+                    <div style="{{ t.boxStyle }}"></div>
+                    <span style="{{ t.textStyle }}">{{ t.t }}</span>
+                  </div>
+                </sc-for>
+                <div style="margin-top:auto; padding-top:8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85);">{{ item.d.done }} of {{ item.d.total }} done today</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isLinks }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex:1; align-content:center;">
+                <sc-for list="{{ item.d.items }}" as="l" hint-placeholder-count="8">
+                  <div onClick="{{ l.onOpen }}" title="{{ l.u }}" style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 4px; border-radius:12px; cursor:pointer;" style-hover="background:var(--panel2,rgba(255,255,255,.09))">
+                    <div style="{{ l.markStyle }}">{{ l.k }}</div>
+                    <span style="font-size:11px; color:var(--dim,#9aa0ab); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;">{{ l.n }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isMusic }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; justify-content:space-between; flex:1;">
+                <div style="display:flex; gap:12px; align-items:center;">
+                  <div style="width:48px; height:48px; border-radius:10px; flex:none; background:linear-gradient(140deg, var(--accent,#6f9bff), transparent 70%), var(--panel2,rgba(255,255,255,.09));"></div>
+                  <div style="min-width:0; flex:1;">
+                    <div style="font-size:14px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.d.track }}</div>
+                    <div style="font-size:12px; color:var(--dim,#9aa0ab);">{{ item.d.artist }}</div>
+                  </div>
+                  <button onClick="{{ item.d.onPlay }}" title="Play / pause" style="width:32px; height:32px; border-radius:999px; flex:none; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09)); font-size:11px;" style-hover="background:var(--accent,#6f9bff); color:var(--onAccent,#0a0b0e)">{{ item.d.playGlyph }}</button>
+                </div>
+                <div>
+                  <div style="height:3px; border-radius:99px; background:var(--line,rgba(255,255,255,.12)); overflow:hidden;">
+                    <div style="{{ item.d.barStyle }}"></div>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--faint,#767a85); margin-top:6px;">
+                    <span>{{ item.d.at }}</span>
+                    <span>{{ item.d.len }}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isNotes }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1; font-size:13px; line-height:1.7; color:var(--dim,#9aa0ab); text-wrap:pretty; overflow:hidden;">{{ item.d.text }}</div>
+            </sc-if>
+
+            <sc-if value="{{ item.isStocks }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:9px; flex:1; justify-content:center;">
+                <sc-for list="{{ item.d.rows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:12px;">
+                    <span style="letter-spacing:.06em;">{{ r.s }}</span>
+                    <div style="display:flex; gap:12px;">
+                      <span style="color:var(--dim,#9aa0ab);">{{ r.p }}</span>
+                      <span style="{{ r.chgStyle }}">{{ r.c }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isGithub }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:14px; flex:1;">
+                <div style="display:flex; gap:20px;">
+                  <sc-for list="{{ item.d.stats }}" as="s" hint-placeholder-count="3">
+                    <div>
+                      <div style="font-size:24px; font-weight:500; letter-spacing:-.02em;">{{ s.v }}</div>
+                      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--faint,#767a85); text-transform:uppercase; letter-spacing:.1em; margin-top:2px;">{{ s.k }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--dim,#9aa0ab);">
+                  <sc-for list="{{ item.d.commits }}" as="c" hint-placeholder-count="2">
+                    <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ c }}</div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isHabit }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:12px; flex:1; justify-content:center;">
+                <sc-for list="{{ item.d.rows }}" as="r" hint-placeholder-count="3">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                    <span style="font-size:12px; color:var(--dim,#9aa0ab); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.n }}</span>
+                    <div style="display:flex; gap:5px;">
+                      <sc-for list="{{ r.days }}" as="day" hint-placeholder-count="7">
+                        <div onClick="{{ day.onTap }}" style="{{ day.style }}"></div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isTimer }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; justify-content:center; gap:12px; flex:1;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:36px; font-weight:500; letter-spacing:-.02em;">{{ item.d.left }}</div>
+                  <button onClick="{{ item.d.onPlay }}" style="padding:6px 14px; border-radius:999px; font-size:12px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09));" style-hover="background:var(--accent,#6f9bff); color:var(--onAccent,#0a0b0e)">{{ item.d.playLabel }}</button>
+                </div>
+                <div style="height:3px; border-radius:99px; background:var(--line,rgba(255,255,255,.12)); overflow:hidden;">
+                  <div style="{{ item.d.barStyle }}"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--faint,#767a85);">
+                  <span>{{ item.d.phase }}</span>
+                  <span>round {{ item.d.round }}</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isNews }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                <sc-for list="{{ item.d.items }}" as="n" hint-placeholder-count="3">
+                  <div onClick="{{ n.onOpen }}" style="padding:6px 8px; margin:0 -8px; border-radius:8px; cursor:pointer;" style-hover="background:var(--panel2,rgba(255,255,255,.09))">
+                    <div style="font-size:13px; line-height:1.45; text-wrap:pretty;">{{ n.h }}</div>
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--faint,#767a85); margin-top:3px;">{{ n.s }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isHistory }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+                <sc-for list="{{ item.d.items }}" as="n" hint-placeholder-count="4">
+                  <div onClick="{{ n.onOpen }}" style="display:flex; gap:10px; align-items:center; font-size:12px; padding:6px 8px; margin:0 -8px; border-radius:8px; cursor:pointer;" style-hover="background:var(--panel2,rgba(255,255,255,.09))">
+                    <div style="width:16px; height:16px; border-radius:4px; background:var(--panel2,rgba(255,255,255,.09)); flex:none;"></div>
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--dim,#9aa0ab);">{{ n.t }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ item.isAi }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:10px; flex:1; justify-content:flex-end;">
+                <div style="font-size:13px; line-height:1.6; color:var(--dim,#9aa0ab); text-wrap:pretty;">{{ item.d.text }}</div>
+                <div onClick="{{ item.d.onAsk }}" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; cursor:text; background:var(--panel2,rgba(255,255,255,.09));" style-hover="background:var(--accentSoft,rgba(111,155,255,.16))">
+                  <span style="font-size:12px; color:var(--faint,#767a85);">Ask anything…</span>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ openStore }}" style="grid-column:span 3; grid-row:span 2; border-radius:18px; border:1.5px dashed var(--line,rgba(255,255,255,.14)); display:grid; place-items:center; cursor:pointer; color:var(--faint,#767a85); font-size:13px;" style-hover="border-color:var(--accent,#6f9bff); color:var(--accent,#6f9bff)">+ Add widget</div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <sc-if value="{{ zoomed }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeZoom }}" style="position:fixed; inset:0; z-index:30; background:var(--scrim,rgba(6,7,10,.55));"></div>
+  </sc-if>
+
+  <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:45; display:flex; align-items:center; gap:8px; padding:8px; border-radius:999px; background:var(--sheet,rgba(20,21,26,.9)); border:1px solid var(--line,rgba(255,255,255,.09)); backdrop-filter:blur(24px); box-shadow:0 20px 60px rgba(0,0,0,.45);">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); padding:0 10px;">Presets</span>
+      <sc-for list="{{ presets }}" as="p" hint-placeholder-count="4">
+        <button onClick="{{ p.onPick }}" style="{{ p.style }}" style-hover="opacity:.85">{{ p.name }}</button>
+      </sc-for>
+      <div style="width:1px; height:22px; background:var(--line,rgba(255,255,255,.12)); margin:0 4px;"></div>
+      <button onClick="{{ openStore }}" style="padding:8px 14px; border-radius:999px; font-size:13px; cursor:pointer; background:transparent; border:1px solid var(--line,rgba(255,255,255,.12));" style-hover="background:var(--panel2,rgba(255,255,255,.09))">Add widget</button>
+      <button onClick="{{ toggleEdit }}" style="padding:8px 16px; border-radius:999px; font-size:13px; font-weight:500; cursor:pointer; border:0; background:var(--accent,#6f9bff); color:var(--onAccent,#08090c);" style-hover="opacity:.9">Done</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMenu }}" onContextMenu="{{ closeMenu }}" style="position:fixed; inset:0; z-index:80;"></div>
+    <div style="{{ menuStyle }}">
+      <div style="padding:9px 14px 8px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint,#767a85);">{{ menuTitle }}</div>
+      <sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="6">
+        <sc-if value="{{ m.isSep }}" hint-placeholder-val="{{ false }}">
+          <div style="height:1px; background:var(--line,rgba(255,255,255,.09)); margin:6px 0;"></div>
+        </sc-if>
+        <sc-if value="{{ m.isSizes }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; gap:5px; padding:4px 10px 8px;">
+            <sc-for list="{{ m.sizes }}" as="s" hint-placeholder-count="4">
+              <button onClick="{{ s.onPick }}" style="{{ s.style }}">{{ s.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ m.isItem }}" hint-placeholder-val="{{ true }}">
+          <div onClick="{{ m.onPick }}" style="{{ m.style }}" style-hover="background:var(--panel2,rgba(255,255,255,.09))">
+            <span>{{ m.label }}</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--faint,#767a85);">{{ m.hint }}</span>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; top:0; right:0; bottom:0; width:340px; z-index:50; background:var(--sheet,rgba(20,21,26,.94)); border-left:1px solid var(--line,rgba(255,255,255,.09)); backdrop-filter:blur(28px); padding:24px; overflow:auto; animation:db-in .28s ease both;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint,#767a85);">Widget settings</span>
+        <button onClick="{{ closePanel }}" style="width:26px; height:26px; border-radius:8px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09)); line-height:1;">×</button>
+      </div>
+      <div style="font-size:22px; font-weight:500; letter-spacing:-.02em; margin-bottom:2px;">{{ focus.name }}</div>
+      <div style="font-size:12px; color:var(--dim,#9aa0ab); margin-bottom:22px;">{{ focus.desc }}</div>
+
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:9px;">Size</div>
+          <div style="display:flex; gap:6px;">
+            <sc-for list="{{ focus.sizes }}" as="s" hint-placeholder-count="4">
+              <button onClick="{{ s.onPick }}" style="{{ s.style }}">{{ s.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:9px;">Options</div>
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <sc-for list="{{ focus.opts }}" as="o" hint-placeholder-count="4">
+              <div onClick="{{ o.onToggle }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; cursor:pointer;" style-hover="background:var(--panel,rgba(255,255,255,.05))">
+                <span style="font-size:13px;">{{ o.label }}</span>
+                <div style="{{ o.trackStyle }}"><div style="{{ o.knobStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:9px;">Refresh</div>
+          <div style="display:flex; gap:6px;">
+            <sc-for list="{{ focus.rates }}" as="r" hint-placeholder-count="3">
+              <button onClick="{{ r.onPick }}" style="{{ r.style }}">{{ r.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="padding-top:14px; border-top:1px solid var(--line,rgba(255,255,255,.09)); display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85);">
+            <span>publisher</span><span style="color:var(--dim,#9aa0ab);">{{ focus.author }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85);">
+            <span>version</span><span style="color:var(--dim,#9aa0ab);">{{ focus.version }}</span>
+          </div>
+          <button onClick="{{ removeFocused }}" style="margin-top:8px; padding:9px; border-radius:10px; font-size:13px; cursor:pointer; background:transparent; border:1px solid var(--line,rgba(255,255,255,.12)); color:var(--danger,#ff8189);" style-hover="background:rgba(255,129,137,.1)">Remove from home</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeOverlays }}" style="position:fixed; inset:0; z-index:60; background:rgba(6,7,10,.5);"></div>
+    <div style="position:fixed; top:0; right:0; bottom:0; width:400px; z-index:61; background:var(--sheet,rgba(20,21,26,.96)); border-left:1px solid var(--line,rgba(255,255,255,.09)); backdrop-filter:blur(28px); padding:26px; overflow:auto; animation:db-in .28s ease both;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div style="font-size:22px; font-weight:500; letter-spacing:-.02em;">Settings</div>
+        <button onClick="{{ closeOverlays }}" style="width:28px; height:28px; border-radius:8px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09)); line-height:1;">×</button>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:10px;">Appearance</div>
+      <div style="display:flex; gap:6px; margin-bottom:20px;">
+        <sc-for list="{{ themeOpts }}" as="t" hint-placeholder-count="2">
+          <button onClick="{{ t.onPick }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:10px;">Accent</div>
+      <div style="display:flex; gap:10px; margin-bottom:22px;">
+        <sc-for list="{{ accentOpts }}" as="a" hint-placeholder-count="6">
+          <div onClick="{{ a.onPick }}" style="{{ a.style }}"></div>
+        </sc-for>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:10px;">Background</div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:22px;">
+        <sc-for list="{{ wallOpts }}" as="w" hint-placeholder-count="4">
+          <div onClick="{{ w.onPick }}" style="{{ w.style }}">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--fg,#eef0f3); text-shadow:0 1px 3px rgba(0,0,0,.6);">{{ w.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:10px;">Click behaviour</div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:22px;">
+        <sc-for list="{{ zoomOpts }}" as="z" hint-placeholder-count="4">
+          <div onClick="{{ z.onPick }}" style="{{ z.style }}">
+            <div style="font-size:13px; font-weight:500;">{{ z.label }}</div>
+            <div style="font-size:11px; color:var(--dim,#9aa0ab); margin-top:2px;">{{ z.desc }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:10px;">Grid</div>
+      <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:22px;">
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--dim,#9aa0ab); margin-bottom:6px;"><span>Gap</span><span style="font-family:'JetBrains Mono',monospace;">{{ gap }}px</span></div>
+          <input type="range" min="6" max="28" step="2" value="{{ gap }}" onChange="{{ setGap }}" style="width:100%; accent-color:var(--accent,#6f9bff);" />
+        </div>
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--dim,#9aa0ab); margin-bottom:6px;"><span>Corner radius</span><span style="font-family:'JetBrains Mono',monospace;">{{ radius }}px</span></div>
+          <input type="range" min="4" max="32" step="2" value="{{ radius }}" onChange="{{ setRadius }}" style="width:100%; accent-color:var(--accent,#6f9bff);" />
+        </div>
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--dim,#9aa0ab); margin-bottom:6px;"><span>Tile opacity</span><span style="font-family:'JetBrains Mono',monospace;">{{ alpha }}%</span></div>
+          <input type="range" min="0" max="100" step="5" value="{{ alpha }}" onChange="{{ setAlpha }}" style="width:100%; accent-color:var(--accent,#6f9bff);" />
+        </div>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:10px;">General</div>
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        <sc-for list="{{ generalToggles }}" as="g" hint-placeholder-count="4">
+          <div onClick="{{ g.onToggle }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; cursor:pointer;" style-hover="background:var(--panel,rgba(255,255,255,.05))">
+            <span style="font-size:13px;">{{ g.label }}</span>
+            <div style="{{ g.trackStyle }}"><div style="{{ g.knobStyle }}"></div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ storeOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:70; background:var(--storeBg,rgba(9,10,13,.96)); display:flex; flex-direction:column; animation:db-in .3s ease both;">
+
+      <div style="display:flex; align-items:center; gap:24px; padding:20px 32px; border-bottom:1px solid var(--line,rgba(255,255,255,.09));">
+        <div style="font-size:20px; font-weight:500; letter-spacing:-.02em;">Widget Store</div>
+        <div style="display:flex; gap:4px; padding:3px; border-radius:999px; background:var(--panel,rgba(255,255,255,.05));">
+          <sc-for list="{{ storeTabs }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.onPick }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <div style="flex:1; display:flex; justify-content:center;">
+          <input placeholder="Search widgets…" value="{{ query }}" onChange="{{ setQuery }}" style="width:100%; max-width:420px; padding:9px 16px; border-radius:999px; background:var(--panel,rgba(255,255,255,.05)); border:1px solid var(--line,rgba(255,255,255,.09)); outline:none; font-size:13px;" />
+        </div>
+        <button onClick="{{ closeOverlays }}" style="width:32px; height:32px; border-radius:999px; cursor:pointer; background:var(--panel2,rgba(255,255,255,.09)); border:1px solid var(--line,rgba(255,255,255,.09)); line-height:1;">×</button>
+      </div>
+
+      <div style="flex:1; display:flex; min-height:0;">
+        <div style="width:210px; padding:22px 16px; border-right:1px solid var(--line,rgba(255,255,255,.09)); overflow:auto; display:flex; flex-direction:column; gap:2px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); padding:0 12px 10px;">Categories</div>
+          <sc-for list="{{ categories }}" as="c" hint-placeholder-count="7">
+            <div onClick="{{ c.onPick }}" style="{{ c.style }}">
+              <span>{{ c.name }}</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; opacity:.55;">{{ c.count }}</span>
+            </div>
+          </sc-for>
+          <div style="margin-top:auto; padding:14px 12px 0; border-top:1px solid var(--line,rgba(255,255,255,.09));">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:8px;">Sort</div>
+            <sc-for list="{{ sorts }}" as="s" hint-placeholder-count="3">
+              <div onClick="{{ s.onPick }}" style="{{ s.style }}">{{ s.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="flex:1; overflow:auto; padding:24px 32px 40px;">
+
+          <sc-if value="{{ showDetail }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <button onClick="{{ backToList }}" style="font-size:12px; padding:6px 12px; border-radius:999px; cursor:pointer; background:var(--panel,rgba(255,255,255,.05)); border:1px solid var(--line,rgba(255,255,255,.09)); margin-bottom:20px;">← All widgets</button>
+              <div style="display:grid; grid-template-columns:1fr 320px; gap:32px; align-items:start;">
+                <div>
+                  <div style="{{ detail.heroStyle }}">
+                    <div style="{{ detail.markStyle }}"></div>
+                    <div>
+                      <div style="font-size:26px; font-weight:500; letter-spacing:-.02em;">{{ detail.name }}</div>
+                      <div style="font-size:13px; color:var(--dim,#9aa0ab); margin-top:4px;">{{ detail.tagline }}</div>
+                    </div>
+                  </div>
+                  <div style="font-size:14px; line-height:1.75; color:var(--dim,#9aa0ab); text-wrap:pretty; margin:24px 0;">{{ detail.desc }}</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:12px;">Live preview</div>
+                  <div style="{{ detail.previewStyle }}">
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85);">{{ detail.previewNote }}</div>
+                  </div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin:26px 0 12px;">What's new · {{ detail.version }}</div>
+                  <div style="display:flex; flex-direction:column; gap:8px;">
+                    <sc-for list="{{ detail.changelog }}" as="c" hint-placeholder-count="3">
+                      <div style="display:flex; gap:10px; font-size:13px; color:var(--dim,#9aa0ab);">
+                        <span style="color:var(--accent,#6f9bff);">—</span><span>{{ c }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="padding:20px; border-radius:16px; background:var(--panel,rgba(255,255,255,.05)); border:1px solid var(--line,rgba(255,255,255,.09)); position:sticky; top:0;">
+                  <button onClick="{{ detail.onInstall }}" style="{{ detail.installStyle }}">{{ detail.installLabel }}</button>
+                  <div style="display:flex; flex-direction:column; gap:11px; margin-top:18px;">
+                    <sc-for list="{{ detail.meta }}" as="m" hint-placeholder-count="5">
+                      <div style="display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px;">
+                        <span style="color:var(--faint,#767a85);">{{ m.k }}</span>
+                        <span style="color:var(--dim,#9aa0ab);">{{ m.v }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line,rgba(255,255,255,.09));">
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint,#767a85); margin-bottom:10px;">Permissions</div>
+                    <div style="display:flex; flex-direction:column; gap:7px;">
+                      <sc-for list="{{ detail.perms }}" as="p" hint-placeholder-count="3">
+                        <div style="display:flex; gap:9px; align-items:center; font-size:12px; color:var(--dim,#9aa0ab);">
+                          <div style="width:5px; height:5px; border-radius:99px; background:var(--accent,#6f9bff);"></div>
+                          <span>{{ p }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showBrowse }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px;">
+                <div style="font-size:16px; font-weight:500;">{{ browseTitle }}</div>
+                <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint,#767a85);">{{ resultCount }} results</div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px;">
+                <sc-for list="{{ results }}" as="w" hint-placeholder-count="9">
+                  <div onClick="{{ w.onOpen }}" style="padding:18px; border-radius:16px; background:var(--panel,rgba(255,255,255,.05)); border:1px solid var(--line,rgba(255,255,255,.09)); cursor:pointer; display:flex; flex-direction:column; gap:12px;" style-hover="background:var(--panel2,rgba(255,255,255,.09)); border-color:var(--accentLine,rgba(111,155,255,.3))">
+                    <div style="display:flex; align-items:center; gap:11px;">
+                      <div style="{{ w.markStyle }}"></div>
+                      <div style="min-width:0;">
+                        <div style="font-size:14px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.name }}</div>
+                        <div style="font-size:11px; color:var(--faint,#767a85);">{{ w.author }}</div>
+                      </div>
+                    </div>
+                    <div style="font-size:12px; line-height:1.55; color:var(--dim,#9aa0ab); text-wrap:pretty; min-height:36px;">{{ w.tagline }}</div>
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--faint,#767a85);">★ {{ w.rating }} · {{ w.installs }}</span>
+                      <button onClick="{{ w.onInstall }}" style="{{ w.chipStyle }}">{{ w.chipLabel }}</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showPublish }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:720px;">
+              <div style="font-size:20px; font-weight:500; letter-spacing:-.02em; margin-bottom:6px;">Publish a widget</div>
+              <div style="font-size:13px; color:var(--dim,#9aa0ab); margin-bottom:26px;">Build with the Daybreak SDK, submit a manifest, ship to 1.2M home screens.</div>
+              <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:26px;">
+                <sc-for list="{{ publishSteps }}" as="s" hint-placeholder-count="4">
+                  <div style="{{ s.style }}">
+                    <div style="{{ s.numStyle }}">{{ s.n }}</div>
+                    <div style="flex:1;">
+                      <div style="font-size:14px; font-weight:500;">{{ s.title }}</div>
+                      <div style="font-size:12px; color:var(--dim,#9aa0ab); margin-top:3px;">{{ s.desc }}</div>
+                    </div>
+                    <span style="{{ s.badgeStyle }}">{{ s.badge }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:20px; border-radius:16px; background:var(--codeBg,rgba(0,0,0,.28)); border:1px solid var(--line,rgba(255,255,255,.09)); font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.9; color:var(--dim,#9aa0ab); white-space:pre; overflow:auto;">{{ manifest }}</div>
+              <div style="display:flex; gap:10px; margin-top:22px;">
+                <button style="padding:11px 20px; border-radius:999px; font-size:13px; font-weight:500; cursor:pointer; border:0; background:var(--accent,#6f9bff); color:var(--onAccent,#08090c);" style-hover="opacity:.9">Submit for review</button>
+                <button style="padding:11px 20px; border-radius:999px; font-size:13px; cursor:pointer; background:transparent; border:1px solid var(--line,rgba(255,255,255,.12));" style-hover="background:var(--panel2,rgba(255,255,255,.09))">Read the SDK docs</button>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:90; padding:11px 18px; border-radius:999px; font-size:13px; background:var(--sheet,rgba(20,21,26,.94)); border:1px solid var(--line,rgba(255,255,255,.09)); box-shadow:0 16px 44px rgba(0,0,0,.4); animation:db-in .2s ease both;">{{ toast }}</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#6f9bff&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#6f9bff&quot;,&quot;#7de2b8&quot;,&quot;#ffb26f&quot;,&quot;#c79bff&quot;]},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;zoomMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Camera&quot;,&quot;options&quot;:[&quot;Camera&quot;,&quot;Expand&quot;,&quot;Spotlight&quot;,&quot;None&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;wallpaper&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Mesh&quot;,&quot;options&quot;:[&quot;Flat&quot;,&quot;Mesh&quot;,&quot;Dusk&quot;,&quot;Grain&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+const CAT = [
+  { type:'clock', name:'Clock', cat:'Essentials', author:'Daybreak', tagline:'Time, date, and up to four world clocks.', w:4, h:2, rating:'4.9', installs:'1.2M', opts:['24-hour time','Show seconds','Second timezone'], acts:[['Add a timezone','⌥T'],['Switch to 24-hour','']] },
+  { type:'weather', name:'Weather', cat:'Essentials', author:'Daybreak', tagline:'Current conditions and an hourly strip.', w:3, h:2, rating:'4.8', installs:'980k', opts:['Use my location','Fahrenheit','Show precipitation'], acts:[['Change location',''],['Switch to Celsius','']] },
+  { type:'calendar', name:'Calendar', cat:'Productivity', author:'Daybreak', tagline:'Your next meeting and the rest of the day.', w:5, h:2, rating:'4.7', installs:'760k', opts:['Join links','Hide declined','Working hours only'], acts:[['Join next meeting','⌥J'],['New event','⌥N']] },
+  { type:'todo', name:'Tasks', cat:'Productivity', author:'Northwind', tagline:'A short list that resets each morning.', w:4, h:3, rating:'4.6', installs:'640k', opts:['Roll over unfinished','Group by project','Confetti on complete'], acts:[['Add task','⌥N'],['Clear completed','']] },
+  { type:'links', name:'Quick Links', cat:'Essentials', author:'Daybreak', tagline:'The eight places you actually go.', w:5, h:2, rating:'4.9', installs:'1.1M', opts:['Show favicons','Open in new tab','Sync across devices'], acts:[['Open all in tabs',''],['Add current tab','⌥D'],['Edit links','']] },
+  { type:'music', name:'Now Playing', cat:'Media', author:'Waveform Co.', tagline:'Controls for whatever is playing anywhere.', w:3, h:2, rating:'4.5', installs:'410k', opts:['Show album art','Scrobble','Compact mode'], acts:[['Play / pause','space'],['Next track','⌥→']] },
+  { type:'notes', name:'Scratchpad', cat:'Productivity', author:'Daybreak', tagline:'One text field. No folders. No sync anxiety.', w:4, h:2, rating:'4.8', installs:'520k', opts:['Markdown','Autosave','Monospace'], acts:[['Copy text','⌘C'],['New note','']] },
+  { type:'stocks', name:'Markets', cat:'Finance', author:'Ticker Labs', tagline:'Watchlist for equities and crypto.', w:4, h:2, rating:'4.4', installs:'300k', opts:['After hours','Show sparklines','Percent first'], acts:[['Add symbol',''],['Edit watchlist','']] },
+  { type:'github', name:'Dev Activity', cat:'Developer', author:'octo.dev', tagline:'Open PRs, issues, and your commit streak.', w:4, h:2, rating:'4.7', installs:'220k', opts:['Include drafts','Only my repos','Notify on review'], acts:[['Open my PRs',''],['Switch account','']] },
+  { type:'habit', name:'Habits', cat:'Lifestyle', author:'Slowgrid', tagline:'A seven-day dot grid per habit.', w:3, h:2, rating:'4.6', installs:'180k', opts:['Week starts Monday','Reminders','Show streaks'], acts:[['Mark today done',''],['Add habit','']] },
+  { type:'timer', name:'Focus Timer', cat:'Productivity', author:'Slowgrid', tagline:'Pomodoro rounds with a quiet chime.', w:3, h:2, rating:'4.8', installs:'350k', opts:['Auto-start breaks','Block distracting sites','Chime'], acts:[['Start / pause','space'],['Reset round','']] },
+  { type:'news', name:'Reading Feed', cat:'News', author:'Paperboy', tagline:'RSS without the app you never open.', w:5, h:2, rating:'4.3', installs:'150k', opts:['Unread only','Show source','Compact rows'], acts:[['Mark all read',''],['Manage feeds','']] },
+  { type:'history', name:'Recent Tabs', cat:'Essentials', author:'Daybreak', tagline:'Reopen what you closed by accident.', w:4, h:2, rating:'4.5', installs:'470k', opts:['Include other devices','Group by window','Clear daily'], acts:[['Reopen all','⇧⌘T'],['Clear list','']] },
+  { type:'ai', name:'Assistant', cat:'AI', author:'Daybreak', tagline:'Ask, summarize, and draft without a tab.', w:4, h:3, rating:'4.9', installs:'890k', opts:['Suggestions on load','Voice input','Remember context'], acts:[['New chat','⌥A'],['Clear history','']] }
+];
+
+const EXTRA = [
+  { type:'x1', name:'Air Quality', cat:'Lifestyle', author:'Breathe', tagline:'AQI, pollen, and UV for your block.', w:3, h:2, rating:'4.4', installs:'92k', opts:['Alerts','Metric','Hourly'], acts:[] },
+  { type:'x2', name:'Standup Notes', cat:'Productivity', author:'Northwind', tagline:'Yesterday, today, blockers. Copy as text.', w:4, h:2, rating:'4.2', installs:'61k', opts:['Slack export','Prefill from tasks','Remind at 9'], acts:[] },
+  { type:'x3', name:'World Clocks', cat:'Essentials', author:'Meridian', tagline:'Up to six cities with working-hour shading.', w:4, h:2, rating:'4.6', installs:'140k', opts:['Shade off-hours','24-hour','Show flags'], acts:[] },
+  { type:'x4', name:'Uptime Board', cat:'Developer', author:'octo.dev', tagline:'Status of the services you own.', w:4, h:2, rating:'4.5', installs:'44k', opts:['Only failing','Sound on incident','Group by team'], acts:[] },
+  { type:'x5', name:'Water Intake', cat:'Lifestyle', author:'Slowgrid', tagline:'Tap a glass. That is the whole widget.', w:3, h:2, rating:'4.7', installs:'210k', opts:['Goal reminders','Ounces','Reset at 4am'], acts:[] },
+  { type:'x6', name:'Crypto Heatmap', cat:'Finance', author:'Ticker Labs', tagline:'Top 50 by 24h move, colored by delta.', w:5, h:2, rating:'4.1', installs:'77k', opts:['Stablecoins','Log scale','Dark palette'], acts:[] }
+];
+
+const ALL = CAT.concat(EXTRA);
+
+const PRESETS = {
+  Balanced: ['clock','weather','calendar','todo','links','music','notes','stocks','github','habit','timer','news'],
+  Focus:    ['clock','calendar','todo','timer','notes','habit'],
+  Dense:    ['clock','weather','calendar','todo','links','music','notes','stocks','github','habit','timer','news','history','ai'],
+  Minimal:  ['clock','links','weather']
+};
+
+const SIZES = [[3,2],[4,2],[5,2],[4,3]];
+
+const LINKS = [{k:'GH',n:'GitHub',u:'github.com'},{k:'FG',n:'Figma',u:'figma.com'},{k:'LN',n:'Linear',u:'linear.app'},
+  {k:'NT',n:'Notion',u:'notion.so'},{k:'DR',n:'Drive',u:'drive.google.com'},{k:'ML',n:'Mail',u:'mail.google.com'},
+  {k:'SL',n:'Slack',u:'slack.com'},{k:'YT',n:'YouTube',u:'youtube.com'}];
+
+const TODOS = ['Ship widget detail page','Review SDK manifest spec','Draft store submission policy','Fix grid drag on Windows','Reply to Slowgrid'];
+
+function data(type) {
+  const d = new Date();
+  const hh = d.getHours(), mm = String(d.getMinutes()).padStart(2, '0');
+  switch (type) {
+    case 'clock': return { time: ((hh % 12) || 12) + ':' + mm, ampm: hh < 12 ? 'AM' : 'PM',
+      date: d.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' }) };
+    case 'weather': return { temp:'72°', cond:'Partly cloudy', city:'San Francisco',
+      hours:[{t:'10a',v:'71°'},{t:'11a',v:'74°'},{t:'12p',v:'77°'},{t:'1p',v:'78°'},{t:'2p',v:'76°'}] };
+    case 'calendar': return { next:'Design review — Daybreak v2', time:'10:30 – 11:00', in:'in 24m',
+      rest:[{t:'1:00 PM',n:'1:1 with Marco'},{t:'3:30 PM',n:'Store launch sync'}] };
+    case 'links': return { items: LINKS };
+    case 'music': return { track:'Awake', artist:'Tycho', at:'2:14', len:'5:02', pct:44 };
+    case 'notes': return { text:'Store review needs a permissions summary on every card — reviewers keep asking what "reads your tabs" means. Also: preset layouts should be shareable by link.' };
+    case 'stocks': return { rows:[{s:'AAPL',p:'227.31',c:'+1.24%',up:true},{s:'NVDA',p:'118.02',c:'-0.86%',up:false},
+      {s:'MSFT',p:'441.60',c:'+0.42%',up:true},{s:'BTC',p:'68,204',c:'+2.91%',up:true}] };
+    case 'github': return { stats:[{v:'3',k:'PRs'},{v:'7',k:'Issues'},{v:'12',k:'Streak'}],
+      commits:['fix: grid snap on resize · daybreak/core','feat: manifest v2 permissions · daybreak/sdk'] };
+    case 'habit': return { rows:[{n:'Read 20 pages',days:[1,1,0,1,1,1,0]},{n:'Walk outside',days:[1,1,1,1,0,1,1]},
+      {n:'No phone before 9',days:[0,1,1,0,1,1,1]}] };
+    case 'timer': return { left:'18:24', phase:'Focus', round:'3 of 4', pct:63 };
+    case 'news': return { items:[{s:'The Verge',h:'Browsers are quietly becoming operating systems again',u:'theverge.com'},
+      {s:'Ars Technica',h:'A new spec wants extensions to declare data use up front',u:'arstechnica.com'},
+      {s:'Stratechery',h:'The economics of a widget marketplace',u:'stratechery.com'}] };
+    case 'history': return { items:[{t:'linear.app — Daybreak v2 board',u:'linear.app'},{t:'figma.com — Store detail exploration',u:'figma.com'},
+      {t:'developer.chrome.com — chrome.storage.sync',u:'developer.chrome.com'},{t:'news.ycombinator.com',u:'news.ycombinator.com'}] };
+    case 'ai': return { text:'You have 3 unread reviews on the SDK docs and a design review in 24 minutes. Want a summary of the review thread?' };
+    default: return {};
+  }
+}
+
+class Component extends DCLogic {
+  state = {
+    ids: PRESETS.Balanced.slice(),
+    sizes: {}, layoutName: 'Balanced',
+    editing: false, zoom: null, cam: null, panel: null,
+    menu: null, toast: '',
+    settingsOpen: false, storeOpen: false,
+    storeTab: 'Discover', cat: 'All', sort: 'Most installed', query: '', detail: null,
+    installed: PRESETS.Balanced.slice(),
+    theme: null, accent: null, wall: null, zoomMode: null,
+    gap: 14, radius: 18, alpha: 100,
+    opts: {}, rates: {},
+    general: { 'Show greeting': true, 'Open on new tab': true, 'Keyboard shortcuts': true, 'Sync layout to account': false },
+    done: { 0: true, 1: true }, playing: false, timerOn: true,
+    scrolled: false, tick: 0
+  };
+
+  componentDidMount() {
+    this._els = {};
+    this._t = setInterval(() => this.setState(s => ({ tick: s.tick + 1 })), 20000);
+    this._k = (e) => { if (e.key === 'Escape') this.setState({ zoom: null, cam: null, panel: null, menu: null, settingsOpen: false, storeOpen: false, detail: null }); };
+    this._s = () => { const on = window.scrollY > 10; if (on !== this.state.scrolled) this.setState({ scrolled: on }); };
+    window.addEventListener('keydown', this._k);
+    window.addEventListener('scroll', this._s, { passive: true });
+  }
+  componentWillUnmount() {
+    clearInterval(this._t); clearTimeout(this._toast);
+    window.removeEventListener('keydown', this._k);
+    window.removeEventListener('scroll', this._s);
+  }
+
+  get theme() { return this.state.theme || this.props.theme || 'dark'; }
+  get accent() { return this.state.accent || this.props.accentColor || '#6f9bff'; }
+  get wall() { return this.state.wall || this.props.wallpaper || 'Mesh'; }
+  get zoomMode() { return this.state.zoomMode || this.props.zoomMode || 'Camera'; }
+
+  spec(type) { return ALL.find(w => w.type === type) || ALL[0]; }
+  size(id) { return this.state.sizes[id] || [this.spec(id).w, this.spec(id).h]; }
+
+  say(msg) { clearTimeout(this._toast); this.setState({ toast: msg });
+    this._toast = setTimeout(() => this.setState({ toast: '' }), 1900); }
+
+  open(url) { this.say('Opening ' + url); }
+
+  focusTile(id) {
+    if (this.zoomMode === 'None') { this.say(this.spec(id).name + ' — click-to-zoom is off'); return; }
+    const el = this._els && this._els[id];
+    let cam = null;
+    if (el && this.zoomMode === 'Camera') {
+      const cr = el.parentElement.parentElement.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const vw = window.innerWidth, vh = window.innerHeight, top = 78;
+      const s = Math.min((vw * 0.62) / r.width, (vh - top - 60) / r.height, 2.6);
+      cam = { ox: r.left + r.width / 2 - cr.left, oy: r.top + r.height / 2 - cr.top,
+        tx: vw / 2 - (r.left + r.width / 2), ty: (top + vh) / 2 - (r.top + r.height / 2), s };
+    }
+    this.setState({ zoom: id, cam, menu: null });
+  }
+
+  tokens() {
+    const dark = this.theme === 'dark';
+    const a = this.accent;
+    return {
+      '--accent': a, '--accentSoft': a + '22', '--accentLine': a + '55',
+      '--onAccent': dark ? '#0a0b0e' : '#ffffff',
+      '--fg': dark ? 'oklch(0.96 0.004 260)' : 'oklch(0.22 0.01 260)',
+      '--dim': dark ? 'oklch(0.72 0.012 260)' : 'oklch(0.46 0.012 260)',
+      '--faint': dark ? 'oklch(0.56 0.012 260)' : 'oklch(0.60 0.012 260)',
+      '--line': dark ? 'rgba(255,255,255,.10)' : 'rgba(20,22,28,.10)',
+      '--panel': dark ? 'rgba(255,255,255,.05)' : 'rgba(255,255,255,.62)',
+      '--panel2': dark ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.92)',
+      '--sheet': dark ? 'rgba(18,19,24,.94)' : 'rgba(250,250,249,.97)',
+      '--storeBg': dark ? 'rgba(10,11,14,.97)' : 'rgba(244,244,242,.98)',
+      '--scrim': dark ? 'rgba(6,7,10,.58)' : 'rgba(240,240,238,.6)',
+      '--codeBg': dark ? 'rgba(0,0,0,.30)' : 'rgba(20,22,28,.05)',
+      '--danger': dark ? '#ff8189' : '#c0323c'
+    };
+  }
+
+  background() {
+    const dark = this.theme === 'dark';
+    const base = dark ? '#0a0b0e' : '#f3f3f1';
+    const a = this.accent;
+    if (this.wall === 'Flat') return base;
+    if (this.wall === 'Mesh') return 'radial-gradient(1100px 700px at 12% -10%, ' + a + (dark ? '26' : '30') + ', transparent 60%), radial-gradient(900px 600px at 92% 8%, ' + (dark ? '#ffffff14' : '#ffffffcc') + ', transparent 55%), ' + base;
+    if (this.wall === 'Dusk') return 'linear-gradient(170deg, ' + (dark ? '#141826' : '#e9ecf5') + ', ' + base + ' 60%)';
+    return 'repeating-linear-gradient(135deg, ' + (dark ? '#ffffff08' : '#00000008') + ' 0 2px, transparent 2px 12px), ' + base;
+  }
+
+  tileStyle(id, focused) {
+    const dark = this.theme === 'dark';
+    const [w, h] = this.size(id);
+    const al = this.state.alpha / 100;
+    const base = {
+      gridColumn: 'span ' + w, gridRow: 'span ' + h,
+      display: 'flex', flexDirection: 'column', padding: '16px 18px',
+      borderRadius: this.state.radius + 'px',
+      background: dark ? 'rgba(255,255,255,' + (0.055 * al).toFixed(3) + ')' : 'rgba(255,255,255,' + (0.30 + 0.52 * al).toFixed(3) + ')',
+      border: '1px solid var(--line)', overflow: 'hidden',
+      cursor: this.state.editing ? 'grab' : 'pointer',
+      transition: 'transform .3s cubic-bezier(.22,1,.36,1), opacity .3s, border-color .2s, box-shadow .3s',
+      boxShadow: dark ? '0 1px 0 rgba(255,255,255,.04) inset' : '0 1px 2px rgba(20,22,28,.05)'
+    };
+    if (this.state.editing) base.boxShadow = '0 0 0 1px var(--accentLine) inset';
+    if (this.state.menu && this.state.menu.id === id) base.boxShadow = '0 0 0 1.5px var(--accent) inset';
+    if (!this.state.zoom) return base;
+    const mode = this.zoomMode;
+    const wide = this.state.panel ? 'calc(340px + 3vw)' : '3vw';
+    if (focused) {
+      if (mode === 'Camera') return Object.assign(base, { zIndex: 36, position: 'relative', cursor: 'default',
+        boxShadow: '0 40px 120px rgba(0,0,0,.45)', background: dark ? 'rgba(28,30,38,.98)' : 'rgba(255,255,255,.99)' });
+      if (mode === 'Expand') return Object.assign({}, base, { position: 'fixed', top: '86px', left: '3vw', right: wide,
+        bottom: '3vh', zIndex: 36, padding: '34px 38px', borderRadius: '22px', cursor: 'default',
+        background: dark ? 'rgba(24,26,33,.98)' : 'rgba(255,255,255,.99)', boxShadow: '0 40px 140px rgba(0,0,0,.5)' });
+      return Object.assign({}, base, { position: 'fixed', top: '50%', left: '50%',
+        transform: 'translate(-50%,-50%)', width: 'min(760px, 72vw)', height: 'min(470px, 64vh)', zIndex: 36,
+        padding: '32px 36px', borderRadius: '20px', cursor: 'default',
+        background: dark ? 'rgba(24,26,33,.98)' : 'rgba(255,255,255,.99)', boxShadow: '0 40px 140px rgba(0,0,0,.5)' });
+    }
+    return Object.assign(base, { opacity: mode === 'Camera' ? 0.35 : 0.2, pointerEvents: 'none' });
+  }
+
+  cameraStyle() {
+    const c = this.state.cam;
+    const s = { transition: 'transform .55s cubic-bezier(.2,.9,.25,1)', willChange: 'transform',
+      transformOrigin: c ? c.ox + 'px ' + c.oy + 'px' : 'center center', transform: 'none' };
+    if (c && this.state.zoom && this.zoomMode === 'Camera')
+      s.transform = 'translate(' + Math.round(c.tx) + 'px, ' + Math.round(c.ty) + 'px) scale(' + c.s.toFixed(3) + ')';
+    return s;
+  }
+
+  pill(active, extra) {
+    return Object.assign({ padding: '7px 13px', borderRadius: '999px', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap',
+      border: '1px solid ' + (active ? 'transparent' : 'var(--line)'),
+      background: active ? 'var(--accent)' : 'transparent',
+      color: active ? 'var(--onAccent)' : 'var(--dim)', fontWeight: active ? 500 : 400 }, extra || {});
+  }
+
+  toggle(on) {
+    return { track: { width: '34px', height: '20px', borderRadius: '999px', padding: '2px', display: 'flex', flex: 'none',
+        justifyContent: on ? 'flex-end' : 'flex-start', background: on ? 'var(--accent)' : 'var(--line)', transition: 'background .2s' },
+      knob: { width: '16px', height: '16px', borderRadius: '999px', background: on ? 'var(--onAccent)' : 'var(--dim)', transition: 'all .2s' } };
+  }
+
+  mark(seed, size) {
+    const hues = [0, 40, 120, 190, 250, 300];
+    const h = hues[seed % hues.length], s = size || 22;
+    return { width: s + 'px', height: s + 'px', borderRadius: Math.round(s * 0.3) + 'px', flex: 'none',
+      background: 'linear-gradient(140deg, oklch(0.72 0.14 ' + h + '), oklch(0.55 0.12 ' + ((h + 45) % 360) + '))',
+      display: 'grid', placeItems: 'center', fontSize: Math.round(s * 0.4) + 'px', fontWeight: 600, color: '#0a0b0e' };
+  }
+
+  menuItem(label, hint, fn, danger) {
+    return { isItem: true, label, hint: hint || '',
+      style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px',
+        padding: '8px 14px', fontSize: '13px', cursor: 'pointer', color: danger ? 'var(--danger)' : 'var(--fg)' },
+      onPick: (e) => { if (e) e.stopPropagation(); this.setState({ menu: null }); if (fn) fn(); } };
+  }
+
+  buildMenu() {
+    const m = this.state.menu;
+    if (!m) return { title: '', items: [] };
+    if (!m.id) return { title: 'Home board', items: [
+      this.menuItem('Add widget…', '⌥A', () => this.setState({ storeOpen: true, detail: null })),
+      this.menuItem(this.state.editing ? 'Exit layout mode' : 'Edit layout', '⌥E', () => this.setState({ editing: !this.state.editing, zoom: null, cam: null })),
+      { isSep: true },
+      this.menuItem('Reset to Balanced', '', () => this.setState({ ids: PRESETS.Balanced.slice(), sizes: {}, layoutName: 'Balanced' })),
+      this.menuItem('Change background', '', () => this.setState({ settingsOpen: true })),
+      this.menuItem(this.theme === 'dark' ? 'Switch to light' : 'Switch to dark', '⌥L', () => this.setState({ theme: this.theme === 'dark' ? 'light' : 'dark' })),
+      { isSep: true },
+      this.menuItem('All settings', '⌘,', () => this.setState({ settingsOpen: true }))
+    ] };
+
+    const id = m.id, sp = this.spec(id), cur = this.size(id);
+    const items = [];
+    (sp.acts || []).forEach(a => items.push(this.menuItem(a[0], a[1], () => this.say(a[0]))));
+    if (sp.acts && sp.acts.length) items.push({ isSep: true });
+    if (this.zoomMode !== 'None') items.push(this.menuItem('Focus widget', '↵', () => this.focusTile(id)));
+    items.push(this.menuItem('Widget settings', '⌥,', () => this.setState({ panel: id })));
+    items.push({ isSizes: true, sizes: SIZES.map(s => {
+      const on = cur[0] === s[0] && cur[1] === s[1];
+      return { label: s.join('×'), style: this.pill(on, { fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', padding: '5px 9px' }),
+        onPick: (e) => { e.stopPropagation(); this.setState({ sizes: Object.assign({}, this.state.sizes, { [id]: s }), layoutName: 'Custom', menu: null }); } };
+    }) });
+    items.push({ isSep: true });
+    items.push(this.menuItem('Refresh now', '⌘R', () => { this.setState(s => ({ tick: s.tick + 1 })); this.say(sp.name + ' refreshed'); }));
+    items.push(this.menuItem('Duplicate', '', () => this.setState(s => ({ ids: s.ids.concat([id]), layoutName: 'Custom' }))));
+    items.push(this.menuItem('Move to top', '', () => this.setState(s => ({ ids: [id].concat(s.ids.filter(x => x !== id)), layoutName: 'Custom' }))));
+    items.push({ isSep: true });
+    items.push(this.menuItem('Remove from home', '⌫', () => this.setState(s => ({ ids: s.ids.filter(x => x !== id), zoom: null, panel: null, layoutName: 'Custom' })), true));
+    return { title: sp.name, items };
+  }
+
+  renderVals() {
+    const st = this.state, dark = this.theme === 'dark', zoom = st.zoom;
+    const stop = (e) => { if (e) e.stopPropagation(); };
+
+    const tiles = st.ids.map((id, i) => {
+      const sp = this.spec(id);
+      const d = data(id);
+      const focused = zoom === id;
+
+      if (id === 'todo') {
+        const done = st.done;
+        d.items = TODOS.map((t, j) => ({ t,
+          boxStyle: { width: '15px', height: '15px', borderRadius: '5px', flex: 'none',
+            border: done[j] ? '1px solid var(--accent)' : '1px solid var(--line)',
+            background: done[j] ? 'var(--accent)' : 'transparent', transition: 'all .15s' },
+          textStyle: { fontSize: '13px', color: done[j] ? 'var(--faint)' : 'var(--fg)',
+            textDecoration: done[j] ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+          onToggle: (e) => { stop(e); this.setState(s => ({ done: Object.assign({}, s.done, { [j]: !s.done[j] }) })); } }));
+        d.done = TODOS.filter((t, j) => done[j]).length; d.total = TODOS.length;
+      }
+      if (id === 'links') d.items = LINKS.map((l, j) => ({ n: l.n, k: l.k, u: l.u, markStyle: this.mark(j + 2, 30),
+        onOpen: (e) => { stop(e); this.open(l.u); } }));
+      if (id === 'news') d.items = d.items.map(n => ({ h: n.h, s: n.s, onOpen: (e) => { stop(e); this.open(n.u); } }));
+      if (id === 'history') d.items = d.items.map(n => ({ t: n.t, onOpen: (e) => { stop(e); this.open(n.u); } }));
+      if (id === 'stocks') d.rows = d.rows.map(r => ({ s: r.s, p: r.p, c: r.c,
+        chgStyle: { color: r.up ? 'oklch(0.78 0.15 155)' : 'var(--danger)', width: '62px', textAlign: 'right' } }));
+      if (id === 'habit') d.rows = d.rows.map(r => ({ n: r.n, days: r.days.map(v => ({
+        style: { width: '11px', height: '11px', borderRadius: '4px', cursor: 'pointer', background: v ? 'var(--accent)' : 'var(--line)' },
+        onTap: (e) => { stop(e); this.say(r.n + ' — logged'); } })) }));
+      if (id === 'music') { d.barStyle = { width: d.pct + '%', height: '100%', background: 'var(--accent)' };
+        d.playGlyph = st.playing ? '❙❙' : '▶'; d.onPlay = (e) => { stop(e); this.setState(s => ({ playing: !s.playing })); }; }
+      if (id === 'timer') { d.barStyle = { width: d.pct + '%', height: '100%', background: 'var(--accent)' };
+        d.playLabel = st.timerOn ? 'Pause' : 'Start'; d.onPlay = (e) => { stop(e); this.setState(s => ({ timerOn: !s.timerOn })); }; }
+      if (id === 'calendar') d.onJoin = (e) => { stop(e); this.open('meet.google.com/design-review'); };
+      if (id === 'ai') d.onAsk = (e) => { stop(e); this.say('Assistant ready'); };
+
+      return {
+        id, d, name: sp.name, focused,
+        isClock: id==='clock', isWeather: id==='weather', isCalendar: id==='calendar', isTodo: id==='todo',
+        isLinks: id==='links', isMusic: id==='music', isNotes: id==='notes', isStocks: id==='stocks',
+        isGithub: id==='github', isHabit: id==='habit', isTimer: id==='timer', isNews: id==='news',
+        isHistory: id==='history', isAi: id==='ai',
+        markStyle: this.mark(i + 1, 14),
+        wrapStyle: this.tileStyle(id, focused),
+        sizeLabel: this.size(id).join('×'),
+        draggable: st.editing,
+        ref: (el) => { if (!this._els) this._els = {}; if (el) this._els[id] = el; },
+        onDragStart: () => { this._drag = id; },
+        onDragOver: (e) => e.preventDefault(),
+        onDrop: (e) => { e.preventDefault(); const from = this._drag; if (!from || from === id) return;
+          const ids = st.ids.slice(), a = ids.indexOf(from), b = ids.indexOf(id);
+          ids.splice(a, 1); ids.splice(b, 0, from); this._drag = null;
+          this.setState({ ids, layoutName: 'Custom' }); },
+        onResize: (e) => { e.stopPropagation(); const cur = this.size(id);
+          const idx = SIZES.findIndex(s => s[0] === cur[0] && s[1] === cur[1]);
+          this.setState({ sizes: Object.assign({}, st.sizes, { [id]: SIZES[(idx + 1) % SIZES.length] }), layoutName: 'Custom' }); },
+        onRemove: (e) => { e.stopPropagation(); this.setState({ ids: st.ids.filter(x => x !== id), layoutName: 'Custom' }); },
+        onSettings: (e) => { e.stopPropagation(); this.setState({ panel: id }); },
+        onOpen: () => { if (st.editing || focused) return; this.focusTile(id); },
+        onMenu: (e) => { e.preventDefault(); e.stopPropagation();
+          this.setState({ menu: { id, x: e.clientX, y: e.clientY } }); }
+      };
+    });
+
+    const pid = st.panel;
+    const fs = pid ? this.spec(pid) : null;
+    const focus = fs ? {
+      name: fs.name, desc: fs.tagline, author: fs.author, version: 'v2.4.1',
+      sizes: SIZES.map(s => { const cur = this.size(pid), on = cur[0] === s[0] && cur[1] === s[1];
+        return { label: s.join('×'), style: this.pill(on, { fontFamily: "'JetBrains Mono',monospace", fontSize: '11px' }),
+          onPick: () => this.setState({ sizes: Object.assign({}, st.sizes, { [pid]: s }), layoutName: 'Custom' }) }; }),
+      opts: fs.opts.map(label => { const key = pid + ':' + label, on = !!st.opts[key], t = this.toggle(on);
+        return { label, trackStyle: t.track, knobStyle: t.knob,
+          onToggle: () => this.setState({ opts: Object.assign({}, st.opts, { [key]: !on }) }) }; }),
+      rates: ['Live', '5 min', '1 hr'].map(label => { const on = (st.rates[pid] || 'Live') === label;
+        return { label, style: this.pill(on), onPick: () => this.setState({ rates: Object.assign({}, st.rates, { [pid]: label }) }) }; })
+    } : { sizes: [], opts: [], rates: [] };
+
+    const catCounts = {};
+    ALL.forEach(w => { catCounts[w.cat] = (catCounts[w.cat] || 0) + 1; });
+
+    let results = ALL.filter(w => (st.cat === 'All' || w.cat === st.cat) &&
+      (!st.query || (w.name + ' ' + w.tagline + ' ' + w.author).toLowerCase().includes(st.query.toLowerCase())));
+    if (st.storeTab === 'Installed') results = results.filter(w => st.installed.includes(w.type));
+    if (st.sort === 'Top rated') results = results.slice().sort((a, b) => b.rating - a.rating);
+    if (st.sort === 'Newest') results = results.slice().reverse();
+
+    const install = (type) => (e) => { if (e) e.stopPropagation();
+      const on = this.state.ids.includes(type);
+      this.setState(s => ({ ids: on ? s.ids.filter(x => x !== type) : s.ids.concat([type]),
+        installed: on ? s.installed : (s.installed.includes(type) ? s.installed : s.installed.concat([type])),
+        layoutName: 'Custom' })); };
+
+    const det = st.detail ? this.spec(st.detail) : null;
+    const detOn = det && st.ids.includes(det.type);
+    const menu = this.buildMenu();
+    const mx = st.menu ? Math.min(st.menu.x, window.innerWidth - 250) : 0;
+    const my = st.menu ? Math.min(st.menu.y, window.innerHeight - (st.menu.id ? 400 : 280)) : 0;
+
+    return {
+      rootStyle: Object.assign({ minHeight: '100vh', display: 'flex', flexDirection: 'column',
+        fontFamily: "'DM Sans', system-ui, sans-serif", color: 'var(--fg)',
+        background: this.background(), WebkitFontSmoothing: 'antialiased' }, this.tokens()),
+
+      headerStyle: { position: 'sticky', top: 0, zIndex: 40, display: 'flex', alignItems: 'center', gap: '20px',
+        padding: st.scrolled ? '10px 28px' : '20px 28px',
+        background: st.scrolled ? 'var(--sheet)' : 'transparent',
+        borderBottom: '1px solid ' + (st.scrolled ? 'var(--line)' : 'transparent'),
+        backdropFilter: st.scrolled ? 'blur(22px)' : 'none',
+        transition: 'padding .25s ease, background .25s ease, border-color .25s ease' },
+      brandStyle: { fontFamily: "'JetBrains Mono',monospace", letterSpacing: '.16em', textTransform: 'uppercase',
+        color: 'var(--accent)', fontSize: st.scrolled ? '10px' : '12px', transition: 'font-size .25s ease' },
+      searchStyle: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+        maxWidth: st.scrolled ? '440px' : '560px', padding: st.scrolled ? '7px 15px' : '10px 16px',
+        borderRadius: '999px', background: st.scrolled ? 'var(--panel2)' : 'var(--panel)',
+        border: '1px solid var(--line)', transition: 'all .25s ease' },
+      stageStyle: { position: 'relative', flex: 1, padding: '0 28px 80px', overflowX: 'clip' },
+
+      gridStyle: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gridAutoRows: '96px',
+        gridAutoFlow: 'row dense', gap: st.gap + 'px', maxWidth: '1560px', margin: '0 auto' },
+      cameraStyle: this.cameraStyle(),
+
+      tiles, editing: st.editing, zoomed: !!zoom, focus, panelOpen: !!pid,
+      tileCount: st.ids.length, layoutName: st.layoutName,
+      showHero: st.general['Show greeting'] && !zoom,
+      greeting: (new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening') + ', Sara',
+      heroSub: '2 meetings, 4 open tasks, and clear skies until Thursday.',
+      clockShort: new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }),
+
+      editLabel: st.editing ? 'Editing' : 'Edit layout',
+      editBtnStyle: { padding: '9px 14px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer',
+        border: st.editing ? '0' : '1px solid var(--line)', background: st.editing ? 'var(--accent)' : 'var(--panel)',
+        color: st.editing ? 'var(--onAccent)' : 'var(--fg)', fontWeight: st.editing ? 500 : 400 },
+      themeGlyph: dark ? '☾' : '☀',
+
+      toggleEdit: () => this.setState({ editing: !st.editing, zoom: null, cam: null, panel: null }),
+      toggleTheme: () => this.setState({ theme: dark ? 'light' : 'dark' }),
+      openStore: (e) => { if (e) e.stopPropagation(); this.setState({ storeOpen: true, detail: null, settingsOpen: false, menu: null }); },
+      openSettings: () => this.setState({ settingsOpen: true, menu: null }),
+      closeOverlays: () => this.setState({ settingsOpen: false, storeOpen: false, detail: null }),
+      closeZoom: (e) => { if (e) e.stopPropagation(); this.setState({ zoom: null, cam: null, panel: null }); },
+      closePanel: () => this.setState({ panel: null }),
+      removeFocused: () => this.setState({ ids: st.ids.filter(x => x !== pid), zoom: null, cam: null, panel: null, layoutName: 'Custom' }),
+
+      menuOpen: !!st.menu, menuTitle: menu.title, menuItems: menu.items,
+      closeMenu: (e) => { if (e) { e.preventDefault(); e.stopPropagation(); } this.setState({ menu: null }); },
+      menuStyle: { position: 'fixed', left: mx + 'px', top: my + 'px', zIndex: 81, width: '236px',
+        padding: '4px 0 6px', borderRadius: '14px', background: 'var(--sheet)', border: '1px solid var(--line)',
+        backdropFilter: 'blur(24px)', boxShadow: '0 24px 70px rgba(0,0,0,.45)', transformOrigin: 'top left',
+        animation: 'db-menu .12s ease both', overflow: 'hidden' },
+      onBoardMenu: (e) => { e.preventDefault(); this.setState({ menu: { id: null, x: e.clientX, y: e.clientY } }); },
+
+      toast: st.toast, toastOn: !!st.toast && !st.editing,
+
+      presets: Object.keys(PRESETS).map(name => ({ name,
+        style: this.pill(st.layoutName === name, { padding: '8px 14px', fontSize: '13px' }),
+        onPick: () => this.setState({ ids: PRESETS[name].slice(), layoutName: name, sizes: {} }) })),
+
+      themeOpts: ['dark', 'light'].map(v => ({ label: v === 'dark' ? 'Dark' : 'Light',
+        style: this.pill(this.theme === v, { flex: '1', textAlign: 'center', padding: '10px' }),
+        onPick: () => this.setState({ theme: v }) })),
+
+      accentOpts: ['#6f9bff', '#7de2b8', '#ffb26f', '#ff8fb1', '#c79bff', '#e8e6df'].map(c => ({
+        style: { width: '30px', height: '30px', borderRadius: '999px', cursor: 'pointer', background: c,
+          boxShadow: this.accent === c ? '0 0 0 2px var(--sheet), 0 0 0 4px ' + c : 'none' },
+        onPick: () => this.setState({ accent: c }) })),
+
+      wallOpts: ['Flat', 'Mesh', 'Dusk', 'Grain'].map(label => ({ label,
+        style: { height: '54px', borderRadius: '10px', cursor: 'pointer', display: 'grid', placeItems: 'center',
+          background: label === 'Flat' ? (dark ? '#0a0b0e' : '#f3f3f1')
+            : label === 'Mesh' ? 'radial-gradient(60px 40px at 30% 20%, ' + this.accent + '55, transparent 70%), ' + (dark ? '#0a0b0e' : '#f3f3f1')
+            : label === 'Dusk' ? 'linear-gradient(170deg, ' + (dark ? '#141826' : '#e9ecf5') + ', ' + (dark ? '#0a0b0e' : '#f3f3f1') + ')'
+            : 'repeating-linear-gradient(135deg, ' + (dark ? '#ffffff14' : '#00000012') + ' 0 2px, transparent 2px 8px), ' + (dark ? '#0a0b0e' : '#f3f3f1'),
+          border: '1px solid ' + (this.wall === label ? 'var(--accent)' : 'var(--line)') },
+        onPick: () => this.setState({ wall: label }) })),
+
+      zoomOpts: [
+        { key: 'Camera', label: 'Camera zoom', desc: 'The board scales toward the tile you clicked.' },
+        { key: 'Expand', label: 'Expand', desc: 'Tile fills the screen, the rest dims out.' },
+        { key: 'Spotlight', label: 'Spotlight', desc: 'Tile lifts into a centered panel.' },
+        { key: 'None', label: 'No zoom', desc: 'Clicks stay inside the widget. Right-click for its menu.' }
+      ].map(o => { const on = this.zoomMode === o.key;
+        return { label: o.label, desc: o.desc,
+          style: { padding: '12px 14px', borderRadius: '12px', cursor: 'pointer',
+            background: on ? 'var(--accentSoft)' : 'var(--panel)',
+            border: '1px solid ' + (on ? 'var(--accentLine)' : 'var(--line)') },
+          onPick: () => this.setState({ zoomMode: o.key, zoom: null, cam: null }) }; }),
+
+      gap: st.gap, radius: st.radius, alpha: st.alpha,
+      setGap: (e) => this.setState({ gap: +e.target.value }),
+      setRadius: (e) => this.setState({ radius: +e.target.value }),
+      setAlpha: (e) => this.setState({ alpha: +e.target.value }),
+
+      generalToggles: Object.keys(st.general).map(label => { const on = st.general[label], t = this.toggle(on);
+        return { label, trackStyle: t.track, knobStyle: t.knob,
+          onToggle: () => this.setState({ general: Object.assign({}, st.general, { [label]: !on }) }) }; }),
+
+      settingsOpen: st.settingsOpen, storeOpen: st.storeOpen,
+      showDetail: !!st.detail,
+      showBrowse: !st.detail && st.storeTab !== 'Publish',
+      showPublish: !st.detail && st.storeTab === 'Publish',
+      browseTitle: st.storeTab === 'Installed' ? 'Installed widgets' : (st.cat === 'All' ? 'All widgets' : st.cat),
+      resultCount: results.length, query: st.query,
+      setQuery: (e) => this.setState({ query: e.target.value }),
+
+      storeTabs: ['Discover', 'Installed', 'Publish'].map(label => ({ label,
+        style: this.pill(st.storeTab === label, { padding: '7px 15px' }),
+        onPick: () => this.setState({ storeTab: label, detail: null }) })),
+
+      categories: ['All'].concat(Object.keys(catCounts)).map(name => { const on = st.cat === name;
+        return { name, count: name === 'All' ? ALL.length : catCounts[name],
+          style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px',
+            padding: '9px 12px', borderRadius: '10px', fontSize: '13px', cursor: 'pointer',
+            background: on ? 'var(--accentSoft)' : 'transparent', color: on ? 'var(--accent)' : 'var(--dim)' },
+          onPick: () => this.setState({ cat: name, detail: null }) }; }),
+
+      sorts: ['Most installed', 'Top rated', 'Newest'].map(label => ({ label,
+        style: { padding: '7px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer',
+          color: st.sort === label ? 'var(--accent)' : 'var(--faint)' },
+        onPick: () => this.setState({ sort: label }) })),
+
+      results: results.map((w, i) => { const on = st.ids.includes(w.type);
+        return { name: w.name, author: w.author, tagline: w.tagline, rating: w.rating, installs: w.installs,
+          markStyle: this.mark(i + 3, 34), chipLabel: on ? 'Added' : 'Add',
+          chipStyle: this.pill(!on, { padding: '5px 12px', fontSize: '11px',
+            background: on ? 'transparent' : 'var(--accent)', color: on ? 'var(--faint)' : 'var(--onAccent)',
+            border: on ? '1px solid var(--line)' : '0' }),
+          onInstall: install(w.type), onOpen: () => this.setState({ detail: w.type }) }; }),
+
+      detail: det ? {
+        name: det.name, tagline: det.tagline, version: 'v2.4.1',
+        heroStyle: { display: 'flex', gap: '16px', alignItems: 'center' },
+        markStyle: this.mark(5, 56),
+        desc: det.tagline + ' Built on the Daybreak SDK, it renders in an isolated frame, keeps its own storage bucket, and respects your theme tokens — accent, radius, and opacity are inherited from your home layout, so it never looks bolted on.',
+        previewStyle: { height: '200px', borderRadius: '14px', display: 'grid', placeItems: 'center',
+          background: 'var(--panel)', border: '1px dashed var(--line)' },
+        previewNote: 'interactive preview — ' + det.name.toLowerCase() + ' at ' + det.w + '×' + det.h,
+        changelog: ['Inherits accent and corner radius from host theme', 'Offline cache for the last successful fetch', 'Keyboard focus ring meets WCAG AA'],
+        meta: [{ k: 'publisher', v: det.author }, { k: 'category', v: det.cat }, { k: 'rating', v: '★ ' + det.rating },
+          { k: 'installs', v: det.installs }, { k: 'size', v: det.w + '×' + det.h + ' default' }, { k: 'updated', v: '3 days ago' }],
+        perms: ['Read widget storage', 'Network access to one domain', 'No access to browsing history'],
+        installLabel: detOn ? 'Remove from home' : 'Add to home',
+        installStyle: { width: '100%', padding: '12px', borderRadius: '999px', fontSize: '14px', fontWeight: 500, cursor: 'pointer',
+          border: detOn ? '1px solid var(--line)' : '0', background: detOn ? 'transparent' : 'var(--accent)',
+          color: detOn ? 'var(--fg)' : 'var(--onAccent)' },
+        onInstall: install(det.type)
+      } : {},
+      backToList: () => this.setState({ detail: null }),
+
+      publishSteps: [
+        { n: '1', title: 'Scaffold', desc: 'npx create-daybreak-widget — React, Vue, or plain HTML.', badge: 'done' },
+        { n: '2', title: 'Declare a manifest', desc: 'Sizes, permissions, settings schema, theme tokens.', badge: 'done' },
+        { n: '3', title: 'Test in the sandbox', desc: 'Runs against a mock home grid with every theme.', badge: 'in review' },
+        { n: '4', title: 'Submit', desc: 'Automated privacy scan, then a human reviewer within 48h.', badge: 'pending' }
+      ].map((s, i) => ({ n: s.n, title: s.title, desc: s.desc, badge: s.badge,
+        style: { display: 'flex', gap: '14px', alignItems: 'center', padding: '14px 16px', borderRadius: '12px',
+          background: i % 2 ? 'transparent' : 'var(--panel)', border: '1px solid ' + (i % 2 ? 'transparent' : 'var(--line)') },
+        numStyle: { width: '26px', height: '26px', borderRadius: '999px', flex: 'none', display: 'grid', placeItems: 'center',
+          fontFamily: "'JetBrains Mono',monospace", fontSize: '11px',
+          background: s.badge === 'done' ? 'var(--accent)' : 'var(--panel2)',
+          color: s.badge === 'done' ? 'var(--onAccent)' : 'var(--dim)' },
+        badgeStyle: { fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', letterSpacing: '.1em',
+          textTransform: 'uppercase', color: s.badge === 'done' ? 'var(--accent)' : 'var(--faint)' } })),
+
+      manifest: '{\n  "name": "Air Quality",\n  "version": "2.4.1",\n  "sizes": ["3x2", "4x2", "4x3"],\n  "settings": [\n    { "key": "units", "type": "enum", "of": ["metric", "imperial"] },\n    { "key": "alerts", "type": "boolean", "default": true }\n  ],\n  "permissions": ["storage", "net:api.breathe.io"],\n  "theme": "inherit"\n}'
+    };
+  }
+}
+</script>
+</body>
+</html>
