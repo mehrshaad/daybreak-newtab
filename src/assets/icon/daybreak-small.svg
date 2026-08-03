@@ -1,0 +1,35 @@
+<!--
+  Small-size variant of the Daybreak mark, for 16 and 32 px.
+
+  Same idea as the full artwork — sun rising over water — but the eight rays and
+  the third horizon bar are dropped and everything is scaled up. At 16px the
+  full version collapses into a smudge: the rays land on single pixels and the
+  three thin bars merge into one block. Shipping different artwork per size is
+  what platform icon guidelines do, and it keeps the mark readable in the
+  extensions menu.
+
+  Colours are sampled from the chosen artwork, and `currentColor` is not used
+  because the tile has to stay legible on any browser chrome.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="sun" x1="32" y1="16" x2="32" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fcbe52" />
+      <stop offset="1" stop-color="#f79c2e" />
+    </linearGradient>
+    <linearGradient id="sea" x1="10" y1="44" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b93f9" />
+      <stop offset="1" stop-color="#3f6ef2" />
+    </linearGradient>
+  </defs>
+
+  <!-- Tile. Kept dark so the mark reads on light and dark chrome alike. -->
+  <rect width="64" height="64" rx="15" fill="#0a0d11" />
+
+  <!-- Sun: a half disc sitting on the horizon, larger than in the full mark. -->
+  <path d="M14 41a18 18 0 0 1 36 0z" fill="url(#sun)" />
+
+  <!-- Two bars instead of three, thick enough to survive a 4x downscale. -->
+  <rect x="11" y="45.5" width="42" height="5.5" rx="2.75" fill="url(#sea)" />
+  <rect x="19" y="54" width="26" height="5.5" rx="2.75" fill="url(#sea)" />
+</svg>
