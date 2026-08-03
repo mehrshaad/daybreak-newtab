@@ -7,6 +7,7 @@ export function tileStyle({
   radius = 18,
   alpha = 100,
   size = [4, 2],
+  columns = 12,
   editing = false,
   menuTarget = false,
   zoomed = false,
@@ -15,7 +16,10 @@ export function tileStyle({
   panelOpen = false,
 }) {
   const dark = theme !== "light";
-  const [w, h] = size;
+  // A tile can never span more columns than the grid has, or it overflows the
+  // page on a narrow window.
+  const w = Math.min(size[0], columns);
+  const h = size[1];
   const al = alpha / 100;
 
   const base = {

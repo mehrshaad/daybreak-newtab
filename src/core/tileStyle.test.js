@@ -12,6 +12,18 @@ describe("tileStyle grid placement", () => {
     expect(s.gridRow).toBe("span 3");
   });
 
+  // On a narrow window the grid drops to 8 or 4 columns; a 5-wide tile must
+  // shrink to fit rather than overflow the page.
+  it("clamps the span to the available columns", () => {
+    expect(tileStyle({ size: [5, 2], columns: 4 }).gridColumn).toBe("span 4");
+    expect(tileStyle({ size: [5, 2], columns: 8 }).gridColumn).toBe("span 5");
+    expect(tileStyle({ size: [3, 2], columns: 4 }).gridColumn).toBe("span 3");
+  });
+
+  it("never clamps the row span", () => {
+    expect(tileStyle({ size: [5, 3], columns: 4 }).gridRow).toBe("span 3");
+  });
+
   it("applies the radius setting", () => {
     expect(tileStyle({ radius: 4 }).borderRadius).toBe("4px");
     expect(tileStyle({ radius: 32 }).borderRadius).toBe("32px");

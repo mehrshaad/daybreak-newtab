@@ -5,6 +5,7 @@ import Tile from "./Tile";
 
 function Board({
   ids,
+  columns,
   appearance,
   board,
   widgets,
@@ -33,14 +34,14 @@ function Board({
   const gridStyle = useMemo(
     () => ({
       display: "grid",
-      gridTemplateColumns: "repeat(12, 1fr)",
+      gridTemplateColumns: `repeat(${columns}, 1fr)`,
       gridAutoRows: "96px",
       gridAutoFlow: "row dense",
       gap: `${appearance.gap}px`,
       maxWidth: "1560px",
       margin: "0 auto",
     }),
-    [appearance.gap]
+    [appearance.gap, columns]
   );
 
   return (
@@ -55,6 +56,7 @@ function Board({
               key={instanceId}
               instanceId={instanceId}
               appearance={appearance}
+              columns={columns}
               size={resolveSize(instanceId, board.sizes)}
               options={resolveOptions(instanceId, widgets[instanceId]?.options)}
               config={widgets[instanceId]?.config || {}}
@@ -88,7 +90,7 @@ function Board({
               type="button"
               onClick={onOpenStore}
               style={{
-                gridColumn: "span 3",
+                gridColumn: `span ${Math.min(3, columns)}`,
                 gridRow: "span 2",
                 borderRadius: `${appearance.radius}px`,
                 border: "1.5px dashed var(--line)",

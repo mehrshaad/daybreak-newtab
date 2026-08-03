@@ -60,6 +60,7 @@ function TileButton({ label, onClick, children, style }) {
 function Tile({
   instanceId,
   appearance,
+  columns,
   size,
   options,
   config,
@@ -98,6 +99,7 @@ function Tile({
         radius: appearance.radius,
         alpha: appearance.alpha,
         size,
+        columns,
         editing,
         menuTarget,
         zoomed,
@@ -105,7 +107,7 @@ function Tile({
         zoomMode,
         panelOpen,
       }),
-    [appearance, size, editing, menuTarget, zoomed, focused, zoomMode, panelOpen]
+    [appearance, size, columns, editing, menuTarget, zoomed, focused, zoomMode, panelOpen]
   );
 
   if (!manifest) return null;
@@ -122,6 +124,17 @@ function Tile({
       onDragEnd={onDragEnd}
       onClick={onOpen}
       onContextMenu={onMenu}
+      // Focusable so keyboard users can reach a tile and open it with Enter,
+      // and so the ContextMenu key targets the tile rather than the page.
+      // The guard keeps Enter inside a widget's own inputs from zooming.
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter") {
+          e.preventDefault();
+          onOpen?.();
+        }
+      }}
       role="group"
       aria-label={manifest.name}
     >

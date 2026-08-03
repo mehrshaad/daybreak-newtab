@@ -14,6 +14,7 @@ import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
 import { background, baseColor, tokens } from "./core/tokens";
+import { useColumns } from "./core/useColumns";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { clearBucket } from "./sdk/bucket";
 import { hasPermissionsApi, requestAllPermissions } from "./sdk/permissions";
@@ -49,6 +50,7 @@ function App() {
   const dragId = useRef(null);
   const toastTimer = useRef(null);
   const scrolled = useScrolled();
+  const columns = useColumns();
 
   // Only render ids the catalog actually knows, so a widget removed from a
   // build can never leave an empty tile behind.
@@ -440,6 +442,7 @@ function App() {
 
       <Board
         ids={ids}
+        columns={columns}
         appearance={appearance}
         board={board}
         widgets={widgets}
