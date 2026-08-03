@@ -1,31 +1,32 @@
-import "animate.css";
-import Background from "./components/Background";
-import Bookmarks from "./components/Bookmarks";
-import City from "./components/City";
-import Google from "./components/Google";
-import Home from "./components/Home";
-import Notes from "./components/Notes";
-import Pomodoro from "./components/Pomodoro";
-import Quote from "./components/Quote";
-import Settings from "./components/Settings";
-import Todo from "./components/Todo";
-import "./styles/App.scss";
-import "./styles/index.scss";
+import { useMemo } from "react";
+import { useSettings } from "./core/settingsContext";
+import { background, tokens } from "./core/tokens";
 
 function App() {
+  const { settings } = useSettings();
+  const { theme, accent, wall } = settings.appearance;
+
+  const rootStyle = useMemo(
+    () => ({
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      color: "var(--fg)",
+      background: background(theme, accent, wall),
+      backgroundAttachment: "fixed",
+      WebkitFontSmoothing: "antialiased",
+      ...tokens(theme, accent),
+    }),
+    [theme, accent, wall]
+  );
+
   return (
-    <>
-      <Home />
-      <City />
-      <Todo />
-      <Notes />
-      <Pomodoro />
-      <Quote />
-      <Google />
-      <Settings />
-      <Bookmarks />
-      <Background />
-    </>
+    <div style={rootStyle}>
+      <div style={{ padding: 28 }}>
+        <span className="db-label">Daybreak v2</span>
+      </div>
+    </div>
   );
 }
 

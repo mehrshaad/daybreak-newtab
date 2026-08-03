@@ -12,24 +12,16 @@ export default defineConfig({
       output: {
         manualChunks: {
           react: ["react", "react-dom"],
-          antd: ["antd", "@ant-design/icons"],
           icons: ["react-icons"],
         },
       },
     },
   },
-  assetsInclude: [
-    "**/*.jpg",
-    "**/*.jpeg",
-    "**/*.png",
-    "**/*.gif",
-    "**/*.svg",
-    "**/*.JPG",
-    "**/*.webp",
-  ],
   base: "./",
   test: {
-    environment: "node",
-    include: ["src/**/*.test.js"],
+    // jsdom so component tests can render; pure-logic tests are unaffected.
+    environment: "jsdom",
+    include: ["src/**/*.test.{js,jsx}"],
+    setupFiles: ["./src/test/setup.js"],
   },
 });

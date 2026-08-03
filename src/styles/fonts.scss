@@ -1,0 +1,20 @@
+// Fonts are bundled, not fetched from a CDN: the extension must render offline
+// and Chrome's extension CSP blocks remote stylesheets. Both files are the
+// latin subset of the variable font, so one file covers every weight we use.
+// Licenses: src/assets/fonts/LICENSE.txt (SIL OFL 1.1).
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../assets/fonts/dm-sans-latin-var.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../assets/fonts/jetbrains-mono-latin-var.woff2") format("woff2");
+}

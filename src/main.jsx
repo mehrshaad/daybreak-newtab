@@ -1,16 +1,16 @@
-import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
-import AntdConfig from "./context/AntdConfig";
-import { SettingsProvider } from "./context/SettingsContext";
-import "./styles/utils/variables.css";
+import { SettingsProvider } from "./core/SettingsProvider";
+import "./styles/base.scss";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <ErrorBoundary>
-    <SettingsProvider>
-      <AntdConfig>
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <ErrorBoundary>
+      <SettingsProvider>
         <App />
-      </AntdConfig>
-    </SettingsProvider>
-  </ErrorBoundary>
+      </SettingsProvider>
+    </ErrorBoundary>
+  </StrictMode>
 );

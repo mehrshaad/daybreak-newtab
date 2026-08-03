@@ -1,24 +1,10 @@
-export const updateVariable = (variables) => {
-  const root = document.querySelector(":root");
-  Object.entries(variables).forEach(([variable, value]) => {
-    root.style.setProperty(variable, value);
-  });
-};
-
 export const classNames = (...classes) =>
-  classes.filter((className) => className !== undefined).join(" ");
-
-export function chunkArray(array, size) {
-  const result = [];
-  for (let i = 0; i < array.length; i += size) {
-    result.push(array.slice(i, i + size));
-  }
-  return result;
-}
+  classes.filter(Boolean).join(" ");
 
 // Look up a place with the Open-Meteo geocoding API (no API key required).
 // Returns { name, country, latitude, longitude, timezone } or null. Cached in
 // memory for the session so repeated lookups of the same name are free.
+// The `timezone` field is what the World Clocks widget stores per zone.
 const _geoCache = {};
 export async function geocodeCity(name) {
   const key = (name || "").trim().toLowerCase();
@@ -47,8 +33,32 @@ export async function geocodeCity(name) {
   }
 }
 
-// Map a WMO weather code (returned by Open-Meteo) to an icon key understood by
-// IconWeather and a short human-readable label.
+// Type-ahead variant: several matches, for the city pickers.
+export async function searchCities(query, count = 8) {
+  const q = (query || "").trim();
+  if (!q) return [];
+  try {
+    const res = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+        q
+      )}&count=${count}&language=en&format=json`
+    );
+    const data = await res.json();
+    return (data.results || []).map((r) => ({
+      name: r.name,
+      country: r.country,
+      admin1: r.admin1,
+      latitude: r.latitude,
+      longitude: r.longitude,
+      timezone: r.timezone,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// Map a WMO weather code (returned by Open-Meteo) to a condition key and a
+// short human-readable label.
 export function wmoWeather(code) {
   const map = {
     0: ["clear", "Clear"],
@@ -84,30 +94,21 @@ export function wmoWeather(code) {
   return { condition, label };
 }
 
-// Supported web-search engines for the search box.
+// Supported web-search engines for the header search box.
 export const SEARCH_ENGINES = {
   google: { label: "Google", url: "https://www.google.com/search?q=" },
   bing: { label: "Bing", url: "https://www.bing.com/search?q=" },
   duckduckgo: { label: "DuckDuckGo", url: "https://duckduckgo.com/?q=" },
 };
 
-// Time-of-day greeting, optionally personalized with a name.
-export const greeting = (name) => {
-  const h = new Date().getHours();
+// Time-of-day greeting, optionally personalized with a name. v2 renders this
+// without the trailing "!" the v1 layout used.
+export const greeting = (name, date = new Date()) => {
+  const h = date.getHours();
   const part =
     h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
   const who = (name || "").trim();
-  return who ? `${part}, ${who}!` : `${part}!`;
-};
-
-// Derive a site's own favicon URL, used as a fallback shortcut icon. Kept
-// first-party (the bookmarked site itself) so no data goes to a third party.
-export const faviconFromUrl = (url) => {
-  try {
-    return `${new URL(url).origin}/favicon.ico`;
-  } catch {
-    return null;
-  }
+  return who ? `${part}, ${who}` : part;
 };
 
 export const formatDate = (date) => {
@@ -117,3 +118,12 @@ export const formatDate = (date) => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+export const todayKey = () => formatDate(new Date());
+
+// Stable id without pulling in a uuid dependency.
+export const uid = () =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+// Clamp helper used by the grid sliders and size pickers.
+export const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
