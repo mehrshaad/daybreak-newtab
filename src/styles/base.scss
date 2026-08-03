@@ -55,6 +55,15 @@ textarea,
   min-height: 100vh;
 }
 
+// index.html doubles as the project's landing page on GitHub Pages, where the
+// module script 404s and the page would otherwise be blank. In the extension the
+// app's stylesheet loads from <head> and is render-blocking, so this hides the
+// block before the first paint — no flash, and no inline script, which the
+// extension's CSP would refuse anyway.
+#db-landing {
+  display: none;
+}
+
 a {
   color: var(--accent, #6f9bff);
   text-decoration: none;
