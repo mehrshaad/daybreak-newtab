@@ -156,9 +156,20 @@ function App() {
     setMenu(null);
   }, []);
 
+  // The store and the settings drawer both end layout editing: they cover the
+  // board (or push it aside) and leaving the dock and the tile chrome behind
+  // them is just noise. A widget's own settings drawer does not — that one is
+  // opened *while* arranging, and is meant to be.
   const openStore = useCallback(() => {
     setStoreOpen(true);
     setSettingsOpen(false);
+    setEditing(false);
+    setMenu(null);
+  }, []);
+
+  const openSettings = useCallback(() => {
+    setSettingsOpen(true);
+    setEditing(false);
     setMenu(null);
   }, []);
 
@@ -369,6 +380,7 @@ function App() {
         return;
       }
       setSettingsOpen(true);
+      setEditing(false);
       setMenu(null);
     },
     [theme, update]
@@ -526,7 +538,7 @@ function App() {
         editing={editing}
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
-        onOpenSettings={() => setSettingsOpen(true)}
+        onOpenSettings={openSettings}
         searchRef={searchRef}
       />
 

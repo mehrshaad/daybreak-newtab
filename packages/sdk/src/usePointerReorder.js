@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FLIP_ITEMS } from "./useFlip";
 
 // Realtime reordering with pointer events instead of HTML5 drag-and-drop.
@@ -17,6 +17,31 @@ import { FLIP_ITEMS } from "./useFlip";
 // term the tile jumps by the width of the slot it just swapped into.
 
 const START_THRESHOLD = 5; // px before a press becomes a drag, so clicks survive
+
+// Measure the element's untransformed layout box. Clearing and restoring the
+// transform inside one task means nothing is painted in between.
+const measureLayoutRect = (node) => {
+  const applied = node.style.transform;
+  node.style.transform = "";
+  const rect = node.getBoundingClientRect();
+  node.style.transform = applied;
+  return rect;
+};
+
+// L — where the element's layout centre is *now*.
+const rebase = (s) => {
+  const rect = measureLayoutRect(s.node);
+  s.layoutX = rect.left + rect.width / 2;
+  s.layoutY = rect.top + rect.height / 2;
+};
+
+const apply = (s, clientX, clientY) => {
+  s.lastX = clientX;
+  s.lastY = clientY;
+  const tx = s.grabX + (clientX - s.startX) - s.layoutX;
+  const ty = s.grabY + (clientY - s.startY) - s.layoutY;
+  s.node.style.transform = `translate(${tx}px, ${ty}px)`;
+};
 
 export const pointInRect = (rect, x, y) =>
   !!rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
@@ -50,16 +75,6 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
     setDraggingId(null);
   }, []);
 
-  // Measure the element's untransformed layout box.
-  const measureLayoutRect = (node) => {
-    const applied = node.style.transform;
-    node.style.transform = "";
-    const rect = node.getBoundingClientRect();
-    node.style.transform = applied;
-    return rect;
-  };
-
-
   const onPointerDown = useCallback(
     (event, id) => {
       if (!enabled) return;
@@ -81,7 +96,11 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
         grabY: rect.top + rect.height / 2,
         layoutX: rect.left + rect.width / 2, // L — re-measured after each reorder
         layoutY: rect.top + rect.height / 2,
+        lastX: event.clientX,
+        lastY: event.clientY,
         slots: [], // frozen slot geometry, filled when the drag activates
+        // Index this drag has asked for and is waiting to see committed.
+        pending: null,
         active: false,
       };
     },
@@ -90,12 +109,6 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
 
   useEffect(() => {
     if (!enabled) return undefined;
-
-    const apply = (s, clientX, clientY) => {
-      const tx = s.grabX + (clientX - s.startX) - s.layoutX;
-      const ty = s.grabY + (clientY - s.startY) - s.layoutY;
-      s.node.style.transform = `translate(${tx}px, ${ty}px)`;
-    };
 
     const onMove = (event) => {
       const s = state.current;
@@ -139,23 +152,17 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
       const slot = slotIndexAt(s.slots, event.clientX, event.clientY);
       if (slot === -1) return;
 
+      // One reorder at a time. `latest.current.ids` only catches up when the
+      // new order is committed, so acting on it again before then would compute
+      // `from` against a stale order and move the item twice.
+      if (s.pending !== null) return;
+
       const { ids: order, onReorder: reorder } = latest.current;
       const from = order.indexOf(s.id);
       if (from === -1 || from === slot) return;
 
+      s.pending = slot;
       reorder(from, slot);
-
-      // React has not laid out the new order yet; re-measure on the next frame
-      // and re-apply so the item never leaves the cursor.
-      requestAnimationFrame(() => {
-        const cur = state.current;
-        if (!cur?.node) return;
-        const rect = measureLayoutRect(cur.node);
-        cur.layoutRect = rect;
-        cur.layoutX = rect.left + rect.width / 2;
-        cur.layoutY = rect.top + rect.height / 2;
-        apply(cur, event.clientX, event.clientY);
-      });
     };
 
     const onUp = () => {
@@ -171,6 +178,25 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
       window.removeEventListener("pointercancel", onUp);
     };
   }, [enabled, containerRef, finish]);
+
+  // Re-base as soon as the new order is committed, and put the item back under
+  // the cursor in the same frame.
+  //
+  // This has to be a layout effect. Doing it in requestAnimationFrame was the
+  // bug behind the held tile jumping a slot away from the pointer as soon as it
+  // passed a neighbour: pointermove is a continuous event, so React commits the
+  // reorder in a scheduler callback that can run *after* the frame callback. The
+  // measurement was then taken against the old layout, and since L is only read
+  // here, the item stayed a whole slot out for the rest of the drag.
+  const orderKey = ids.join("|");
+  useLayoutEffect(() => {
+    const s = state.current;
+    if (!s) return;
+    s.pending = null;
+    if (!s.active || !s.node) return;
+    rebase(s);
+    apply(s, s.lastX, s.lastY);
+  }, [orderKey]);
 
   // Leaving edit mode mid-drag must not strand a floating tile.
   useEffect(() => {
