@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag like v1.1.0 to build the extension from the `codes` branch and
+# Push a tag like v1.1.0 to build the extension from the tagged commit and
 # attach the packaged zip to a GitHub Release.
 on:
   push:
@@ -13,8 +13,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: codes
       - uses: actions/setup-node@v4
         with:
           node-version: 20
