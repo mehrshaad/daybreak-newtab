@@ -76,6 +76,18 @@ export function seedFor(id) {
   return h;
 }
 
+// Shared transition for interactive chrome, so hover and focus feedback lands
+// at the same speed everywhere.
+export const CONTROL_TRANSITION =
+  "background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease, opacity .18s ease";
+
+// Lift applied on hover: enough to be unmistakable, short of bouncy.
+export const HOVER_LIFT = {
+  background: "var(--panel2)",
+  boxShadow: "0 4px 14px rgba(0,0,0,.16)",
+  transform: "translateY(-1px)",
+};
+
 // The round 36px header controls.
 export function roundControl(extra) {
   return {
@@ -89,7 +101,7 @@ export function roundControl(extra) {
     placeItems: "center",
     color: "var(--fg)",
     flex: "none",
-    transition: "background .18s ease",
+    transition: CONTROL_TRANSITION,
     ...extra,
   };
 }
@@ -104,7 +116,7 @@ export function softButton(extra) {
     background: "var(--panel)",
     border: "1px solid var(--line)",
     color: "var(--fg)",
-    transition: "background .18s ease",
+    transition: CONTROL_TRANSITION,
     ...extra,
   };
 }
@@ -119,7 +131,7 @@ export function primaryButton(extra) {
     border: 0,
     background: "var(--accent)",
     color: "var(--onAccent)",
-    transition: "opacity .18s ease",
+    transition: CONTROL_TRANSITION,
     ...extra,
   };
 }

@@ -19,6 +19,7 @@ function panelFor(manifest) {
 }
 
 function WidgetSettingsDrawer({
+  open,
   instanceId,
   board,
   widgets,
@@ -43,7 +44,7 @@ function WidgetSettingsDrawer({
   const Panel = panelFor(manifest);
 
   return (
-    <Drawer open onClose={onClose} width={340} label={`${manifest.name} settings`}>
+    <Drawer open={open} onClose={onClose} width={340} label={`${manifest.name} settings`}>
       <DrawerHeader
         eyebrow="Widget settings"
         title={manifest.name}

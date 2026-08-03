@@ -75,12 +75,16 @@ export function defaultSettings() {
       gap: VISUAL_DEFAULTS.gap,
       radius: VISUAL_DEFAULTS.radius,
       alpha: VISUAL_DEFAULTS.alpha,
+      pageZoom: VISUAL_DEFAULTS.pageZoom,
     },
     behavior: {
       zoomMode: DEFAULT_ZOOM_MODE,
       showGreeting: true,
       shortcuts: true,
       searchEngine: "google",
+      // Only the permission-free source is on by default; the others are
+      // opt-in and each asks for its Chrome permission when switched on.
+      suggest: { links: true, tabs: false, bookmarks: false, history: false },
     },
     profile: { name: "" },
     widgets: {},

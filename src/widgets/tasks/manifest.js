@@ -12,6 +12,7 @@ export default {
     [4, 2],
     [4, 3],
     [5, 3],
+    [4, 4],
   ],
   defaultSize: [4, 3],
   options: [

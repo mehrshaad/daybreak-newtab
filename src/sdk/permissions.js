@@ -28,6 +28,15 @@ export function requestPermission(name) {
   });
 }
 
+// Hand a permission back when the feature that needed it is switched off, so
+// the extension holds no more access than it is actually using.
+export function dropPermission(name) {
+  if (!name || !hasPermissionsApi()) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    chrome.permissions.remove({ permissions: [name] }, (removed) => resolve(!!removed));
+  });
+}
+
 export function hasAllPermissions(names = []) {
   if (!names.length) return Promise.resolve(true);
   if (!hasPermissionsApi()) return Promise.resolve(false);

@@ -18,6 +18,7 @@ import { cameraFor } from "./core/tileStyle";
 import { background, tokens } from "./core/tokens";
 import { useColumns } from "./core/useColumns";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
+import { resolveTheme, useSystemTheme } from "./core/useSystemTheme";
 import { animateExit } from "./core/useFlip";
 import { moveItem } from "./core/usePointerReorder";
 import { clearBucket } from "./sdk/bucket";
@@ -36,7 +37,11 @@ function App() {
   const { settings, update, updateWidget, replaceSettings, resetSettings } =
     useSettings();
   const { appearance, behavior, board, widgets, profile } = settings;
-  const { theme, accent, wall } = appearance;
+  const { accent, wall } = appearance;
+  // The stored preference may be "system"; resolve it once here so every token
+  // lookup and every child sees a concrete theme.
+  const fromSystem = useSystemTheme();
+  const theme = resolveTheme(appearance.theme, fromSystem);
 
   const [editing, setEditing] = useState(false);
   const [zoom, setZoom] = useState(null);
@@ -60,6 +65,20 @@ function App() {
   const ids = useMemo(() => knownIds(board.ids), [board.ids]);
   const zoomMode = behavior.zoomMode;
   const summary = useMemo(() => heroSummary(settings, ids), [settings, ids]);
+
+  // Remembered so the widget drawer can finish its exit animation with its
+  // content still rendered, rather than blanking the instant it closes.
+  const lastPanel = useRef(null);
+  if (panel) lastPanel.current = panel;
+  const panelId = panel || lastPanel.current;
+
+  // An open drawer overlaps the board on anything but a very wide window, so
+  // the content shifts left by the drawer's width instead of hiding under it.
+  const openDrawerWidth = settingsOpen ? 400 : panel ? 340 : 0;
+  const shift =
+    openDrawerWidth && typeof window !== "undefined" && window.innerWidth < 1600
+      ? openDrawerWidth
+      : 0;
 
   const toast = useCallback((message) => {
     clearTimeout(toastTimer.current);
@@ -420,9 +439,12 @@ function App() {
       fontFamily: "'DM Sans', system-ui, sans-serif",
       color: "var(--fg)",
       WebkitFontSmoothing: "antialiased",
+      // Makes room for an open drawer rather than letting it cover the board.
+      paddingRight: shift ? `${shift}px` : 0,
+      transition: "padding-right .3s cubic-bezier(.2,.8,.2,1)",
       ...tokens(theme, accent),
     }),
-    [theme, accent]
+    [theme, accent, shift]
   );
 
   // The page background is painted on the root element, not on a layer inside
@@ -444,16 +466,31 @@ function App() {
     html.style.backgroundAttachment = "fixed";
     // Body must stay clear or it would cover the canvas again.
     document.body.style.background = "transparent";
+    // Tells Chrome to theme form controls and scrollbars to match.
+    html.style.colorScheme = theme;
     return () => {
       html.style.background = "";
       html.style.backgroundAttachment = "";
+      html.style.colorScheme = "";
     };
   }, [theme, accent, wall]);
+
+  // Page zoom uses the CSS `zoom` property rather than a transform so the
+  // layout actually reflows — text rewraps and the grid recalculates — which is
+  // what Ctrl+ does. A transform would just scale a fixed-width page.
+  useEffect(() => {
+    const pct = appearance.pageZoom ?? 100;
+    document.body.style.zoom = pct === 100 ? "" : `${pct}%`;
+    return () => {
+      document.body.style.zoom = "";
+    };
+  }, [appearance.pageZoom]);
 
   return (
     <div style={rootStyle}>
       <Header
         scrolled={scrolled}
+        theme={theme}
         editing={editing}
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
@@ -566,44 +603,48 @@ function App() {
         />
       ) : null}
 
-      {panel ? (
+      {/* Both drawers stay mounted while they animate out, which is why they
+          take an `open` prop rather than being conditionally rendered. The
+          widget drawer keeps the last id so its content does not vanish
+          mid-exit. */}
+      {panelId ? (
         <WidgetSettingsDrawer
-          instanceId={panel}
+          open={!!panel}
+          instanceId={panelId}
           board={board}
           widgets={widgets}
           onClose={() => setPanel(null)}
-          onSize={(size) => setSize(panel, size)}
-          onOptions={(patch) => setWidgetOptions(panel, patch)}
-          onConfig={(patch) => setWidgetConfig(panel, patch)}
-          onRate={(rate) => updateWidget(panel, { rate })}
-          onRemove={() => removeTile(panel)}
+          onSize={(size) => setSize(panelId, size)}
+          onOptions={(patch) => setWidgetOptions(panelId, patch)}
+          onConfig={(patch) => setWidgetConfig(panelId, patch)}
+          onRate={(rate) => updateWidget(panelId, { rate })}
+          onRemove={() => removeTile(panelId)}
         />
       ) : null}
 
-      {settingsOpen ? (
-        <SettingsDrawer
-          settings={settings}
-          update={update}
-          onClose={() => setSettingsOpen(false)}
-          onReset={() => {
-            resetSettings();
-            setSettingsOpen(false);
-          }}
-          onRestore={(incoming) => {
-            replaceSettings(incoming);
-            setSettingsOpen(false);
-          }}
-          toast={toast}
-        />
-      ) : null}
+      <SettingsDrawer
+        open={settingsOpen}
+        settings={settings}
+        theme={theme}
+        update={update}
+        onClose={() => setSettingsOpen(false)}
+        onReset={() => {
+          resetSettings();
+          setSettingsOpen(false);
+        }}
+        onRestore={(incoming) => {
+          replaceSettings(incoming);
+          setSettingsOpen(false);
+        }}
+        toast={toast}
+      />
 
-      {storeOpen ? (
-        <Store
-          boardIds={board.ids}
-          onClose={() => setStoreOpen(false)}
-          onToggle={toggleFromStore}
-        />
-      ) : null}
+      <Store
+        open={storeOpen}
+        boardIds={board.ids}
+        onClose={() => setStoreOpen(false)}
+        onToggle={toggleFromStore}
+      />
 
       {menu && menuModel ? (
         <ContextMenu

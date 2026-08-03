@@ -7,12 +7,23 @@ import {
   restoreBuckets,
 } from "../core/backup";
 import { MONO } from "../core/styles";
-import { ACCENTS, WALLPAPERS, backgroundSwatch } from "../core/tokens";
+import {
+  ACCENTS,
+  PAGE_ZOOM_MAX,
+  PAGE_ZOOM_MIN,
+  WALLPAPERS,
+  backgroundSwatch,
+} from "../core/tokens";
+import { SOURCES } from "../core/suggest";
+import { systemTheme } from "../core/useSystemTheme";
+import { dropPermission, requestPermission } from "../sdk/permissions";
 import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 
 function SettingsDrawer({
+  open,
   settings,
+  theme,
   update,
   onClose,
   onReset,
@@ -20,6 +31,7 @@ function SettingsDrawer({
   toast,
 }) {
   const { appearance, behavior, profile } = settings;
+  const suggest = behavior.suggest || { links: true };
   const fileRef = useRef(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -38,22 +50,31 @@ function SettingsDrawer({
   };
 
   return (
-    <Drawer open onClose={onClose} width={400} label="Settings" scrim>
+    <Drawer open={open} onClose={onClose} width={400} label="Settings">
       <DrawerHeader title="Settings" onClose={onClose} />
 
       <Section title="Appearance" style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", gap: 6 }}>
-          {["dark", "light"].map((t) => (
+          {[
+            ["system", "System"],
+            ["dark", "Dark"],
+            ["light", "Light"],
+          ].map(([value, label]) => (
             <Pill
-              key={t}
-              active={appearance.theme === t}
-              onClick={() => update("appearance", { theme: t })}
+              key={value}
+              active={(appearance.theme || "system") === value}
+              onClick={() => update("appearance", { theme: value })}
               style={{ flex: 1, textAlign: "center", padding: 10 }}
             >
-              {t === "dark" ? "Dark" : "Light"}
+              {label}
             </Pill>
           ))}
         </div>
+        {(appearance.theme || "system") === "system" ? (
+          <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 8 }}>
+            Following your {systemTheme()} browser setting.
+          </div>
+        ) : null}
       </Section>
 
       <Section title="Accent" style={{ marginBottom: 22 }}>
@@ -104,7 +125,7 @@ function SettingsDrawer({
                 display: "grid",
                 placeItems: "center",
                 padding: 0,
-                background: backgroundSwatch(appearance.theme, appearance.accent, w),
+                background: backgroundSwatch(theme, appearance.accent, w),
                 border: `1px solid ${
                   appearance.wall === w ? "var(--accent)" : "var(--line)"
                 }`,
@@ -157,6 +178,15 @@ function SettingsDrawer({
             value={appearance.alpha}
             onChange={(alpha) => update("appearance", { alpha })}
           />
+          <Slider
+            label="Page zoom"
+            suffix="%"
+            min={PAGE_ZOOM_MIN}
+            max={PAGE_ZOOM_MAX}
+            step={5}
+            value={appearance.pageZoom ?? 100}
+            onChange={(pageZoom) => update("appearance", { pageZoom })}
+          />
         </div>
       </Section>
 
@@ -198,6 +228,41 @@ function SettingsDrawer({
             on={behavior.shortcuts}
             onChange={() => update("behavior", { shortcuts: !behavior.shortcuts })}
           />
+        </div>
+      </Section>
+
+      <Section title="Search suggestions" style={{ marginBottom: 22 }}>
+        <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5, marginBottom: 8 }}>
+          What the search box offers as you type. Each source beyond your quick
+          links needs a Chrome permission, asked for only when you switch it on.
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {SOURCES.map((source) => {
+            const on = !!suggest[source.key];
+            return (
+              <Toggle
+                key={source.key}
+                label={source.label}
+                on={on}
+                // The permission request must run inside this click; Chrome
+                // rejects one that is not tied to a user gesture.
+                onChange={async () => {
+                  if (!on && source.permission) {
+                    const granted = await requestPermission(source.permission);
+                    if (!granted) {
+                      toast(`${source.label} needs the ${source.permission} permission`);
+                      return;
+                    }
+                  }
+                  if (on && source.permission) {
+                    // Give the permission back when the source is turned off.
+                    dropPermission(source.permission);
+                  }
+                  update("behavior", { suggest: { ...suggest, [source.key]: !on } });
+                }}
+              />
+            );
+          })}
         </div>
       </Section>
 

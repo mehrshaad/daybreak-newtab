@@ -45,15 +45,28 @@ export function useKeyboard({ enabled = true, onEscape, onSearch, onToggleEdit, 
 
 // Tracks whether the page has scrolled past a threshold, for the condensing
 // header. Uses a passive listener so scrolling stays smooth.
-export function useScrolled(threshold = 10) {
+//
+// The threshold is hysteretic — it engages at `on` and only releases back below
+// `off`. With a single value, resting near it (very common just off the top of
+// the page, and worse because condensing the header changes the page height and
+// can nudge the scroll position back) made the header and search bar flicker
+// between sizes. Separate thresholds give it somewhere stable to sit.
+export function useScrolled(on = 24, off = 6) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > threshold);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [threshold]);
+    const update = () => {
+      const y = window.scrollY;
+      setScrolled((was) => (was ? y > off : y > on));
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [on, off]);
 
   return scrolled;
 }

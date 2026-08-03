@@ -1,12 +1,40 @@
+import googleMark from "../assets/brand/google-favicon-2025.webp";
 import { brandFor, hashHue } from "../core/brands";
+
+// Google's current favicon, supplied as artwork rather than a monochrome path,
+// so it is used directly instead of being tinted like the glyph brands.
+const ARTWORK = { google: googleMark };
 
 // A rounded app-icon tile with a brand glyph, falling back to a monogram on a
 // hashed-hue gradient so any name renders something recognizable.
 function IconTile({ name = "", size = 40, radius, bare = false }) {
+  const key = String(name).toLowerCase().trim();
   const brand = brandFor(name);
-  const hue = hashHue(String(name).toLowerCase().trim() || "?");
+  const hue = hashHue(key || "?");
   const Glyph = brand?.Glyph;
   const letter = String(name).trim()[0]?.toUpperCase() || "?";
+
+  // Full-colour artwork wins over a tinted glyph where we have it.
+  const artwork = ARTWORK[key];
+  if (artwork) {
+    return (
+      <img
+        src={artwork}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: bare ? 0 : (radius ?? size * 0.28),
+          objectFit: "contain",
+          flex: "none",
+          display: "block",
+        }}
+      />
+    );
+  }
 
   // "bare" = just the coloured glyph, no tile (used in the search box).
   if (bare) {

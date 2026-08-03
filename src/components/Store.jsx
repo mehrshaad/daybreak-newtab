@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MONO, mark, pill, primaryButton, seedFor } from "../core/styles";
 import { WIDGETS, categories, getWidget, typeOf } from "../widgets/registry";
 import { Pill } from "./primitives";
@@ -307,11 +307,31 @@ npm run build     the widget now appears here`}
   );
 }
 
-function Store({ boardIds, onClose, onToggle, initialDetail }) {
+const EXIT_MS = 220;
+
+function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
+  // Kept mounted through the exit so closing animates too.
+  const [present, setPresent] = useState(open);
+  const [closing, setClosing] = useState(false);
   const [tab, setTab] = useState("Discover");
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState(initialDetail || null);
+
+  useEffect(() => {
+    if (open) {
+      setPresent(true);
+      setClosing(false);
+      return undefined;
+    }
+    if (!present) return undefined;
+    setClosing(true);
+    const t = setTimeout(() => {
+      setPresent(false);
+      setClosing(false);
+    }, EXIT_MS);
+    return () => clearTimeout(t);
+  }, [open, present]);
 
   const cats = useMemo(() => categories(), []);
   const onBoard = useMemo(
@@ -334,6 +354,8 @@ function Store({ boardIds, onClose, onToggle, initialDetail }) {
   const detailWidget = detail ? getWidget(detail) : null;
   const showBrowse = tab !== "Add widgets" && !detailWidget;
 
+  if (!present) return null;
+
   return (
     <div
       style={{
@@ -347,7 +369,9 @@ function Store({ boardIds, onClose, onToggle, initialDetail }) {
         WebkitBackdropFilter: "blur(28px) saturate(140%)",
         display: "flex",
         flexDirection: "column",
-        animation: "db-in .3s ease both",
+        animation: closing
+          ? `db-store-out ${EXIT_MS}ms ease both`
+          : "db-store-in .3s cubic-bezier(.2,.8,.2,1) both",
       }}
       role="dialog"
       aria-modal="true"
@@ -366,15 +390,9 @@ function Store({ boardIds, onClose, onToggle, initialDetail }) {
         <div style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-.02em" }}>
           Widgets
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 4,
-            padding: 3,
-            borderRadius: 999,
-            background: "var(--panel)",
-          }}
-        >
+        {/* Transparent: the pills already read as a group, so a filled
+            container was just a slab of colour. */}
+        <div style={{ display: "flex", gap: 4, padding: 3, borderRadius: 999 }}>
           {TABS.map((t) => (
             <Pill
               key={t}

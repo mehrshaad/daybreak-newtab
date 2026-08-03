@@ -1,6 +1,6 @@
 import { LuBookmark, LuRotateCcw, LuWandSparkles } from "react-icons/lu";
 import { PRESETS, SAVED_LAYOUT } from "../core/schema";
-import { MONO, primaryButton, softButton } from "../core/styles";
+import { HOVER_LIFT, MONO, primaryButton, softButton } from "../core/styles";
 import { Button, Pill } from "./primitives";
 
 // The floating dock shown in layout-edit mode. Occupies the same spot as the
@@ -111,7 +111,7 @@ function PresetsDock({
               placeItems: "center",
               background: "transparent",
             }}
-            hover={{ background: "var(--panel2)", color: "var(--accent)" }}
+            hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
           >
             <LuRotateCcw size={13} />
           </Button>
@@ -133,7 +133,7 @@ function PresetsDock({
           gap: 7,
           whiteSpace: "nowrap",
         }}
-        hover={{ background: "var(--panel2)", color: "var(--accent)" }}
+        hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
       >
         <LuWandSparkles size={13} />
         Auto arrange
@@ -143,7 +143,7 @@ function PresetsDock({
         onClick={onAddWidget}
         styleFor={softButton}
         style={{ padding: "8px 14px", background: "transparent" }}
-        hover={{ background: "var(--panel2)" }}
+        hover={HOVER_LIFT}
       >
         Add widget
       </Button>
@@ -151,7 +151,7 @@ function PresetsDock({
         onClick={onDone}
         styleFor={primaryButton}
         style={{ padding: "8px 16px" }}
-        hover={{ opacity: 0.9 }}
+        hover={{ opacity: 0.92, transform: "translateY(-1px)" }}
       >
         Done
       </Button>

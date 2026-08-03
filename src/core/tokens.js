@@ -20,13 +20,22 @@ export const ACCENTS = [
 export const WALLPAPERS = ["Flat", "Mesh", "Dusk", "Grain"];
 
 export const DEFAULTS = {
-  theme: "dark",
+  // "system" follows the OS/browser colour scheme, which is what a new tab
+  // page should do out of the box. Resolved by resolveTheme() before any
+  // token lookup.
+  theme: "system",
   accent: ACCENTS[0],
   wall: "Mesh",
   gap: 14,
   radius: 18,
   alpha: 100,
+  pageZoom: 100,
 };
+
+// Page zoom, as a percentage, applied with the CSS `zoom` property so the
+// layout genuinely reflows the way Ctrl+ does rather than being scaled.
+export const PAGE_ZOOM_MIN = 70;
+export const PAGE_ZOOM_MAX = 150;
 
 const HEX6 = /^#[0-9a-f]{6}$/i;
 

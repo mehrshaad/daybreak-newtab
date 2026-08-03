@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { pill, toggleStyles } from "../core/styles";
 import { useHover } from "../core/useHover";
 
@@ -105,14 +105,41 @@ export function Slider({ label, value, min, max, step, suffix = "", onChange }) 
   );
 }
 
-// Right-hand sheet used by both settings drawers. Traps Escape, restores focus
-// and closes when the backdrop is clicked.
-export function Drawer({ open, onClose, width = 340, label, scrim = false, children }) {
+// Right-hand sheet used by both settings drawers.
+//
+// Deliberately no scrim and no blur: the whole point of the settings drawer is
+// watching the board change as you adjust it, so dimming or blurring the thing
+// being configured is self-defeating. An invisible click-catcher still closes it
+// on an outside click.
+//
+// Closing is animated too. That needs the panel to stay mounted for the length
+// of the exit, so `open` going false starts the animation and unmounting waits
+// for it to finish.
+const EXIT_MS = 220;
+
+export function Drawer({ open, onClose, width = 340, label, children }) {
   const panelRef = useRef(null);
   const restoreRef = useRef(null);
+  const [present, setPresent] = useState(open);
+  const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (open) {
+      setPresent(true);
+      setClosing(false);
+      return undefined;
+    }
+    if (!present) return undefined;
+    setClosing(true);
+    const t = setTimeout(() => {
+      setPresent(false);
+      setClosing(false);
+    }, EXIT_MS);
+    return () => clearTimeout(t);
+  }, [open, present]);
+
+  useEffect(() => {
+    if (!present || closing) return undefined;
     restoreRef.current = document.activeElement;
     const node = panelRef.current;
     if (node) {
@@ -124,30 +151,22 @@ export function Drawer({ open, onClose, width = 340, label, scrim = false, child
     return () => {
       restoreRef.current?.focus?.();
     };
-  }, [open]);
+  }, [present, closing]);
 
-  if (!open) return null;
+  if (!present) return null;
 
   return (
     <>
-      {scrim ? (
-        <div
-          onClick={onClose}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 60,
-            background: "var(--scrim)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            animation: "db-fade .25s ease both",
-          }}
-        />
-      ) : null}
+      {/* Transparent: catches the outside click without hiding the board. */}
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        style={{ position: "fixed", inset: 0, zIndex: 49, background: "transparent" }}
+      />
       <div
         ref={panelRef}
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-label={label}
         tabIndex={-1}
         style={{
@@ -156,13 +175,16 @@ export function Drawer({ open, onClose, width = 340, label, scrim = false, child
           right: 0,
           bottom: 0,
           width: `min(${width}px, 100vw)`,
-          zIndex: scrim ? 61 : 50,
+          zIndex: 50,
           background: "var(--sheet)",
           borderLeft: "1px solid var(--line)",
           backdropFilter: "blur(28px)",
+          boxShadow: "-18px 0 50px rgba(0,0,0,.22)",
           padding: "24px",
           overflow: "auto",
-          animation: "db-in .28s ease both",
+          animation: closing
+            ? `db-slide-out ${EXIT_MS}ms ease both`
+            : "db-slide-in .3s cubic-bezier(.2,.8,.2,1) both",
           outline: "none",
         }}
       >

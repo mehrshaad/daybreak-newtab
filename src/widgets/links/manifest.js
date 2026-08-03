@@ -10,9 +10,12 @@ export default {
     "is known, a lettered tile otherwise. Nothing is fetched from the sites " +
     "themselves, so opening a new tab contacts nobody.",
   sizes: [
+    [3, 2],
     [4, 2],
     [5, 2],
+    [6, 2],
     [4, 3],
+    [6, 3],
   ],
   defaultSize: [5, 2],
   options: [

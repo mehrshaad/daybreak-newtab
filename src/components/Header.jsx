@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LuMoon, LuSettings, LuSun } from "react-icons/lu";
 import { useSettings } from "../core/settingsContext";
-import { MONO, roundControl, softButton } from "../core/styles";
+import { HOVER_LIFT, MONO, roundControl, softButton } from "../core/styles";
+import { gatherSuggestions } from "../core/suggest";
 import { SEARCH_ENGINES } from "../utils";
 import IconTile from "./IconTile";
+import SearchSuggestions from "./SearchSuggestions";
 import { Button } from "./primitives";
 
 const isMac = () =>
@@ -98,6 +100,7 @@ function EnginePicker({ engine, onPick }) {
 
 function Header({
   scrolled,
+  theme,
   editing,
   onToggleEdit,
   onOpenStore,
@@ -108,7 +111,8 @@ function Header({
   const engine = SEARCH_ENGINES[settings.behavior.searchEngine]
     ? settings.behavior.searchEngine
     : "google";
-  const dark = settings.appearance.theme !== "light";
+  // `theme` arrives already resolved, so "system" cannot be mistaken for dark.
+  const dark = theme !== "light";
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -116,11 +120,92 @@ function Header({
     return () => clearInterval(t);
   }, []);
 
+  const [searchActive, setSearchActive] = useState(false);
+  const [searchHover, setSearchHover] = useState(false);
+  const [query, setQuery] = useState("");
+  const [items, setItems] = useState([]);
+  const [active, setActive] = useState(-1);
+  const seq = useRef(0);
+
+  const suggestEnabled = settings.behavior.suggest || { links: true };
+  const linkItems = useMemo(() => {
+    // Suggestions search whatever Quick Links tiles are configured.
+    const out = [];
+    for (const [id, rec] of Object.entries(settings.widgets || {})) {
+      if (!id.startsWith("links")) continue;
+      for (const l of rec?.config?.items || []) out.push(l);
+    }
+    return out;
+  }, [settings.widgets]);
+
+  // Debounced so typing does not hammer chrome.history on every keystroke.
+  useEffect(() => {
+    if (!searchActive || query.trim().length < 2) {
+      setItems([]);
+      setActive(-1);
+      return undefined;
+    }
+    const mine = ++seq.current;
+    const t = setTimeout(async () => {
+      const found = await gatherSuggestions({
+        query,
+        links: linkItems,
+        enabled: suggestEnabled,
+      });
+      // Ignore a slow source that lost the race to a newer query.
+      if (mine !== seq.current) return;
+      setItems(found);
+      setActive(-1);
+    }, 140);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, searchActive, linkItems]);
+
+  const go = useCallback((url) => {
+    window.location.href = url;
+  }, []);
+
+  const pick = useCallback(
+    (item) => {
+      if (item.kind === "tabs" && typeof chrome !== "undefined" && chrome.tabs) {
+        // Switching to an existing tab, not navigating this one.
+        chrome.tabs.update(item.tabId, { active: true });
+        if (item.windowId != null && chrome.windows) {
+          chrome.windows.update(item.windowId, { focused: true });
+        }
+        return;
+      }
+      if (item.url) go(item.url);
+    },
+    [go]
+  );
+
   const submit = (e) => {
     e.preventDefault();
-    const q = new FormData(e.currentTarget).get("q")?.toString().trim();
+    // Enter on a highlighted suggestion takes it instead of searching.
+    if (active >= 0 && items[active]) {
+      pick(items[active]);
+      return;
+    }
+    const q = query.trim();
     if (!q) return;
-    window.location.href = SEARCH_ENGINES[engine].url + encodeURIComponent(q);
+    go(SEARCH_ENGINES[engine].url + encodeURIComponent(q));
+  };
+
+  const onKeyDown = (e) => {
+    if (!items.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((i) => (i + 1) % items.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((i) => (i <= 0 ? items.length - 1 : i - 1));
+    } else if (e.key === "Escape" && items.length) {
+      // Clear the list first; a second Escape falls through to the app.
+      e.stopPropagation();
+      setItems([]);
+      setActive(-1);
+    }
   };
 
   return (
@@ -169,17 +254,30 @@ function Header({
         <form
           onSubmit={submit}
           role="search"
+          onFocusCapture={() => setSearchActive(true)}
+          onBlurCapture={() => setSearchActive(false)}
+          onMouseEnter={() => setSearchHover(true)}
+          onMouseLeave={() => setSearchHover(false)}
           style={{
+            position: "relative",
             display: "flex",
             alignItems: "center",
             gap: "10px",
             width: "100%",
-            maxWidth: scrolled ? "440px" : "560px",
+            // Widen a little on focus so typing feels like the field opened up.
+            maxWidth: searchActive ? "640px" : scrolled ? "440px" : "560px",
             padding: scrolled ? "7px 15px" : "10px 16px",
             borderRadius: "999px",
-            background: scrolled ? "var(--panel2)" : "var(--panel)",
-            border: "1px solid var(--line)",
-            transition: "all .25s ease",
+            background: searchActive || searchHover ? "var(--panel2)" : scrolled ? "var(--panel2)" : "var(--panel)",
+            // Focus is the strongest state, hover a hint of it.
+            border: `1px solid ${searchActive ? "var(--accentLine)" : "var(--line)"}`,
+            boxShadow: searchActive
+              ? "0 6px 22px rgba(0,0,0,.16), 0 0 0 3px var(--accentSoft)"
+              : searchHover
+              ? "0 3px 12px rgba(0,0,0,.10)"
+              : "none",
+            transition:
+              "max-width .28s cubic-bezier(.2,.8,.2,1), background .2s ease, border-color .2s ease, box-shadow .2s ease, padding .25s ease",
           }}
         >
           <EnginePicker
@@ -193,6 +291,12 @@ function Header({
             autoComplete="off"
             placeholder="Search the web…"
             aria-label="Search the web"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={onKeyDown}
+            role="combobox"
+            aria-expanded={items.length > 0}
+            aria-controls="db-suggestions"
             style={{
               flex: 1,
               minWidth: 0,
@@ -217,6 +321,15 @@ function Header({
           >
             {isMac() ? "⌘K" : "Ctrl K"}
           </span>
+
+          {searchActive ? (
+            <SearchSuggestions
+              items={items}
+              activeIndex={active}
+              onPick={pick}
+              onHover={setActive}
+            />
+          ) : null}
         </form>
       </div>
 
@@ -242,14 +355,14 @@ function Header({
             color: editing ? "var(--onAccent)" : "var(--fg)",
             fontWeight: editing ? 500 : 400,
           }}
-          hover={editing ? { opacity: 0.88 } : { background: "var(--panel2)" }}
+          hover={editing ? { opacity: 0.9, transform: "translateY(-1px)" } : HOVER_LIFT}
         >
           {editing ? "Editing" : "Edit layout"}
         </Button>
         <Button
           onClick={onOpenStore}
           styleFor={softButton}
-          hover={{ background: "var(--panel2)" }}
+          hover={HOVER_LIFT}
         >
           Store
         </Button>
@@ -260,7 +373,7 @@ function Header({
           title={dark ? "Switch to light" : "Switch to dark"}
           aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
           styleFor={roundControl}
-          hover={{ background: "var(--panel2)" }}
+          hover={HOVER_LIFT}
         >
           {dark ? <LuMoon size={15} /> : <LuSun size={15} />}
         </Button>
@@ -269,7 +382,7 @@ function Header({
           title="Settings"
           aria-label="Settings"
           styleFor={roundControl}
-          hover={{ background: "var(--panel2)" }}
+          hover={HOVER_LIFT}
         >
           <LuSettings size={15} />
         </Button>

@@ -11,7 +11,6 @@ export default {
   sizes: [
     [3, 2],
     [4, 2],
-    [4, 3],
   ],
   defaultSize: [3, 2],
   options: [

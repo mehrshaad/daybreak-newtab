@@ -11,9 +11,12 @@ export default {
   sizes: [
     [4, 2],
     [5, 2],
-    [4, 3],
+    [6, 2],
+    [6, 3],
+    [8, 3],
+    [8, 4],
   ],
-  defaultSize: [4, 2],
+  defaultSize: [5, 2],
   options: [
     { key: "hideLabels", label: "Hide labels", type: "boolean", default: false },
     { key: "newTab", label: "Open in a new tab", type: "boolean", default: false },
