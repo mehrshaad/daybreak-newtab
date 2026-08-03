@@ -3,6 +3,7 @@ import {
   ACCENTS,
   DEFAULTS,
   background,
+  backgroundSwatch,
   baseColor,
   luminance,
   normalizeAccent,
@@ -101,8 +102,44 @@ describe("background", () => {
 
   it("Mesh tints with the accent and ends on the base color", () => {
     const bg = background("dark", "#6f9bff", "Mesh");
-    expect(bg).toContain("#6f9bff26");
+    expect(bg).toContain("#6f9bff");
     expect(bg.endsWith("#0a0b0e")).toBe(true);
+  });
+
+  // The original values were so faint that all four options looked identical,
+  // which read as "backgrounds don't work". Each must now carry enough alpha to
+  // actually be seen, light theme especially.
+  it("every non-flat background is strong enough to perceive", () => {
+    const strongestAlpha = (css) => {
+      const hexAlphas = [...css.matchAll(/#[0-9a-f]{6}([0-9a-f]{2})/gi)].map((m) =>
+        parseInt(m[1], 16) / 255
+      );
+      return hexAlphas.length ? Math.max(...hexAlphas) : 0;
+    };
+    for (const theme of ["dark", "light"]) {
+      for (const wall of ["Mesh", "Dusk", "Grain"]) {
+        expect(strongestAlpha(background(theme, "#6f9bff", wall)), `${theme}/${wall}`)
+          .toBeGreaterThan(0.1);
+      }
+    }
+  });
+
+  it("all four backgrounds are visually distinct per theme", () => {
+    for (const theme of ["dark", "light"]) {
+      const made = ["Flat", "Mesh", "Dusk", "Grain"].map((w) =>
+        background(theme, "#6f9bff", w)
+      );
+      expect(new Set(made).size).toBe(4);
+    }
+  });
+
+  it("swatches differ from each other too, so the picker is readable", () => {
+    for (const theme of ["dark", "light"]) {
+      const made = ["Flat", "Mesh", "Dusk", "Grain"].map((w) =>
+        backgroundSwatch(theme, "#6f9bff", w)
+      );
+      expect(new Set(made).size).toBe(4);
+    }
   });
 
   it("Dusk and Grain are distinct from Mesh and each other", () => {

@@ -6,17 +6,10 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { ZOOM_MODES } from "../core/schema";
 import { MONO } from "../core/styles";
 import { ACCENTS, WALLPAPERS, backgroundSwatch } from "../core/tokens";
 import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
-const ZOOM_COPY = {
-  Camera: "The board scales toward the tile you clicked.",
-  Expand: "Tile fills the screen, the rest dims out.",
-  Spotlight: "Tile lifts into a centered panel.",
-  None: "Clicks stay inside the widget. Right-click for its menu.",
-};
 
 function SettingsDrawer({
   settings,
@@ -132,37 +125,8 @@ function SettingsDrawer({
         </div>
       </Section>
 
-      <Section title="Click behaviour" style={{ marginBottom: 22 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {ZOOM_MODES.map((mode) => {
-            const on = behavior.zoomMode === mode;
-            return (
-              <button
-                key={mode}
-                type="button"
-                aria-pressed={on}
-                onClick={() => update("behavior", { zoomMode: mode })}
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  background: on ? "var(--accentSoft)" : "var(--panel)",
-                  border: `1px solid ${on ? "var(--accentLine)" : "var(--line)"}`,
-                  color: "var(--fg)",
-                }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 500 }}>
-                  {mode === "None" ? "No zoom" : mode === "Camera" ? "Camera zoom" : mode}
-                </div>
-                <div style={{ fontSize: 11, color: "var(--dim)", marginTop: 2 }}>
-                  {ZOOM_COPY[mode]}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </Section>
+      {/* Click-to-zoom is parked until the interaction is good enough, so the
+          picker is not offered. The modes still exist in the schema. */}
 
       <Section title="Grid" style={{ marginBottom: 22 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

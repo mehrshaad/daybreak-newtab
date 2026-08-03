@@ -90,6 +90,11 @@ export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent) {
 
 export const baseColor = (theme) => (theme !== "light" ? "#0a0b0e" : "#f3f3f1");
 
+// The design's own values were far too weak to read as different backgrounds:
+// in light theme Mesh resolved to an accent at 0.19 alpha over #f3f3f1 and
+// Grain to black at 0.03, so all four looked like the same flat page. These are
+// pushed to where each option is plainly distinguishable while still reading as
+// a backdrop rather than decoration.
 export function background(
   theme = DEFAULTS.theme,
   accentInput = DEFAULTS.accent,
@@ -98,34 +103,56 @@ export function background(
   const dark = theme !== "light";
   const base = baseColor(theme);
   const a = normalizeAccent(accentInput);
+
   if (wall === "Flat") return base;
-  if (wall === "Dusk")
-    return `linear-gradient(170deg, ${dark ? "#141826" : "#e9ecf5"}, ${base} 60%)`;
-  if (wall === "Grain")
+
+  if (wall === "Dusk") {
+    // A deep vertical wash, tinted by the accent at the horizon.
+    return dark
+      ? `linear-gradient(168deg, #1b2338 0%, #12151f 42%, ${base} 100%), ` +
+          `radial-gradient(1200px 620px at 50% 108%, ${a}2e, transparent 70%), ${base}`
+      : `linear-gradient(168deg, #dfe6f6 0%, #eef0f6 46%, ${base} 100%), ` +
+          `radial-gradient(1200px 620px at 50% 108%, ${a}3d, transparent 70%), ${base}`;
+  }
+
+  if (wall === "Grain") {
+    // Fine diagonal hatch. Light theme needs roughly 4x the alpha of dark to
+    // register at all against a near-white page.
+    const line = dark ? "#ffffff12" : "#0b132622";
     return (
-      `repeating-linear-gradient(135deg, ${dark ? "#ffffff08" : "#00000008"} 0 2px, ` +
-      `transparent 2px 12px), ${base}`
+      `repeating-linear-gradient(135deg, ${line} 0 1px, transparent 1px 7px), ` +
+      `radial-gradient(1000px 700px at 15% 0%, ${a}${dark ? "1f" : "26"}, transparent 65%), ` +
+      base
     );
-  // Mesh is the default.
+  }
+
+  // Mesh is the default: two accent blooms plus a counter-light.
   return (
-    `radial-gradient(1100px 700px at 12% -10%, ${a}${dark ? "26" : "30"}, transparent 60%), ` +
-    `radial-gradient(900px 600px at 92% 8%, ${dark ? "#ffffff14" : "#ffffffcc"}, transparent 55%), ` +
+    `radial-gradient(1100px 720px at 8% -12%, ${a}${dark ? "4a" : "5c"}, transparent 62%), ` +
+    `radial-gradient(900px 640px at 96% 4%, ${a}${dark ? "2b" : "38"}, transparent 58%), ` +
+    `radial-gradient(1000px 800px at 50% 120%, ${dark ? "#ffffff10" : "#ffffffdd"}, transparent 60%), ` +
     base
   );
 }
 
-// Small swatch version of `background()` for the picker in settings.
+// Small swatch version of `background()` for the picker in settings. Scaled to
+// the swatch, but tuned to read the same way the full page does.
 export function backgroundSwatch(theme, accent, wall) {
   const dark = theme !== "light";
   const base = baseColor(theme);
   const a = normalizeAccent(accent);
   if (wall === "Flat") return base;
   if (wall === "Dusk")
-    return `linear-gradient(170deg, ${dark ? "#141826" : "#e9ecf5"}, ${base})`;
+    return dark
+      ? `linear-gradient(168deg, #1b2338, #12151f 55%, ${base}), ${base}`
+      : `linear-gradient(168deg, #dfe6f6, #eef0f6 55%, ${base}), ${base}`;
   if (wall === "Grain")
     return (
-      `repeating-linear-gradient(135deg, ${dark ? "#ffffff14" : "#00000012"} 0 2px, ` +
-      `transparent 2px 8px), ${base}`
+      `repeating-linear-gradient(135deg, ${dark ? "#ffffff1f" : "#0b132630"} 0 1px, ` +
+      `transparent 1px 5px), ${base}`
     );
-  return `radial-gradient(60px 40px at 30% 20%, ${a}55, transparent 70%), ${base}`;
+  return (
+    `radial-gradient(46px 32px at 24% 12%, ${a}${dark ? "70" : "80"}, transparent 68%), ` +
+    `radial-gradient(40px 30px at 88% 90%, ${a}40, transparent 65%), ${base}`
+  );
 }

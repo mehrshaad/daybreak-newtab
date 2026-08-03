@@ -13,7 +13,18 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #0a0b0e; // repainted by the app root once tokens resolve
+}
+
+// The page background is set on <html> at runtime (see App). It carries a
+// pre-mount colour here so there is no white flash, and <body> must stay
+// transparent: a background on body paints above negative-z-index content and
+// would hide anything drawn behind the app.
+html {
+  background: #0a0b0e;
+}
+
+body {
+  background: transparent;
 }
 
 body {
@@ -90,6 +101,14 @@ button {
   color: var(--faint);
 }
 
+// A tile clips its content so widgets cannot spill. While an icon inside one is
+// being dragged that clip is what made the icon disappear at the tile edge, so
+// lift it for the duration of the drag. !important is required because the
+// tile's overflow is an inline style.
+[data-flip-id]:has([data-dragging="true"]) {
+  overflow: visible !important;
+}
+
 .db-sr-only {
   position: absolute;
   width: 1px;
@@ -130,6 +149,55 @@ button {
   }
   to {
     opacity: 1;
+  }
+}
+
+// For elements that rise into place but are centred by auto margins rather
+// than a transform. Animating only `translate` leaves `transform` untouched,
+// so it can never clobber a layout transform the way db-in's `transform: none`
+// does.
+@keyframes db-rise-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes db-rise-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+// Right-hand sheets slide in and out.
+@keyframes db-slide-in {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes db-slide-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 24px 0;
   }
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { MONO } from "../../core/styles";
 import { formatClock, nextPhase, phaseLength } from "./phases";
 
-function Timer({ options, focused }) {
+function Timer({ options }) {
   const { longFocus, autoStart } = options;
   const [phase, setPhase] = useState("Focus");
   const [round, setRound] = useState(1);
@@ -61,17 +61,16 @@ function Timer({ options, focused }) {
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: focused ? "center" : "space-between",
-          flexDirection: focused ? "column" : "row",
-          gap: focused ? "clamp(14px, 3vh, 34px)" : 10,
+          justifyContent: "space-between",
+          gap: 10,
         }}
       >
         <div
           style={{
             fontFamily: MONO,
-            fontSize: focused ? "clamp(64px, 13vw, 190px)" : "clamp(26px, 3.4vw, 36px)",
+            fontSize: "clamp(26px, 3.4vw, 36px)",
             fontWeight: 500,
-            letterSpacing: "-.03em",
+            letterSpacing: "-.02em",
             fontVariantNumeric: "tabular-nums",
             lineHeight: 1,
           }}
@@ -81,9 +80,8 @@ function Timer({ options, focused }) {
         <div
           style={{
             display: "flex",
-            gap: focused ? 10 : 6,
+            gap: 6,
             flex: "none",
-            transform: focused ? "scale(1.25)" : "none",
           }}
         >
           <button
@@ -130,13 +128,10 @@ function Timer({ options, focused }) {
 
       <div
         style={{
-          height: focused ? 5 : 3,
+          height: 3,
           borderRadius: 99,
           background: "var(--line)",
           overflow: "hidden",
-          maxWidth: focused ? "min(620px, 70%)" : "none",
-          width: focused ? "100%" : "auto",
-          alignSelf: focused ? "center" : "stretch",
         }}
       >
         <div
@@ -152,10 +147,9 @@ function Timer({ options, focused }) {
       <div
         style={{
           display: "flex",
-          justifyContent: focused ? "center" : "space-between",
-          gap: focused ? "clamp(16px, 4vw, 60px)" : 0,
+          justifyContent: "space-between",
           fontFamily: MONO,
-          fontSize: focused ? "clamp(11px, 1.1vw, 15px)" : 10,
+          fontSize: 10,
           color: "var(--faint)",
         }}
       >

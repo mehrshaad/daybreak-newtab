@@ -63,7 +63,14 @@ function Board({
 
   return (
     <div
-      style={{ position: "relative", flex: 1, padding: "0 28px 80px", overflowX: "clip" }}
+      style={{
+        position: "relative",
+        flex: 1,
+        padding: "0 28px 80px",
+        // Clipping keeps a zoomed board from widening the page, but it would
+        // also cut off a tile dragged past the edge.
+        overflowX: draggingId ? "visible" : "clip",
+      }}
       onContextMenu={onBoardMenu}
     >
       <div ref={boardRef} style={cameraStyle(cam, !!zoom && zoomMode === "Camera")}>

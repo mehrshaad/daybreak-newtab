@@ -33,6 +33,9 @@ function IconGrid({
   return (
     <div
       ref={gridRef}
+      // A drag lifts the whole grid's stacking so the held icon paints above
+      // the tile chrome rather than being clipped or hidden behind it.
+      data-dragging={draggingId ? "true" : undefined}
       style={{
         display: "grid",
         gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
@@ -41,6 +44,7 @@ function IconGrid({
         alignContent: "center",
         justifyItems: "center",
         minWidth: 0,
+        ...(draggingId ? { position: "relative", zIndex: 6, overflow: "visible" } : null),
       }}
     >
       {items.map((item) => {

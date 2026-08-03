@@ -9,9 +9,13 @@ function Toast({ message, hidden }) {
       aria-live="polite"
       style={{
         position: "fixed",
-        left: "50%",
+        // Auto margins, not translateX(-50%) — see PresetsDock: the entrance
+        // animation ends at `transform: none` and would undo the centering.
+        left: 0,
+        right: 0,
+        marginInline: "auto",
+        width: "fit-content",
         bottom: "26px",
-        transform: "translateX(-50%)",
         zIndex: 90,
         padding: "11px 18px",
         borderRadius: "999px",
@@ -20,7 +24,7 @@ function Toast({ message, hidden }) {
         border: "1px solid var(--line)",
         boxShadow: "0 16px 44px rgba(0,0,0,.4)",
         backdropFilter: "blur(20px)",
-        animation: "db-in .2s ease both",
+        animation: "db-rise-in .22s ease both",
         maxWidth: "min(560px, 90vw)",
         textAlign: "center",
       }}

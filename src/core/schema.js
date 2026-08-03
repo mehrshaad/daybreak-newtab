@@ -11,7 +11,12 @@ export const SIZES = [
   [4, 3],
 ];
 
+// Click-to-zoom is parked for a future release: the interaction is not good
+// enough yet, so "None" is the default and the picker is not offered in
+// settings. The modes and their maths are kept intact so the work can be picked
+// back up rather than rewritten.
 export const ZOOM_MODES = ["Camera", "Expand", "Spotlight", "None"];
+export const DEFAULT_ZOOM_MODE = "None";
 
 export const REFRESH_RATES = ["Live", "5 min", "1 hr"];
 
@@ -72,7 +77,7 @@ export function defaultSettings() {
       alpha: VISUAL_DEFAULTS.alpha,
     },
     behavior: {
-      zoomMode: "Camera",
+      zoomMode: DEFAULT_ZOOM_MODE,
       showGreeting: true,
       shortcuts: true,
       searchEngine: "google",

@@ -52,24 +52,32 @@ describe("orderedApps", () => {
 
 describe("gridFor", () => {
   it("grows the grid with the tile", () => {
-    expect(gridFor([4, 2], false).cols).toBeLessThan(gridFor([5, 2], false).cols);
+    expect(gridFor([4, 2]).cols).toBeLessThan(gridFor([5, 2]).cols);
   });
 
-  it("adds a row for a taller tile", () => {
-    expect(gridFor([4, 2], false).rows).toBe(2);
-    expect(gridFor([4, 3], false).rows).toBe(3);
+  it("adds rows for a taller tile", () => {
+    expect(gridFor([4, 2]).rows).toBeLessThan(gridFor([4, 3]).rows);
+    expect(gridFor([4, 3]).rows).toBeLessThan(gridFor([4, 4]).rows);
   });
 
-  it("opens right up when zoomed", () => {
-    const z = gridFor([4, 2], true);
-    expect(z.cols * z.rows).toBeGreaterThanOrEqual(32);
+  // The point of offering Google Apps large sizes: a bigger tile must actually
+  // show meaningfully more icons, not just more padding.
+  it("a large tile holds far more icons than a small one", () => {
+    const small = gridFor([3, 2]);
+    const large = gridFor([6, 4]);
+    expect(large.cols * large.rows).toBeGreaterThan(small.cols * small.rows * 2);
   });
 
   it("never asks for more columns than the board has", () => {
-    expect(gridFor([5, 2], false, 4).cols).toBeLessThanOrEqual(4);
+    expect(gridFor([5, 2], 4).cols).toBeLessThanOrEqual(4);
   });
 
-  it("always leaves room for at least three columns", () => {
-    expect(gridFor([1, 1], false).cols).toBeGreaterThanOrEqual(3);
+  it("always leaves room for at least three columns and two rows", () => {
+    expect(gridFor([1, 1]).cols).toBeGreaterThanOrEqual(3);
+    expect(gridFor([1, 1]).rows).toBeGreaterThanOrEqual(2);
+  });
+
+  it("caps rows so an absurd height cannot explode the grid", () => {
+    expect(gridFor([6, 40]).rows).toBeLessThanOrEqual(5);
   });
 });

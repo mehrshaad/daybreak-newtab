@@ -1,4 +1,4 @@
-import { LuBookmark, LuRotateCcw } from "react-icons/lu";
+import { LuBookmark, LuRotateCcw, LuWandSparkles } from "react-icons/lu";
 import { PRESETS, SAVED_LAYOUT } from "../core/schema";
 import { MONO, primaryButton, softButton } from "../core/styles";
 import { Button, Pill } from "./primitives";
@@ -11,6 +11,7 @@ function PresetsDock({
   onPreset,
   onApplySaved,
   onSaveCurrent,
+  onAutoArrange,
   onAddWidget,
   onDone,
 }) {
@@ -18,9 +19,15 @@ function PresetsDock({
     <div
       style={{
         position: "fixed",
-        left: "50%",
+        // Centred with auto margins rather than translateX(-50%): the db-in
+        // keyframes end at `transform: none`, and an animation with fill both
+        // outranks an inline style, so a transform-based centre gets wiped the
+        // moment the entrance finishes.
+        left: 0,
+        right: 0,
+        marginInline: "auto",
+        width: "fit-content",
         bottom: 24,
-        transform: "translateX(-50%)",
         zIndex: 45,
         display: "flex",
         alignItems: "center",
@@ -30,11 +37,14 @@ function PresetsDock({
         background: "var(--sheet)",
         border: "1px solid var(--line)",
         backdropFilter: "blur(24px)",
-        boxShadow: "0 20px 60px rgba(0,0,0,.45)",
-        maxWidth: "min(94vw, 860px)",
-        flexWrap: "wrap",
+        boxShadow: "0 20px 60px rgba(0,0,0,.28)",
+        // One line whenever the viewport allows; wrap only as a last resort.
+        maxWidth: "calc(100vw - 32px)",
+        flexWrap: "nowrap",
+        overflowX: "auto",
+        scrollbarWidth: "none",
         justifyContent: "center",
-        animation: "db-in .28s ease both",
+        animation: "db-rise-in .3s cubic-bezier(.2,.8,.2,1) both",
       }}
     >
       <span
@@ -109,6 +119,25 @@ function PresetsDock({
       </div>
 
       <div style={{ width: 1, height: 22, background: "var(--line)", margin: "0 2px" }} />
+
+      {/* Repacks what is already on the board; never adds or removes a widget. */}
+      <Button
+        onClick={onAutoArrange}
+        title="Tidy the current widgets into neat rows"
+        styleFor={softButton}
+        style={{
+          padding: "8px 13px",
+          background: "transparent",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 7,
+          whiteSpace: "nowrap",
+        }}
+        hover={{ background: "var(--panel2)", color: "var(--accent)" }}
+      >
+        <LuWandSparkles size={13} />
+        Auto arrange
+      </Button>
 
       <Button
         onClick={onAddWidget}

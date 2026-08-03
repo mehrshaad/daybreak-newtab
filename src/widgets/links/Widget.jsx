@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { LuPlus } from "react-icons/lu";
 import IconGrid from "../../components/IconGrid";
-import { MONO } from "../../core/styles";
 import { moveItem } from "../../core/usePointerReorder";
 import { uid } from "../../utils";
 
@@ -33,15 +32,15 @@ function nameFromUrl(href) {
   }
 }
 
-function Links({ options, config, setConfig, size, focused, editing, columns }) {
+function Links({ options, config, setConfig, size, editing, columns }) {
   const { hideLabels, newTab } = options;
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
 
   // Columns follow the tile width so icons fill the space at every size.
-  const cols = focused ? 8 : Math.max(3, Math.min(size[0], columns));
-  const iconSize = focused ? 48 : Math.max(24, Math.min(40, Math.round(150 / cols)));
+  const cols = Math.max(3, Math.min(size[0], columns));
+  const iconSize = Math.max(24, Math.min(42, Math.round(150 / cols)));
 
   const gridItems = useMemo(
     () => items.map((l) => ({ key: l.id, name: l.name, title: l.url, iconName: l.name })),
@@ -72,7 +71,7 @@ function Links({ options, config, setConfig, size, focused, editing, columns }) 
         items={gridItems}
         cols={cols}
         iconSize={iconSize}
-        gap={focused ? 10 : 6}
+        gap={6}
         showLabels={!hideLabels}
         onOpen={open}
         onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
@@ -144,20 +143,6 @@ function Links({ options, config, setConfig, size, focused, editing, columns }) 
         }
       />
 
-      {focused ? (
-        <div
-          className="db-reveal"
-          style={{
-            marginTop: 10,
-            textAlign: "center",
-            fontFamily: MONO,
-            fontSize: 10,
-            color: "var(--faint)",
-          }}
-        >
-          {items.length} {items.length === 1 ? "link" : "links"} · drag to reorder
-        </div>
-      ) : null}
     </div>
   );
 }

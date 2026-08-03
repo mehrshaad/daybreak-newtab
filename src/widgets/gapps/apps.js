@@ -51,14 +51,14 @@ export function orderedApps(order) {
   return [...known, ...APPS.filter((a) => !seen.has(a.key))];
 }
 
-// How many icons a tile can show without cramping, given its span and whether
-// it is zoomed. Rather than overflow or shrink to nothing, the tile shows a
-// full grid for its size and hides the rest behind a "+N more" affordance.
-export function gridFor(size, focused, columns = 12) {
+// How many icons a tile can show without cramping, given its span. Rather than
+// overflow or shrink icons to nothing, the tile fills a whole grid for its size
+// and hides the rest behind a "+N more" affordance. Zoom is not a factor: it
+// magnifies the tile as-is rather than relaying it out.
+export function gridFor(size, columns = 12) {
   const [w, h] = size;
-  if (focused) return { cols: 8, rows: 4 };
-  // Roughly one column of icons per grid column, two rows per grid row.
+  // Roughly one icon column per grid column, two icon rows per grid row.
   const cols = Math.max(3, Math.min(w + 1, columns));
-  const rows = h >= 3 ? 3 : 2;
+  const rows = Math.max(2, Math.min(h + 1, 5));
   return { cols, rows };
 }

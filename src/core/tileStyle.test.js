@@ -92,8 +92,25 @@ describe("tileStyle zoom modes", () => {
   it("Camera keeps the tile in flow so the board can transform around it", () => {
     const s = tileStyle({ zoomed: true, focused: true, zoomMode: "Camera" });
     expect(s.position).toBe("relative");
-    expect(s.zIndex).toBe(36);
     expect(s.cursor).toBe("default");
+  });
+
+  // A page zoom magnifies the tile exactly as it sits on the board. Restyling
+  // it — a lifted background, a big drop shadow — made it read as a modal being
+  // pulled toward the screen instead.
+  it("Camera does not restyle the focused tile", () => {
+    const plain = tileStyle({ theme: "dark", alpha: 100 });
+    const zoomedIn = tileStyle({
+      theme: "dark",
+      alpha: 100,
+      zoomed: true,
+      focused: true,
+      zoomMode: "Camera",
+    });
+    expect(zoomedIn.background).toBe(plain.background);
+    expect(zoomedIn.boxShadow).toBe(plain.boxShadow);
+    expect(zoomedIn.borderRadius).toBe(plain.borderRadius);
+    expect(zoomedIn.padding).toBe(plain.padding);
   });
 
   it("Expand pins to the viewport and reserves room for the drawer", () => {

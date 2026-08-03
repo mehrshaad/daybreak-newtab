@@ -9,12 +9,13 @@ import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
 import Toast from "./components/Toast";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
+import { autoArrange } from "./core/autoArrange";
 import { boardMenu, widgetMenu } from "./core/menus";
 import { PRESETS, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
-import { background, baseColor, tokens } from "./core/tokens";
+import { background, tokens } from "./core/tokens";
 import { useColumns } from "./core/useColumns";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { animateExit } from "./core/useFlip";
@@ -92,11 +93,9 @@ function App() {
   // so the transform origin lands on the tile the user actually clicked.
   const focusTile = useCallback(
     (id) => {
-      const manifest = getWidget(id);
-      if (zoomMode === "None") {
-        toast(`${manifest?.name || "Widget"} — click-to-zoom is off`);
-        return;
-      }
+      // Zoom off is the normal state now, so it passes silently — telling the
+      // user something they configured is not news.
+      if (zoomMode === "None") return;
       let nextCam = null;
       const el = tileEls.current[id];
       if (el && boardRef.current && zoomMode === "Camera") {
@@ -111,7 +110,7 @@ function App() {
       setZoom(id);
       setMenu(null);
     },
-    [zoomMode, toast]
+    [zoomMode]
   );
 
   const openTile = useCallback(
@@ -236,6 +235,17 @@ function App() {
     });
     toast(`Saved as "${SAVED_LAYOUT}"`);
   }, [board.ids, board.sizes, update, toast]);
+
+  // Repack the board without touching which widgets are on it.
+  const autoArrangeBoard = useCallback(() => {
+    const next = autoArrange(ids, board.sizes, columns);
+    if (next.join("|") === ids.join("|")) {
+      toast("Already tidy");
+      return;
+    }
+    update("board", { ids: next, layoutName: "Custom" });
+    toast("Widgets rearranged");
+  }, [ids, board.sizes, columns, update, toast]);
 
   const applySavedLayout = useCallback(() => {
     const saved = board.saved;
@@ -415,29 +425,33 @@ function App() {
     [theme, accent]
   );
 
-  // The background lives on its own fixed layer: it must not scroll away, and
-  // setting backgroundAttachment beside the `background` shorthand makes React
-  // warn about mixed shorthand properties. It sits at z-index -1 rather than
-  // wrapping the content in a positive layer, because such a wrapper would be
-  // a stacking context and trap the focused tile's z-index below the scrim.
-  const backgroundStyle = useMemo(
-    () => ({
-      position: "fixed",
-      inset: 0,
-      zIndex: -1,
-      pointerEvents: "none",
-      background: background(theme, accent, wall),
-    }),
-    [theme, accent, wall]
-  );
-
+  // The page background is painted on the root element, not on a layer inside
+  // the app.
+  //
+  // It used to be a fixed div at z-index -1, which never showed at all: base
+  // styles give <html> its own background, so <body>'s background stops being
+  // propagated to the canvas and instead paints as an ordinary block
+  // background — and in the root stacking context that lands *above* negative
+  // z-index descendants. The layer was permanently hidden, which is why none of
+  // the background options appeared to do anything.
+  //
+  // Painting on <html> sidesteps stacking order entirely: it is the canvas, so
+  // it is always behind everything, needs no z-index, and covers the overscroll
+  // area for free.
   useEffect(() => {
-    document.body.style.background = baseColor(theme);
-  }, [theme]);
+    const html = document.documentElement;
+    html.style.background = background(theme, accent, wall);
+    html.style.backgroundAttachment = "fixed";
+    // Body must stay clear or it would cover the canvas again.
+    document.body.style.background = "transparent";
+    return () => {
+      html.style.background = "";
+      html.style.backgroundAttachment = "";
+    };
+  }, [theme, accent, wall]);
 
   return (
     <div style={rootStyle}>
-      <div aria-hidden="true" style={backgroundStyle} />
       <Header
         scrolled={scrolled}
         editing={editing}
@@ -546,6 +560,7 @@ function App() {
           onPreset={applyPreset}
           onApplySaved={applySavedLayout}
           onSaveCurrent={saveCurrentLayout}
+          onAutoArrange={autoArrangeBoard}
           onAddWidget={openStore}
           onDone={toggleEdit}
         />

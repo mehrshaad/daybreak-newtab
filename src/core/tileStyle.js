@@ -33,6 +33,10 @@ export function tileStyle({
       ? `rgba(255,255,255,${(0.055 * al).toFixed(3)})`
       : `rgba(255,255,255,${(0.3 + 0.52 * al).toFixed(3)})`,
     border: "1px solid var(--line)",
+    // Tiles clip their content. That clip is what made a dragged app icon
+    // vanish once it left the tile; base.scss lifts it via :has() while a
+    // nested drag is in flight, which needs !important to beat this inline
+    // value.
     overflow: "hidden",
     cursor: editing ? "grab" : "pointer",
     transition:
@@ -64,14 +68,11 @@ export function tileStyle({
   }
 
   if (zoomMode === "Camera") {
-    return {
-      ...base,
-      zIndex: 36,
-      position: "relative",
-      cursor: "default",
-      boxShadow: "0 40px 120px rgba(0,0,0,.45)",
-      background: lifted,
-    };
+    // Deliberately identical to the unzoomed tile apart from the cursor. A
+    // lifted background and a 120px drop shadow made this read as a modal
+    // being brought toward the screen; a page zoom should magnify the tile
+    // exactly as it sits on the board, changing nothing about how it looks.
+    return { ...base, position: "relative", cursor: "default" };
   }
 
   if (zoomMode === "Expand") {
