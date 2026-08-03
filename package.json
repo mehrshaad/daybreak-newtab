@@ -1,28 +1,36 @@
 {
   "name": "daybreak-newtab",
   "private": true,
-  "version": "1.1.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "optimize:wallpapers": "node scripts/optimize-wallpapers.mjs",
     "gen:icons": "node scripts/gen-icons.mjs",
     "test": "vitest run"
   },
   "dependencies": {
-    "animate.css": "^4.1.1",
-    "antd": "^5.22.5",
-    "antd-style": "^3.7.1",
+    "@daybreak/sdk": "*",
+    "@daybreak/widget-clock": "*",
+    "@daybreak/widget-gapps": "*",
+    "@daybreak/widget-habits": "*",
+    "@daybreak/widget-links": "*",
+    "@daybreak/widget-quote": "*",
+    "@daybreak/widget-recenttabs": "*",
+    "@daybreak/widget-scratchpad": "*",
+    "@daybreak/widget-tasks": "*",
+    "@daybreak/widget-timer": "*",
+    "@daybreak/widget-weather": "*",
+    "@daybreak/widget-worldclocks": "*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-icons": "^5.4.0",
-    "react-lottie": "^1.2.10"
+    "react-icons": "^5.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
@@ -31,9 +39,13 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.13.0",
+    "jsdom": "^25.0.1",
     "sass-embedded": "^1.83.0",
     "sharp": "^0.35.3",
     "vite": "^6.0.3",
     "vitest": "^3.2.7"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

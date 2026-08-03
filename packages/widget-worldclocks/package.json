@@ -1,0 +1,15 @@
+{
+  "name": "@daybreak/widget-worldclocks",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Two to four cities, side by side.",
+  "type": "module",
+  "main": "manifest.js",
+  "dependencies": {
+    "@daybreak/sdk": "*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-icons": "^5.4.0"
+  }
+}

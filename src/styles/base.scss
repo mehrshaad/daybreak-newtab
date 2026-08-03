@@ -1,0 +1,350 @@
+@use "./fonts";
+
+// Reset + globals. Ported from the <helmet> block in design/Daybreak.dc.html,
+// plus the focus-visible and reduced-motion rules the prototype did not need.
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+// The page background is set on <html> at runtime (see App). It carries a
+// pre-mount colour here so there is no white flash, and <body> must stay
+// transparent: a background on body paints above negative-z-index content and
+// would hide anything drawn behind the app.
+html {
+  background: #0a0b0e;
+  // Always reserve the scrollbar's width. Without it the whole board shifts
+  // sideways the moment the page becomes scrollable — adding a tile, opening the
+  // dock, anything that grows the page by a row.
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: transparent;
+}
+
+body {
+  font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  // A new tab page is a control surface, not a document: dragging across it
+  // should never leave a blue smear over the labels and clock. Anything the user
+  // actually authored opts back in below.
+  user-select: none;
+}
+
+// Typing is unaffected by user-select: none, but selecting inside a field is
+// not, so every editable surface has to say so explicitly. Widgets that show
+// text worth copying — a note, a quote — carry .db-selectable.
+input,
+textarea,
+[contenteditable="true"],
+.db-selectable {
+  user-select: text;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent, #6f9bff);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--fg, #fff);
+  }
+}
+
+input,
+textarea,
+button,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  margin: 0;
+}
+
+// Only show a ring for keyboard users; pointer users get the hover styles.
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent, #6f9bff);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--accentLine, rgba(111, 155, 255, 0.4));
+  color: var(--fg, #fff);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.db-mono {
+  font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+// Small uppercase mono label used for widget names and section headings.
+.db-label {
+  font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+// A tile clips its content so widgets cannot spill. While an icon inside one is
+// being dragged that clip is what made the icon disappear at the tile edge, so
+// lift it for the duration of the drag. !important is required because the
+// tile's overflow is an inline style.
+[data-flip-id]:has([data-dragging="true"]) {
+  overflow: visible !important;
+}
+
+.db-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes db-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes db-menu {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// The exit half of db-menu, for chrome that leaves as well as arrives.
+@keyframes db-pop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes db-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes db-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+// For elements that rise into place but are centred by auto margins rather
+// than a transform. Animating only `translate` leaves `transform` untouched,
+// so it can never clobber a layout transform the way db-in's `transform: none`
+// does.
+@keyframes db-rise-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes db-rise-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+// The store fades up from slightly below, and back down on close.
+@keyframes db-store-in {
+  from {
+    opacity: 0;
+    scale: 0.99;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes db-store-out {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 0.99;
+    translate: 0 6px;
+  }
+}
+
+// Store navigation: drilling into a widget comes in from the right, coming back
+// out from the left. `translate` rather than `transform`, so neither can clobber
+// a layout transform.
+@keyframes db-page-in {
+  from {
+    opacity: 0;
+    translate: 16px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes db-page-back {
+  from {
+    opacity: 0;
+    translate: -16px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+// Right-hand sheets slide in and out.
+@keyframes db-slide-in {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes db-slide-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 24px 0;
+  }
+}
+
+// Detail that only exists in a zoomed tile arrives just after the zoom is
+// underway rather than at the same instant, so the eye follows the movement
+// first and the new content second. Timing matches the reference site.
+.db-reveal {
+  animation: db-rise 0.32s ease 0.22s both;
+}
+
+@keyframes db-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// Theme and accent changes ease rather than snapping.
+//
+// Deliberately only on the root, and only inherited properties. `color` and
+// `fill` inherit, so animating them here animates every descendant that has not
+// set its own — one transition instead of one per element. The earlier `*`
+// version started five transitions on every element in the tree, several
+// thousand of them, all ticking on the main thread; that was the lag on an
+// accent or wallpaper change. Surfaces that need their own (tiles, buttons, the
+// header, sheets) carry it in their own styles.
+//
+// The class is added a frame after mount so the first paint is not animated,
+// which would read as the page fading in on every new tab.
+.db-themed {
+  transition: color 0.34s ease, fill 0.34s ease;
+}
+
+// Sliders are dragged, so say so.
+input[type="range"] {
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    cursor: grab;
+  }
+
+  &:active::-webkit-slider-thumb {
+    cursor: grabbing;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
