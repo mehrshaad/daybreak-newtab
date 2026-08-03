@@ -11,6 +11,7 @@ import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { boardMenu, widgetMenu } from "./core/menus";
 import { PRESETS } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
+import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
 import { background, baseColor, tokens } from "./core/tokens";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
@@ -53,6 +54,7 @@ function App() {
   // build can never leave an empty tile behind.
   const ids = useMemo(() => knownIds(board.ids), [board.ids]);
   const zoomMode = behavior.zoomMode;
+  const summary = useMemo(() => heroSummary(settings, ids), [settings, ids]);
 
   const toast = useCallback((message) => {
     clearTimeout(toastTimer.current);
@@ -430,7 +432,7 @@ function App() {
       {behavior.showGreeting && !zoom ? (
         <Hero
           name={profile.name}
-          summary=""
+          summary={summary}
           layoutName={board.layoutName}
           tileCount={ids.length}
         />
