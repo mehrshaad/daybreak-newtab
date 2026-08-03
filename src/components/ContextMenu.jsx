@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MONO, pill } from "../core/styles";
+import { MONO, pill } from "@daybreak/sdk";
 
 const MENU_WIDTH = 236;
 const EDGE = 12;

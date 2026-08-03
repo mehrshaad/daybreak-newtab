@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { migrateV1, migrateV1Local } from "./migrate";
 import { defaultSettings, hydrate, widgetState } from "./schema";
 import { SettingsContext } from "./settingsContext";
-import { debounceWriter, localArea, readV1Settings, syncArea } from "./storage";
+import { debounceWriter, localArea, readV1Settings, syncArea } from "@daybreak/sdk";
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(null);

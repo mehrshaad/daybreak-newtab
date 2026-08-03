@@ -1,5 +1,5 @@
 import { Suspense, lazy, useMemo } from "react";
-import { MONO, pill } from "../core/styles";
+import { MONO, pill } from "@daybreak/sdk";
 import { getWidget, resolveOptions, resolveSize } from "../widgets/registry";
 import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 

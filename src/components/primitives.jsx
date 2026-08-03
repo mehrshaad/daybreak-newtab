@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { pill, toggleStyles } from "../core/styles";
-import { useHover } from "../core/useHover";
+import { pill, toggleStyles, useHover } from "@daybreak/sdk";
 
 export function Pill({ active, children, style, hoverStyle, ...rest }) {
   const [hovered, bind] = useHover();

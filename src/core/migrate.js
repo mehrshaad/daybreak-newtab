@@ -1,5 +1,5 @@
 import { defaultSettings } from "./schema";
-import { SEARCH_ENGINES } from "../utils";
+import { SEARCH_ENGINES } from "@daybreak/sdk";
 
 // One-time upgrade from the v1 layout's settings blob. v1 stored one object
 // under `daybreakSettings`; v2 splits the same information across the board,

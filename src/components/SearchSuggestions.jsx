@@ -1,5 +1,5 @@
 import { LuBookmark, LuClock, LuExternalLink, LuLink } from "react-icons/lu";
-import { MONO } from "../core/styles";
+import { MONO } from "@daybreak/sdk";
 
 const KIND_ICON = {
   links: LuLink,

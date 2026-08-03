@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { MONO, mark, pill, primaryButton, seedFor } from "../core/styles";
+import { mark, MONO, pill, primaryButton, seedFor } from "@daybreak/sdk";
 import { WIDGETS, categories, getWidget, typeOf } from "../widgets/registry";
 import { Pill } from "./primitives";
 

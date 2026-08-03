@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LuMoon, LuSettings, LuSun } from "react-icons/lu";
 import { useSettings } from "../core/settingsContext";
-import { HOVER_LIFT, MONO, roundControl, softButton } from "../core/styles";
+import { HOVER_LIFT, IconTile, MONO, roundControl, SEARCH_ENGINES, softButton } from "@daybreak/sdk";
 import { gatherSuggestions } from "../core/suggest";
-import { SEARCH_ENGINES } from "../utils";
-import IconTile from "./IconTile";
 import SearchSuggestions from "./SearchSuggestions";
 import { Button } from "./primitives";
 

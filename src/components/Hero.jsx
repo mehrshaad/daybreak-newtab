@@ -1,5 +1,4 @@
-import { MONO } from "../core/styles";
-import { greeting } from "../utils";
+import { greeting, MONO } from "@daybreak/sdk";
 
 // The design's hero carried invented copy ("2 meetings, 4 open tasks, and clear
 // skies until Thursday"). This builds the same line from what is actually on

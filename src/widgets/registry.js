@@ -1,14 +1,17 @@
-// The widget catalog builds itself from the folders in this directory.
+// The widget catalog builds itself from the workspace packages.
 //
-// Adding a widget means creating src/widgets/<id>/manifest.js (plus its
-// Widget.jsx) and rebuilding — no edit to this file, no registration list to
-// keep in sync. That is the whole "drop in a folder" contract, and it is the
-// same contract a future runtime loader will satisfy by handing us a manifest
-// fetched from another repo instead of one found by this glob.
+// Each widget is its own package under packages/widget-<id>/, with its own
+// package.json and version, so it can be developed, versioned and eventually
+// extracted to a separate repository on its own. Adding one means creating that
+// folder and rebuilding — no edit to this file, no registration list to keep in
+// sync. It is the same contract a future runtime loader will satisfy by handing
+// us a manifest fetched over the network instead of one found by this glob.
 //
-// See sdk/types.md for the manifest shape.
+// See packages/sdk/README.md for the manifest shape.
 
-const modules = import.meta.glob("./*/manifest.js", { eager: true });
+const modules = import.meta.glob("../../packages/widget-*/manifest.js", {
+  eager: true,
+});
 
 function normalize(manifest, folder) {
   const id = manifest.id || folder;
@@ -34,7 +37,9 @@ const catalog = Object.entries(modules)
   .map(([path, mod]) => {
     const manifest = mod.default || mod.manifest;
     if (!manifest) return null;
-    const folder = path.split("/")[1];
+    // ".../packages/widget-clock/manifest.js" -> "clock", used as the id when a
+    // manifest does not declare one.
+    const folder = (path.match(/widget-([^/]+)\/manifest\.js$/) || [])[1] || path;
     return normalize(manifest, folder);
   })
   .filter(Boolean)

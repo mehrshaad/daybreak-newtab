@@ -21,7 +21,9 @@ export default defineConfig({
   test: {
     // jsdom so component tests can render; pure-logic tests are unaffected.
     environment: "jsdom",
-    include: ["src/**/*.test.{js,jsx}"],
+    // Widgets and the sdk live in workspace packages, so their tests do too.
+    include: ["src/**/*.test.{js,jsx}", "packages/**/*.test.{js,jsx}"],
+    exclude: ["**/node_modules/**", "**/dist/**"],
     setupFiles: ["./src/test/setup.js"],
   },
 });

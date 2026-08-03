@@ -1,6 +1,6 @@
 import { LuBookmark, LuRotateCcw, LuWandSparkles } from "react-icons/lu";
 import { PRESETS, SAVED_LAYOUT } from "../core/schema";
-import { HOVER_LIFT, MONO, primaryButton, softButton } from "../core/styles";
+import { HOVER_LIFT, MONO, primaryButton, softButton } from "@daybreak/sdk";
 import { Button, Pill } from "./primitives";
 
 // The floating dock shown in layout-edit mode. Occupies the same spot as the

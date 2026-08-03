@@ -6,7 +6,7 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { MONO } from "../core/styles";
+import { dropPermission, MONO, requestPermission } from "@daybreak/sdk";
 import {
   ACCENTS,
   PAGE_ZOOM_MAX,
@@ -16,7 +16,6 @@ import {
 } from "../core/tokens";
 import { SOURCES } from "../core/suggest";
 import { systemTheme } from "../core/useSystemTheme";
-import { dropPermission, requestPermission } from "../sdk/permissions";
 import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 

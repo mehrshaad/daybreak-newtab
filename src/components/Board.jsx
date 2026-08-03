@@ -1,7 +1,6 @@
 import { useMemo, useRef } from "react";
 import { cameraStyle } from "../core/tileStyle";
-import { useFlip } from "../core/useFlip";
-import { usePointerReorder } from "../core/usePointerReorder";
+import { useFlip, usePointerReorder } from "@daybreak/sdk";
 import { resolveOptions, resolveSize } from "../widgets/registry";
 import Tile from "./Tile";
 

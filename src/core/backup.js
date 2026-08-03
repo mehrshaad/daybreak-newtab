@@ -1,5 +1,5 @@
 import { SCHEMA_VERSION } from "./schema";
-import { localArea, syncArea } from "./storage";
+import { localArea, syncArea } from "@daybreak/sdk";
 
 export const BACKUP_KIND = "daybreak-backup";
 

@@ -1,8 +1,7 @@
 import { Suspense, lazy, useMemo } from "react";
 import { LuSettings2, LuX } from "react-icons/lu";
-import { MONO, mark, seedFor } from "../core/styles";
+import { mark, MONO, seedFor, useRefresh } from "@daybreak/sdk";
 import { tileStyle } from "../core/tileStyle";
-import { useRefresh } from "../sdk/useRefresh";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
 

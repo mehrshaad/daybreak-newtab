@@ -12,6 +12,18 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@daybreak/sdk": "*",
+    "@daybreak/widget-clock": "*",
+    "@daybreak/widget-gapps": "*",
+    "@daybreak/widget-habits": "*",
+    "@daybreak/widget-links": "*",
+    "@daybreak/widget-quote": "*",
+    "@daybreak/widget-recenttabs": "*",
+    "@daybreak/widget-scratchpad": "*",
+    "@daybreak/widget-tasks": "*",
+    "@daybreak/widget-timer": "*",
+    "@daybreak/widget-weather": "*",
+    "@daybreak/widget-worldclocks": "*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0"
@@ -32,5 +44,8 @@
     "sharp": "^0.35.3",
     "vite": "^6.0.3",
     "vitest": "^3.2.7"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
