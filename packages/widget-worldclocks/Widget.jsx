@@ -9,7 +9,7 @@ import {
   useMinutes,
   usePointerReorder,
 } from "@daybreak/sdk";
-import { MAX_ZONES, shortZone, zoneParts } from "./zones";
+import { MAX_ZONES, zoneParts } from "./zones";
 
 const DEFAULT_ZONES = [
   { city: "London", tz: "Europe/London" },
@@ -20,7 +20,7 @@ const DEFAULT_ZONES = [
 // change under a reorder and the drag needs a stable id.
 const keyFor = (zone) => `${zone.tz}|${zone.city}`;
 
-function WorldClocks({ options, config, setConfig, focused, editing }) {
+function WorldClocks({ options, config, setConfig, size, editing }) {
   const { hour24, hideZone } = options;
   const now = useMinutes();
   const [adding, setAdding] = useState(false);
@@ -32,6 +32,9 @@ function WorldClocks({ options, config, setConfig, focused, editing }) {
       : DEFAULT_ZONES;
 
   const ids = zones.map(keyFor);
+  // A three-row tile has room for the timezone under each city and a larger
+  // readout; a two-row one does not.
+  const tall = (size?.[1] ?? 2) >= 3;
 
   const reorder = (from, to) => setConfig({ zones: moveItem(zones, from, to) });
 
@@ -79,8 +82,6 @@ function WorldClocks({ options, config, setConfig, focused, editing }) {
       </div>
     );
   }
-
-  const controls = editing || focused;
 
   return (
     <div
@@ -160,9 +161,9 @@ function WorldClocks({ options, config, setConfig, focused, editing }) {
                 >
                   {p.city}
                 </span>
-                {!hideZone && focused ? (
+                {!hideZone && tall && p.zoneLabel ? (
                   <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--faint)" }}>
-                    {shortZone(p.tz)}
+                    {p.zoneLabel}
                   </span>
                 ) : null}
               </div>
@@ -178,14 +179,14 @@ function WorldClocks({ options, config, setConfig, focused, editing }) {
                 <span
                   style={{
                     fontFamily: MONO,
-                    fontSize: focused ? 22 : 15,
+                    fontSize: tall ? 19 : 15,
                     fontVariantNumeric: "tabular-nums",
                     color: "var(--fg)",
                   }}
                 >
                   {p.time}
                 </span>
-                <Appear open={controls} style={{ display: "flex", flex: "none" }}>
+                <Appear open={editing} style={{ display: "flex", flex: "none" }}>
                   <button
                     type="button"
                     aria-label={`Remove ${p.city}`}

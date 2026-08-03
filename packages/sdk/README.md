@@ -31,6 +31,7 @@ packages/widget-clock/
 export default {
   id: "clock",                    // unique; defaults to the folder name
   name: "Clock",                  // shown on the tile and in the store
+  glyph: "clock",                 // icon on the widget's chip; see glyphNames()
   category: "Essentials",         // groups it in the store sidebar
   author: "Daybreak",
   version: "2.0.0",
@@ -61,6 +62,15 @@ export default {
 Only `id`/folder name, `name` and `load` are required; everything else has a
 default (see `normalize()` in the registry).
 
+`glyph` picks one of the names in `glyphNames()` — generic ones like `clock`,
+`weather`, `list`, `note`, `timer` — drawn over a gradient derived from the id.
+Anything unrecognised, or omitted, falls back to the widget's initial, so a chip
+is never empty.
+
+Every size in `sizes` should show something the smaller ones do not. A size that
+only stretches the same content across more of the board is not worth offering;
+the weather widget's `layoutFor()` is the pattern to copy.
+
 ## Widget.jsx
 
 Default-export a component. It receives:
@@ -74,7 +84,7 @@ Default-export a component. It receives:
 | `config` | free-form per-widget settings (city, zones, links…) |
 | `setConfig(patch)` | merge into `config`; persists to synced settings |
 | `setOptions(patch)` | merge into `options` |
-| `focused` | true while zoomed — render more detail if useful |
+| `focused` | reserved for click-to-zoom, which is parked; currently always false, so key layout off `size` instead |
 | `editing` | true in layout-edit mode; suppress internal interactions |
 | `refreshKey` | increments on the widget's refresh interval; use as an effect dep |
 | `toast(message)` | show the bottom pill |

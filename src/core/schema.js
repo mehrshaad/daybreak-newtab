@@ -78,7 +78,6 @@ export function defaultSettings() {
       blur: VISUAL_DEFAULTS.blur,
     },
     behavior: {
-      zoomMode: DEFAULT_ZOOM_MODE,
       showGreeting: true,
       shortcuts: true,
       searchEngine: "google",

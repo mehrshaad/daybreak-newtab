@@ -1,6 +1,7 @@
 export default {
   id: "quote",
   name: "Quote of the day",
+  glyph: "quote",
   category: "Lifestyle",
   author: "Daybreak",
   version: "2.0.0",
@@ -11,7 +12,6 @@ export default {
   sizes: [
     [3, 2],
     [4, 2],
-    [5, 2],
   ],
   defaultSize: [4, 2],
   options: [

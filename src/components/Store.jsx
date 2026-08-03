@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { mark, MONO, pill, primaryButton, seedFor } from "@daybreak/sdk";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MONO, pill, primaryButton, WidgetMark } from "@daybreak/sdk";
 import { WIDGETS, categories, getWidget, typeOf } from "../widgets/registry";
 import { Pill } from "./primitives";
 
@@ -35,7 +35,7 @@ function Card({ widget, installed, onOpen, onToggle }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
-        <div style={mark(seedFor(widget.id), 34)} />
+        <WidgetMark id={widget.id} glyph={widget.glyph} name={widget.name} size={34} />
         <div style={{ minWidth: 0 }}>
           <div
             style={{
@@ -105,7 +105,7 @@ function Detail({ widget, installed, onBack, onToggle }) {
       >
         <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <div style={mark(seedFor(widget.id), 56)} />
+            <WidgetMark id={widget.id} glyph={widget.glyph} name={widget.name} size={56} />
             <div>
               <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: "-.02em" }}>
                 {widget.name}
@@ -269,6 +269,24 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState(initialDetail || null);
+  // Which way the last navigation went, so the pane can slide in from the side
+  // it came from instead of every change looking the same.
+  const [nav, setNav] = useState("forward");
+  const paneRef = useRef(null);
+
+  const drillInto = (id) => {
+    setNav("forward");
+    setDetail(id);
+  };
+  const back = () => {
+    setNav("back");
+    setDetail(null);
+  };
+  // Changing tab or category is not a direction, so the list just fades.
+  const swap = () => {
+    setNav("swap");
+    setDetail(null);
+  };
 
   useEffect(() => {
     if (open) {
@@ -286,6 +304,10 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
   }, [open, present]);
 
   const cats = useMemo(() => categories(), []);
+
+  useEffect(() => {
+    paneRef.current?.scrollTo({ top: 0 });
+  }, [detail, tab, category]);
   const onBoard = useMemo(
     () => new Set(boardIds.map((id) => typeOf(id))),
     [boardIds]
@@ -351,7 +373,7 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
               active={tab === t}
               onClick={() => {
                 setTab(t);
-                setDetail(null);
+                swap();
               }}
               style={{ padding: "7px 15px" }}
             >
@@ -422,7 +444,7 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
                 type="button"
                 onClick={() => {
                   setCategory(c.name);
-                  setDetail(null);
+                  swap();
                 }}
                 style={{
                   display: "flex",
@@ -448,18 +470,32 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
           })}
         </div>
 
-        <div style={{ flex: 1, overflow: "auto", padding: "24px 32px 40px" }}>
+        <div ref={paneRef} style={{ flex: 1, overflow: "auto", padding: "24px 32px 40px" }}>
           {detailWidget ? (
-            <Detail
-              widget={detailWidget}
-              installed={onBoard.has(detailWidget.id)}
-              onBack={() => setDetail(null)}
-              onToggle={() => onToggle(detailWidget)}
-            />
+            <div
+              key={detailWidget.id}
+              style={{ animation: "db-page-in .26s cubic-bezier(.2,.8,.2,1) both" }}
+            >
+              <Detail
+                widget={detailWidget}
+                installed={onBoard.has(detailWidget.id)}
+                onBack={back}
+                onToggle={() => onToggle(detailWidget)}
+              />
+            </div>
           ) : null}
 
           {showBrowse ? (
-            <div>
+            // Keyed on the tab and category so switching either replays the
+            // entry animation rather than swapping the list between frames.
+            <div
+              key={`${tab}|${category}`}
+              style={{
+                animation: `${
+                  nav === "back" ? "db-page-back" : "db-fade"
+                } .26s cubic-bezier(.2,.8,.2,1) both`,
+              }}
+            >
               <div
                 style={{
                   display: "flex",
@@ -494,7 +530,7 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
                       key={w.id}
                       widget={w}
                       installed={onBoard.has(w.id)}
-                      onOpen={() => setDetail(w.id)}
+                      onOpen={() => drillInto(w.id)}
                       onToggle={() => onToggle(w)}
                     />
                   ))}

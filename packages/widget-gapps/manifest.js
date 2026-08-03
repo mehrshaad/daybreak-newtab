@@ -1,6 +1,7 @@
 export default {
   id: "gapps",
   name: "Google Apps",
+  glyph: "grid",
   category: "Essentials",
   author: "Daybreak",
   version: "2.0.0",

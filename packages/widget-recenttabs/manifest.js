@@ -1,6 +1,7 @@
 export default {
   id: "recenttabs",
   name: "Recent Tabs",
+  glyph: "history",
   category: "Essentials",
   author: "Daybreak",
   version: "2.0.0",

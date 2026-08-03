@@ -1,6 +1,7 @@
 export default {
   id: "clock",
   name: "Clock",
+  glyph: "clock",
   category: "Essentials",
   author: "Daybreak",
   version: "2.1.0",

@@ -3,6 +3,7 @@ import { WEEKDAYS } from "./weeks";
 export default {
   id: "habits",
   name: "Habits",
+  glyph: "calendar",
   category: "Lifestyle",
   author: "Daybreak",
   version: "2.2.0",

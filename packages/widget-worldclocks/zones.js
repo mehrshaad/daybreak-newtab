@@ -61,7 +61,14 @@ export const isDaytime = (hour) => hour >= 7 && hour < 19;
 
 export function zoneParts(date, zone, { hour24 = false, localTz } = {}) {
   if (!isValidZone(zone?.tz)) {
-    return { city: zone?.city || "—", time: "—", offset: 0, label: "", day: true };
+    return {
+      city: zone?.city || "—",
+      zoneLabel: "",
+      time: "—",
+      offset: 0,
+      label: "",
+      day: true,
+    };
   }
   const time = new Intl.DateTimeFormat(undefined, {
     timeZone: zone.tz,
@@ -74,6 +81,7 @@ export function zoneParts(date, zone, { hour24 = false, localTz } = {}) {
   return {
     city: zone.city,
     tz: zone.tz,
+    zoneLabel: zoneOffsetLabel(date, zone.tz),
     time,
     offset,
     label: offsetLabel(offset),
@@ -81,9 +89,20 @@ export function zoneParts(date, zone, { hour24 = false, localTz } = {}) {
   };
 }
 
-// Shorten "America/Argentina/Buenos_Aires" to something that fits a tile.
-export function shortZone(tz) {
-  if (!tz) return "";
-  const tail = String(tz).split("/").pop();
-  return tail.replace(/_/g, " ");
+// The zone's offset from UTC at that instant, e.g. "UTC+9" or "UTC+3:30".
+//
+// Not the zone's name: the last path segment of an IANA id is usually the city
+// ("Asia/Tokyo"), so printing it next to the city label just said "Tokyo Tokyo".
+// The offset is the thing a row of world clocks is actually missing.
+//
+// Asked of the formatter at that instant, so it follows DST without a table.
+export function zoneOffsetLabel(date, tz) {
+  if (!isValidZone(tz)) return "";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    timeZoneName: "shortOffset",
+  }).formatToParts(date);
+  const name = parts.find((part) => part.type === "timeZoneName")?.value || "";
+  // Intl says "GMT+0" for zero; "UTC" alone says the same thing with less noise.
+  return name.replace(/^GMT/, "UTC").replace(/^UTC\+0$/, "UTC");
 }

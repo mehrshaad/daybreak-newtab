@@ -1,6 +1,7 @@
 export default {
   id: "scratchpad",
   name: "Scratchpad",
+  glyph: "note",
   category: "Productivity",
   author: "Daybreak",
   version: "2.0.0",

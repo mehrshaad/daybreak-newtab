@@ -34,7 +34,7 @@ function Detail({ label, value }) {
   );
 }
 
-function Weather({ id, options, config, setConfig, refreshKey, focused, size }) {
+function Weather({ id, options, config, setConfig, refreshKey, size }) {
   const { fahrenheit, hour24, showHourly } = options;
   const city = config.city;
   // Cache the last good reading so a refresh (or being offline) shows the
@@ -106,7 +106,7 @@ function Weather({ id, options, config, setConfig, refreshKey, focused, size }) 
   }
 
   const deg = fahrenheit ? "°F" : "°C";
-  const view = layoutFor(size, focused);
+  const view = layoutFor(size);
   const hours = data.hours?.slice(0, view.hours) || [];
 
   return (
@@ -124,9 +124,7 @@ function Weather({ id, options, config, setConfig, refreshKey, focused, size }) 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              fontSize: focused
-                ? "clamp(48px, 7vw, 76px)"
-                : view.tall
+              fontSize: view.tall
                 ? "clamp(38px, 4.4vw, 54px)"
                 : "clamp(30px, 3.4vw, 40px)",
               fontWeight: 500,
@@ -141,7 +139,7 @@ function Weather({ id, options, config, setConfig, refreshKey, focused, size }) 
           <ConditionIcon
             condition={data.condition}
             day={data.isDay}
-            size={focused ? 44 : view.tall ? 38 : 30}
+            size={view.tall ? 38 : 30}
           />
         </div>
         <div

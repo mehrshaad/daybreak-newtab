@@ -13,7 +13,7 @@ import Toast from "./components/Toast";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
 import { boardMenu, widgetMenu } from "./core/menus";
-import { PRESETS, SAVED_LAYOUT } from "./core/schema";
+import { DEFAULT_ZOOM_MODE, PRESETS, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
@@ -70,7 +70,10 @@ function App() {
   // Only render ids the catalog actually knows, so a widget removed from a
   // build can never leave an empty tile behind.
   const ids = useMemo(() => knownIds(board.ids), [board.ids]);
-  const zoomMode = behavior.zoomMode;
+  // Not read from settings: click-to-zoom is parked, nothing offers a picker,
+  // and an earlier build wrote a mode into stored settings — which would
+  // otherwise resurrect Spotlight for anyone who ran it.
+  const zoomMode = DEFAULT_ZOOM_MODE;
   const summary = useMemo(() => heroSummary(settings, ids), [settings, ids]);
 
   // Remembered so the widget drawer can finish its exit animation with its

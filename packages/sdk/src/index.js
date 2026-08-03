@@ -52,6 +52,9 @@ export {
   toggleStyles,
 } from "./styles";
 
+// Glyph names a widget manifest can ask for on its chip.
+export { GLYPHS, glyphNames } from "./glyphs";
+
 // Brand marks for app-style icons.
 export { BRANDS, brandFor, hashHue } from "./brands";
 
@@ -93,3 +96,4 @@ export { APPEAR_MS, default as Appear } from "./components/Appear";
 export { default as CitySearch } from "./components/CitySearch";
 export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";
+export { default as WidgetMark } from "./components/WidgetMark";

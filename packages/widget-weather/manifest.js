@@ -1,6 +1,7 @@
 export default {
   id: "weather",
   name: "Weather",
+  glyph: "weather",
   category: "Essentials",
   author: "Daybreak",
   version: "2.1.0",
@@ -14,7 +15,6 @@ export default {
   sizes: [
     [3, 2],
     [4, 2],
-    [5, 2],
     [4, 3],
   ],
   defaultSize: [3, 2],

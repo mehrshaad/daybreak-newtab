@@ -12,13 +12,13 @@ function faviconHost(url) {
   }
 }
 
-function RecentTabs({ options, refreshKey, focused, toast }) {
+function RecentTabs({ options, refreshKey, size, toast }) {
   const [granted, setGranted] = useState(null); // null = checking
   const [entries, setEntries] = useState([]);
 
   const load = useCallback(() => {
     if (!hasSessions()) return;
-    const max = focused ? 18 : 6;
+    const max = (size?.[1] ?? 2) >= 3 ? 14 : 6;
     chrome.sessions.getRecentlyClosed({ maxResults: 25 }, (sessions) => {
       const out = [];
       for (const s of sessions || []) {
@@ -44,7 +44,7 @@ function RecentTabs({ options, refreshKey, focused, toast }) {
       }
       setEntries(out);
     });
-  }, [options.showWindows, focused]);
+  }, [options.showWindows, size]);
 
   useEffect(() => {
     let active = true;

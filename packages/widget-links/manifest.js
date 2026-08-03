@@ -1,6 +1,7 @@
 export default {
   id: "links",
   name: "Quick Links",
+  glyph: "link",
   category: "Essentials",
   author: "Daybreak",
   version: "2.0.0",

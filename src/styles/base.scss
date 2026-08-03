@@ -243,6 +243,31 @@ button {
   }
 }
 
+// Store navigation: drilling into a widget comes in from the right, coming back
+// out from the left. `translate` rather than `transform`, so neither can clobber
+// a layout transform.
+@keyframes db-page-in {
+  from {
+    opacity: 0;
+    translate: 16px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes db-page-back {
+  from {
+    opacity: 0;
+    translate: -16px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
 // Right-hand sheets slide in and out.
 @keyframes db-slide-in {
   from {

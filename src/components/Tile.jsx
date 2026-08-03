@@ -219,16 +219,18 @@ function Tile({
         }}
       >
         <>
-          <TileButton
-            label="Resize"
-            onClick={(e) => {
-              e.stopPropagation();
-              onResize?.();
-            }}
-            style={{ fontFamily: MONO, fontSize: "10px", padding: "3px 7px" }}
-          >
-            {size.join("×")}
-          </TileButton>
+          {manifest.sizes.length > 1 ? (
+            <TileButton
+              label="Resize"
+              onClick={(e) => {
+                e.stopPropagation();
+                onResize?.();
+              }}
+              style={{ fontFamily: MONO, fontSize: "10px", padding: "3px 7px" }}
+            >
+              {size.join("×")}
+            </TileButton>
+          ) : null}
           <TileButton
             label={`Remove ${manifest.name}`}
             onClick={(e) => {

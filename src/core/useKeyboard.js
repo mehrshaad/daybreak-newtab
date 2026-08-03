@@ -46,35 +46,35 @@ export function useKeyboard({ enabled = true, onEscape, onSearch, onToggleEdit, 
 // Decides whether the header should be condensed. Pure, so the flicker it
 // prevents can be tested without a DOM.
 //
-// Two guards, both for the same flicker:
+// The band has to be wider than the distance the scroll position slides when the
+// state changes. Condensing takes about 25px off the header, which shortens the
+// document, and Chrome's scroll anchoring pulls scrollY down by the same amount
+// to keep the board visually still — measured in Chrome, scrolling to y=100
+// condensed the header and left scrollY at 75.
 //
-// - Hysteresis. The state engages at `on` and only releases below `off`. With a
-//   single value, resting near it made the header and search bar flip between
-//   sizes.
-// - A minimum amount of scrollable page. Condensing takes ~20px off the header,
-//   which makes the document shorter. On a board that is only just scrollable
-//   that removes the overflow completely: the scroll position snaps to 0, the
-//   header expands, the page overflows again, and it oscillates — exactly the
-//   glitch seen at a scroll position close to zero but not zero. Hysteresis
-//   cannot help, because the position really does return to 0 each time. So a
-//   page with barely anything to scroll never condenses at all.
-export const MIN_SCROLLABLE = 48;
-
-export function nextScrolled(was, y, scrollable, on = 24, off = 6) {
-  if (scrollable < MIN_SCROLLABLE) return false;
+// With 48 and 12 there is 36px of margin, so a 25px slide can never cross back
+// over the threshold it just left. A narrower band oscillates: condense, get
+// dragged below the release point, expand, get pushed back up, condense. That is
+// the flicker seen just off the top of the page, and no amount of extra
+// conditions fixes it — only a band wider than the slide does.
+//
+// It also covers the barely-scrollable case on its own: engaging needs y > 48, so
+// the page must have more than 48px of overflow, and after losing 25 it still has
+// more than the release point.
+export function nextScrolled(was, y, on = 48, off = 12) {
   return was ? y > off : y > on;
 }
 
 // Tracks whether the page has scrolled past the threshold, for the condensing
 // header. Uses a passive listener so scrolling stays smooth.
-export function useScrolled(on = 24, off = 6) {
+export function useScrolled(on = 48, off = 12) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    // Deliberately reads nothing but scrollY: measuring scrollHeight here would
+    // force a layout on every scroll event.
     const update = () => {
-      const doc = document.documentElement;
-      const scrollable = doc.scrollHeight - window.innerHeight;
-      setScrolled((was) => nextScrolled(was, window.scrollY, scrollable, on, off));
+      setScrolled((was) => nextScrolled(was, window.scrollY, on, off));
     };
     update();
     window.addEventListener("scroll", update, { passive: true });

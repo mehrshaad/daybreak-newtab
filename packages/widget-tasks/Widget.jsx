@@ -95,7 +95,7 @@ function Task({ task, showDates, onToggle, onRemove }) {
   );
 }
 
-function Tasks({ options, config, setConfig, focused }) {
+function Tasks({ options, config, setConfig }) {
   const { hideCompleted, showDates } = options;
   const items = Array.isArray(config.items) ? config.items : [];
   const [draft, setDraft] = useState("");
@@ -171,7 +171,7 @@ function Tasks({ options, config, setConfig, focused }) {
             color: "var(--fg)",
           }}
         />
-        {focused && showDates ? (
+        {showDates ? (
           <input
             type="date"
             value={due}

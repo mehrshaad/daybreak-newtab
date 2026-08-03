@@ -4,7 +4,7 @@ import {
   isDaytime,
   isValidZone,
   offsetLabel,
-  shortZone,
+  zoneOffsetLabel,
   zoneParts,
 } from "./zones";
 
@@ -141,11 +141,26 @@ describe("zoneParts", () => {
   });
 });
 
-describe("shortZone", () => {
-  it("uses the last path segment and unescapes underscores", () => {
-    expect(shortZone("America/Argentina/Buenos_Aires")).toBe("Buenos Aires");
-    expect(shortZone("Asia/Tehran")).toBe("Tehran");
-    expect(shortZone("UTC")).toBe("UTC");
-    expect(shortZone("")).toBe("");
+describe("zoneOffsetLabel", () => {
+  // Mid-January and mid-July, so both sides of DST are covered.
+  const winter = new Date("2026-01-15T12:00:00Z");
+  const summer = new Date("2026-07-15T12:00:00Z");
+
+  it("reports the offset from UTC, not the zone's city", () => {
+    expect(zoneOffsetLabel(winter, "Asia/Tokyo")).toBe("UTC+9");
+    expect(zoneOffsetLabel(winter, "Asia/Tehran")).toBe("UTC+3:30");
+    // Zero offset drops the "+0".
+    expect(zoneOffsetLabel(winter, "UTC")).toBe("UTC");
+    expect(zoneOffsetLabel(winter, "Europe/London")).toBe("UTC");
+  });
+
+  it("follows daylight saving", () => {
+    expect(zoneOffsetLabel(winter, "America/New_York")).toBe("UTC-5");
+    expect(zoneOffsetLabel(summer, "America/New_York")).toBe("UTC-4");
+  });
+
+  it("is empty for a zone it cannot resolve", () => {
+    expect(zoneOffsetLabel(winter, "Not/AZone")).toBe("");
+    expect(zoneOffsetLabel(winter, "")).toBe("");
   });
 });

@@ -1,6 +1,7 @@
 export default {
   id: "timer",
   name: "Focus Timer",
+  glyph: "timer",
   category: "Productivity",
   author: "Daybreak",
   version: "2.0.0",
@@ -8,10 +9,7 @@ export default {
   description:
     "Twenty-five minutes of focus, five off, a longer break every fourth " +
     "round. Runs entirely in the page — closing the tab resets it.",
-  sizes: [
-    [3, 2],
-    [4, 2],
-  ],
+  sizes: [[3, 2]],
   defaultSize: [3, 2],
   options: [
     { key: "longFocus", label: "50-minute rounds", type: "boolean", default: false },

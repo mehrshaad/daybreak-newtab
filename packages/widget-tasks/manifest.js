@@ -1,6 +1,7 @@
 export default {
   id: "tasks",
   name: "Tasks",
+  glyph: "list",
   category: "Productivity",
   author: "Daybreak",
   version: "2.0.0",
