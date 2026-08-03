@@ -13,7 +13,17 @@ export const hint = (spec) => {
 
 const separator = { type: "separator" };
 
-export function boardMenu({ editing, theme, onStore, onToggleEdit, onPreset, onSettings }) {
+export function boardMenu({
+  editing,
+  theme,
+  hasSaved,
+  onStore,
+  onToggleEdit,
+  onPreset,
+  onApplySaved,
+  onSaveCurrent,
+  onSettings,
+}) {
   return {
     title: "Home board",
     items: [
@@ -24,6 +34,10 @@ export function boardMenu({ editing, theme, onStore, onToggleEdit, onPreset, onS
         run: onToggleEdit,
       },
       separator,
+      ...(hasSaved
+        ? [{ label: "Switch to your layout", run: onApplySaved }]
+        : []),
+      { label: "Save this as your layout", run: onSaveCurrent },
       { label: "Reset to Balanced", run: () => onPreset("Balanced") },
       { label: "Change background", run: () => onSettings("background") },
       {

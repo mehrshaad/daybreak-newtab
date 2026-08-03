@@ -70,6 +70,7 @@ function Tile({
   zoomMode,
   panelOpen,
   menuTarget,
+  dragging = false,
   rate,
   manualRefresh = 0,
   tileRef,
@@ -79,10 +80,7 @@ function Tile({
   onClose,
   onResize,
   onRemove,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
+  onPointerDown,
   setConfig,
   setOptions,
   toast,
@@ -116,12 +114,21 @@ function Tile({
   return (
     <div
       ref={tileRef}
-      style={style}
-      draggable={editing}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
+      // FLIP identifies tiles by this across reorders and resizes.
+      data-flip-id={instanceId}
+      style={{
+        ...style,
+        // Held tiles lift off the board and stop animating their own box, so
+        // the pointer transform is the only thing moving them.
+        ...(dragging
+          ? {
+              boxShadow: "0 26px 60px rgba(0,0,0,.42)",
+              cursor: "grabbing",
+              opacity: 0.97,
+            }
+          : null),
+      }}
+      onPointerDown={onPointerDown}
       onClick={onOpen}
       onContextMenu={onMenu}
       // Focusable so keyboard users can reach a tile and open it with Enter,
@@ -225,6 +232,7 @@ function Tile({
           <Widget
             id={instanceId}
             size={size}
+            columns={columns}
             options={options}
             config={config}
             focused={focused}

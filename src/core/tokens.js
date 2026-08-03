@@ -77,6 +77,10 @@ export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent) {
     "--panel2": dark ? "rgba(255,255,255,.10)" : "rgba(255,255,255,.92)",
     "--sheet": dark ? "rgba(18,19,24,.94)" : "rgba(250,250,249,.97)",
     "--storeBg": dark ? "rgba(10,11,14,.97)" : "rgba(244,244,242,.98)",
+    // The store sits on a blur, so its own fill is deliberately thinner than
+    // --storeBg: opaque enough to read text on, sheer enough that the blurred
+    // board still shows through as depth.
+    "--storeScrim": dark ? "rgba(10,11,14,.82)" : "rgba(244,244,242,.86)",
     "--scrim": dark ? "rgba(6,7,10,.58)" : "rgba(240,240,238,.6)",
     "--codeBg": dark ? "rgba(0,0,0,.30)" : "rgba(20,22,28,.05)",
     "--danger": dark ? "#ff8189" : "#c0323c",

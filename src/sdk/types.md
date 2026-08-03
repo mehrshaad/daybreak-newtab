@@ -63,6 +63,7 @@ Default-export a component. It receives:
 | --- | --- |
 | `id` | the widget id |
 | `size` | `[cols, rows]` currently applied |
+| `columns` | how many columns the board has right now (12, 8 or 4) — use it to cap internal grids on narrow windows |
 | `options` | manifest defaults merged with the user's choices |
 | `config` | free-form per-widget settings (city, zones, links…) |
 | `setConfig(patch)` | merge into `config`; persists to synced settings |

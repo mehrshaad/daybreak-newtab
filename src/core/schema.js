@@ -47,6 +47,11 @@ export const PRESETS = {
 
 export const DEFAULT_LAYOUT = "Balanced";
 
+// The user's own layout, kept alongside the built-in presets. Stored as a
+// snapshot of ids + per-tile sizes so applying it restores the arrangement
+// exactly, not just which widgets were on the board.
+export const SAVED_LAYOUT = "Yours";
+
 export function defaultSettings() {
   return {
     v: SCHEMA_VERSION,
@@ -55,6 +60,8 @@ export function defaultSettings() {
       sizes: {},
       layoutName: DEFAULT_LAYOUT,
       installed: [...PRESETS[DEFAULT_LAYOUT]],
+      // null until the user saves one: { ids, sizes }
+      saved: null,
     },
     appearance: {
       theme: VISUAL_DEFAULTS.theme,

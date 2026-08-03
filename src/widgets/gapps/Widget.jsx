@@ -1,94 +1,117 @@
-import IconTile from "../../components/IconTile";
+import { useMemo, useState } from "react";
+import IconGrid from "../../components/IconGrid";
+import { MONO } from "../../core/styles";
+import { moveItem } from "../../core/usePointerReorder";
+import { APPS, gridFor, orderedApps } from "./apps";
 
-// Carried over from the v1 launcher. Names double as IconTile keys, so each
-// gets its brand glyph from the bundled icon set.
-const APPS = [
-  { name: "Gmail", key: "gmail", url: "https://mail.google.com/" },
-  { name: "Drive", key: "drive", url: "https://drive.google.com/" },
-  { name: "Calendar", key: "calendar", url: "https://calendar.google.com/" },
-  { name: "Meet", key: "meet", url: "https://meet.google.com/" },
-  { name: "Docs", key: "docs", url: "https://docs.google.com/" },
-  { name: "Sheets", key: "sheets", url: "https://sheets.google.com/" },
-  { name: "Slides", key: "slides", url: "https://slides.google.com/" },
-  { name: "Keep", key: "keep", url: "https://keep.google.com/" },
-  { name: "Photos", key: "photos", url: "https://photos.google.com/" },
-  { name: "Maps", key: "maps", url: "https://maps.google.com/" },
-  { name: "Translate", key: "translate", url: "https://translate.google.com/" },
-  { name: "Contacts", key: "contacts", url: "https://contacts.google.com/" },
-  { name: "Classroom", key: "classroom", url: "https://classroom.google.com/" },
-  { name: "Scholar", key: "scholar", url: "https://scholar.google.com/" },
-  { name: "Colab", key: "colab", url: "https://colab.research.google.com/" },
-  { name: "Account", key: "account", url: "https://myaccount.google.com/" },
-];
-
-function GoogleApps({ options, size, focused, editing }) {
+function GoogleApps({ options, config, setConfig, size, focused, editing, columns }) {
   const { hideLabels, newTab } = options;
-  // Fill the tile: more columns when it is wider or zoomed.
-  const columns = focused ? 8 : Math.max(4, size[0] + 1);
-  const visible = focused ? APPS : APPS.slice(0, columns * (size[1] >= 3 ? 3 : 2));
+  const [showAll, setShowAll] = useState(false);
 
-  const open = (url) => {
-    if (newTab) window.open(url, "_blank", "noopener,noreferrer");
-    else window.location.href = url;
+  const apps = useMemo(() => orderedApps(config.order), [config.order]);
+  const { cols, rows } = gridFor(size, focused, columns);
+
+  // Fit a whole grid for this size and hide the remainder rather than
+  // overflowing the tile or shrinking icons until they are unreadable.
+  const capacity = cols * rows;
+  const expanded = focused || showAll;
+  const visible = expanded ? apps : apps.slice(0, Math.max(0, capacity - (apps.length > capacity ? 1 : 0)));
+  const hidden = apps.length - visible.length;
+
+  // Icon size scales with how much room each cell actually gets.
+  const iconSize = focused
+    ? 46
+    : Math.max(20, Math.min(38, Math.round(120 / cols) + (size[1] >= 3 ? 6 : 0)));
+
+  const open = (app) => {
+    if (editing) return;
+    if (newTab) window.open(app.url, "_blank", "noopener,noreferrer");
+    else window.location.href = app.url;
   };
 
   return (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gap: 6,
+        display: "flex",
+        flexDirection: "column",
         flex: 1,
-        alignContent: "center",
         minWidth: 0,
+        minHeight: 0,
+        overflow: expanded ? "auto" : "hidden",
       }}
     >
-      {visible.map((app) => (
+      <IconGrid
+        items={visible}
+        cols={cols}
+        iconSize={iconSize}
+        gap={focused ? 10 : 6}
+        showLabels={!hideLabels}
+        onOpen={open}
+        onReorder={(from, to) =>
+          setConfig({ order: moveItem(apps.map((a) => a.key), from, to) })
+        }
+      />
+
+      {hidden > 0 ? (
         <button
-          key={app.key}
           type="button"
-          title={app.name}
           onClick={(e) => {
             e.stopPropagation();
-            if (editing) return;
-            open(app.url);
+            setShowAll(true);
           }}
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 5,
-            padding: "8px 2px",
-            borderRadius: 10,
+            marginTop: 4,
+            alignSelf: "center",
             border: 0,
             background: "transparent",
-            cursor: editing ? "grab" : "pointer",
-            minWidth: 0,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--panel2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
+            color: "var(--faint)",
+            fontFamily: MONO,
+            fontSize: 10,
+            letterSpacing: ".08em",
+            cursor: "pointer",
+            padding: "2px 8px",
           }}
         >
-          <IconTile name={app.key} size={focused ? 38 : 26} />
-          {hideLabels ? null : (
-            <span
-              style={{
-                fontSize: 10,
-                color: "var(--dim)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
-              }}
-            >
-              {app.name}
-            </span>
-          )}
+          +{hidden} more
         </button>
-      ))}
+      ) : null}
+
+      {expanded && !focused && apps.length > capacity ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowAll(false);
+          }}
+          style={{
+            marginTop: 2,
+            alignSelf: "center",
+            border: 0,
+            background: "transparent",
+            color: "var(--faint)",
+            fontFamily: MONO,
+            fontSize: 10,
+            cursor: "pointer",
+          }}
+        >
+          show less
+        </button>
+      ) : null}
+
+      {focused ? (
+        <div
+          className="db-reveal"
+          style={{
+            marginTop: 10,
+            textAlign: "center",
+            fontFamily: MONO,
+            fontSize: 10,
+            color: "var(--faint)",
+          }}
+        >
+          {APPS.length} apps · drag an icon to reorder
+        </div>
+      ) : null}
     </div>
   );
 }

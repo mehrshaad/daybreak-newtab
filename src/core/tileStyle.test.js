@@ -71,12 +71,22 @@ describe("tileStyle states", () => {
 });
 
 describe("tileStyle zoom modes", () => {
-  it("unfocused tiles dim and stop taking clicks", () => {
+  it("unfocused tiles stop taking clicks in every mode", () => {
     for (const zoomMode of ["Camera", "Expand", "Spotlight"]) {
-      const s = tileStyle({ zoomed: true, focused: false, zoomMode });
-      expect(s.pointerEvents).toBe("none");
-      expect(s.opacity).toBe(zoomMode === "Camera" ? 0.35 : 0.2);
+      expect(tileStyle({ zoomed: true, focused: false, zoomMode }).pointerEvents).toBe(
+        "none"
+      );
     }
+  });
+
+  // Camera moves in on the board itself, so neighbours must stay solid and
+  // merely be cropped; Expand and Spotlight are overlays, so the board recedes.
+  it("keeps neighbours solid under Camera and dims them for the overlays", () => {
+    expect(tileStyle({ zoomed: true, focused: false, zoomMode: "Camera" }).opacity).toBe(1);
+    expect(tileStyle({ zoomed: true, focused: false, zoomMode: "Expand" }).opacity).toBe(0.2);
+    expect(tileStyle({ zoomed: true, focused: false, zoomMode: "Spotlight" }).opacity).toBe(
+      0.2
+    );
   });
 
   it("Camera keeps the tile in flow so the board can transform around it", () => {
@@ -135,16 +145,22 @@ describe("cameraFor", () => {
     expect(cam.oy).toBe(tileRect.top + tileRect.height / 2 - boardRect.top);
   });
 
-  it("never scales past 2.6x, however small the tile", () => {
+  it("never scales past 3.2x, however small the tile", () => {
     const tiny = { left: 0, top: 0, width: 10, height: 10 };
-    expect(cameraFor(tiny, boardRect, viewport).s).toBe(2.6);
+    expect(cameraFor(tiny, boardRect, viewport).s).toBe(3.2);
   });
 
   it("scales down rather than overflowing a large tile", () => {
     const huge = { left: 0, top: 0, width: 1400, height: 800 };
     const cam = cameraFor(huge, boardRect, viewport);
     expect(cam.s).toBeLessThan(1);
-    expect(huge.height * cam.s).toBeLessThanOrEqual(viewport.innerHeight - 78 - 60 + 0.001);
+    expect(huge.height * cam.s).toBeLessThanOrEqual(viewport.innerHeight - 78 - 56 + 0.001);
+  });
+
+  it("pushes in far enough to feel decisive on a normal tile", () => {
+    // A 4x2 tile on a 1600px board should end up filling most of the width.
+    const cam = cameraFor(tileRect, boardRect, viewport);
+    expect(tileRect.width * cam.s).toBeGreaterThan(viewport.innerWidth * 0.6);
   });
 });
 

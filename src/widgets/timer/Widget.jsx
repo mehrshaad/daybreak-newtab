@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { MONO } from "../../core/styles";
 import { formatClock, nextPhase, phaseLength } from "./phases";
 
-function Timer({ options }) {
+function Timer({ options, focused }) {
   const { longFocus, autoStart } = options;
   const [phase, setPhase] = useState("Focus");
   const [round, setRound] = useState(1);
@@ -57,19 +57,35 @@ function Timer({ options }) {
         flex: 1,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: focused ? "center" : "space-between",
+          flexDirection: focused ? "column" : "row",
+          gap: focused ? "clamp(14px, 3vh, 34px)" : 10,
+        }}
+      >
         <div
           style={{
             fontFamily: MONO,
-            fontSize: "clamp(26px, 3.4vw, 36px)",
+            fontSize: focused ? "clamp(64px, 13vw, 190px)" : "clamp(26px, 3.4vw, 36px)",
             fontWeight: 500,
-            letterSpacing: "-.02em",
+            letterSpacing: "-.03em",
             fontVariantNumeric: "tabular-nums",
+            lineHeight: 1,
           }}
         >
           {formatClock(left)}
         </div>
-        <div style={{ display: "flex", gap: 6, flex: "none" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: focused ? 10 : 6,
+            flex: "none",
+            transform: focused ? "scale(1.25)" : "none",
+          }}
+        >
           <button
             type="button"
             onClick={(e) => {
@@ -114,10 +130,13 @@ function Timer({ options }) {
 
       <div
         style={{
-          height: 3,
+          height: focused ? 5 : 3,
           borderRadius: 99,
           background: "var(--line)",
           overflow: "hidden",
+          maxWidth: focused ? "min(620px, 70%)" : "none",
+          width: focused ? "100%" : "auto",
+          alignSelf: focused ? "center" : "stretch",
         }}
       >
         <div
@@ -133,9 +152,10 @@ function Timer({ options }) {
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: focused ? "center" : "space-between",
+          gap: focused ? "clamp(16px, 4vw, 60px)" : 0,
           fontFamily: MONO,
-          fontSize: 10,
+          fontSize: focused ? "clamp(11px, 1.1vw, 15px)" : 10,
           color: "var(--faint)",
         }}
       >

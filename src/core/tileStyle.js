@@ -52,9 +52,13 @@ export function tileStyle({
   const right = panelOpen ? "calc(340px + 3vw)" : "3vw";
 
   if (!focused) {
+    // Camera zoom reads as moving in on a physical board, so neighbours stay
+    // solid and are simply cropped by the viewport — dimming them to 0.35
+    // broke the illusion. Expand and Spotlight *are* overlays, so for those
+    // the board really should recede.
     return {
       ...base,
-      opacity: zoomMode === "Camera" ? 0.35 : 0.2,
+      opacity: zoomMode === "Camera" ? 1 : 0.2,
       pointerEvents: "none",
     };
   }
@@ -107,12 +111,16 @@ export function tileStyle({
 
 // Camera zoom: translate + scale the whole board so the clicked tile lands in
 // the middle of the free space under the header. Ported from `focusTile()`.
+//
+// The target width is 78% of the viewport (the design used 62%) and the ceiling
+// is 3.2x, which lands close to the ~3x the reference site settles on and makes
+// the move read as a decisive push-in rather than a nudge.
 export function cameraFor(tileRect, boardRect, viewport, headerHeight = 78) {
   const { innerWidth: vw, innerHeight: vh } = viewport;
   const scale = Math.min(
-    (vw * 0.62) / tileRect.width,
-    (vh - headerHeight - 60) / tileRect.height,
-    2.6
+    (vw * 0.78) / tileRect.width,
+    (vh - headerHeight - 56) / tileRect.height,
+    3.2
   );
   return {
     ox: tileRect.left + tileRect.width / 2 - boardRect.left,
@@ -132,8 +140,13 @@ export function cameraFor(tileRect, boardRect, viewport, headerHeight = 78) {
 // transform makes the wrapper a stacking context, so the focused tile's own
 // z-index can no longer escape it, and without this the scrim would dim the
 // very tile being focused. Unfocused tiles are dimmed by their own opacity.
+// Timing lifted from the reference site (saramazaheri.com), whose board uses
+// `transform .65s cubic-bezier(.5,.05,.2,1)` — a slow, weighted start that
+// settles rather than the springier curve the prototype had.
+export const CAMERA_TRANSITION = "transform .65s cubic-bezier(.5,.05,.2,1)";
+
 export function cameraStyle(cam, active) {
-  const style = { transition: "transform .55s cubic-bezier(.2,.9,.25,1)" };
+  const style = { transition: CAMERA_TRANSITION };
   if (!cam || !active) return style;
   return {
     ...style,

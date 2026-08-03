@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LuPlus } from "react-icons/lu";
-import IconTile from "../../components/IconTile";
+import IconGrid from "../../components/IconGrid";
+import { MONO } from "../../core/styles";
+import { moveItem } from "../../core/usePointerReorder";
 import { uid } from "../../utils";
 
 const DEFAULTS = [
@@ -24,21 +26,34 @@ function normalizeUrl(input) {
 
 function nameFromUrl(href) {
   try {
-    return new URL(href).hostname.replace(/^www\./, "").split(".")[0];
+    const host = new URL(href).hostname.replace(/^www\./, "").split(".")[0];
+    return host.charAt(0).toUpperCase() + host.slice(1);
   } catch {
     return "Link";
   }
 }
 
-function Links({ options, config, setConfig, editing, focused }) {
+function Links({ options, config, setConfig, size, focused, editing, columns }) {
   const { hideLabels, newTab } = options;
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
 
-  const open = (url) => {
-    if (newTab) window.open(url, "_blank", "noopener,noreferrer");
-    else window.location.href = url;
+  // Columns follow the tile width so icons fill the space at every size.
+  const cols = focused ? 8 : Math.max(3, Math.min(size[0], columns));
+  const iconSize = focused ? 48 : Math.max(24, Math.min(40, Math.round(150 / cols)));
+
+  const gridItems = useMemo(
+    () => items.map((l) => ({ key: l.id, name: l.name, title: l.url, iconName: l.name })),
+    [items]
+  );
+
+  const open = (item) => {
+    if (editing) return;
+    const link = items.find((l) => l.id === item.key);
+    if (!link) return;
+    if (newTab) window.open(link.url, "_blank", "noopener,noreferrer");
+    else window.location.href = link.url;
   };
 
   const add = (e) => {
@@ -52,124 +67,97 @@ function Links({ options, config, setConfig, editing, focused }) {
   };
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${focused ? 6 : 4}, 1fr)`,
-        gap: 8,
-        flex: 1,
-        alignContent: "center",
-        minWidth: 0,
-      }}
-    >
-      {items.map((link) => (
-        <button
-          key={link.id}
-          type="button"
-          title={link.url}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (editing) return;
-            open(link.url);
-          }}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 6,
-            padding: "10px 4px",
-            borderRadius: 12,
-            cursor: editing ? "grab" : "pointer",
-            border: 0,
-            background: "transparent",
-            minWidth: 0,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--panel2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-          }}
-        >
-          <IconTile name={link.name} size={focused ? 40 : 30} />
-          {hideLabels ? null : (
-            <span
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
+      <IconGrid
+        items={gridItems}
+        cols={cols}
+        iconSize={iconSize}
+        gap={focused ? 10 : 6}
+        showLabels={!hideLabels}
+        onOpen={open}
+        onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
+        trailing={
+          adding ? (
+            <form
+              onSubmit={add}
+              onClick={(e) => e.stopPropagation()}
+              style={{ gridColumn: "span 2", width: "100%", alignSelf: "center" }}
+            >
+              <input
+                autoFocus
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={() => !draft && setAdding(false)}
+                placeholder="example.com"
+                aria-label="Link address"
+                style={{
+                  width: "100%",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  background: "var(--panel2)",
+                  border: "1px solid var(--line)",
+                  outline: "none",
+                  fontSize: 12,
+                  color: "var(--fg)",
+                }}
+              />
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setAdding(true);
+              }}
+              aria-label="Add a link"
               style={{
-                fontSize: 11,
-                color: "var(--dim)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: Math.max(4, Math.round(iconSize * 0.16)),
+                padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
+                borderRadius: 12,
+                cursor: "pointer",
+                border: 0,
+                background: "transparent",
+                color: "var(--faint)",
+                width: "100%",
               }}
             >
-              {link.name}
-            </span>
-          )}
-        </button>
-      ))}
+              <span
+                style={{
+                  width: iconSize,
+                  height: iconSize,
+                  borderRadius: iconSize * 0.28,
+                  border: "1.5px dashed var(--line)",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
+              </span>
+              {hideLabels ? null : (
+                <span style={{ fontSize: Math.max(9, Math.round(iconSize * 0.3)) }}>Add</span>
+              )}
+            </button>
+          )
+        }
+      />
 
-      {adding ? (
-        <form
-          onSubmit={add}
-          onClick={(e) => e.stopPropagation()}
-          style={{ gridColumn: "span 2", display: "flex", alignItems: "center" }}
-        >
-          <input
-            autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => !draft && setAdding(false)}
-            placeholder="example.com"
-            aria-label="Link address"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              borderRadius: 8,
-              background: "var(--panel2)",
-              border: "1px solid var(--line)",
-              outline: "none",
-              fontSize: 12,
-              color: "var(--fg)",
-            }}
-          />
-        </form>
-      ) : (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setAdding(true);
-          }}
-          aria-label="Add a link"
+      {focused ? (
+        <div
+          className="db-reveal"
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 6,
-            padding: "10px 4px",
-            borderRadius: 12,
-            cursor: "pointer",
-            border: 0,
-            background: "transparent",
+            marginTop: 10,
+            textAlign: "center",
+            fontFamily: MONO,
+            fontSize: 10,
             color: "var(--faint)",
           }}
         >
-          <span
-            style={{
-              width: focused ? 40 : 30,
-              height: focused ? 40 : 30,
-              borderRadius: (focused ? 40 : 30) * 0.28,
-              border: "1.5px dashed var(--line)",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <LuPlus size={14} />
-          </span>
-          {hideLabels ? null : <span style={{ fontSize: 11 }}>Add</span>}
-        </button>
-      )}
+          {items.length} {items.length === 1 ? "link" : "links"} · drag to reorder
+        </div>
+      ) : null}
     </div>
   );
 }

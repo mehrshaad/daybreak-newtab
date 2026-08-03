@@ -138,6 +138,9 @@ export function Drawer({ open, onClose, width = 340, label, scrim = false, child
             inset: 0,
             zIndex: 60,
             background: "var(--scrim)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            animation: "db-fade .25s ease both",
           }}
         />
       ) : null}

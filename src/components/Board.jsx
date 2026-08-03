@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { cameraStyle } from "../core/tileStyle";
+import { useFlip } from "../core/useFlip";
+import { usePointerReorder } from "../core/usePointerReorder";
 import { resolveOptions, resolveSize } from "../widgets/registry";
 import Tile from "./Tile";
 
@@ -26,11 +28,26 @@ function Board({
   onResize,
   onRemove,
   onOpenStore,
-  dnd,
+  onReorder,
   setWidgetConfig,
   setWidgetOptions,
   toast,
 }) {
+  const gridRef = useRef(null);
+
+  const { draggingId, onPointerDown } = usePointerReorder({
+    ids,
+    onReorder,
+    enabled: editing,
+    containerRef: gridRef,
+  });
+
+  // Animate every layout change: reorder, resize, add, remove, preset switch.
+  // The held tile is skipped because it is being positioned by the pointer.
+  useFlip(gridRef, [ids.join("|"), JSON.stringify(board.sizes), columns, appearance.gap], {
+    skipId: draggingId,
+  });
+
   const gridStyle = useMemo(
     () => ({
       display: "grid",
@@ -50,7 +67,7 @@ function Board({
       onContextMenu={onBoardMenu}
     >
       <div ref={boardRef} style={cameraStyle(cam, !!zoom && zoomMode === "Camera")}>
-        <div style={gridStyle}>
+        <div ref={gridRef} style={gridStyle}>
           {ids.map((instanceId) => (
             <Tile
               key={instanceId}
@@ -61,6 +78,7 @@ function Board({
               options={resolveOptions(instanceId, widgets[instanceId]?.options)}
               config={widgets[instanceId]?.config || {}}
               editing={editing}
+              dragging={draggingId === instanceId}
               zoomed={!!zoom}
               focused={zoom === instanceId}
               zoomMode={zoomMode}
@@ -75,10 +93,7 @@ function Board({
               onClose={onCloseZoom}
               onResize={() => onResize(instanceId)}
               onRemove={() => onRemove(instanceId)}
-              onDragStart={() => dnd.start(instanceId)}
-              onDragOver={dnd.over}
-              onDrop={(e) => dnd.drop(e, instanceId)}
-              onDragEnd={dnd.end}
+              onPointerDown={(e) => onPointerDown(e, instanceId)}
               setConfig={(patch) => setWidgetConfig(instanceId, patch)}
               setOptions={(patch) => setWidgetOptions(instanceId, patch)}
               toast={toast}

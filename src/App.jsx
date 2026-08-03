@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LuArrowLeft } from "react-icons/lu";
 import Board from "./components/Board";
 import ContextMenu from "./components/ContextMenu";
 import Header from "./components/Header";
@@ -9,13 +10,15 @@ import Store from "./components/Store";
 import Toast from "./components/Toast";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { boardMenu, widgetMenu } from "./core/menus";
-import { PRESETS } from "./core/schema";
+import { PRESETS, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
 import { background, baseColor, tokens } from "./core/tokens";
 import { useColumns } from "./core/useColumns";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
+import { animateExit } from "./core/useFlip";
+import { moveItem } from "./core/usePointerReorder";
 import { clearBucket } from "./sdk/bucket";
 import { hasPermissionsApi, requestAllPermissions } from "./sdk/permissions";
 import {
@@ -47,7 +50,6 @@ function App() {
   const searchRef = useRef(null);
   const boardRef = useRef(null);
   const tileEls = useRef({});
-  const dragId = useRef(null);
   const toastTimer = useRef(null);
   const scrolled = useScrolled();
   const columns = useColumns();
@@ -150,15 +152,18 @@ function App() {
   // --- board mutations -----------------------------------------------------
 
   const removeTile = useCallback(
-    (id) => {
+    async (id) => {
+      setMenu(null);
+      if (zoom === id) closeZoom();
+      if (panel === id) setPanel(null);
+      // Play the tile out before unmounting it; the gap it leaves is then
+      // closed by the board's FLIP animation.
+      await animateExit(tileEls.current[id]);
       update("board", {
         ids: board.ids.filter((x) => x !== id),
         layoutName: "Custom",
       });
       clearBucket(id);
-      if (zoom === id) closeZoom();
-      if (panel === id) setPanel(null);
-      setMenu(null);
     },
     [board.ids, update, zoom, panel, closeZoom]
   );
@@ -180,31 +185,12 @@ function App() {
     [board.sizes, update]
   );
 
-  const dnd = useMemo(
-    () => ({
-      start: (id) => {
-        dragId.current = id;
-      },
-      over: (e) => e.preventDefault(),
-      // Reorder by id, never by index: `grid-auto-flow: dense` means visual
-      // position and DOM order are not the same thing.
-      drop: (e, id) => {
-        e.preventDefault();
-        const from = dragId.current;
-        dragId.current = null;
-        if (!from || from === id) return;
-        const next = [...board.ids];
-        const a = next.indexOf(from);
-        const b = next.indexOf(id);
-        if (a === -1 || b === -1) return;
-        next.splice(a, 1);
-        next.splice(b, 0, from);
-        update("board", { ids: next, layoutName: "Custom" });
-      },
-      end: () => {
-        dragId.current = null;
-      },
-    }),
+  // Called continuously while a tile is held, so the board reorders under the
+  // cursor rather than only on drop.
+  const reorderTiles = useCallback(
+    (from, to) => {
+      update("board", { ids: moveItem(board.ids, from, to), layoutName: "Custom" });
+    },
     [board.ids, update]
   );
 
@@ -240,6 +226,30 @@ function App() {
     },
     [board.installed, update, closeZoom, toast]
   );
+
+  // The user's own layout: a snapshot of ids and per-tile sizes, so restoring
+  // it brings back the arrangement and not merely the set of widgets.
+  const saveCurrentLayout = useCallback(() => {
+    update("board", {
+      saved: { ids: [...board.ids], sizes: { ...board.sizes } },
+      layoutName: SAVED_LAYOUT,
+    });
+    toast(`Saved as "${SAVED_LAYOUT}"`);
+  }, [board.ids, board.sizes, update, toast]);
+
+  const applySavedLayout = useCallback(() => {
+    const saved = board.saved;
+    if (!saved) return;
+    const next = knownIds(saved.ids || []);
+    update("board", {
+      ids: next,
+      sizes: saved.sizes || {},
+      layoutName: SAVED_LAYOUT,
+      installed: [...new Set([...board.installed, ...next])],
+    });
+    closeZoom();
+    toast(`${SAVED_LAYOUT} layout applied`);
+  }, [board.saved, board.installed, update, closeZoom, toast]);
 
   const duplicateTile = useCallback(
     (id) => {
@@ -335,9 +345,12 @@ function App() {
       return boardMenu({
         editing,
         theme,
+        hasSaved: !!board.saved,
         onStore: openStore,
         onToggleEdit: toggleEdit,
         onPreset: applyPreset,
+        onApplySaved: applySavedLayout,
+        onSaveCurrent: saveCurrentLayout,
         onSettings: openSettingsAt,
       });
     }
@@ -369,9 +382,12 @@ function App() {
     board.sizes,
     zoomMode,
     widgets,
+    board.saved,
     openStore,
     toggleEdit,
     applyPreset,
+    applySavedLayout,
+    saveCurrentLayout,
     openSettingsAt,
     focusTile,
     setSize,
@@ -470,12 +486,16 @@ function App() {
         onResize={cycleSize}
         onRemove={removeTile}
         onOpenStore={openStore}
-        dnd={dnd}
+        onReorder={reorderTiles}
         setWidgetConfig={setWidgetConfig}
         setWidgetOptions={setWidgetOptions}
         toast={toast}
       />
 
+      {/* Camera zoom moves in on the board, so there is nothing to dim behind —
+          a scrim would sit over the very thing being magnified. Expand and
+          Spotlight are overlays and still get one. Either way the backdrop
+          stays clickable to zoom back out. */}
       {zoom ? (
         <div
           onClick={closeZoom}
@@ -483,9 +503,38 @@ function App() {
             position: "fixed",
             inset: 0,
             zIndex: 30,
-            background: "var(--scrim)",
+            background: zoomMode === "Camera" ? "transparent" : "var(--scrim)",
+            transition: "background .45s ease",
           }}
         />
+      ) : null}
+
+      {zoom ? (
+        <button
+          type="button"
+          onClick={closeZoom}
+          style={{
+            position: "fixed",
+            left: 20,
+            top: 20,
+            zIndex: 46,
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+            padding: "8px 14px",
+            borderRadius: 999,
+            cursor: "pointer",
+            fontSize: 13,
+            background: "var(--sheet)",
+            border: "1px solid var(--line)",
+            color: "var(--fg)",
+            backdropFilter: "blur(20px)",
+            boxShadow: "0 10px 30px rgba(0,0,0,.28)",
+            animation: "db-in .3s ease both",
+          }}
+        >
+          <LuArrowLeft size={14} /> Back
+        </button>
       ) : null}
 
       <Toast message={toastMsg} hidden={editing} />
@@ -493,7 +542,10 @@ function App() {
       {editing ? (
         <PresetsDock
           layoutName={board.layoutName}
+          hasSaved={!!board.saved}
           onPreset={applyPreset}
+          onApplySaved={applySavedLayout}
+          onSaveCurrent={saveCurrentLayout}
           onAddWidget={openStore}
           onDone={toggleEdit}
         />
