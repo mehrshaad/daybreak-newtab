@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { MIN_SCROLLABLE, nextScrolled } from "./useKeyboard";
 
-// Mirrors the state update inside useScrolled. Extracted here because the
-// flicker it prevents is a pure state-machine property, testable without a DOM.
-const next = (was, y, on = 24, off = 6) => (was ? y > off : y > on);
+// Plenty of page to scroll, so these cases exercise the thresholds alone.
+const next = (was, y, on = 24, off = 6) => nextScrolled(was, y, 4000, on, off);
 
 describe("condensed-header hysteresis", () => {
   it("engages only past the upper threshold", () => {
@@ -40,5 +40,14 @@ describe("condensed-header hysteresis", () => {
     expect(state).toBe(true);
     state = next(state, 0);
     expect(state).toBe(false);
+  });
+
+  // Condensing shortens the page. If that wipes out the only overflow there
+  // was, the scroll position returns to 0 and the header expands again — a loop
+  // hysteresis cannot break, because the position genuinely is 0 each time.
+  it("never condenses a page that has barely anything to scroll", () => {
+    expect(nextScrolled(false, 30, MIN_SCROLLABLE - 1)).toBe(false);
+    expect(nextScrolled(true, 30, MIN_SCROLLABLE - 1)).toBe(false);
+    expect(nextScrolled(false, 30, MIN_SCROLLABLE)).toBe(true);
   });
 });

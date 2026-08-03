@@ -43,21 +43,38 @@ export function useKeyboard({ enabled = true, onEscape, onSearch, onToggleEdit, 
   }, [enabled, onEscape, onSearch, onToggleEdit, onStore]);
 }
 
-// Tracks whether the page has scrolled past a threshold, for the condensing
-// header. Uses a passive listener so scrolling stays smooth.
+// Decides whether the header should be condensed. Pure, so the flicker it
+// prevents can be tested without a DOM.
 //
-// The threshold is hysteretic — it engages at `on` and only releases back below
-// `off`. With a single value, resting near it (very common just off the top of
-// the page, and worse because condensing the header changes the page height and
-// can nudge the scroll position back) made the header and search bar flicker
-// between sizes. Separate thresholds give it somewhere stable to sit.
+// Two guards, both for the same flicker:
+//
+// - Hysteresis. The state engages at `on` and only releases below `off`. With a
+//   single value, resting near it made the header and search bar flip between
+//   sizes.
+// - A minimum amount of scrollable page. Condensing takes ~20px off the header,
+//   which makes the document shorter. On a board that is only just scrollable
+//   that removes the overflow completely: the scroll position snaps to 0, the
+//   header expands, the page overflows again, and it oscillates — exactly the
+//   glitch seen at a scroll position close to zero but not zero. Hysteresis
+//   cannot help, because the position really does return to 0 each time. So a
+//   page with barely anything to scroll never condenses at all.
+export const MIN_SCROLLABLE = 48;
+
+export function nextScrolled(was, y, scrollable, on = 24, off = 6) {
+  if (scrollable < MIN_SCROLLABLE) return false;
+  return was ? y > off : y > on;
+}
+
+// Tracks whether the page has scrolled past the threshold, for the condensing
+// header. Uses a passive listener so scrolling stays smooth.
 export function useScrolled(on = 24, off = 6) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const update = () => {
-      const y = window.scrollY;
-      setScrolled((was) => (was ? y > off : y > on));
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - window.innerHeight;
+      setScrolled((was) => nextScrolled(was, window.scrollY, scrollable, on, off));
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
