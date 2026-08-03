@@ -57,7 +57,7 @@ feature that needs it, and revocable at any time:
 | `sessions` | Recent Tabs, to list and reopen what you closed |
 | `tabs` | search suggestions from the tabs you already have open |
 | `history` | search suggestions from pages you have visited |
-| `bookmarks` | the bookmark panel and bookmark search suggestions (read-only) |
+| `bookmarks` | search suggestions from your bookmarks (read-only) |
 
 It never asks for access to the content of the sites you visit, and declares no
 host permissions.

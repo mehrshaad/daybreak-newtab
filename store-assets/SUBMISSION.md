@@ -106,12 +106,14 @@ the manifest is a common rejection.
 
 | Asset | File |
 | --- | --- |
+| Store icon (128x128) | `store-icon-128.png` — the mark at 96x96 with the transparent padding the image guidelines ask for. Not `public/icon-128.png`, which is full-bleed for Chrome's own surfaces. |
 | Screenshot 1 (1280x800) | `screenshot-1.png` — the board |
 | Screenshot 2 (1280x800) | `screenshot-2.png` — widgets in use |
 | Screenshot 3 (1280x800) | `screenshot-3.png` — layout mode |
 | Screenshot 4 (1280x800) | `screenshot-4.png` — the widget browser |
 | Screenshot 5 (1280x800) | `screenshot-5.png` — themes and backgrounds |
 | Small promo tile (440x280) | `promo-tile-440x280.png` |
+| Marquee promo tile (1400x560) | `marquee-1400x560.png` — only used if the store features the item |
 
 Regenerate from fresh captures with:
 
@@ -138,9 +140,10 @@ dashboard of widgets.
 - **history** (optional) — Lets the search box suggest pages the user has visited
   before, matched against what they type. Requested only when that suggestion
   source is switched on.
-- **bookmarks** (optional) — Lets the bookmark panel and the search box show the
-  user's bookmarks. Read-only; the extension never creates, edits or deletes a
-  bookmark. Requested only when that feature is used.
+- **bookmarks** (optional) — Lets the search box suggest the user's saved
+  bookmarks, matched against what they type. Read-only; the extension never
+  creates, edits or deletes a bookmark. Requested only when that suggestion
+  source is switched on.
 - **Remote code** — No. All code is bundled in the package; nothing is fetched
   and executed at runtime.
 
@@ -164,7 +167,7 @@ server.
 - [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.0.0`
 - [ ] loaded the built `dist/` unpacked once, over v1 storage, and checked the
       migration (see below)
-- [ ] five screenshots and the promo tile uploaded
+- [ ] store icon, five screenshots, the small promo tile and the marquee uploaded
 - [ ] release notes filled in
 - [ ] every permission justification filled in, including the four optional ones
 

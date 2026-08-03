@@ -32,6 +32,8 @@ const FG = "#f4f5f8";
 
 const FONTS = "'Segoe UI', 'DM Sans', system-ui, -apple-system, sans-serif";
 
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
+
 const CARDS = [
   {
     file: "1.jpg",
@@ -184,6 +186,107 @@ async function card(rawPath, meta) {
     .toBuffer();
 }
 
+// 1400x560 marquee tile, for the store's featured carousel: the mark and name on
+// the left, a slice of the real board on the right. The slice is cropped out of a
+// screenshot rather than shrunk from the whole page, so the UI in it stays at a
+// size where it reads as a product and not as texture.
+async function marquee(rawPath) {
+  const W2 = 1400;
+  const H2 = 560;
+
+  const src = sharp(rawPath);
+  const { width: rawW, height: rawH } = await src.metadata();
+  // The tiles, not the header: from just under the greeting to the bottom of the
+  // capture, and stopping short of the scrollbar.
+  const crop = {
+    left: 24,
+    top: Math.round(rawH * 0.4),
+    width: Math.min(rawW - 24 - SCROLLBAR, Math.round(rawW * 0.58)),
+    height: rawH - Math.round(rawH * 0.4),
+  };
+  const slice = await src.extract(crop).toBuffer();
+  const shot = await rounded(slice, 880, 16);
+
+  const icon = await sharp(join(root, "public", "icon-128.png"))
+    .resize({ width: 96 })
+    .toBuffer();
+
+  const text = Buffer.from(`<svg width="${W2}" height="${H2}" xmlns="http://www.w3.org/2000/svg">
+  <text x="88" y="322" font-family="${FONTS}" font-size="62" font-weight="600"
+        letter-spacing="-1.5" fill="${FG}">Daybreak</text>
+  <text x="90" y="366" font-family="${FONTS}" font-size="21" font-weight="400"
+        fill="${FG}" fill-opacity=".62">Every tab, arranged your way</text>
+</svg>`);
+
+  const shadow = await sharp({
+    create: {
+      width: shot.width + 80,
+      height: shot.height + 80,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([
+      {
+        input: Buffer.from(
+          `<svg width="${shot.width + 80}" height="${shot.height + 80}" xmlns="http://www.w3.org/2000/svg">
+             <rect x="40" y="40" width="${shot.width}" height="${shot.height}"
+                   rx="16" fill="#000" fill-opacity=".55"/>
+           </svg>`
+        ),
+      },
+    ])
+    .blur(20)
+    .png()
+    .toBuffer();
+
+  // Runs off the right edge on purpose: a floating card needs a right border,
+  // and a border landing mid-tile reads as a rendering artifact. Bleeding it off
+  // the canvas says "the page carries on" instead.
+  const shotX = 560;
+  const shotY = Math.round((H2 - shot.height) / 2);
+
+  return sharp(backdrop(W2, H2))
+    .composite([
+      { input: shadow, left: shotX - 40, top: shotY - 28 },
+      { input: shot.buffer, left: shotX, top: shotY },
+      {
+        input: Buffer.from(
+          `<svg width="${shot.width}" height="${shot.height}" xmlns="http://www.w3.org/2000/svg">
+             <rect x=".5" y=".5" width="${shot.width - 1}" height="${shot.height - 1}"
+                   rx="16" fill="none" stroke="#ffffff" stroke-opacity=".14"/>
+           </svg>`
+        ),
+        left: shotX,
+        top: shotY,
+      },
+      { input: icon, left: 88, top: 168 },
+      { input: text, left: 0, top: 0 },
+    ])
+    .flatten({ background: BASE })
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
+
+// The listing icon. Not the same file as the extension's own icon: the store's
+// image guidelines ask for the artwork at 96x96 inside a 128x128 canvas with
+// transparent padding, whereas public/icon-128.png is full-bleed because that is
+// what Chrome's own surfaces want. Rendered from the 288px master, so it is a
+// downscale rather than an upscale of the shipped png.
+//
+// The dark tile, like the extension icon, because the store shows icons on white.
+async function storeIcon() {
+  const art = await sharp(join(root, "src", "assets", "icon", "daybreak-dark.png"))
+    .resize({ width: 96, height: 96, fit: "contain", background: TRANSPARENT })
+    .toBuffer();
+  return sharp({
+    create: { width: 128, height: 128, channels: 4, background: TRANSPARENT },
+  })
+    .composite([{ input: art, left: 16, top: 16 }])
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
+
 // 440x280 small promo tile: the mark, the name, and nothing else.
 async function promo() {
   const icon = await sharp(join(root, "public", "icon-128.png"))
@@ -226,6 +329,17 @@ for (const [i, meta] of CARDS.entries()) {
   console.log(`${name}  ${width}x${height}  ${(buf.length / 1024).toFixed(0)}KB`);
 }
 
+const listingIcon = await storeIcon();
+await writeFile(join(outDir, "store-icon-128.png"), listingIcon);
+console.log(`store-icon-128.png  ${(listingIcon.length / 1024).toFixed(1)}KB`);
+
 const tile = await promo();
 await writeFile(join(outDir, "promo-tile-440x280.png"), tile);
 console.log(`promo-tile-440x280.png  ${(tile.length / 1024).toFixed(0)}KB`);
+
+if (present.has(CARDS[0].file)) {
+  const wide = await marquee(join(rawDir, CARDS[0].file));
+  await writeFile(join(outDir, "marquee-1400x560.png"), wide);
+  const { width, height } = await sharp(wide).metadata();
+  console.log(`marquee-1400x560.png  ${width}x${height}  ${(wide.length / 1024).toFixed(0)}KB`);
+}
