@@ -1,7 +1,7 @@
 import { Suspense, lazy, useMemo } from "react";
 import { MONO, pill } from "../core/styles";
 import { getWidget, resolveOptions, resolveSize } from "../widgets/registry";
-import { Drawer, DrawerHeader, Pill, Section, Toggle } from "./primitives";
+import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 const panelCache = new Map();
 function panelFor(manifest) {
@@ -85,15 +85,53 @@ function WidgetSettingsDrawer({
 
         {manifest.options.length ? (
           <Section title="Options">
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {manifest.options.map((o) => (
-                <Toggle
-                  key={o.key}
-                  label={o.label}
-                  on={!!options[o.key]}
-                  onChange={() => onOptions({ [o.key]: !options[o.key] })}
-                />
-              ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {manifest.options.map((o) => {
+                // Options started out boolean-only; enum and number let a
+                // widget ask for a choice or a count without needing its own
+                // settings panel.
+                if (o.type === "enum") {
+                  return (
+                    <div key={o.key}>
+                      <div style={{ fontSize: 13, marginBottom: 7 }}>{o.label}</div>
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                        {o.of.map((choice) => (
+                          <Pill
+                            key={choice}
+                            active={options[o.key] === choice}
+                            onClick={() => onOptions({ [o.key]: choice })}
+                            style={{ fontSize: 11, padding: "5px 10px" }}
+                          >
+                            {o.labels?.[choice] || choice}
+                          </Pill>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                if (o.type === "number") {
+                  return (
+                    <Slider
+                      key={o.key}
+                      label={o.label}
+                      min={o.min ?? 0}
+                      max={o.max ?? 10}
+                      step={o.step ?? 1}
+                      suffix={o.suffix || ""}
+                      value={Number(options[o.key] ?? o.default ?? 0)}
+                      onChange={(v) => onOptions({ [o.key]: v })}
+                    />
+                  );
+                }
+                return (
+                  <Toggle
+                    key={o.key}
+                    label={o.label}
+                    on={!!options[o.key]}
+                    onChange={() => onOptions({ [o.key]: !options[o.key] })}
+                  />
+                );
+              })}
             </div>
           </Section>
         ) : null}

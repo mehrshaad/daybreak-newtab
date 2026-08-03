@@ -1,27 +1,29 @@
 import { useState } from "react";
-import { LuPlus } from "react-icons/lu";
+import { LuCheck, LuPlus } from "react-icons/lu";
 import { MONO } from "../../core/styles";
 import { useWidgetLocal } from "../../sdk/bucket";
 import { uid } from "../../utils";
-import { lastNDays, streakFor, toggleDay } from "./streak";
+import { toggleDay } from "./streak";
+import { habitProgress, weekStartIndex } from "./weeks";
 
 const DEFAULTS = [
   { id: "h1", name: "Read 20 pages" },
   { id: "h2", name: "Walk outside" },
 ];
 
-function Habits({ id, options, config, setConfig, focused }) {
-  // Names are settings (small, worth syncing); the tick history is content and
-  // grows over time, so it lives in the local bucket.
+function Habits({ id, options, config, setConfig, size }) {
+  // Names are settings (small, worth syncing); tick history is content that
+  // grows, so it lives in the local bucket.
   const [history, setHistory] = useWidgetLocal(id, "history", {});
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
 
-  const habits = Array.isArray(config.habits) && config.habits.length
-    ? config.habits
-    : DEFAULTS;
-  const days = lastNDays(7);
-  const today = days[days.length - 1];
+  const habits =
+    Array.isArray(config.habits) && config.habits.length ? config.habits : DEFAULTS;
+  const startIndex = weekStartIndex(options.weekStart);
+  const target = Number(options.target) || 5;
+  const targetWeeks = Number(options.targetWeeks) || 0;
+  const wide = (size?.[0] ?? 3) >= 4;
 
   const toggle = (habitId, date) =>
     setHistory((prev) => ({
@@ -44,7 +46,7 @@ function Habits({ id, options, config, setConfig, focused }) {
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 10,
+        gap: 9,
         flex: 1,
         justifyContent: "center",
         minWidth: 0,
@@ -52,70 +54,95 @@ function Habits({ id, options, config, setConfig, focused }) {
     >
       {habits.map((habit) => {
         const done = history?.[habit.id] || {};
-        const streak = streakFor(done);
+        const p = habitProgress(done, { startIndex, target, targetWeeks });
         return (
-          <div
-            key={habit.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 10,
-              minWidth: 0,
-            }}
-          >
-            <span
+          <div key={habit.id} style={{ minWidth: 0 }}>
+            <div
               style={{
-                fontSize: 12,
-                color: "var(--dim)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
                 minWidth: 0,
               }}
             >
-              {habit.name}
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, flex: "none" }}>
-              {options.showStreaks && streak > 0 ? (
+              <span
+                style={{
+                  fontSize: 12,
+                  color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                {habit.name}
+              </span>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 5, flex: "none" }}>
+                {/* This week's dots, aligned to the chosen week start rather
+                    than a rolling window, since the target is weekly. */}
+                {p.days.map((date) => {
+                  const isToday = date === p.today;
+                  const ticked = !!done[date];
+                  return (
+                    <button
+                      key={date}
+                      type="button"
+                      aria-label={`${habit.name} on ${date}`}
+                      aria-pressed={ticked}
+                      title={isToday ? "Today" : date}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggle(habit.id, date);
+                      }}
+                      style={{
+                        width: wide ? 13 : 11,
+                        height: wide ? 13 : 11,
+                        borderRadius: 4,
+                        padding: 0,
+                        cursor: "pointer",
+                        background: ticked ? "var(--accent)" : "var(--line)",
+                        border: isToday
+                          ? "1px solid var(--accentLine)"
+                          : "1px solid transparent",
+                        transition: "background .15s",
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 8,
+                fontFamily: MONO,
+                fontSize: 9,
+                color: "var(--faint)",
+                marginTop: 3,
+              }}
+            >
+              <span style={{ color: p.metThisWeek ? "var(--ok)" : "var(--faint)" }}>
+                {p.count}/{p.target} this week
+              </span>
+              {options.showStreaks && p.weeksDone > 0 ? (
                 <span
                   style={{
-                    fontFamily: MONO,
-                    fontSize: 10,
-                    color: "var(--faint)",
-                    marginRight: 3,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
+                    color: p.goalReached ? "var(--ok)" : "var(--faint)",
                   }}
                 >
-                  {streak}d
+                  {p.goalReached ? <LuCheck size={9} /> : null}
+                  {targetWeeks > 0
+                    ? `${p.weeksDone}/${targetWeeks} weeks`
+                    : `${p.weeksDone} week${p.weeksDone === 1 ? "" : "s"}`}
                 </span>
               ) : null}
-              {days.map((date) => (
-                <button
-                  key={date}
-                  type="button"
-                  aria-label={`${habit.name} on ${date}`}
-                  aria-pressed={!!done[date]}
-                  title={date === today ? "Today" : date}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggle(habit.id, date);
-                  }}
-                  style={{
-                    width: focused ? 16 : 11,
-                    height: focused ? 16 : 11,
-                    borderRadius: 4,
-                    padding: 0,
-                    cursor: "pointer",
-                    background: done[date] ? "var(--accent)" : "var(--line)",
-                    // Today gets a ring so the grid reads without a legend.
-                    border:
-                      date === today
-                        ? "1px solid var(--accentLine)"
-                        : "1px solid transparent",
-                    transition: "background .15s",
-                  }}
-                />
-              ))}
             </div>
           </div>
         );
