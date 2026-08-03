@@ -1,0 +1,144 @@
+// Ported from `tileStyle()` in design/Daybreak.dc.html. Kept as a pure
+// function of (appearance, tile state) so the zoom behaviour is testable
+// without mounting the board.
+
+export function tileStyle({
+  theme = "dark",
+  radius = 18,
+  alpha = 100,
+  size = [4, 2],
+  editing = false,
+  menuTarget = false,
+  zoomed = false,
+  focused = false,
+  zoomMode = "Camera",
+  panelOpen = false,
+}) {
+  const dark = theme !== "light";
+  const [w, h] = size;
+  const al = alpha / 100;
+
+  const base = {
+    gridColumn: `span ${w}`,
+    gridRow: `span ${h}`,
+    display: "flex",
+    flexDirection: "column",
+    padding: "16px 18px",
+    borderRadius: `${radius}px`,
+    background: dark
+      ? `rgba(255,255,255,${(0.055 * al).toFixed(3)})`
+      : `rgba(255,255,255,${(0.3 + 0.52 * al).toFixed(3)})`,
+    border: "1px solid var(--line)",
+    overflow: "hidden",
+    cursor: editing ? "grab" : "pointer",
+    transition:
+      "transform .3s cubic-bezier(.22,1,.36,1), opacity .3s, border-color .2s, box-shadow .3s",
+    boxShadow: dark
+      ? "0 1px 0 rgba(255,255,255,.04) inset"
+      : "0 1px 2px rgba(20,22,28,.05)",
+  };
+
+  if (editing) base.boxShadow = "0 0 0 1px var(--accentLine) inset";
+  if (menuTarget) base.boxShadow = "0 0 0 1.5px var(--accent) inset";
+
+  if (!zoomed) return base;
+
+  const lifted = dark ? "rgba(28,30,38,.98)" : "rgba(255,255,255,.99)";
+  // Expand mode leaves room for the widget-settings drawer when it is open.
+  const right = panelOpen ? "calc(340px + 3vw)" : "3vw";
+
+  if (!focused) {
+    return {
+      ...base,
+      opacity: zoomMode === "Camera" ? 0.35 : 0.2,
+      pointerEvents: "none",
+    };
+  }
+
+  if (zoomMode === "Camera") {
+    return {
+      ...base,
+      zIndex: 36,
+      position: "relative",
+      cursor: "default",
+      boxShadow: "0 40px 120px rgba(0,0,0,.45)",
+      background: lifted,
+    };
+  }
+
+  if (zoomMode === "Expand") {
+    return {
+      ...base,
+      position: "fixed",
+      top: "86px",
+      left: "3vw",
+      right,
+      bottom: "3vh",
+      zIndex: 36,
+      padding: "34px 38px",
+      borderRadius: "22px",
+      cursor: "default",
+      background: lifted,
+      boxShadow: "0 40px 140px rgba(0,0,0,.5)",
+    };
+  }
+
+  // Spotlight
+  return {
+    ...base,
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%,-50%)",
+    width: "min(760px, 72vw)",
+    height: "min(470px, 64vh)",
+    zIndex: 36,
+    padding: "32px 36px",
+    borderRadius: "20px",
+    cursor: "default",
+    background: lifted,
+    boxShadow: "0 40px 140px rgba(0,0,0,.5)",
+  };
+}
+
+// Camera zoom: translate + scale the whole board so the clicked tile lands in
+// the middle of the free space under the header. Ported from `focusTile()`.
+export function cameraFor(tileRect, boardRect, viewport, headerHeight = 78) {
+  const { innerWidth: vw, innerHeight: vh } = viewport;
+  const scale = Math.min(
+    (vw * 0.62) / tileRect.width,
+    (vh - headerHeight - 60) / tileRect.height,
+    2.6
+  );
+  return {
+    ox: tileRect.left + tileRect.width / 2 - boardRect.left,
+    oy: tileRect.top + tileRect.height / 2 - boardRect.top,
+    tx: vw / 2 - (tileRect.left + tileRect.width / 2),
+    ty: (headerHeight + vh) / 2 - (tileRect.top + tileRect.height / 2),
+    s: scale,
+  };
+}
+
+// The camera wrapper deliberately carries NO transform or will-change unless a
+// Camera zoom is actually running. Both properties make an element a stacking
+// context *and* a containing block for fixed-position descendants, which would
+// pin Expand/Spotlight tiles to the board box instead of the viewport.
+//
+// While Camera zoom is active it also lifts above the scrim (z-index 30): the
+// transform makes the wrapper a stacking context, so the focused tile's own
+// z-index can no longer escape it, and without this the scrim would dim the
+// very tile being focused. Unfocused tiles are dimmed by their own opacity.
+export function cameraStyle(cam, active) {
+  const style = { transition: "transform .55s cubic-bezier(.2,.9,.25,1)" };
+  if (!cam || !active) return style;
+  return {
+    ...style,
+    position: "relative",
+    zIndex: 36,
+    willChange: "transform",
+    transformOrigin: `${cam.ox}px ${cam.oy}px`,
+    transform: `translate(${Math.round(cam.tx)}px, ${Math.round(
+      cam.ty
+    )}px) scale(${cam.s.toFixed(3)})`,
+  };
+}
