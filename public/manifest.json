@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Daybreak v2 - New Tab",
+  "name": "Daybreak - New Tab",
   "short_name": "Daybreak",
   "version": "2.0.0",
   "description": "Start every tab fresh: a customizable widget dashboard with a clock, weather, tasks, quick links, and more.",

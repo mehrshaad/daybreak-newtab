@@ -1,4 +1,4 @@
-# Daybreak v2 - New Tab
+# Daybreak - New Tab
 
 **Start every tab fresh.** Daybreak replaces Chrome's new tab page with a
 customizable widget dashboard — a grid of tiles you arrange yourself, with a
@@ -67,9 +67,7 @@ The only outbound requests are your chosen **city** to
 and your **search queries** to whichever engine you've selected. Icons and
 backgrounds are bundled or generated, so simply opening a new tab contacts
 nobody. Full policy:
-[Privacy Policy](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy-v2.html)
-(v1's is still at
-[privacy-policy.html](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html)).
+[Privacy Policy](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html).
 
 ## Install
 
@@ -87,9 +85,10 @@ _Coming soon._
 4. Click **Load unpacked** and select the unzipped folder.
 5. Open a new tab.
 
-v2 is a **separate** Web Store item, not an update to v1, so the two can be
-installed side by side and v1 keeps working untouched. Because each extension has
-its own storage, v2 starts fresh rather than inheriting a v1 board.
+Upgrading from v1 keeps your settings: your name, search engine, city, to-dos and
+shortcuts are migrated the first time v2 runs, and every v1 city becomes a world
+clock. v2 also asks for **less** than v1 did — v1 required bookmark access up
+front, and here it is optional.
 
 ## Development
 

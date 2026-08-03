@@ -117,6 +117,21 @@ describe("migrateV1", () => {
     ]);
   });
 
+  it("labels a nameless bookmark with its host, not the whole url", () => {
+    const out = migrateV1({
+      bookmarks: {
+        bookmarksList: [
+          { url: "https://www.example.com/some/path?q=1" },
+          { url: "not a url" },
+        ],
+      },
+    });
+    expect(out.widgets.links.config.items.map((l) => l.name)).toEqual([
+      "example.com",
+      "not a url",
+    ]);
+  });
+
   it("drops bookmark entries with no url", () => {
     const partial = migrateV1({
       bookmarks: { bookmarksList: [{ name: "Broken" }, { name: "OK", url: "https://ok.dev" }] },

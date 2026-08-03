@@ -66,6 +66,17 @@ export function migrateV1(v1) {
     };
   }
 
+  // A v1 bookmark with no name would otherwise be labelled with its whole URL,
+  // which reads as broken under an icon. The host is what a user would call it.
+  const linkName = (b) => {
+    if (b.name) return b.name;
+    try {
+      return new URL(b.url).hostname.replace(/^www\./, "");
+    } catch {
+      return b.url;
+    }
+  };
+
   const links = Array.isArray(v1.bookmarks?.bookmarksList)
     ? v1.bookmarks.bookmarksList
     : [];
@@ -76,7 +87,7 @@ export function migrateV1(v1) {
       config: {
         items: links
           .filter((b) => b && b.url)
-          .map((b, i) => ({ id: `v1-${i}`, name: b.name || b.url, url: b.url })),
+          .map((b, i) => ({ id: `v1-${i}`, name: linkName(b), url: b.url })),
       },
     };
   }

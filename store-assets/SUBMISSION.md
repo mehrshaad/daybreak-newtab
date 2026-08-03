@@ -1,8 +1,10 @@
-# Chrome Web Store submission — Daybreak v2
+# Chrome Web Store — publishing Daybreak 2.0.0
 
-Everything the listing form asks for, ready to paste. **v2 is a new item, not an
-update to v1** — create a fresh item in the developer dashboard so the two can be
-installed side by side and v1's listing is left alone.
+This goes out as **a new version of the existing listing**, not a new item. Open
+the current *Daybreak - New Tab* item in the developer dashboard and upload a new
+package; the item id, URL, installs, ratings and reviews all stay.
+
+Everything below is ready to paste.
 
 ## The package
 
@@ -16,28 +18,50 @@ Then zip the **contents** of `dist/` so `manifest.json` sits at the root of the
 archive:
 
 ```powershell
-Compress-Archive -Path dist\* -DestinationPath daybreak-v2-2.0.0.zip -Force
+Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-v2-2.0.0.zip -Force
 ```
 
-That writes `store-assets/daybreak-v2-2.0.0.zip`, which is git-ignored — rebuild
-it whenever `dist/` changes. The store rejects a zip whose `manifest.json` is
-nested inside a folder.
+The zip is git-ignored — rebuild it whenever `dist/` changes. The store rejects an
+archive whose `manifest.json` is nested inside a folder.
+
+## What the reviewer will see change
+
+| | v1.1.0 (live) | 2.0.0 (this upload) |
+| --- | --- | --- |
+| Name | Daybreak - New Tab | unchanged |
+| Required permissions | `storage`, `bookmarks` | **`storage` only** |
+| Optional permissions | none | `sessions`, `tabs`, `history`, `bookmarks` |
+| Host permissions | none | none |
+| Remote code | none | none |
+| Minimum Chrome | unset | 117 |
+
+**Required permissions go down.** Chrome only disables an extension pending user
+re-approval when required permissions increase, so this update installs silently
+for existing users — no re-enable prompt. Bookmark access, which v1 demanded up
+front, is now requested only if the user turns the bookmarks feature on.
+
+`minimum_chrome_version: 117` is what the animated greeting collapse
+(`grid-template-rows` interpolation) and the OKLCH colour tokens need. Anyone on
+an older Chrome keeps v1.1.0 rather than receiving a build that renders wrongly.
 
 ## Listing fields
 
+Most are already set on the item. Check these:
+
 | Field | Value |
 | --- | --- |
-| Item name | `Daybreak v2 - New Tab` |
+| Item name | `Daybreak - New Tab` |
 | Short description (132 max) | `Start every tab fresh: a customizable widget dashboard with a clock, weather, tasks, quick links, and more.` |
 | Category | Workflow & Planning |
 | Language | English (United States) |
 | Website / homepage | `https://github.com/mehrshaad/daybreak-newtab` |
 | Support | `https://github.com/mehrshaad/daybreak-newtab/issues` |
-| Privacy policy URL | `https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy-v2.html` |
+| Privacy policy URL | `https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html` |
 
-Publish `privacy-policy-v2.html` to that URL **before** submitting; review fails
-on a 404. v1's `privacy-policy.html` must stay where it is — it is the URL on the
-live v1 listing.
+The policy URL is unchanged, but **the file behind it has to be republished** —
+`privacy-policy.html` in this repo now describes 2.0.0, including the four
+optional permissions. Push it live before submitting: a policy that does not match
+the manifest is a common rejection.
 
 ### Detailed description
 
@@ -64,6 +88,19 @@ live v1 listing.
 > box.
 >
 > Export your whole setup to a file and import it back whenever you like.
+
+### What's new (release notes)
+
+> A complete rebuild. Daybreak is now a board of widgets you arrange yourself
+> rather than a fixed layout.
+>
+> - Eleven widgets, including world clocks, habits, a focus timer and an analog
+>   clock face
+> - Drag tiles anywhere, resize them, save your own layout
+> - A widget browser for adding and removing
+> - Dark, light or system themes, six accents, eight generated backgrounds
+> - Needs less than before: bookmark access is now optional instead of required
+> - Your name, search engine, city, to-dos and shortcuts carry over from v1
 
 ## Images
 
@@ -122,13 +159,27 @@ server.
 
 ## Before you hit submit
 
-- [ ] `privacy-policy-v2.html` is live at the URL above
+- [ ] the updated `privacy-policy.html` is live at the URL on the listing
 - [ ] the zip's `manifest.json` is at the archive root
-- [ ] `manifest.json` name reads `Daybreak v2 - New Tab` and version `2.0.0`
-- [ ] loaded the built `dist/` unpacked once and opened a new tab
+- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.0.0`
+- [ ] loaded the built `dist/` unpacked once, over v1 storage, and checked the
+      migration (see below)
 - [ ] five screenshots and the promo tile uploaded
-- [ ] every permission has a justification filled in
+- [ ] release notes filled in
+- [ ] every permission justification filled in, including the four optional ones
 
-New-tab overrides get a closer look than most extensions, and a first review can
-take several days. Nothing in the package needs a review exception: no remote
-code, no host permissions, one required permission.
+## Checking the migration by hand
+
+v1's settings live under the `daybreakSettings` key. To watch the upgrade the way
+a real user will:
+
+1. Install v1.1.0, set a name, pick a city, add a to-do and a shortcut.
+2. Load the 2.0.0 `dist/` over the same profile (or, unpacked, replace the
+   extension keeping the same id).
+3. Open a new tab. The name, search engine, city, to-dos and shortcuts should be
+   there, every v1 city should appear as a world clock, and `daybreakSettings`
+   should still be untouched — the migration reads it and never deletes it, so a
+   downgrade is still possible.
+
+Once an upgraded profile has written `daybreak2`, the migration is skipped
+forever after; it only runs when no v2 settings exist yet.
