@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CitySearch, MONO, useWidgetLocal } from "@daybreak/sdk";
+import ConditionIcon from "./ConditionIcon";
 import { forecastUrl, parseForecast } from "./forecast";
 
 function Weather({ id, options, config, setConfig, refreshKey, focused }) {
@@ -87,15 +88,24 @@ function Weather({ id, options, config, setConfig, refreshKey, focused }) {
       }}
     >
       <div>
-        <div
-          style={{
-            fontSize: focused ? "clamp(48px, 7vw, 76px)" : "clamp(30px, 3.4vw, 40px)",
-            fontWeight: 500,
-            letterSpacing: "-.03em",
-            lineHeight: 1,
-          }}
-        >
-          {data.temp}°
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              fontSize: focused ? "clamp(48px, 7vw, 76px)" : "clamp(30px, 3.4vw, 40px)",
+              fontWeight: 500,
+              letterSpacing: "-.03em",
+              lineHeight: 1,
+            }}
+          >
+            {data.temp}°
+          </div>
+          {/* Day/night decided from the location's own clock, not the
+              browser's — the point of the widget is somewhere else. */}
+          <ConditionIcon
+            condition={data.condition}
+            day={data.isDay}
+            size={focused ? 44 : 30}
+          />
         </div>
         <div
           style={{

@@ -87,6 +87,10 @@ describe("forecastUrl", () => {
     expect(forecastUrl(c, false)).not.toMatch(/key|token|appid/i);
   });
 
+  it("asks for is_day, so the icon can tell noon from midnight", () => {
+    expect(forecastUrl({ latitude: 1, longitude: 2 }, false)).toContain("is_day");
+  });
+
   it("only ever targets Open-Meteo", () => {
     expect(forecastUrl({ latitude: 1, longitude: 2 }, false)).toMatch(
       /^https:\/\/api\.open-meteo\.com\//
@@ -120,6 +124,19 @@ describe("parseForecast", () => {
 
   it("honours the 24-hour preference in the strip", () => {
     expect(parseForecast(data, true).hours[0].t).toBe("22");
+  });
+
+  it("reads day and night from the location's own clock", () => {
+    expect(parseForecast({ ...data, current: { ...data.current, is_day: 1 } }, false).isDay).toBe(
+      true
+    );
+    expect(parseForecast({ ...data, current: { ...data.current, is_day: 0 } }, false).isDay).toBe(
+      false
+    );
+  });
+
+  it("assumes day when is_day is missing, rather than showing a moon at noon", () => {
+    expect(parseForecast(data, false).isDay).toBe(true);
   });
 
   it("returns null when the payload has no current block", () => {

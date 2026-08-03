@@ -30,23 +30,37 @@ describe("tileStyle grid placement", () => {
   });
 });
 
+const alphaOf = (css) => Number(/rgba\([\d, ]+,([\d.]+)\)/.exec(css)[1]);
+
 describe("tileStyle opacity", () => {
-  it("dark tiles fade toward transparent as alpha drops", () => {
-    expect(tileStyle({ theme: "dark", alpha: 100 }).background).toBe(
-      "rgba(255,255,255,0.055)"
-    );
-    expect(tileStyle({ theme: "dark", alpha: 0 }).background).toBe(
-      "rgba(255,255,255,0.000)"
-    );
+  // The slider is absolute: 100% is opaque, 0% is invisible, in both themes.
+  it("maps the slider straight onto the fill alpha", () => {
+    for (const theme of ["dark", "light"]) {
+      expect(alphaOf(tileStyle({ theme, alpha: 100 }).background), theme).toBe(1);
+      expect(alphaOf(tileStyle({ theme, alpha: 0 }).background), theme).toBe(0);
+      expect(alphaOf(tileStyle({ theme, alpha: 50 }).background), theme).toBe(0.5);
+    }
   });
 
-  it("light tiles stay legible at alpha 0 (they float on a light page)", () => {
-    expect(tileStyle({ theme: "light", alpha: 0 }).background).toBe(
-      "rgba(255,255,255,0.300)"
-    );
-    expect(tileStyle({ theme: "light", alpha: 100 }).background).toBe(
-      "rgba(255,255,255,0.820)"
-    );
+  it("uses a dark surface in dark mode, so a solid tile is not a white card", () => {
+    expect(tileStyle({ theme: "dark", alpha: 100 }).background).toBe("rgba(28,30,38,1)");
+    expect(tileStyle({ theme: "light", alpha: 100 }).background).toBe("rgba(255,255,255,1)");
+  });
+});
+
+describe("tileStyle blur", () => {
+  it("applies a backdrop filter only when blur is on", () => {
+    expect(tileStyle({ blur: true }).backdropFilter).toBe("var(--blur-tile)");
+    expect(tileStyle({ blur: false }).backdropFilter).toBe("none");
+  });
+
+  // The fill is the user's own opacity setting either way; only the frost goes.
+  it("leaves the fill alone when blur is switched off", () => {
+    for (const theme of ["dark", "light"]) {
+      expect(tileStyle({ theme, alpha: 40, blur: false }).background, theme).toBe(
+        tileStyle({ theme, alpha: 40, blur: true }).background
+      );
+    }
   });
 });
 
@@ -57,6 +71,14 @@ describe("tileStyle states", () => {
     expect(s.boxShadow).toContain("--accentLine");
   });
 
+  // With zoom off a tile does nothing when clicked, so it must not look
+  // clickable.
+  it("only offers a pointer cursor when a click would do something", () => {
+    expect(tileStyle({ zoomMode: "Camera" }).cursor).toBe("pointer");
+    expect(tileStyle({ zoomMode: "None" }).cursor).toBe("default");
+    expect(tileStyle({ zoomMode: "None", editing: true }).cursor).toBe("grab");
+  });
+
   it("the menu target outranks the edit ring", () => {
     const s = tileStyle({ editing: true, menuTarget: true });
     expect(s.boxShadow).toBe("0 0 0 1.5px var(--accent) inset");
@@ -64,7 +86,9 @@ describe("tileStyle states", () => {
 
   it("is inert with no zoom applied", () => {
     const s = tileStyle({});
-    expect(s.position).toBeUndefined();
+    // Relative only so edit-mode chrome can be positioned over the tile; it
+    // still takes part in the grid and is not lifted or dimmed.
+    expect(s.position).toBe("relative");
     expect(s.opacity).toBeUndefined();
     expect(s.pointerEvents).toBeUndefined();
   });

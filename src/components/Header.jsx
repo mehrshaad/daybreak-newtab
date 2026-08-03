@@ -57,7 +57,7 @@ function EnginePicker({ engine, onPick }) {
             borderRadius: 12,
             background: "var(--sheet)",
             border: "1px solid var(--line)",
-            backdropFilter: "blur(24px)",
+            backdropFilter: "var(--blur-panel)",
             boxShadow: "0 20px 50px rgba(0,0,0,.4)",
             animation: "db-menu .12s ease both",
           }}
@@ -218,7 +218,7 @@ function Header({
         padding: scrolled ? "10px 28px" : "20px 28px",
         background: scrolled ? "var(--sheet)" : "transparent",
         borderBottom: `1px solid ${scrolled ? "var(--line)" : "transparent"}`,
-        backdropFilter: scrolled ? "blur(22px)" : "none",
+        backdropFilter: scrolled ? "var(--blur-panel)" : "none",
         transition: "padding .25s ease, background .25s ease, border-color .25s ease",
       }}
     >
@@ -266,7 +266,12 @@ function Header({
             maxWidth: searchActive ? "640px" : scrolled ? "440px" : "560px",
             padding: scrolled ? "7px 15px" : "10px 16px",
             borderRadius: "999px",
-            background: searchActive || searchHover ? "var(--panel2)" : scrolled ? "var(--panel2)" : "var(--panel)",
+            background:
+              searchActive || searchHover || scrolled ? "var(--panel2)" : "var(--panel)",
+            // Frosted when blur is on, so the field reads as glass over the
+            // board rather than a flat strip.
+            backdropFilter: "var(--blur-tile)",
+            WebkitBackdropFilter: "var(--blur-tile)",
             // Focus is the strongest state, hover a hint of it.
             border: `1px solid ${searchActive ? "var(--accentLine)" : "var(--line)"}`,
             boxShadow: searchActive
@@ -348,6 +353,10 @@ function Header({
             borderRadius: "999px",
             fontSize: "13px",
             cursor: "pointer",
+            // Wide enough for the longer of the two labels. Without this the
+            // button shrinks on toggle, the header's right-hand group narrows
+            // and the whole search bar slides sideways.
+            minWidth: "104px",
             border: editing ? "0" : "1px solid var(--line)",
             background: editing ? "var(--accent)" : "var(--panel)",
             color: editing ? "var(--onAccent)" : "var(--fg)",
@@ -355,7 +364,14 @@ function Header({
           }}
           hover={editing ? { opacity: 0.9, transform: "translateY(-1px)" } : HOVER_LIFT}
         >
-          {editing ? "Editing" : "Edit layout"}
+          {/* Keyed so the label crossfades on toggle instead of swapping
+              between frames. */}
+          <span
+            key={editing ? "on" : "off"}
+            style={{ animation: "db-fade .2s ease both" }}
+          >
+            {editing ? "Editing" : "Edit layout"}
+          </span>
         </Button>
         <Button
           onClick={onOpenStore}
@@ -373,7 +389,12 @@ function Header({
           styleFor={roundControl}
           hover={HOVER_LIFT}
         >
-          {dark ? <LuMoon size={15} /> : <LuSun size={15} />}
+          <span
+            key={dark ? "dark" : "light"}
+            style={{ display: "grid", placeItems: "center", animation: "db-menu .22s ease both" }}
+          >
+            {dark ? <LuMoon size={15} /> : <LuSun size={15} />}
+          </span>
         </Button>
         <Button
           onClick={onOpenSettings}

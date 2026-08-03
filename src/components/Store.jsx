@@ -365,8 +365,8 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
         // The board stays faintly visible behind, but blurred well out of
         // focus so it reads as depth rather than as competing content.
         background: "var(--storeScrim)",
-        backdropFilter: "blur(28px) saturate(140%)",
-        WebkitBackdropFilter: "blur(28px) saturate(140%)",
+        backdropFilter: "var(--blur-overlay)",
+        WebkitBackdropFilter: "var(--blur-overlay)",
         display: "flex",
         flexDirection: "column",
         animation: closing

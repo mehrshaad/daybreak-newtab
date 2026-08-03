@@ -1,4 +1,4 @@
-# Daybreak - New Tab
+# Daybreak v2 - New Tab
 
 **Start every tab fresh.** Daybreak replaces Chrome's new tab page with a
 customizable widget dashboard — a grid of tiles you arrange yourself, with a

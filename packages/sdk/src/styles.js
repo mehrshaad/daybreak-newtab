@@ -16,7 +16,8 @@ export function pill(active, extra) {
     background: active ? "var(--accent)" : "transparent",
     color: active ? "var(--onAccent)" : "var(--dim)",
     fontWeight: active ? 500 : 400,
-    transition: "background .18s ease, color .18s ease, border-color .18s ease",
+    transition:
+      "background .18s ease, color .18s ease, border-color .18s ease, opacity .18s ease",
     ...extra,
   };
 }
@@ -79,7 +80,8 @@ export function seedFor(id) {
 // Shared transition for interactive chrome, so hover and focus feedback lands
 // at the same speed everywhere.
 export const CONTROL_TRANSITION =
-  "background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease, opacity .18s ease";
+  "background .18s ease, color .18s ease, border-color .18s ease, " +
+  "box-shadow .18s ease, transform .18s ease, opacity .18s ease";
 
 // Lift applied on hover: enough to be unmistakable, short of bouncy.
 export const HOVER_LIFT = {

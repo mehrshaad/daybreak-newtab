@@ -1,5 +1,6 @@
 import { useMemo, useRef } from "react";
 import { cameraStyle } from "../core/tileStyle";
+import { GRID_GAP } from "../core/tokens";
 import { useFlip, usePointerReorder } from "@daybreak/sdk";
 import { resolveOptions, resolveSize } from "../widgets/registry";
 import Tile from "./Tile";
@@ -43,7 +44,7 @@ function Board({
 
   // Animate every layout change: reorder, resize, add, remove, preset switch.
   // The held tile is skipped because it is being positioned by the pointer.
-  useFlip(gridRef, [ids.join("|"), JSON.stringify(board.sizes), columns, appearance.gap], {
+  useFlip(gridRef, [ids.join("|"), JSON.stringify(board.sizes), columns], {
     skipId: draggingId,
   });
 
@@ -53,11 +54,11 @@ function Board({
       gridTemplateColumns: `repeat(${columns}, 1fr)`,
       gridAutoRows: "96px",
       gridAutoFlow: "row dense",
-      gap: `${appearance.gap}px`,
+      gap: `${GRID_GAP}px`,
       maxWidth: "1560px",
       margin: "0 auto",
     }),
-    [appearance.gap, columns]
+    [columns]
   );
 
   return (
@@ -122,6 +123,10 @@ function Board({
                 color: "var(--faint)",
                 fontSize: "13px",
                 transition: "border-color .2s, color .2s",
+                // Fades in with the rest of the edit-mode chrome. It cannot
+                // fade out — it is a grid item, and holding it past the mode
+                // would leave a gap in the board.
+                animation: "db-menu .22s ease both",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = "var(--accent)";

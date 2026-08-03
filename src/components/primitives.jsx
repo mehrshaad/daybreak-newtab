@@ -1,5 +1,60 @@
-import { useEffect, useRef, useState } from "react";
-import { pill, toggleStyles, useHover } from "@daybreak/sdk";
+import { useEffect, useRef } from "react";
+import { CONTROL_TRANSITION, pill, toggleStyles, useHover } from "@daybreak/sdk";
+import { usePresence } from "../core/usePresence";
+
+// Height-animated show/hide for content in normal flow.
+//
+// grid-template-rows 1fr <-> 0fr animates the *real* content height, so there is
+// no max-height guess to get wrong and whatever sits below slides into place
+// instead of jumping. The child stays mounted, so there is nothing to hold on to
+// for the exit.
+export function Collapse({ open, children }) {
+  return (
+    <div
+      aria-hidden={open ? undefined : true}
+      style={{
+        display: "grid",
+        gridTemplateRows: open ? "1fr" : "0fr",
+        transition: "grid-template-rows .34s cubic-bezier(.2,.8,.2,1)",
+      }}
+    >
+      <div
+        style={{
+          overflow: "hidden",
+          minHeight: 0,
+          opacity: open ? 1 : 0,
+          // Fades out ahead of the collapse and in behind it, so the content is
+          // never half-clipped and legible at the same time.
+          transition: open ? "opacity .26s ease .06s" : "opacity .18s ease",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const APPEAR_MS = 180;
+
+// Fades and scales a group in, and — unlike a bare ternary — back out again.
+// Used for chrome that only exists in a particular mode, such as a tile's
+// resize and remove buttons.
+export function Appear({ open, style, children }) {
+  const [present, closing] = usePresence(open, APPEAR_MS);
+  if (!present) return null;
+  return (
+    <div
+      style={{
+        ...style,
+        animation: closing
+          ? `db-pop-out ${APPEAR_MS}ms ease both`
+          : `db-menu ${APPEAR_MS}ms cubic-bezier(.2,.8,.2,1) both`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export function Pill({ active, children, style, hoverStyle, ...rest }) {
   const [hovered, bind] = useHover();
@@ -26,7 +81,8 @@ export function Button({ children, styleFor, hover, style, ...rest }) {
   return (
     <button
       type="button"
-      style={{ ...base, ...(hovered ? hover : null) }}
+      // First so a caller's own transition still wins.
+      style={{ transition: CONTROL_TRANSITION, ...base, ...(hovered ? hover : null) }}
       {...bind}
       {...rest}
     >
@@ -56,6 +112,7 @@ export function Toggle({ on, label, onChange }) {
         background: "transparent",
         border: 0,
         textAlign: "left",
+        transition: "background .18s ease",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "var(--panel)";
@@ -119,23 +176,7 @@ const EXIT_MS = 220;
 export function Drawer({ open, onClose, width = 340, label, children }) {
   const panelRef = useRef(null);
   const restoreRef = useRef(null);
-  const [present, setPresent] = useState(open);
-  const [closing, setClosing] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setPresent(true);
-      setClosing(false);
-      return undefined;
-    }
-    if (!present) return undefined;
-    setClosing(true);
-    const t = setTimeout(() => {
-      setPresent(false);
-      setClosing(false);
-    }, EXIT_MS);
-    return () => clearTimeout(t);
-  }, [open, present]);
+  const [present, closing] = usePresence(open, EXIT_MS);
 
   useEffect(() => {
     if (!present || closing) return undefined;
@@ -177,7 +218,7 @@ export function Drawer({ open, onClose, width = 340, label, children }) {
           zIndex: 50,
           background: "var(--sheet)",
           borderLeft: "1px solid var(--line)",
-          backdropFilter: "blur(28px)",
+          backdropFilter: "var(--blur-sheet)",
           boxShadow: "-18px 0 50px rgba(0,0,0,.22)",
           padding: "24px",
           overflow: "auto",

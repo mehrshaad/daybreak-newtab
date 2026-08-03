@@ -143,12 +143,33 @@ button {
   }
 }
 
+// The exit half of db-menu, for chrome that leaves as well as arrives.
+@keyframes db-pop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
 @keyframes db-fade {
   from {
     opacity: 0;
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes db-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -242,6 +263,31 @@ button {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+// Theme and accent changes crossfade rather than snapping. Colours are the only
+// thing transitioned here — transitioning `all` would fight the FLIP transforms
+// on the board and the drag positioning.
+//
+// Scoped to a class the app adds after first paint, so the initial render is not
+// itself animated (which would look like the page fading in on every new tab).
+.db-themed,
+.db-themed * {
+  transition: background-color 0.34s ease, border-color 0.34s ease,
+    color 0.34s ease, fill 0.34s ease, box-shadow 0.34s ease;
+}
+
+// Sliders are dragged, so say so.
+input[type="range"] {
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    cursor: grab;
+  }
+
+  &:active::-webkit-slider-thumb {
+    cursor: grabbing;
   }
 }
 

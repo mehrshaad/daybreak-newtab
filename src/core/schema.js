@@ -72,10 +72,10 @@ export function defaultSettings() {
       theme: VISUAL_DEFAULTS.theme,
       accent: VISUAL_DEFAULTS.accent,
       wall: VISUAL_DEFAULTS.wall,
-      gap: VISUAL_DEFAULTS.gap,
       radius: VISUAL_DEFAULTS.radius,
       alpha: VISUAL_DEFAULTS.alpha,
       pageZoom: VISUAL_DEFAULTS.pageZoom,
+      blur: VISUAL_DEFAULTS.blur,
     },
     behavior: {
       zoomMode: DEFAULT_ZOOM_MODE,

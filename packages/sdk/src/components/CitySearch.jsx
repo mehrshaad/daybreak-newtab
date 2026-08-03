@@ -89,7 +89,7 @@ function CitySearch({ onPick, placeholder = "Search a city…", autoFocus = fals
             borderRadius: 12,
             background: "var(--sheet)",
             border: "1px solid var(--line)",
-            backdropFilter: "blur(24px)",
+            backdropFilter: "var(--blur-panel)",
             boxShadow: "0 18px 44px rgba(0,0,0,.34)",
             animation: "db-rise-in .16s ease both",
           }}

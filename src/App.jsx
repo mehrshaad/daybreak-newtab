@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LuArrowLeft } from "react-icons/lu";
+import Backdrop from "./components/Backdrop";
 import Board from "./components/Board";
 import ContextMenu from "./components/ContextMenu";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import PresetsDock from "./components/PresetsDock";
+import { Collapse } from "./components/primitives";
 import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
 import Toast from "./components/Toast";
@@ -17,6 +19,7 @@ import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
 import { background, tokens } from "./core/tokens";
 import { useColumns } from "./core/useColumns";
+import { usePresence } from "./core/usePresence";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { resolveTheme, useSystemTheme } from "./core/useSystemTheme";
 import { animateExit, clearBucket, hasPermissionsApi, moveItem, requestAllPermissions } from "@daybreak/sdk";
@@ -39,6 +42,14 @@ function App() {
   // lookup and every child sees a concrete theme.
   const fromSystem = useSystemTheme();
   const theme = resolveTheme(appearance.theme, fromSystem);
+
+  // Everything below the app gets the *resolved* theme. Passing the raw
+  // preference down meant tileStyle saw "system" and, since it treats anything
+  // that is not "light" as dark, gave tiles dark backgrounds on a light page.
+  const resolvedAppearance = useMemo(
+    () => ({ ...appearance, theme }),
+    [appearance, theme]
+  );
 
   const [editing, setEditing] = useState(false);
   const [zoom, setZoom] = useState(null);
@@ -439,9 +450,9 @@ function App() {
       // Makes room for an open drawer rather than letting it cover the board.
       paddingRight: shift ? `${shift}px` : 0,
       transition: "padding-right .3s cubic-bezier(.2,.8,.2,1)",
-      ...tokens(theme, accent),
+      ...tokens(theme, accent, appearance.blur !== false),
     }),
-    [theme, accent, shift]
+    [theme, accent, appearance.blur, shift]
   );
 
   // The page background is painted on the root element, not on a layer inside
@@ -472,6 +483,26 @@ function App() {
     };
   }, [theme, accent, wall]);
 
+  // Chrome that only exists in a mode has to outlive the mode by the length of
+  // its exit animation.
+  const [dockPresent, dockLeaving] = usePresence(editing, 220);
+  const [zoomChrome, zoomLeaving] = usePresence(!!zoom, 260);
+  const [menuPresent, menuLeaving] = usePresence(!!(menu && menuModel), 120);
+  // Held so the fading menu still has something to draw.
+  const lastMenu = useRef(null);
+  const lastModel = useRef(null);
+  if (menu && menuModel) {
+    lastMenu.current = menu;
+    lastModel.current = menuModel;
+  }
+
+  // See the root element's className.
+  const [themed, setThemed] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setThemed(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   // Page zoom uses the CSS `zoom` property rather than a transform so the
   // layout actually reflows — text rewraps and the grid recalculates — which is
   // what Ctrl+ does. A transform would just scale a fixed-width page.
@@ -484,7 +515,11 @@ function App() {
   }, [appearance.pageZoom]);
 
   return (
-    <div style={rootStyle}>
+    // db-themed turns on the colour transitions in base.scss. It is added a
+    // frame after mount so the first paint is not itself animated — otherwise
+    // every new tab would fade its own colours in.
+    <div style={rootStyle} className={themed ? "db-themed" : undefined}>
+      <Backdrop background={background(theme, accent, wall)} />
       <Header
         scrolled={scrolled}
         theme={theme}
@@ -495,19 +530,21 @@ function App() {
         searchRef={searchRef}
       />
 
-      {behavior.showGreeting && !zoom ? (
+      {/* Collapsed rather than unmounted, so turning the greeting off (or
+          zooming a tile) slides the board up instead of snapping it. */}
+      <Collapse open={behavior.showGreeting && !zoom}>
         <Hero
           name={profile.name}
           summary={summary}
           layoutName={board.layoutName}
           tileCount={ids.length}
         />
-      ) : null}
+      </Collapse>
 
       <Board
         ids={ids}
         columns={columns}
-        appearance={appearance}
+        appearance={resolvedAppearance}
         board={board}
         widgets={widgets}
         editing={editing}
@@ -544,20 +581,21 @@ function App() {
           a scrim would sit over the very thing being magnified. Expand and
           Spotlight are overlays and still get one. Either way the backdrop
           stays clickable to zoom back out. */}
-      {zoom ? (
+      {zoomChrome ? (
         <div
           onClick={closeZoom}
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 30,
-            background: zoomMode === "Camera" ? "transparent" : "var(--scrim)",
+            background:
+              zoomMode === "Camera" || zoomLeaving ? "transparent" : "var(--scrim)",
             transition: "background .45s ease",
           }}
         />
       ) : null}
 
-      {zoom ? (
+      {zoomChrome ? (
         <button
           type="button"
           onClick={closeZoom}
@@ -576,9 +614,11 @@ function App() {
             background: "var(--sheet)",
             border: "1px solid var(--line)",
             color: "var(--fg)",
-            backdropFilter: "blur(20px)",
+            backdropFilter: "var(--blur-panel)",
             boxShadow: "0 10px 30px rgba(0,0,0,.28)",
-            animation: "db-in .3s ease both",
+            animation: zoomLeaving
+              ? "db-out .2s ease both"
+              : "db-in .3s ease both",
           }}
         >
           <LuArrowLeft size={14} /> Back
@@ -587,8 +627,9 @@ function App() {
 
       <Toast message={toastMsg} hidden={editing} />
 
-      {editing ? (
+      {dockPresent ? (
         <PresetsDock
+          closing={dockLeaving}
           layoutName={board.layoutName}
           hasSaved={!!board.saved}
           onPreset={applyPreset}
@@ -643,11 +684,13 @@ function App() {
         onToggle={toggleFromStore}
       />
 
-      {menu && menuModel ? (
+      {/* The menu keeps its last position and contents while it fades out. */}
+      {menuPresent && lastMenu.current && lastModel.current ? (
         <ContextMenu
-          menu={menu}
-          title={menuModel.title}
-          items={menuModel.items}
+          menu={lastMenu.current}
+          title={lastModel.current.title}
+          items={lastModel.current.items}
+          closing={menuLeaving}
           onClose={() => setMenu(null)}
         />
       ) : null}

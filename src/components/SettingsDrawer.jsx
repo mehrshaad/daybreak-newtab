@@ -151,15 +151,6 @@ function SettingsDrawer({
       <Section title="Grid" style={{ marginBottom: 22 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Slider
-            label="Gap"
-            suffix="px"
-            min={6}
-            max={28}
-            step={2}
-            value={appearance.gap}
-            onChange={(gap) => update("appearance", { gap })}
-          />
-          <Slider
             label="Corner radius"
             suffix="px"
             min={4}
@@ -176,6 +167,11 @@ function SettingsDrawer({
             step={5}
             value={appearance.alpha}
             onChange={(alpha) => update("appearance", { alpha })}
+          />
+          <Toggle
+            label="Blur behind panels"
+            on={appearance.blur !== false}
+            onChange={() => update("appearance", { blur: appearance.blur === false })}
           />
           <Slider
             label="Page zoom"

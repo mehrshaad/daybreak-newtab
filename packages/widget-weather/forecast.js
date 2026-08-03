@@ -36,7 +36,7 @@ export function forecastUrl({ latitude, longitude }, fahrenheit) {
   return (
     `https://api.open-meteo.com/v1/forecast?latitude=${latitude}` +
     `&longitude=${longitude}` +
-    `&current=temperature_2m,apparent_temperature,weather_code` +
+    `&current=temperature_2m,apparent_temperature,weather_code,is_day` +
     `&hourly=temperature_2m` +
     `&daily=temperature_2m_max,temperature_2m_min` +
     `&forecast_days=2&timezone=auto&temperature_unit=${unit}`
@@ -48,6 +48,9 @@ export function parseForecast(data, hour24) {
   const { condition, label } = wmoWeather(data.current.weather_code);
   return {
     temp: Math.round(data.current.temperature_2m),
+    // Open-Meteo reports 1 during daylight at that location. Absent (older
+    // cached payloads), assume day rather than showing a moon at noon.
+    isDay: data.current.is_day === undefined ? true : data.current.is_day === 1,
     feels: Math.round(data.current.apparent_temperature),
     high: Math.round(data.daily?.temperature_2m_max?.[0]),
     low: Math.round(data.daily?.temperature_2m_min?.[0]),

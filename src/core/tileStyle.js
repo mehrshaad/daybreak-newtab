@@ -6,6 +6,7 @@ export function tileStyle({
   theme = "dark",
   radius = 18,
   alpha = 100,
+  blur = true,
   size = [4, 2],
   columns = 12,
   editing = false,
@@ -22,25 +23,40 @@ export function tileStyle({
   const h = size[1];
   const al = alpha / 100;
 
+  // The opacity slider maps straight through: 100% is a fully opaque tile, 0%
+  // leaves only the content floating on the page. The surface colour is the
+  // theme's own panel colour, so a solid tile is a dark card in dark mode
+  // rather than a white one.
+  const fill = dark ? `rgba(28,30,38,${al})` : `rgba(255,255,255,${al})`;
+
   const base = {
+    // Positioned so edit-mode chrome can float over the tile instead of taking
+    // part in its layout.
+    position: "relative",
     gridColumn: `span ${w}`,
     gridRow: `span ${h}`,
     display: "flex",
     flexDirection: "column",
     padding: "16px 18px",
     borderRadius: `${radius}px`,
-    background: dark
-      ? `rgba(255,255,255,${(0.055 * al).toFixed(3)})`
-      : `rgba(255,255,255,${(0.3 + 0.52 * al).toFixed(3)})`,
+    background: fill,
+    // Frosted glass when blur is on, plain translucency when it is off.
+    backdropFilter: blur ? "var(--blur-tile)" : "none",
+    WebkitBackdropFilter: blur ? "var(--blur-tile)" : "none",
     border: "1px solid var(--line)",
     // Tiles clip their content. That clip is what made a dragged app icon
     // vanish once it left the tile; base.scss lifts it via :has() while a
     // nested drag is in flight, which needs !important to beat this inline
     // value.
     overflow: "hidden",
-    cursor: editing ? "grab" : "pointer",
+    // With click-to-zoom off there is nothing to click a tile for, so it must
+    // not advertise itself as clickable.
+    cursor: editing ? "grab" : zoomMode === "None" ? "default" : "pointer",
+    // background-color and backdrop-filter are here so a theme flip, an
+    // opacity change or the blur toggle ease in rather than snapping.
     transition:
-      "transform .3s cubic-bezier(.22,1,.36,1), opacity .3s, border-color .2s, box-shadow .3s",
+      "transform .3s cubic-bezier(.22,1,.36,1), opacity .3s, border-color .2s, " +
+      "box-shadow .3s, background-color .34s ease, backdrop-filter .34s ease",
     boxShadow: dark
       ? "0 1px 0 rgba(255,255,255,.04) inset"
       : "0 1px 2px rgba(20,22,28,.05)",

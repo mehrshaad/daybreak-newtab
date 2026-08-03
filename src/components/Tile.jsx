@@ -4,6 +4,7 @@ import { mark, MONO, seedFor, useRefresh } from "@daybreak/sdk";
 import { tileStyle } from "../core/tileStyle";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
+import { Appear } from "./primitives";
 
 // One lazy component per widget type, memoized so remounting a tile does not
 // re-trigger the dynamic import.
@@ -93,6 +94,7 @@ function Tile({
     () =>
       tileStyle({
         theme: appearance.theme,
+        blur: appearance.blur !== false,
         radius: appearance.radius,
         alpha: appearance.alpha,
         size,
@@ -173,7 +175,9 @@ function Tile({
         </div>
 
         <div style={{ display: "flex", gap: "6px", flex: "none" }}>
-          {focused ? (
+          {/* Appear rather than a ternary so this chrome leaves the way it
+              arrived instead of blinking out. */}
+          <Appear open={!!focused} style={{ display: "flex", gap: "6px" }}>
             <>
               <TileButton
                 label="Widget settings"
@@ -196,33 +200,48 @@ function Tile({
                 <LuX size={13} />
               </TileButton>
             </>
-          ) : null}
-          {editing ? (
-            <>
-              <TileButton
-                label="Resize"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onResize?.();
-                }}
-                style={{ fontFamily: MONO, fontSize: "10px", padding: "3px 7px" }}
-              >
-                {size.join("×")}
-              </TileButton>
-              <TileButton
-                label={`Remove ${manifest.name}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove?.();
-                }}
-                style={{ padding: "4px 6px" }}
-              >
-                <LuX size={12} />
-              </TileButton>
-            </>
-          ) : null}
+          </Appear>
         </div>
       </div>
+
+      {/* Edit-mode chrome floats above the tile instead of sitting in the
+          header row. In the flow it stole width from the widget's own header and
+          nudged its content sideways, and entering edit mode must not reflow
+          what a widget is showing. */}
+      <Appear
+        open={!!editing}
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "12px",
+          zIndex: 3,
+          display: "flex",
+          gap: "6px",
+        }}
+      >
+        <>
+          <TileButton
+            label="Resize"
+            onClick={(e) => {
+              e.stopPropagation();
+              onResize?.();
+            }}
+            style={{ fontFamily: MONO, fontSize: "10px", padding: "3px 7px" }}
+          >
+            {size.join("×")}
+          </TileButton>
+          <TileButton
+            label={`Remove ${manifest.name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove?.();
+            }}
+            style={{ padding: "4px 6px" }}
+          >
+            <LuX size={12} />
+          </TileButton>
+        </>
+      </Appear>
 
       {/* A crashing widget shows a retry inside its own tile rather than
           taking down the board. */}

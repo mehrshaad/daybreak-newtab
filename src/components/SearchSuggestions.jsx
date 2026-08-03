@@ -34,7 +34,7 @@ function SearchSuggestions({ items, activeIndex, onPick, onHover }) {
         borderRadius: 14,
         background: "var(--sheet)",
         border: "1px solid var(--line)",
-        backdropFilter: "blur(24px)",
+        backdropFilter: "var(--blur-panel)",
         boxShadow: "0 22px 60px rgba(0,0,0,.32)",
         overflow: "hidden",
         animation: "db-rise-in .16s ease both",

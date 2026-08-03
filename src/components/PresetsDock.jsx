@@ -6,6 +6,7 @@ import { Button, Pill } from "./primitives";
 // The floating dock shown in layout-edit mode. Occupies the same spot as the
 // toast, which is why toasts are suppressed while editing.
 function PresetsDock({
+  closing,
   layoutName,
   hasSaved,
   onPreset,
@@ -36,7 +37,7 @@ function PresetsDock({
         borderRadius: 999,
         background: "var(--sheet)",
         border: "1px solid var(--line)",
-        backdropFilter: "blur(24px)",
+        backdropFilter: "var(--blur-panel)",
         boxShadow: "0 20px 60px rgba(0,0,0,.28)",
         // One line whenever the viewport allows; wrap only as a last resort.
         maxWidth: "calc(100vw - 32px)",
@@ -44,7 +45,11 @@ function PresetsDock({
         overflowX: "auto",
         scrollbarWidth: "none",
         justifyContent: "center",
-        animation: "db-rise-in .3s cubic-bezier(.2,.8,.2,1) both",
+        // Sinks back out on the way to being unmounted; App keeps it around
+        // for the length of this animation.
+        animation: closing
+          ? "db-rise-out .22s ease both"
+          : "db-rise-in .3s cubic-bezier(.2,.8,.2,1) both",
       }}
     >
       <span

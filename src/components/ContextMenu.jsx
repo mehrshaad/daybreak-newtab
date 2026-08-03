@@ -62,7 +62,7 @@ function MenuItem({ item, onClose }) {
   );
 }
 
-function ContextMenu({ menu, title, items, onClose }) {
+function ContextMenu({ menu, title, items, closing, onClose }) {
   const [ref, pos] = useClampedPosition(menu.x, menu.y, [items.length]);
 
   useEffect(() => {
@@ -83,7 +83,14 @@ function ContextMenu({ menu, title, items, onClose }) {
           e.preventDefault();
           onClose();
         }}
-        style={{ position: "fixed", inset: 0, zIndex: 80 }}
+        // Inert while the menu fades out, so a quick second click lands on the
+        // page rather than on a catcher that is on its way out.
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 80,
+          pointerEvents: closing ? "none" : undefined,
+        }}
       />
       <div
         ref={ref}
@@ -99,10 +106,13 @@ function ContextMenu({ menu, title, items, onClose }) {
           borderRadius: "14px",
           background: "var(--sheet)",
           border: "1px solid var(--line)",
-          backdropFilter: "blur(24px)",
+          backdropFilter: "var(--blur-panel)",
           boxShadow: "0 24px 70px rgba(0,0,0,.45)",
           transformOrigin: "top left",
-          animation: "db-menu .12s ease both",
+          animation: closing
+            ? "db-pop-out .12s ease both"
+            : "db-menu .12s ease both",
+          pointerEvents: closing ? "none" : undefined,
           overflow: "hidden",
         }}
       >
@@ -132,7 +142,14 @@ function ContextMenu({ menu, title, items, onClose }) {
             return (
               <div
                 key="sizes"
-                style={{ display: "flex", gap: "5px", padding: "4px 10px 8px" }}
+                // Wraps: widgets like Google Apps offer six sizes, which do not
+                // fit the menu width on one line.
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "5px",
+                  padding: "4px 10px 8px",
+                }}
               >
                 {item.sizes.map((s) => {
                   const active = item.current[0] === s[0] && item.current[1] === s[1];

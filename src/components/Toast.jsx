@@ -23,7 +23,7 @@ function Toast({ message, hidden }) {
         background: "var(--sheet)",
         border: "1px solid var(--line)",
         boxShadow: "0 16px 44px rgba(0,0,0,.4)",
-        backdropFilter: "blur(20px)",
+        backdropFilter: "var(--blur-panel)",
         animation: "db-rise-in .22s ease both",
         maxWidth: "min(560px, 90vw)",
         textAlign: "center",
