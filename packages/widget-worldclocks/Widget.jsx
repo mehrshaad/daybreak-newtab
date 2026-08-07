@@ -3,6 +3,7 @@ import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
 import {
   Appear,
   CitySearch,
+  EditableText,
   MONO,
   moveItem,
   useFlip,
@@ -55,6 +56,11 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
 
   const removeZone = (index) =>
     setConfig({ zones: zones.filter((_, i) => i !== index) });
+
+  // Renames the label only — the timezone stays what the geocoder resolved,
+  // so "New York" can become "NYC" without breaking the clock underneath it.
+  const renameZone = (index, city) =>
+    setConfig({ zones: zones.map((z, i) => (i === index ? { ...z, city } : z)) });
 
   if (adding) {
     return (
@@ -150,17 +156,20 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                     aria-hidden="true"
                   />
                 </Appear>
-                <span
+                <EditableText
+                  value={p.city}
+                  onCommit={(city) => renameZone(i, city)}
+                  ariaLabel={`Rename ${p.city}`}
                   style={{
+                    display: "block",
                     fontSize: 13,
                     color: p.day ? "var(--fg)" : "var(--dim)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
-                >
-                  {p.city}
-                </span>
+                  inputStyle={{ fontSize: 13, minWidth: 60 }}
+                />
                 {!hideZone && tall && p.zoneLabel ? (
                   <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--faint)" }}>
                     {p.zoneLabel}

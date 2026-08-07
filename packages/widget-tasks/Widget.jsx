@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { LuPlus } from "react-icons/lu";
-import { formatDate, MONO, uid } from "@daybreak/sdk";
+import { EditableText, formatDate, MONO, uid } from "@daybreak/sdk";
 
 const isOverdue = (due) => !!due && due < formatDate(new Date());
 
-function Task({ task, showDates, onToggle, onRemove }) {
+function Task({ task, showDates, onToggle, onRemove, onEdit }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -42,21 +42,23 @@ function Task({ task, showDates, onToggle, onRemove }) {
           transition: "all .15s",
         }}
       />
-      <span
-        className="db-selectable"
-        style={{
-          fontSize: 13,
-          flex: 1,
-          minWidth: 0,
-          color: task.done ? "var(--faint)" : "var(--fg)",
-          textDecoration: task.done ? "line-through" : "none",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {task.text}
-      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <EditableText
+          value={task.text}
+          onCommit={onEdit}
+          ariaLabel={`Edit "${task.text}"`}
+          style={{
+            display: "block",
+            fontSize: 13,
+            color: task.done ? "var(--faint)" : "var(--fg)",
+            textDecoration: task.done ? "line-through" : "none",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          inputStyle={{ display: "block", width: "100%", fontSize: 13 }}
+        />
+      </div>
       {showDates && task.due ? (
         <span
           style={{
@@ -144,6 +146,9 @@ function Tasks({ options, config, setConfig }) {
                 )
               }
               onRemove={() => save(items.filter((t) => t.id !== task.id))}
+              onEdit={(text) =>
+                save(items.map((t) => (t.id === task.id ? { ...t, text } : t)))
+              }
             />
           ))
         )}

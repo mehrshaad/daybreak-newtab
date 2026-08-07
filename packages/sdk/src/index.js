@@ -55,6 +55,10 @@ export {
 // Glyph names a widget manifest can ask for on its chip.
 export { GLYPHS, glyphNames } from "./glyphs";
 
+// Keeps a floating rectangle inside the viewport. Shared by the context menu
+// and Popover, so there is one implementation of "don't run off the screen".
+export { clampToViewport } from "./clamp";
+
 // Brand marks for app-style icons.
 export { BRANDS, brandFor, hashHue } from "./brands";
 
@@ -94,6 +98,8 @@ export {
 // Shared components.
 export { APPEAR_MS, default as Appear } from "./components/Appear";
 export { default as CitySearch } from "./components/CitySearch";
+export { default as EditableText } from "./components/EditableText";
 export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";
+export { default as Popover } from "./components/Popover";
 export { default as WidgetMark } from "./components/WidgetMark";

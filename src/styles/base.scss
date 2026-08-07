@@ -300,24 +300,6 @@ button {
   }
 }
 
-// Detail that only exists in a zoomed tile arrives just after the zoom is
-// underway rather than at the same instant, so the eye follows the movement
-// first and the new content second. Timing matches the reference site.
-.db-reveal {
-  animation: db-rise 0.32s ease 0.22s both;
-}
-
-@keyframes db-rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 // Theme and accent changes ease rather than snapping.
 //
 // Deliberately only on the root, and only inherited properties. `color` and

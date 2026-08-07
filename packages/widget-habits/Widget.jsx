@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
-import { MONO, uid, useWidgetLocal } from "@daybreak/sdk";
+import { MONO, Popover, uid, useWidgetLocal } from "@daybreak/sdk";
 import { toggleDay } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
 
@@ -48,6 +48,201 @@ function Stepper({ label, value, min, max, onChange, suffix = "" }) {
       <button type="button" aria-label={`Increase ${label}`} onClick={step(1)} style={btn}>
         <LuPlus size={11} />
       </button>
+    </div>
+  );
+}
+
+// One habit's row, plus its settings popover. Broken out so the popover has
+// its own anchor ref to the gear button — a list can't share one ref across
+// rows, and the popover must not shift the rows around it (that was the bug:
+// the old inline editor rendered in flow below the name, pushing every row
+// beneath it down the tile).
+function HabitRow({
+  habit,
+  open,
+  dot,
+  p,
+  done,
+  showStreaks,
+  onToggleOpen,
+  onToggleDay,
+  onPatch,
+  onRemove,
+}) {
+  const anchorRef = useRef(null);
+  const target = Number(habit.target) || 5;
+  const targetWeeks = Number(habit.targetWeeks) || 0;
+
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          display: "flex",
+          // Centred, so the squares sit level with a title however many
+          // lines it wraps onto.
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          minWidth: 0,
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <button
+            ref={anchorRef}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleOpen();
+            }}
+            title="Target and goal"
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 6,
+              border: 0,
+              background: "transparent",
+              padding: 0,
+              cursor: "pointer",
+              textAlign: "left",
+              color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
+              fontSize: 14,
+              lineHeight: 1.3,
+              width: "100%",
+            }}
+          >
+            {/* Wraps instead of being truncated, however long the name. */}
+            <span className="db-selectable" style={{ overflowWrap: "anywhere", minWidth: 0 }}>
+              {habit.name}
+            </span>
+            <LuSettings2
+              size={11}
+              style={{ flex: "none", marginTop: 4, opacity: open ? 1 : 0.4 }}
+            />
+          </button>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              fontFamily: MONO,
+              fontSize: 11,
+              color: "var(--faint)",
+              marginTop: 4,
+            }}
+          >
+            <span style={{ color: p.metThisWeek ? "var(--ok)" : "var(--faint)" }}>
+              {p.count}/{p.target} this week
+            </span>
+            {showStreaks && p.weeksDone > 0 ? (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 3,
+                  color: p.goalReached ? "var(--ok)" : "var(--faint)",
+                }}
+              >
+                {p.goalReached ? <LuCheck size={10} /> : null}
+                {targetWeeks > 0
+                  ? `${p.weeksDone}/${targetWeeks} weeks`
+                  : `${p.weeksDone} week${p.weeksDone === 1 ? "" : "s"}`}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            flex: "none",
+            alignSelf: "center",
+          }}
+        >
+          {p.days.map((date) => {
+            const isToday = date === p.today;
+            const ticked = !!done[date];
+            return (
+              <button
+                key={date}
+                type="button"
+                aria-label={`${habit.name} on ${date}`}
+                aria-pressed={ticked}
+                title={isToday ? "Today" : date}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleDay(date);
+                }}
+                style={{
+                  width: dot,
+                  height: dot,
+                  borderRadius: 5,
+                  padding: 0,
+                  cursor: "pointer",
+                  background: ticked ? "var(--accent)" : "var(--line)",
+                  border: isToday
+                    ? "1.5px solid var(--accentLine)"
+                    : "1.5px solid transparent",
+                  transition: "background .18s ease, border-color .18s ease",
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* No explicit width: matches the name column's own width, which is
+          usually enough to fit both steppers and the remove button on one
+          line, and gracefully wraps to two on the narrowest tile size. */}
+      <Popover open={open} anchorRef={anchorRef} onClose={onToggleOpen}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 14,
+            padding: "10px 12px",
+          }}
+        >
+          <Stepper
+            label="per week"
+            value={target}
+            min={1}
+            max={7}
+            onChange={(v) => onPatch({ target: v })}
+          />
+          <Stepper
+            label="goal"
+            value={targetWeeks}
+            min={0}
+            max={52}
+            suffix="w"
+            onChange={(v) => onPatch({ targetWeeks: v })}
+          />
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove ${habit.name}`}
+            title={`Remove ${habit.name}`}
+            style={{
+              marginLeft: "auto",
+              display: "grid",
+              placeItems: "center",
+              width: 24,
+              height: 24,
+              borderRadius: 7,
+              cursor: "pointer",
+              background: "transparent",
+              border: "1px solid var(--line)",
+              color: "var(--danger)",
+            }}
+          >
+            <LuTrash2 size={12} />
+          </button>
+        </div>
+      </Popover>
     </div>
   );
 }
@@ -106,187 +301,23 @@ function Habits({ id, options, config, setConfig, size }) {
         const targetWeeks = Number(habit.targetWeeks) || 0;
         const done = history?.[habit.id] || {};
         const p = habitProgress(done, { startIndex, target, targetWeeks });
-        const open = editing === habit.id;
-
         return (
-          <div key={habit.id} style={{ minWidth: 0 }}>
-            <div
-              style={{
-                display: "flex",
-                // Centred, so the squares sit level with a title however many
-                // lines it wraps onto.
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-                minWidth: 0,
-              }}
-            >
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditing(open ? null : habit.id);
-                  }}
-                  title="Target and goal"
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 6,
-                    border: 0,
-                    background: "transparent",
-                    padding: 0,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
-                    fontSize: 14,
-                    lineHeight: 1.3,
-                    width: "100%",
-                  }}
-                >
-                  {/* Wraps instead of being truncated, however long the name. */}
-                  <span
-                    className="db-selectable"
-                    style={{ overflowWrap: "anywhere", minWidth: 0 }}
-                  >
-                    {habit.name}
-                  </span>
-                  <LuSettings2
-                    size={11}
-                    style={{ flex: "none", marginTop: 4, opacity: open ? 1 : 0.4 }}
-                  />
-                </button>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 10,
-                    flexWrap: "wrap",
-                    fontFamily: MONO,
-                    fontSize: 11,
-                    color: "var(--faint)",
-                    marginTop: 4,
-                  }}
-                >
-                  <span style={{ color: p.metThisWeek ? "var(--ok)" : "var(--faint)" }}>
-                    {p.count}/{p.target} this week
-                  </span>
-                  {options.showStreaks && p.weeksDone > 0 ? (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 3,
-                        color: p.goalReached ? "var(--ok)" : "var(--faint)",
-                      }}
-                    >
-                      {p.goalReached ? <LuCheck size={10} /> : null}
-                      {targetWeeks > 0
-                        ? `${p.weeksDone}/${targetWeeks} weeks`
-                        : `${p.weeksDone} week${p.weeksDone === 1 ? "" : "s"}`}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  flex: "none",
-                  alignSelf: "center",
-                }}
-              >
-                {p.days.map((date) => {
-                  const isToday = date === p.today;
-                  const ticked = !!done[date];
-                  return (
-                    <button
-                      key={date}
-                      type="button"
-                      aria-label={`${habit.name} on ${date}`}
-                      aria-pressed={ticked}
-                      title={isToday ? "Today" : date}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggle(habit.id, date);
-                      }}
-                      style={{
-                        width: dot,
-                        height: dot,
-                        borderRadius: 5,
-                        padding: 0,
-                        cursor: "pointer",
-                        background: ticked ? "var(--accent)" : "var(--line)",
-                        border: isToday
-                          ? "1.5px solid var(--accentLine)"
-                          : "1.5px solid transparent",
-                        transition: "background .18s ease, border-color .18s ease",
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
-            {open ? (
-              <div
-                className="db-reveal"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: 14,
-                  marginTop: 9,
-                  padding: "9px 10px",
-                  borderRadius: 10,
-                  background: "var(--panel)",
-                  border: "1px solid var(--line)",
-                }}
-              >
-                <Stepper
-                  label="per week"
-                  value={target}
-                  min={1}
-                  max={7}
-                  onChange={(v) => patch(habit.id, { target: v })}
-                />
-                <Stepper
-                  label="goal"
-                  value={targetWeeks}
-                  min={0}
-                  max={52}
-                  suffix="w"
-                  onChange={(v) => patch(habit.id, { targetWeeks: v })}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditing(null);
-                    setConfig({ habits: habits.filter((h) => h.id !== habit.id) });
-                  }}
-                  aria-label={`Remove ${habit.name}`}
-                  title={`Remove ${habit.name}`}
-                  style={{
-                    marginLeft: "auto",
-                    display: "grid",
-                    placeItems: "center",
-                    width: 24,
-                    height: 24,
-                    borderRadius: 7,
-                    cursor: "pointer",
-                    background: "transparent",
-                    border: "1px solid var(--line)",
-                    color: "var(--danger)",
-                  }}
-                >
-                  <LuTrash2 size={12} />
-                </button>
-              </div>
-            ) : null}
-          </div>
+          <HabitRow
+            key={habit.id}
+            habit={habit}
+            open={editing === habit.id}
+            dot={dot}
+            p={p}
+            done={done}
+            showStreaks={options.showStreaks}
+            onToggleOpen={() => setEditing((cur) => (cur === habit.id ? null : habit.id))}
+            onToggleDay={(date) => toggle(habit.id, date)}
+            onPatch={(changes) => patch(habit.id, changes)}
+            onRemove={() => {
+              setEditing(null);
+              setConfig({ habits: habits.filter((h) => h.id !== habit.id) });
+            }}
+          />
         );
       })}
 

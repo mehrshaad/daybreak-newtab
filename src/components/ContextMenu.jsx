@@ -1,8 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MONO, pill } from "@daybreak/sdk";
+import { MONO, clampToViewport, pill } from "@daybreak/sdk";
 
 const MENU_WIDTH = 236;
-const EDGE = 12;
 
 // Keeps the menu on screen. The design used fixed height guesses (400/280);
 // measuring the rendered menu handles long widget menus and short board menus
@@ -14,10 +13,7 @@ function useClampedPosition(x, y, deps) {
   useLayoutEffect(() => {
     const h = ref.current?.offsetHeight || 0;
     const w = ref.current?.offsetWidth || MENU_WIDTH;
-    setPos({
-      left: Math.max(EDGE, Math.min(x, window.innerWidth - w - EDGE)),
-      top: Math.max(EDGE, Math.min(y, window.innerHeight - h - EDGE)),
-    });
+    setPos(clampToViewport(x, y, w, h));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [x, y, ...deps]);
 
