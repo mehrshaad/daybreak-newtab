@@ -76,7 +76,7 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
   }, []);
 
   const onPointerDown = useCallback(
-    (event, id) => {
+    (event, id, dragNode) => {
       if (!enabled) return;
       if (event.button != null && event.button !== 0) return;
       // Ignore presses on a control *inside* the item (a tile's resize pill,
@@ -85,7 +85,11 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
       const control = event.target.closest("button, a, input, textarea, select");
       if (control && control !== event.currentTarget) return;
 
-      const node = event.currentTarget;
+      // Most callers attach onPointerDown directly to the thing that should
+      // move (an icon-grid item, a world-clock row), so event.currentTarget is
+      // it. A tile's drag now starts from a small handle at its edge, so the
+      // node that should actually translate is passed explicitly instead.
+      const node = dragNode || event.currentTarget;
       const rect = node.getBoundingClientRect();
       state.current = {
         id,

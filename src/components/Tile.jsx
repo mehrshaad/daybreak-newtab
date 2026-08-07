@@ -1,9 +1,41 @@
-import { Suspense, lazy, useMemo } from "react";
+import { Suspense, lazy, useMemo, useRef } from "react";
 import { LuSettings2, LuX } from "react-icons/lu";
-import { Appear, mark, MONO, seedFor, useRefresh } from "@daybreak/sdk";
+import { Appear, mark, MONO, seedFor, useHover, useLongPress, useRefresh } from "@daybreak/sdk";
 import { tileStyle } from "../core/tileStyle";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
+
+// The board's own drag start used to live on the tile's root — which is why a
+// pointerdown on, say, a world clock row bubbled straight up into it and
+// dragged the tile at the same time as the row reordered itself. Moving it
+// onto this small handle means a press anywhere else in the tile is simply
+// never seen by the board's drag machinery: there is no ancestor relationship
+// between a row and a sibling handle for the event to bubble through.
+//
+// Only interactive during edit mode — outside it, hovering the tile shows
+// where the handle is without inviting a press that would not do anything.
+function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
+  return (
+    <div
+      onPointerDown={editing ? onPointerDown : undefined}
+      title="Drag to move"
+      style={{
+        position: "absolute",
+        bottom: 8,
+        left: "50%",
+        translate: "-50% 0",
+        width: 36,
+        height: 4,
+        borderRadius: 999,
+        background: "var(--line)",
+        cursor: dragging ? "grabbing" : "grab",
+        pointerEvents: editing ? "auto" : "none",
+        opacity: editing ? 1 : tileHovered ? 0.5 : 0,
+        transition: "opacity .15s ease",
+      }}
+    />
+  );
+}
 
 // One lazy component per widget type, memoized so remounting a tile does not
 // re-trigger the dynamic import.
@@ -80,6 +112,7 @@ function Tile({
   onResize,
   onRemove,
   onPointerDown,
+  onEnterEditing,
   setConfig,
   setOptions,
   toast,
@@ -89,6 +122,18 @@ function Tile({
   // context menu's "Refresh now" force one immediately.
   const tick = useRefresh(rate);
   const refreshKey = tick + manualRefresh;
+  const [tileHovered, hoverBind] = useHover();
+  // Holding the tile body itself (not a control inside it, and not the drag
+  // handle) enters edit mode. Disabled once already editing, so it cannot
+  // fire again mid-arrangement.
+  const onLongPressDown = useLongPress(() => onEnterEditing?.(), {
+    enabled: !editing,
+  });
+  // The handle receives the pointerdown, but the tile itself is what the
+  // board's drag machinery needs to move — kept here so it can be handed to
+  // usePointerReorder explicitly instead of it defaulting to whichever
+  // element the listener happens to be attached to.
+  const rootRef = useRef(null);
   const style = useMemo(
     () =>
       tileStyle({
@@ -113,22 +158,32 @@ function Tile({
 
   return (
     <div
-      ref={tileRef}
+      ref={(el) => {
+        rootRef.current = el;
+        tileRef?.(el);
+      }}
       // FLIP identifies tiles by this across reorders and resizes.
       data-flip-id={instanceId}
       style={{
         ...style,
         // Held tiles lift off the board and stop animating their own box, so
-        // the pointer transform is the only thing moving them.
+        // the pointer transform is the only thing moving them. `scale` is a
+        // separate CSS property from `transform`, which usePointerReorder sets
+        // imperatively on this same node for the drag translation — using it
+        // here means the lift can't ever clobber that positioning.
         ...(dragging
           ? {
               boxShadow: "0 26px 60px rgba(0,0,0,.42)",
               cursor: "grabbing",
               opacity: 0.97,
+              scale: "1.02",
             }
           : null),
       }}
-      onPointerDown={onPointerDown}
+      {...hoverBind}
+      // No longer the board's drag start (see DragHandle) — a long hold here
+      // enters edit mode instead, and does nothing once already editing.
+      onPointerDown={onLongPressDown}
       onClick={onOpen}
       onContextMenu={onMenu}
       // Focusable so keyboard users can reach a tile and open it with Enter,
@@ -243,6 +298,13 @@ function Tile({
           </TileButton>
         </>
       </Appear>
+
+      <DragHandle
+        tileHovered={tileHovered}
+        editing={!!editing}
+        dragging={dragging}
+        onPointerDown={(e) => onPointerDown?.(e, rootRef.current)}
+      />
 
       {/* A crashing widget shows a retry inside its own tile rather than
           taking down the board. */}

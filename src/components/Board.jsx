@@ -1,9 +1,15 @@
 import { useMemo, useRef } from "react";
 import { cameraStyle } from "../core/tileStyle";
 import { GRID_GAP } from "../core/tokens";
-import { useFlip, usePointerReorder } from "@daybreak/sdk";
+import { useFlip, useLongPress, usePointerReorder } from "@daybreak/sdk";
 import { resolveOptions, resolveSize } from "../widgets/registry";
 import Tile from "./Tile";
+
+// Presses that should never turn into "enter edit mode": any interactive
+// control, and any tile — a tile's own long-press (attached to its root)
+// already handles a press that lands on the tile itself, so without this the
+// board's own timer would race it for no reason.
+const IGNORE_FOR_BOARD_LONG_PRESS = "button, a, input, textarea, select, [data-flip-id]";
 
 function Board({
   ids,
@@ -20,6 +26,7 @@ function Board({
   manualRefresh,
   boardRef,
   registerTile,
+  onEnterEditing,
   onBoardMenu,
   onOpenTile,
   onTileMenu,
@@ -40,6 +47,14 @@ function Board({
     onReorder,
     enabled: editing,
     containerRef: gridRef,
+  });
+
+  // Holding empty board space — the gaps between tiles, or the padding around
+  // the grid — is the other place TODO 27 asks for a long-press entry into
+  // edit mode, alongside a tile's own body.
+  const onEmptyLongPress = useLongPress(() => onEnterEditing?.(), {
+    enabled: !editing,
+    ignoreSelector: IGNORE_FOR_BOARD_LONG_PRESS,
   });
 
   // Animate every layout change: reorder, resize, add, remove, preset switch.
@@ -72,6 +87,7 @@ function Board({
         overflowX: draggingId ? "visible" : "clip",
       }}
       onContextMenu={onBoardMenu}
+      onPointerDown={onEmptyLongPress}
     >
       <div ref={boardRef} style={cameraStyle(cam, !!zoom && zoomMode === "Camera")}>
         <div ref={gridRef} style={gridStyle}>
@@ -94,13 +110,16 @@ function Board({
               rate={widgets[instanceId]?.rate}
               manualRefresh={manualRefresh[instanceId] || 0}
               tileRef={(el) => registerTile(instanceId, el)}
+              onEnterEditing={onEnterEditing}
               onOpen={() => onOpenTile(instanceId)}
               onMenu={(e) => onTileMenu(e, instanceId)}
               onSettings={() => onOpenSettings(instanceId)}
               onClose={onCloseZoom}
               onResize={() => onResize(instanceId)}
               onRemove={() => onRemove(instanceId)}
-              onPointerDown={(e) => onPointerDown(e, instanceId)}
+              // The handle is what receives the pointerdown; the tile itself
+              // is what has to move, so Tile passes its own node through.
+              onPointerDown={(e, node) => onPointerDown(e, instanceId, node)}
               setConfig={(patch) => setWidgetConfig(instanceId, patch)}
               setOptions={(patch) => setWidgetOptions(instanceId, patch)}
               toast={toast}

@@ -122,7 +122,14 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
             <div
               key={id}
               data-flip-id={id}
-              onPointerDown={(e) => onPointerDown(e, id)}
+              // The board's own tile drag now starts from a handle rather than
+              // the tile body, so this can no longer reach it either way — kept
+              // as a second line of defense against a row press ever also
+              // dragging the tile.
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                onPointerDown(e, id);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",

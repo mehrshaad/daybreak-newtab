@@ -55,7 +55,13 @@ function IconGrid({
             type="button"
             data-flip-id={item.key}
             title={item.title || item.name}
-            onPointerDown={(e) => onPointerDown(e, item.key)}
+            // Second line of defense, matching World Clocks' rows: the
+            // board's own tile drag now starts from a handle rather than the
+            // tile body, so a press here can no longer reach it either way.
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              onPointerDown(e, item.key);
+            }}
             onClick={() => !held && onOpen?.(item)}
             style={{
               display: "flex",

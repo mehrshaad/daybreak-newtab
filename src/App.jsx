@@ -158,6 +158,17 @@ function App() {
     setMenu(null);
   }, []);
 
+  // Long-pressing a tile or empty board space turns editing on — never off,
+  // unlike toggleEdit, since it fires from a gesture that only ever means
+  // "start arranging."
+  const enterEditing = useCallback(() => {
+    setEditing(true);
+    setZoom(null);
+    setCam(null);
+    setPanel(null);
+    setMenu(null);
+  }, []);
+
   // The store and the settings drawer both end layout editing: they cover the
   // board (or push it aside) and leaving the dock and the tile chrome behind
   // them is just noise. A widget's own settings drawer does not — that one is
@@ -561,6 +572,7 @@ function App() {
         manualRefresh={manualRefresh}
         boardRef={boardRef}
         registerTile={registerTile}
+        onEnterEditing={enterEditing}
         onBoardMenu={(e) => {
           e.preventDefault();
           setMenu({ id: null, x: e.clientX, y: e.clientY });

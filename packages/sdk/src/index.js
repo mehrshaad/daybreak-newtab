@@ -79,6 +79,7 @@ export {
   usePointerReorder,
 } from "./usePointerReorder";
 export { useHover } from "./useHover";
+export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
 
 // Small utilities.
