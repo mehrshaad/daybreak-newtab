@@ -96,6 +96,56 @@ export function onAccentFor(accent) {
     : "#ffffff";
 }
 
+// Darkens an accent by stepping down its HSL lightness until it clears a WCAG
+// contrast target against a background, or lightness bottoms out. The near-
+// white accent swatch is unreadable as text on the light theme's base — this
+// is what keeps it (and every other pale accent) legible there while dark
+// theme, where the raw accent already reads fine, is untouched.
+export function darkenFor(hex, bg = "#f3f3f1", target = 4.5) {
+  const a = normalizeAccent(hex);
+  if (contrast(luminance(a), luminance(bg)) >= target) return a;
+
+  const h = a.slice(1);
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  let l = (max + min) / 2;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let hue = 0;
+  if (d !== 0) {
+    if (max === r) hue = ((g - b) / d) % 6;
+    else if (max === g) hue = (b - r) / d + 2;
+    else hue = (r - g) / d + 4;
+    hue *= 60;
+  }
+  hue = (((hue % 360) + 360) % 360);
+
+  const atLightness = (lightness) => {
+    const c = (1 - Math.abs(2 * lightness - 1)) * s;
+    const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+    const m = lightness - c / 2;
+    const seg = Math.floor(hue / 60) % 6;
+    const rgb = [
+      [c, x, 0],
+      [x, c, 0],
+      [0, c, x],
+      [0, x, c],
+      [x, 0, c],
+      [c, 0, x],
+    ][seg].map((v) => Math.round((v + m) * 255));
+    return `#${rgb.map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("")}`;
+  };
+
+  let candidate = a;
+  while (l > 0) {
+    l = Math.max(0, l - 0.02);
+    candidate = atLightness(l);
+    if (contrast(luminance(candidate), luminance(bg)) >= target) break;
+  }
+  return candidate;
+}
+
 export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent, blur = true) {
   const dark = theme !== "light";
   const a = normalizeAccent(accentInput);
@@ -120,6 +170,7 @@ export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent, bl
     "--accent": a,
     "--accentSoft": `${a}22`,
     "--accentLine": `${a}55`,
+    "--accentText": dark ? a : darkenFor(a),
     "--onAccent": onAccentFor(a),
     "--fg": dark ? "oklch(0.96 0.004 260)" : "oklch(0.22 0.01 260)",
     "--dim": dark ? "oklch(0.72 0.012 260)" : "oklch(0.46 0.012 260)",

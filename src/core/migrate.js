@@ -92,6 +92,11 @@ export function migrateV1(v1) {
     };
   }
 
+  // A v1 install is an existing user, not a first run — v2's welcome card
+  // should not appear for them even though v1's own tour flag is dropped
+  // above.
+  out.behavior.tourDone = true;
+
   return out;
 }
 

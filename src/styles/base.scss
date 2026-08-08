@@ -131,9 +131,16 @@ button {
 // A tile clips its content so widgets cannot spill. While an icon inside one is
 // being dragged that clip is what made the icon disappear at the tile edge, so
 // lift it for the duration of the drag. !important is required because the
-// tile's overflow is an inline style.
+// tile's overflow is an inline style. The z-index lift is the other half:
+// without it a dragged icon escapes the clip but still paints *under* any
+// sibling tile later in the DOM, so it looked lost the moment it crossed onto
+// a neighbour. 60 on purpose: a held icon must ride over *everything* it can
+// be dragged across — sibling tiles, the sticky header (40), the presets dock
+// (45) and any open popover (48). The store (70) and context menu (80) cannot
+// be open mid-drag.
 [data-flip-id]:has([data-dragging="true"]) {
   overflow: visible !important;
+  z-index: 60;
 }
 
 .db-sr-only {
@@ -300,24 +307,6 @@ button {
   }
 }
 
-// Detail that only exists in a zoomed tile arrives just after the zoom is
-// underway rather than at the same instant, so the eye follows the movement
-// first and the new content second. Timing matches the reference site.
-.db-reveal {
-  animation: db-rise 0.32s ease 0.22s both;
-}
-
-@keyframes db-rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 // Theme and accent changes ease rather than snapping.
 //
 // Deliberately only on the root, and only inherited properties. `color` and
@@ -334,17 +323,52 @@ button {
   transition: color 0.34s ease, fill 0.34s ease;
 }
 
-// Sliders are dragged, so say so.
+// Fully custom rather than relying on accent-color: that leaves the
+// unfilled portion of the track at the browser's own grey in both themes,
+// which does not match either. --range-fill (0%-100%, set inline per
+// slider) draws the filled portion; the rest of the track uses the app's
+// own line colour instead.
 input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
   cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--range-fill, 0%),
+    var(--line) var(--range-fill, 0%)
+  );
 
   &::-webkit-slider-thumb {
+    -webkit-appearance: none;
     cursor: grab;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: var(--accent);
+    border: 2px solid var(--sheet);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   }
 
   &:active::-webkit-slider-thumb {
     cursor: grabbing;
   }
+}
+
+// The header's own clear button (Header.jsx) replaces this — a fixed grey
+// glyph that ignores the theme — rather than showing both at once.
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+// The browser's own placeholder grey is fixed regardless of theme; this
+// keeps it on the same token every other muted label already uses.
+::placeholder {
+  color: var(--faint);
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

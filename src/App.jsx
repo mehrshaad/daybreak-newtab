@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LuArrowLeft } from "react-icons/lu";
 import Backdrop from "./components/Backdrop";
 import Board from "./components/Board";
@@ -10,9 +10,11 @@ import { Collapse } from "./components/primitives";
 import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
 import Toast from "./components/Toast";
+import WelcomeCard from "./components/WelcomeCard";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
-import { boardMenu, widgetMenu } from "./core/menus";
+import { essentialsFirst } from "./core/essentials";
+import { boardMenu, isEditableTarget, widgetMenu } from "./core/menus";
 import { DEFAULT_ZOOM_MODE, PRESETS, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
@@ -118,6 +120,22 @@ function App() {
     setStoreOpen(false);
   }, []);
 
+  // Shared catch-all: header, hero, dock and the board's own empty space all
+  // open the same board menu on right-click, but never over a text-entry
+  // surface — that needs the native menu for paste.
+  const openBoardMenu = useCallback((e) => {
+    if (isEditableTarget(e.target)) return;
+    e.preventDefault();
+    setMenu({ id: null, x: e.clientX, y: e.clientY });
+  }, []);
+
+  const openTileMenu = useCallback((e, id) => {
+    if (isEditableTarget(e.target)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setMenu({ id, x: e.clientX, y: e.clientY });
+  }, []);
+
   // Camera zoom needs the tile's on-screen box measured against the board's,
   // so the transform origin lands on the tile the user actually clicked.
   const focusTile = useCallback(
@@ -152,6 +170,17 @@ function App() {
 
   const toggleEdit = useCallback(() => {
     setEditing((v) => !v);
+    setZoom(null);
+    setCam(null);
+    setPanel(null);
+    setMenu(null);
+  }, []);
+
+  // Long-pressing a tile or empty board space turns editing on — never off,
+  // unlike toggleEdit, since it fires from a gesture that only ever means
+  // "start arranging."
+  const enterEditing = useCallback(() => {
+    setEditing(true);
     setZoom(null);
     setCam(null);
     setPanel(null);
@@ -252,8 +281,10 @@ function App() {
   const applyPreset = useCallback(
     (name) => {
       // A preset only places widgets that exist in this build, and adding one
-      // from a preset also marks it installed.
-      const next = knownIds(PRESETS[name] || []);
+      // from a preset also marks it installed. Clock and weather lead every
+      // preset, so this holds even if a preset's own list is ever edited out
+      // of that order.
+      const next = essentialsFirst(knownIds(PRESETS[name] || []));
       update("board", {
         ids: next,
         sizes: {},
@@ -452,6 +483,23 @@ function App() {
 
   // --- styling -------------------------------------------------------------
 
+  // The theme tokens go on <html>, not the app root div: Popover portals its
+  // panel to document.body, which sits *outside* the root, so tokens carried
+  // as inline styles there left every portalled panel with an unresolvable
+  // --sheet/--line/--blur-* — no background, no border, no blur, in either
+  // blur mode. On <html>, everything inherits them, portals included.
+  // useLayoutEffect so they are set before the frame paints.
+  const themeTokens = useMemo(
+    () => tokens(theme, accent, appearance.blur !== false),
+    [theme, accent, appearance.blur]
+  );
+  useLayoutEffect(() => {
+    const style = document.documentElement.style;
+    for (const [key, value] of Object.entries(themeTokens)) {
+      style.setProperty(key, value);
+    }
+  }, [themeTokens]);
+
   const rootStyle = useMemo(
     () => ({
       position: "relative",
@@ -464,9 +512,8 @@ function App() {
       // Makes room for an open drawer rather than letting it cover the board.
       paddingRight: shift ? `${shift}px` : 0,
       transition: "padding-right .3s cubic-bezier(.2,.8,.2,1)",
-      ...tokens(theme, accent, appearance.blur !== false),
     }),
-    [theme, accent, appearance.blur, shift]
+    [shift]
   );
 
   // <html> carries the flat base colour only. The gradient stack lives in
@@ -482,6 +529,14 @@ function App() {
     document.body.style.background = "transparent";
     // Tells Chrome to theme form controls and scrollbars to match.
     html.style.colorScheme = theme;
+    // Mirrored for boot.js, which reads it synchronously on the *next* tab so
+    // the pre-React paint is already the right colour instead of flashing
+    // white/dark until chrome.storage resolves.
+    try {
+      localStorage.setItem("daybreakTheme", theme);
+    } catch {
+      /* storage disabled - the boot script falls back to the OS scheme */
+    }
     return () => {
       html.style.backgroundColor = "";
       html.style.colorScheme = "";
@@ -532,6 +587,7 @@ function App() {
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
         onOpenSettings={openSettings}
+        onContextMenu={openBoardMenu}
         searchRef={searchRef}
       />
 
@@ -543,6 +599,7 @@ function App() {
           summary={summary}
           layoutName={board.layoutName}
           tileCount={ids.length}
+          onContextMenu={openBoardMenu}
         />
       </Collapse>
 
@@ -561,16 +618,10 @@ function App() {
         manualRefresh={manualRefresh}
         boardRef={boardRef}
         registerTile={registerTile}
-        onBoardMenu={(e) => {
-          e.preventDefault();
-          setMenu({ id: null, x: e.clientX, y: e.clientY });
-        }}
+        onEnterEditing={enterEditing}
+        onBoardMenu={openBoardMenu}
         onOpenTile={openTile}
-        onTileMenu={(e, id) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setMenu({ id, x: e.clientX, y: e.clientY });
-        }}
+        onTileMenu={openTileMenu}
         onOpenSettings={(id) => setPanel(id)}
         onCloseZoom={closeZoom}
         onResize={cycleSize}
@@ -643,6 +694,7 @@ function App() {
           onAutoArrange={autoArrangeBoard}
           onAddWidget={openStore}
           onDone={toggleEdit}
+          onContextMenu={openBoardMenu}
         />
       ) : null}
 
@@ -662,6 +714,7 @@ function App() {
           onConfig={(patch) => setWidgetConfig(panelId, patch)}
           onRate={(rate) => updateWidget(panelId, { rate })}
           onRemove={() => removeTile(panelId)}
+          toast={toast}
         />
       ) : null}
 
@@ -687,6 +740,15 @@ function App() {
         boardIds={board.ids}
         onClose={() => setStoreOpen(false)}
         onToggle={toggleFromStore}
+      />
+
+      <WelcomeCard
+        open={!behavior.tourDone}
+        name={profile.name}
+        theme={appearance.theme || "system"}
+        onNameChange={(name) => update("profile", { name })}
+        onThemeChange={(t) => update("appearance", { theme: t })}
+        onDismiss={() => update("behavior", { tourDone: true })}
       />
 
       {/* The menu keeps its last position and contents while it fades out. */}

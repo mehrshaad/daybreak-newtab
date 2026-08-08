@@ -6,7 +6,7 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { dropPermission, MONO, requestPermission } from "@daybreak/sdk";
+import { dropPermission, MONO, requestAllPermissions } from "@daybreak/sdk";
 import {
   ACCENTS,
   PAGE_ZOOM_MAX,
@@ -16,7 +16,7 @@ import {
 } from "../core/tokens";
 import { SOURCES } from "../core/suggest";
 import { systemTheme } from "../core/useSystemTheme";
-import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
+import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 
 function SettingsDrawer({
@@ -69,11 +69,11 @@ function SettingsDrawer({
             </Pill>
           ))}
         </div>
-        {(appearance.theme || "system") === "system" ? (
+        <Collapse open={(appearance.theme || "system") === "system"}>
           <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 8 }}>
             Following your {systemTheme()} browser setting.
           </div>
-        ) : null}
+        </Collapse>
       </Section>
 
       <Section title="Accent" style={{ marginBottom: 22 }}>
@@ -224,6 +224,12 @@ function SettingsDrawer({
             onChange={() => update("behavior", { shortcuts: !behavior.shortcuts })}
           />
         </div>
+        <Pill
+          onClick={() => update("behavior", { tourDone: false })}
+          style={{ marginTop: 10, padding: "8px 14px", fontSize: 13 }}
+        >
+          Show the welcome card again
+        </Pill>
       </Section>
 
       <Section title="Search suggestions" style={{ marginBottom: 22 }}>
@@ -243,7 +249,16 @@ function SettingsDrawer({
                 // rejects one that is not tied to a user gesture.
                 onChange={async () => {
                   if (!on && source.permission) {
-                    const granted = await requestPermission(source.permission);
+                    // Requested together, in one call: real site icons in the
+                    // results are worth asking for right alongside the source
+                    // that will actually produce results to show them next
+                    // to. Declining just the icon half of the dialog is not
+                    // possible — Chrome shows one combined prompt — so this
+                    // only fires when there is already a reason to prompt.
+                    const granted = await requestAllPermissions([
+                      source.permission,
+                      "favicon",
+                    ]);
                     if (!granted) {
                       toast(`${source.label} needs the ${source.permission} permission`);
                       return;
@@ -305,9 +320,13 @@ function SettingsDrawer({
                 fontSize: 13,
                 color: "var(--danger)",
                 borderColor: confirmReset ? "var(--danger)" : "var(--line)",
+                transition: "border-color .18s ease",
               }}
             >
-              {confirmReset ? "Tap again to confirm" : "Reset everything"}
+              {/* Keyed so the label crossfades on toggle instead of snapping. */}
+              <span key={confirmReset ? "confirm" : "ask"} style={{ animation: "db-fade .2s ease both" }}>
+                {confirmReset ? "Tap again to confirm" : "Reset everything"}
+              </span>
             </Pill>
           </div>
         </div>

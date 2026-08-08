@@ -1,3 +1,4 @@
+import { essentialsFirst } from "./essentials";
 import { DEFAULTS as VISUAL_DEFAULTS } from "./tokens";
 
 export const SCHEMA_VERSION = 2;
@@ -47,7 +48,7 @@ export const PRESETS = {
     "gapps",
     "recenttabs",
   ],
-  Minimal: ["clock", "links", "weather"],
+  Minimal: ["clock", "weather", "links"],
 };
 
 export const DEFAULT_LAYOUT = "Balanced";
@@ -61,7 +62,7 @@ export function defaultSettings() {
   return {
     v: SCHEMA_VERSION,
     board: {
-      ids: [...PRESETS[DEFAULT_LAYOUT]],
+      ids: essentialsFirst(PRESETS[DEFAULT_LAYOUT]),
       sizes: {},
       layoutName: DEFAULT_LAYOUT,
       installed: [...PRESETS[DEFAULT_LAYOUT]],
@@ -80,6 +81,7 @@ export function defaultSettings() {
     behavior: {
       showGreeting: true,
       shortcuts: true,
+      tourDone: false,
       searchEngine: "google",
       // Only the permission-free source is on by default; the others are
       // opt-in and each asks for its Chrome permission when switched on.
@@ -105,6 +107,10 @@ export function hydrate(saved) {
         : s;
   }
   out.v = SCHEMA_VERSION;
+  // tourDone is new: an install that already had *something* saved predates
+  // it and should not suddenly see a first-run card, so only a genuinely
+  // fresh install (the !saved branch above) leaves it at the false default.
+  if (saved.behavior?.tourDone === undefined) out.behavior.tourDone = true;
   // `installed` must always cover what is on the board.
   const ids = Array.isArray(out.board.ids) ? out.board.ids : [];
   const installed = Array.isArray(out.board.installed) ? out.board.installed : [];

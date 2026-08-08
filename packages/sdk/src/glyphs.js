@@ -1,15 +1,21 @@
 import {
+  LuBanknote,
+  LuBitcoin,
   LuBookmark,
   LuCalendarCheck,
+  LuCalendarDays,
+  LuCalendarRange,
   LuClock,
   LuLayoutGrid,
   LuHistory,
   LuLink,
+  LuNewspaper,
   LuNotebookPen,
   LuQuote,
   LuSquareCheck,
   LuSun,
   LuTimer,
+  LuWind,
 } from "react-icons/lu";
 
 // Glyph names a manifest can ask for. Deliberately generic (`clock`, `weather`,
@@ -18,13 +24,19 @@ import {
 // widget's initial for anything not listed here, so a missing or misspelled name
 // can never render an empty chip.
 export const GLYPHS = {
+  air: LuWind,
   bookmark: LuBookmark,
   calendar: LuCalendarCheck,
+  calendarDays: LuCalendarDays,
+  calendarRange: LuCalendarRange,
   clock: LuClock,
+  crypto: LuBitcoin,
+  currency: LuBanknote,
   grid: LuLayoutGrid,
   history: LuHistory,
   link: LuLink,
   list: LuSquareCheck,
+  news: LuNewspaper,
   note: LuNotebookPen,
   quote: LuQuote,
   timer: LuTimer,

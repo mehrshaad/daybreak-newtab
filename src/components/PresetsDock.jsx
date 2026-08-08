@@ -1,6 +1,6 @@
 import { LuBookmark, LuRotateCcw, LuWandSparkles } from "react-icons/lu";
 import { PRESETS, SAVED_LAYOUT } from "../core/schema";
-import { HOVER_LIFT, MONO, primaryButton, softButton } from "@daybreak/sdk";
+import { Appear, HOVER_LIFT, MONO, primaryButton, softButton, Tooltip, useTooltip } from "@daybreak/sdk";
 import { Button, Pill } from "./primitives";
 
 // The floating dock shown in layout-edit mode. Occupies the same spot as the
@@ -15,9 +15,16 @@ function PresetsDock({
   onAutoArrange,
   onAddWidget,
   onDone,
+  onContextMenu,
 }) {
+  const savedTip = useTooltip(
+    hasSaved ? "Switch to the layout you saved" : "Save the current board as your layout"
+  );
+  const resetTip = useTooltip("Reset your saved layout to the board as it is now");
+  const autoArrangeTip = useTooltip("Tidy the current widgets into neat rows");
   return (
     <div
+      onContextMenu={onContextMenu}
       style={{
         position: "fixed",
         // Centred with auto margins rather than translateX(-50%): the db-in
@@ -81,68 +88,74 @@ function PresetsDock({
       {/* The user's own layout sits with the presets but behaves differently:
           it holds a snapshot they took, and the icon re-takes it. */}
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-        <Pill
-          active={layoutName === SAVED_LAYOUT}
-          onClick={hasSaved ? onApplySaved : onSaveCurrent}
-          title={
-            hasSaved
-              ? "Switch to the layout you saved"
-              : "Save the current board as your layout"
-          }
-          style={{
-            padding: "8px 14px",
-            fontSize: 13,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 7,
-            ...(hasSaved ? null : { borderStyle: "dashed" }),
-          }}
-        >
-          <LuBookmark size={12} />
-          {SAVED_LAYOUT}
-        </Pill>
-        {hasSaved ? (
-          <Button
-            onClick={onSaveCurrent}
-            title="Reset your saved layout to the board as it is now"
-            aria-label="Reset your saved layout to the current board"
-            styleFor={softButton}
+        <span ref={savedTip.anchorRef} style={{ display: "inline-flex" }} {...savedTip.anchorProps}>
+          <Pill
+            active={layoutName === SAVED_LAYOUT}
+            onClick={hasSaved ? onApplySaved : onSaveCurrent}
             style={{
-              padding: 0,
-              width: 28,
-              height: 28,
-              borderRadius: 999,
-              display: "grid",
-              placeItems: "center",
-              background: "transparent",
+              padding: "8px 14px",
+              fontSize: 13,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              ...(hasSaved ? null : { borderStyle: "dashed" }),
             }}
-            hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
           >
-            <LuRotateCcw size={13} />
-          </Button>
-        ) : null}
+            <LuBookmark size={12} />
+            {SAVED_LAYOUT}
+          </Pill>
+        </span>
+        <Tooltip {...savedTip} />
+        <Appear open={hasSaved} style={{ display: "flex" }}>
+          <span ref={resetTip.anchorRef} style={{ display: "inline-flex" }} {...resetTip.anchorProps}>
+            <Button
+              onClick={onSaveCurrent}
+              aria-label="Reset your saved layout to the current board"
+              styleFor={softButton}
+              style={{
+                padding: 0,
+                width: 28,
+                height: 28,
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                background: "transparent",
+              }}
+              hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
+            >
+              <LuRotateCcw size={13} />
+            </Button>
+          </span>
+        </Appear>
+        <Tooltip {...resetTip} />
       </div>
 
       <div style={{ width: 1, height: 22, background: "var(--line)", margin: "0 2px" }} />
 
       {/* Repacks what is already on the board; never adds or removes a widget. */}
-      <Button
-        onClick={onAutoArrange}
-        title="Tidy the current widgets into neat rows"
-        styleFor={softButton}
-        style={{
-          padding: "8px 13px",
-          background: "transparent",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 7,
-          whiteSpace: "nowrap",
-        }}
-        hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
+      <span
+        ref={autoArrangeTip.anchorRef}
+        style={{ display: "inline-flex" }}
+        {...autoArrangeTip.anchorProps}
       >
-        <LuWandSparkles size={13} />
-        Auto arrange
-      </Button>
+        <Button
+          onClick={onAutoArrange}
+          styleFor={softButton}
+          style={{
+            padding: "8px 13px",
+            background: "transparent",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            whiteSpace: "nowrap",
+          }}
+          hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
+        >
+          <LuWandSparkles size={13} />
+          Auto arrange
+        </Button>
+      </span>
+      <Tooltip {...autoArrangeTip} />
 
       <Button
         onClick={onAddWidget}

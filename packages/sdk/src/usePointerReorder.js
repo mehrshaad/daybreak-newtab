@@ -52,13 +52,29 @@ export function slotIndexAt(slots, x, y) {
   return slots.findIndex((r) => pointInRect(r, x, y));
 }
 
-export function usePointerReorder({ ids, onReorder, enabled = true, containerRef }) {
+// Grace margin, in pixels, before a drag past the container's edge counts as
+// "outside" — without it, reordering the last item in a row would flicker
+// into delete territory the instant the pointer crosses the boundary.
+const OUTSIDE_MARGIN = 24;
+
+export function isOutsideBounds(rect, x, y, margin = OUTSIDE_MARGIN) {
+  if (!rect) return false;
+  return (
+    x < rect.left - margin ||
+    x > rect.right + margin ||
+    y < rect.top - margin ||
+    y > rect.bottom + margin
+  );
+}
+
+export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = true, containerRef }) {
   const [draggingId, setDraggingId] = useState(null);
+  const [isOutside, setIsOutside] = useState(false);
   const state = useRef(null);
 
-  // Latest order and callback, without re-binding the window listeners.
-  const latest = useRef({ ids, onReorder });
-  latest.current = { ids, onReorder };
+  // Latest order and callbacks, without re-binding the window listeners.
+  const latest = useRef({ ids, onReorder, onDropOutside });
+  latest.current = { ids, onReorder, onDropOutside };
 
   const finish = useCallback(() => {
     const s = state.current;
@@ -73,10 +89,11 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
     }
     document.body.style.userSelect = "";
     setDraggingId(null);
+    setIsOutside(false);
   }, []);
 
   const onPointerDown = useCallback(
-    (event, id) => {
+    (event, id, dragNode) => {
       if (!enabled) return;
       if (event.button != null && event.button !== 0) return;
       // Ignore presses on a control *inside* the item (a tile's resize pill,
@@ -85,7 +102,11 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
       const control = event.target.closest("button, a, input, textarea, select");
       if (control && control !== event.currentTarget) return;
 
-      const node = event.currentTarget;
+      // Most callers attach onPointerDown directly to the thing that should
+      // move (an icon-grid item, a world-clock row), so event.currentTarget is
+      // it. A tile's drag now starts from a small handle at its edge, so the
+      // node that should actually translate is passed explicitly instead.
+      const node = dragNode || event.currentTarget;
       const rect = node.getBoundingClientRect();
       state.current = {
         id,
@@ -99,6 +120,8 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
         lastX: event.clientX,
         lastY: event.clientY,
         slots: [], // frozen slot geometry, filled when the drag activates
+        containerRect: null, // also frozen at activation, for the outside test
+        outside: false,
         // Index this drag has asked for and is waiting to see committed.
         pending: null,
         active: false,
@@ -125,6 +148,7 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
               el.getBoundingClientRect()
             )
           : [];
+        s.containerRect = container ? container.getBoundingClientRect() : null;
         s.node.style.zIndex = "40";
         s.node.style.cursor = "grabbing";
         s.node.style.willChange = "transform";
@@ -138,6 +162,16 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
 
       event.preventDefault();
       apply(s, event.clientX, event.clientY);
+
+      // Past the container's edge (plus a grace margin) is a delete zone, not
+      // a reorder target. Callers that don't offer drop-to-delete never see
+      // this: without onDropOutside there is nothing for it to trigger.
+      const outside = isOutsideBounds(s.containerRect, event.clientX, event.clientY);
+      if (outside !== s.outside) {
+        s.outside = outside;
+        setIsOutside(outside);
+      }
+      if (outside) return;
 
       // Target index comes from the SLOT the pointer is over, using geometry
       // captured once at drag start — not from whichever element happens to be
@@ -166,7 +200,9 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
     };
 
     const onUp = () => {
-      if (state.current) finish();
+      const s = state.current;
+      if (s?.active && s.outside) latest.current.onDropOutside?.(s.id);
+      if (s) finish();
     };
 
     window.addEventListener("pointermove", onMove, { passive: false });
@@ -203,7 +239,7 @@ export function usePointerReorder({ ids, onReorder, enabled = true, containerRef
     if (!enabled && state.current) finish();
   }, [enabled, finish]);
 
-  return { draggingId, onPointerDown };
+  return { draggingId, isOutside, onPointerDown };
 }
 
 // Move an item within an array, returning a new array.

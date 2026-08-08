@@ -50,8 +50,9 @@ export function tileStyle({
     // value.
     overflow: "hidden",
     // With click-to-zoom off there is nothing to click a tile for, so it must
-    // not advertise itself as clickable.
-    cursor: editing ? "grab" : zoomMode === "None" ? "default" : "pointer",
+    // not advertise itself as clickable. Dragging starts from the handle, not
+    // the tile body, even in edit mode — so editing does not change this.
+    cursor: zoomMode === "None" ? "default" : "pointer",
     // background-color and backdrop-filter are here so a theme flip, an
     // opacity change or the blur toggle ease in rather than snapping.
     transition:

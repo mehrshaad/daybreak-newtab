@@ -1,7 +1,7 @@
 {
   "name": "daybreak-newtab",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,10 +13,16 @@
   },
   "dependencies": {
     "@daybreak/sdk": "*",
+    "@daybreak/widget-air": "*",
+    "@daybreak/widget-calendar": "*",
     "@daybreak/widget-clock": "*",
+    "@daybreak/widget-currency": "*",
+    "@daybreak/widget-crypto": "*",
     "@daybreak/widget-gapps": "*",
     "@daybreak/widget-habits": "*",
     "@daybreak/widget-links": "*",
+    "@daybreak/widget-news": "*",
+    "@daybreak/widget-onthisday": "*",
     "@daybreak/widget-quote": "*",
     "@daybreak/widget-recenttabs": "*",
     "@daybreak/widget-scratchpad": "*",

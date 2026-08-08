@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lastNDays, streakFor, toggleDay } from "./streak";
+import { lastNDays, streakFor, toggleDay, trimHistory } from "./streak";
 
 const today = new Date(2026, 7, 10); // 2026-08-10
 
@@ -80,5 +80,37 @@ describe("toggleDay", () => {
 
   it("handles an empty starting history", () => {
     expect(toggleDay(null, "2026-08-10")).toEqual({ "2026-08-10": true });
+  });
+});
+
+describe("trimHistory", () => {
+  it("keeps a day exactly at the cutoff and drops the one before it", () => {
+    const history = { h1: { "2026-08-05": true, "2026-08-06": true } };
+    // 6 days ending today (08-10) starts at 08-05.
+    expect(trimHistory(history, 6, today)).toEqual({
+      h1: { "2026-08-05": true, "2026-08-06": true },
+    });
+    expect(trimHistory(history, 5, today)).toEqual({ h1: { "2026-08-06": true } });
+  });
+
+  it("trims every habit independently", () => {
+    const history = {
+      h1: { "2020-01-01": true, "2026-08-10": true },
+      h2: { "2020-01-01": true },
+    };
+    expect(trimHistory(history, 370, today)).toEqual({
+      h1: { "2026-08-10": true },
+      h2: {},
+    });
+  });
+
+  it("does not mutate the original", () => {
+    const history = { h1: { "2020-01-01": true } };
+    trimHistory(history, 370, today);
+    expect(history).toEqual({ h1: { "2020-01-01": true } });
+  });
+
+  it("handles no history at all", () => {
+    expect(trimHistory(undefined, 370, today)).toEqual({});
   });
 });
