@@ -56,7 +56,12 @@ function Board({
   const { draggingId, onPointerDown } = usePointerReorder({
     ids,
     onReorder,
-    enabled: editing,
+    // Not gated on edit mode: a tile can be rearranged straight from the
+    // board, without the resize pills and remove buttons appearing first.
+    // Safe to leave open because the board offers no drop-to-delete — the
+    // worst a stray drag can do is move a tile, which is visible and
+    // trivially undone by moving it back.
+    enabled: true,
     containerRef: gridRef,
   });
 

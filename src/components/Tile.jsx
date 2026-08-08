@@ -48,7 +48,17 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
           `overflow: hidden` clip. */}
       <div
         ref={tip.anchorRef}
-        onPointerDown={editing ? onPointerDown : undefined}
+        // Dragging does not require edit mode: the handle only appears on
+        // hover, so grabbing it is already deliberate, and rearranging the
+        // board is not an edit-mode-only idea. stopPropagation keeps the
+        // press away from the tile's own long-press-to-edit — the drag
+        // itself escapes that anyway (it cancels past 8px of movement, and a
+        // drag starts at 5px), but holding the handle still would otherwise
+        // drop into edit mode instead of doing nothing.
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          onPointerDown?.(e);
+        }}
         onMouseEnter={() => {
           setHandleHovered(true);
           tip.anchorProps.onMouseEnter?.();
