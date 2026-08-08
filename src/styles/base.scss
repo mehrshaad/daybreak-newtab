@@ -134,10 +134,13 @@ button {
 // tile's overflow is an inline style. The z-index lift is the other half:
 // without it a dragged icon escapes the clip but still paints *under* any
 // sibling tile later in the DOM, so it looked lost the moment it crossed onto
-// a neighbour. Below the zoomed tile (36) and every floating panel (48+).
+// a neighbour. 60 on purpose: a held icon must ride over *everything* it can
+// be dragged across — sibling tiles, the sticky header (40), the presets dock
+// (45) and any open popover (48). The store (70) and context menu (80) cannot
+// be open mid-drag.
 [data-flip-id]:has([data-dragging="true"]) {
   overflow: visible !important;
-  z-index: 30;
+  z-index: 60;
 }
 
 .db-sr-only {

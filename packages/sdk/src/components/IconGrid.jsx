@@ -52,6 +52,12 @@ function IconGridItem({
           width: "100%",
           minWidth: 0,
           touchAction: "none",
+          // Positioned so z-index actually applies: the button used to be a
+          // grid item (where z-index works bare), but the wrapper div that
+          // carries the remove badge made it a plain block child — leaving
+          // both this and usePointerReorder's imperative lift inert, and the
+          // held icon painting under its later siblings.
+          position: "relative",
           zIndex: held ? 5 : undefined,
           filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
           transition: "background .16s ease",
