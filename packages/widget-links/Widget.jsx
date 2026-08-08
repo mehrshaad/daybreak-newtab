@@ -2,6 +2,33 @@ import { useMemo, useState } from "react";
 import { LuPlus } from "react-icons/lu";
 import { Favicon, IconGrid, IconTile, MONO, moveItem, uid } from "@daybreak/sdk";
 
+// Add-form fields: a small eyebrow label above each input, matching the
+// settings drawer's field styling.
+const FIELD_LABEL_STYLE = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 3,
+  fontFamily: MONO,
+  fontSize: 10,
+  letterSpacing: ".06em",
+  textTransform: "uppercase",
+  color: "var(--faint)",
+};
+
+const FIELD_INPUT_STYLE = {
+  width: "100%",
+  padding: "6px 10px",
+  borderRadius: 8,
+  background: "var(--panel2)",
+  border: "1px solid var(--line)",
+  outline: "none",
+  fontSize: 12,
+  fontFamily: "inherit",
+  textTransform: "none",
+  letterSpacing: "normal",
+  color: "var(--fg)",
+};
+
 const DEFAULTS = [
   { id: "d1", name: "GitHub", url: "https://github.com" },
   { id: "d2", name: "YouTube", url: "https://www.youtube.com" },
@@ -81,6 +108,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
         onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
         editing={editing}
         onRemove={remove}
+        onRemoveByDrag={remove}
         hoverCard={(gridItem) => {
           const link = items.find((l) => l.id === gridItem.key);
           if (!link) return null;
@@ -133,43 +161,32 @@ function Links({ options, config, setConfig, size, editing, columns }) {
                 width: "100%",
                 display: "flex",
                 flexDirection: "column",
-                gap: 4,
+                gap: 6,
                 alignSelf: "center",
+                animation: "db-menu .16s ease both",
               }}
             >
-              <input
-                autoFocus
-                value={draftUrl}
-                onChange={(e) => setDraftUrl(e.target.value)}
-                placeholder="example.com"
-                aria-label="Link address"
-                style={{
-                  width: "100%",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  background: "var(--panel2)",
-                  border: "1px solid var(--line)",
-                  outline: "none",
-                  fontSize: 12,
-                  color: "var(--fg)",
-                }}
-              />
-              <input
-                value={draftName}
-                onChange={(e) => setDraftName(e.target.value)}
-                placeholder="Name (optional)"
-                aria-label="Link name"
-                style={{
-                  width: "100%",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  background: "var(--panel2)",
-                  border: "1px solid var(--line)",
-                  outline: "none",
-                  fontSize: 12,
-                  color: "var(--fg)",
-                }}
-              />
+              <label style={FIELD_LABEL_STYLE}>
+                Name
+                <input
+                  autoFocus
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  placeholder="Optional"
+                  aria-label="Link name"
+                  style={FIELD_INPUT_STYLE}
+                />
+              </label>
+              <label style={FIELD_LABEL_STYLE}>
+                Link
+                <input
+                  value={draftUrl}
+                  onChange={(e) => setDraftUrl(e.target.value)}
+                  placeholder="example.com"
+                  aria-label="Link address"
+                  style={FIELD_INPUT_STYLE}
+                />
+              </label>
               {/* A form with two text fields and no button does not submit
                   on Enter — this restores that without a visible button. */}
               <button type="submit" style={{ display: "none" }} aria-hidden="true" />
@@ -194,6 +211,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
                 background: "transparent",
                 color: "var(--faint)",
                 width: "100%",
+                animation: "db-menu .16s ease both",
               }}
             >
               <span

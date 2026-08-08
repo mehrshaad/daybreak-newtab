@@ -6,7 +6,11 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
   const { hideLabels, newTab } = options;
   const [showAll, setShowAll] = useState(false);
 
-  const apps = useMemo(() => orderedApps(config.order), [config.order]);
+  const hiddenKeys = Array.isArray(config.hidden) ? config.hidden : [];
+  const apps = useMemo(() => {
+    const hiddenSet = new Set(Array.isArray(config.hidden) ? config.hidden : []);
+    return orderedApps(config.order).filter((a) => !hiddenSet.has(a.key));
+  }, [config.order, config.hidden]);
   const { cols, rows } = gridFor(size, columns);
 
   // Fill a whole grid for this size and hide the remainder rather than
@@ -47,6 +51,7 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
         onReorder={(from, to) =>
           setConfig({ order: moveItem(apps.map((a) => a.key), from, to) })
         }
+        onRemoveByDrag={(app) => setConfig({ hidden: [...hiddenKeys, app.key] })}
       />
 
       {hidden > 0 || showAll ? (

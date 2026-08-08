@@ -8,7 +8,9 @@ export default {
   tagline: "The launcher grid, without the extra click.",
   description:
     "Direct links to Google's apps. Plain links — the tile just opens the " +
-    "site you click, exactly like a bookmark would.",
+    "site you click, exactly like a bookmark would. Drag an icon out of the " +
+    "grid in edit mode to hide it; restore hidden apps from this widget's " +
+    "settings.",
   sizes: [
     [4, 2],
     [5, 2],
@@ -25,4 +27,8 @@ export default {
   refresh: null,
   permissions: { chrome: [], hosts: [] },
   load: () => import("./Widget.jsx"),
+  settingsPanel: {
+    title: "Hidden apps",
+    load: () => import("./Settings.jsx"),
+  },
 };

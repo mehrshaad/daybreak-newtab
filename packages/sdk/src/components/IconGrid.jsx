@@ -14,6 +14,7 @@ function IconGridItem({
   iconSize,
   showLabels,
   held,
+  danger,
   anyDragging,
   onOpen,
   onPointerDown,
@@ -30,7 +31,10 @@ function IconGridItem({
         ref={ref}
         type="button"
         data-flip-id={item.key}
-        title={item.title || item.name}
+        // The native browser tooltip duplicates a hover card, so it only
+        // applies where there is no card to duplicate.
+        title={hoverCard ? undefined : item.title || item.name}
+        aria-label={item.name}
         // Second line of defense, matching World Clocks' rows: the
         // board's own tile drag now starts from a handle rather than the
         // tile body, so a press here can no longer reach it either way.
@@ -59,8 +63,12 @@ function IconGridItem({
           // held icon painting under its later siblings.
           position: "relative",
           zIndex: held ? 5 : undefined,
+          // Dragged past the grid's edge, the icon reads as "release to
+          // remove" instead of "still reordering".
+          opacity: danger ? 0.4 : 1,
+          boxShadow: danger ? "0 0 0 2px var(--danger)" : "none",
           filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
-          transition: "background .16s ease",
+          transition: "background .16s ease, opacity .16s ease, box-shadow .16s ease",
         }}
         onMouseEnter={(e) => {
           if (held) return;
@@ -120,7 +128,13 @@ function IconGridItem({
       ) : null}
 
       {hoverCard && !editing ? (
-        <Popover open={hovered} anchorRef={ref} onClose={() => setHovered(false)} width={230}>
+        <Popover
+          open={hovered}
+          anchorRef={ref}
+          onClose={() => setHovered(false)}
+          placement="bottom-center"
+          width={230}
+        >
           {hoverCard(item)}
         </Popover>
       ) : null}
@@ -143,15 +157,19 @@ function IconGrid({
   reorderable = true,
   editing = false,
   onRemove,
+  onRemoveByDrag,
   hoverCard,
   trailing = null,
 }) {
   const gridRef = useRef(null);
   const ids = items.map((i) => i.key);
 
-  const { draggingId, onPointerDown } = usePointerReorder({
+  const { draggingId, isOutside, onPointerDown } = usePointerReorder({
     ids,
     onReorder,
+    onDropOutside: onRemoveByDrag
+      ? (id) => onRemoveByDrag(items.find((i) => i.key === id))
+      : undefined,
     enabled: reorderable && !!onReorder,
     containerRef: gridRef,
   });
@@ -182,6 +200,7 @@ function IconGrid({
           iconSize={iconSize}
           showLabels={showLabels}
           held={draggingId === item.key}
+          danger={draggingId === item.key && isOutside}
           anyDragging={!!draggingId}
           onOpen={onOpen}
           onPointerDown={onPointerDown}

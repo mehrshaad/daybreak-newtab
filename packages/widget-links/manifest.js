@@ -11,7 +11,7 @@ export default {
     "is known, a lettered tile otherwise. Name a link yourself when you add " +
     "it, or leave it to the address; hover any icon for its full name, " +
     "address and site icon. Remove one with the badge that appears in edit " +
-    "mode.",
+    "mode, or drag it out of the grid.",
   sizes: [
     [3, 2],
     [4, 2],
