@@ -1,6 +1,16 @@
 import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import { LuSettings2, LuX } from "react-icons/lu";
-import { Appear, mark, MONO, seedFor, useHover, useLongPress, useRefresh } from "@daybreak/sdk";
+import {
+  Appear,
+  mark,
+  MONO,
+  seedFor,
+  Tooltip,
+  useHover,
+  useLongPress,
+  useRefresh,
+  useTooltip,
+} from "@daybreak/sdk";
 import { tileStyle } from "../core/tileStyle";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
@@ -20,6 +30,7 @@ import ErrorBoundary from "./ErrorBoundary";
 // widens past the hover width.
 function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
   const [handleHovered, setHandleHovered] = useState(false);
+  const tip = useTooltip("Drag to move");
   const width = dragging ? 56 : handleHovered || editing ? 48 : 36;
   const background = dragging
     ? "var(--accent)"
@@ -27,43 +38,53 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
     ? "var(--accentLine)"
     : "var(--line)";
   return (
-    // The visual line stays exactly as thin as it looks (4px) — this wrapper
-    // is what actually catches the pointer, padded well past the line's own
-    // edges so grabbing it doesn't require pixel-precision. Bottom-anchored
-    // at the tile's padding edge (not the line's old position) so the extra
-    // hit area below the line stays inside the tile's own padding rather
-    // than needing to reach past its `overflow: hidden` clip.
-    <div
-      onPointerDown={editing ? onPointerDown : undefined}
-      onMouseEnter={() => setHandleHovered(true)}
-      onMouseLeave={() => setHandleHovered(false)}
-      title="Drag to move"
-      style={{
-        position: "absolute",
-        bottom: 0,
-        left: "50%",
-        translate: "-50% 0",
-        width: Math.max(width + 32, 80),
-        height: 28,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        paddingBottom: 8,
-        cursor: dragging ? "grabbing" : "grab",
-        pointerEvents: editing || tileHovered ? "auto" : "none",
-      }}
-    >
+    <>
+      {/* The visual line stays exactly as thin as it looks (4px) — this
+          wrapper is what actually catches the pointer, padded well past the
+          line's own edges so grabbing it doesn't require pixel-precision.
+          Bottom-anchored at the tile's padding edge (not the line's old
+          position) so the extra hit area below the line stays inside the
+          tile's own padding rather than needing to reach past its
+          `overflow: hidden` clip. */}
       <div
-        style={{
-          width,
-          height: 4,
-          borderRadius: 999,
-          background,
-          opacity: editing ? 1 : tileHovered ? 0.5 : 0,
-          transition: "opacity .15s ease, background .18s ease, width .18s ease",
+        ref={tip.anchorRef}
+        onPointerDown={editing ? onPointerDown : undefined}
+        onMouseEnter={() => {
+          setHandleHovered(true);
+          tip.anchorProps.onMouseEnter?.();
         }}
-      />
-    </div>
+        onMouseLeave={() => {
+          setHandleHovered(false);
+          tip.anchorProps.onMouseLeave?.();
+        }}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: "50%",
+          translate: "-50% 0",
+          width: Math.max(width + 32, 80),
+          height: 28,
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          paddingBottom: 8,
+          cursor: dragging ? "grabbing" : "grab",
+          pointerEvents: editing || tileHovered ? "auto" : "none",
+        }}
+      >
+        <div
+          style={{
+            width,
+            height: 4,
+            borderRadius: 999,
+            background,
+            opacity: editing ? 1 : tileHovered ? 0.5 : 0,
+            transition: "opacity .15s ease, background .18s ease, width .18s ease",
+          }}
+        />
+      </div>
+      <Tooltip {...tip} />
+    </>
   );
 }
 
@@ -84,37 +105,43 @@ function lazyFor(manifest) {
 }
 
 function TileButton({ label, onClick, children, style }) {
+  const tip = useTooltip(label);
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "7px",
-        fontSize: "12px",
-        padding: "5px 9px",
-        borderRadius: "999px",
-        cursor: "pointer",
-        background: "var(--panel2)",
-        border: "1px solid var(--line)",
-        color: "var(--fg)",
-        lineHeight: 1,
-        ...style,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--accentSoft)";
-        e.currentTarget.style.borderColor = "var(--accentLine)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "var(--panel2)";
-        e.currentTarget.style.borderColor = "var(--line)";
-      }}
-    >
-      {children}
-    </button>
+    <>
+      <button
+        ref={tip.anchorRef}
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "7px",
+          fontSize: "12px",
+          padding: "5px 9px",
+          borderRadius: "999px",
+          cursor: "pointer",
+          background: "var(--panel2)",
+          border: "1px solid var(--line)",
+          color: "var(--fg)",
+          lineHeight: 1,
+          ...style,
+        }}
+        onMouseEnter={(e) => {
+          tip.anchorProps.onMouseEnter?.();
+          e.currentTarget.style.background = "var(--accentSoft)";
+          e.currentTarget.style.borderColor = "var(--accentLine)";
+        }}
+        onMouseLeave={(e) => {
+          tip.anchorProps.onMouseLeave?.();
+          e.currentTarget.style.background = "var(--panel2)";
+          e.currentTarget.style.borderColor = "var(--line)";
+        }}
+      >
+        {children}
+      </button>
+      <Tooltip {...tip} />
+    </>
   );
 }
 

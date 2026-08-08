@@ -92,6 +92,7 @@ export {
 export { useHover } from "./useHover";
 export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
+export { useTooltip } from "./useTooltip";
 
 // Small utilities.
 export {
@@ -115,4 +116,5 @@ export { default as Favicon } from "./components/Favicon";
 export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";
 export { default as Popover } from "./components/Popover";
+export { default as Tooltip } from "./components/Tooltip";
 export { default as WidgetMark } from "./components/WidgetMark";

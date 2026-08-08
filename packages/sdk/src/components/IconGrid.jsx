@@ -2,9 +2,11 @@ import { useRef, useState } from "react";
 import { LuX } from "react-icons/lu";
 import { useFlip } from "../useFlip";
 import { usePointerReorder } from "../usePointerReorder";
+import { useTooltip } from "../useTooltip";
 import Appear from "./Appear";
 import IconTile from "./IconTile";
 import Popover from "./Popover";
+import Tooltip from "./Tooltip";
 
 // One icon, its own hover state and its own Popover anchor — a grid can't
 // share one ref or one "which icon is hovered" flag across every item the
@@ -24,16 +26,19 @@ function IconGridItem({
 }) {
   const ref = useRef(null);
   const [hovered, setHovered] = useState(false);
+  // The hover card already covers this, so the tooltip only applies where
+  // there is no card to duplicate.
+  const tip = useTooltip(hoverCard ? null : item.title || item.name);
 
   return (
     <div style={{ position: "relative", width: "100%", minWidth: 0 }}>
       <button
-        ref={ref}
+        ref={(el) => {
+          ref.current = el;
+          tip.anchorRef.current = el;
+        }}
         type="button"
         data-flip-id={item.key}
-        // The native browser tooltip duplicates a hover card, so it only
-        // applies where there is no card to duplicate.
-        title={hoverCard ? undefined : item.title || item.name}
         aria-label={item.name}
         // Second line of defense, matching World Clocks' rows: the
         // board's own tile drag now starts from a handle rather than the
@@ -71,11 +76,13 @@ function IconGridItem({
           transition: "background .16s ease, opacity .16s ease, box-shadow .16s ease",
         }}
         onMouseEnter={(e) => {
+          tip.anchorProps.onMouseEnter?.();
           if (held) return;
           e.currentTarget.style.background = "var(--panel2)";
           if (!anyDragging) setHovered(true);
         }}
         onMouseLeave={(e) => {
+          tip.anchorProps.onMouseLeave?.();
           e.currentTarget.style.background = "transparent";
           setHovered(false);
         }}
@@ -96,34 +103,11 @@ function IconGridItem({
           </span>
         ) : null}
       </button>
+      <Tooltip {...tip} />
 
       {onRemove ? (
         <Appear open={!!editing} style={{ position: "absolute", top: -2, right: -2 }}>
-          <button
-            type="button"
-            aria-label={`Remove ${item.name}`}
-            title={`Remove ${item.name}`}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(item);
-            }}
-            style={{
-              display: "grid",
-              placeItems: "center",
-              width: 18,
-              height: 18,
-              padding: 0,
-              borderRadius: 999,
-              cursor: "pointer",
-              background: "var(--sheet)",
-              border: "1px solid var(--line)",
-              color: "var(--danger)",
-              boxShadow: "0 4px 10px rgba(0,0,0,.3)",
-            }}
-          >
-            <LuX size={10} />
-          </button>
+          <RemoveBadge label={`Remove ${item.name}`} onRemove={() => onRemove(item)} />
         </Appear>
       ) : null}
 
@@ -139,6 +123,43 @@ function IconGridItem({
         </Popover>
       ) : null}
     </div>
+  );
+}
+
+// Broken out so its own tooltip gets its own hover state, independent of the
+// icon button's.
+function RemoveBadge({ label, onRemove }) {
+  const tip = useTooltip(label);
+  return (
+    <>
+      <button
+        ref={tip.anchorRef}
+        type="button"
+        aria-label={label}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        {...tip.anchorProps}
+        style={{
+          display: "grid",
+          placeItems: "center",
+          width: 18,
+          height: 18,
+          padding: 0,
+          borderRadius: 999,
+          cursor: "pointer",
+          background: "var(--sheet)",
+          border: "1px solid var(--line)",
+          color: "var(--danger)",
+          boxShadow: "0 4px 10px rgba(0,0,0,.3)",
+        }}
+      >
+        <LuX size={10} />
+      </button>
+      <Tooltip {...tip} />
+    </>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { LuExternalLink, LuLayers } from "react-icons/lu";
-import { hasPermission, requestPermission } from "@daybreak/sdk";
+import { hasPermission, requestPermission, Tooltip, useTooltip } from "@daybreak/sdk";
 
 const hasSessions = () => typeof chrome !== "undefined" && !!chrome.sessions;
 
@@ -10,6 +10,73 @@ function faviconHost(url) {
   } catch {
     return "";
   }
+}
+
+// Its own component so each row's tooltip (the host, since the title text
+// itself is already visible and truncated) gets its own hover state.
+function TabRow({ entry }) {
+  const tip = useTooltip(entry.host);
+  return (
+    <>
+      <button
+        ref={tip.anchorRef}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          chrome.sessions.restore(entry.id);
+        }}
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          fontSize: 12,
+          padding: "6px 8px",
+          margin: "0 -8px",
+          borderRadius: 8,
+          cursor: "pointer",
+          border: 0,
+          background: "transparent",
+          color: "var(--dim)",
+          textAlign: "left",
+          minWidth: 0,
+        }}
+        onMouseEnter={(e) => {
+          tip.anchorProps.onMouseEnter?.();
+          e.currentTarget.style.background = "var(--panel2)";
+        }}
+        onMouseLeave={(e) => {
+          tip.anchorProps.onMouseLeave?.();
+          e.currentTarget.style.background = "transparent";
+        }}
+      >
+        <span
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: 4,
+            background: "var(--panel2)",
+            flex: "none",
+            display: "grid",
+            placeItems: "center",
+            color: "var(--faint)",
+          }}
+        >
+          {entry.window ? <LuLayers size={10} /> : <LuExternalLink size={10} />}
+        </span>
+        <span
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
+          }}
+        >
+          {entry.title}
+        </span>
+      </button>
+      <Tooltip {...tip} />
+    </>
+  );
 }
 
 function RecentTabs({ options, refreshKey, size, toast }) {
@@ -154,61 +221,7 @@ function RecentTabs({ options, refreshKey, size, toast }) {
       }}
     >
       {entries.map((entry) => (
-        <button
-          key={entry.key}
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            chrome.sessions.restore(entry.id);
-          }}
-          title={entry.host}
-          style={{
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            fontSize: 12,
-            padding: "6px 8px",
-            margin: "0 -8px",
-            borderRadius: 8,
-            cursor: "pointer",
-            border: 0,
-            background: "transparent",
-            color: "var(--dim)",
-            textAlign: "left",
-            minWidth: 0,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--panel2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-          }}
-        >
-          <span
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: 4,
-              background: "var(--panel2)",
-              flex: "none",
-              display: "grid",
-              placeItems: "center",
-              color: "var(--faint)",
-            }}
-          >
-            {entry.window ? <LuLayers size={10} /> : <LuExternalLink size={10} />}
-          </span>
-          <span
-            style={{
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              minWidth: 0,
-            }}
-          >
-            {entry.title}
-          </span>
-        </button>
+        <TabRow key={entry.key} entry={entry} />
       ))}
     </div>
   );

@@ -1,27 +1,34 @@
+import { Tooltip, useTooltip } from "@daybreak/sdk";
 import { COINS, FIATS } from "./coins";
 
 const MAX_COINS = 5;
 
-function Pill({ active, disabled, children, ...props }) {
+function Pill({ active, disabled, children, title, ...props }) {
+  const tip = useTooltip(title);
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      aria-pressed={active}
-      style={{
-        padding: "5px 10px",
-        borderRadius: 999,
-        fontSize: 12,
-        cursor: disabled ? "default" : "pointer",
-        background: active ? "var(--accent)" : "var(--panel2)",
-        color: active ? "var(--onAccent)" : disabled ? "var(--faint)" : "var(--fg)",
-        border: `1px solid ${active ? "var(--accent)" : "var(--line)"}`,
-        opacity: disabled && !active ? 0.5 : 1,
-      }}
-      {...props}
-    >
-      {children}
-    </button>
+    <>
+      <button
+        ref={tip.anchorRef}
+        type="button"
+        disabled={disabled}
+        aria-pressed={active}
+        style={{
+          padding: "5px 10px",
+          borderRadius: 999,
+          fontSize: 12,
+          cursor: disabled ? "default" : "pointer",
+          background: active ? "var(--accent)" : "var(--panel2)",
+          color: active ? "var(--onAccent)" : disabled ? "var(--faint)" : "var(--fg)",
+          border: `1px solid ${active ? "var(--accent)" : "var(--line)"}`,
+          opacity: disabled && !active ? 0.5 : 1,
+        }}
+        {...tip.anchorProps}
+        {...props}
+      >
+        {children}
+      </button>
+      <Tooltip {...tip} />
+    </>
   );
 }
 

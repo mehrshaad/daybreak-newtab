@@ -6,9 +6,70 @@ import {
   IconTile,
   originOf,
   requestOrigin,
+  Tooltip,
   uid,
+  useTooltip,
 } from "@daybreak/sdk";
 import { PROVIDER_ICON_NAME, PROVIDER_LABEL, providerFor, resolveCalendars } from "./calendars";
+
+// Its own component so each row's remove-button tooltip gets its own hover
+// state, independent of the others.
+function CalendarRow({ label, provider, onRemove }) {
+  const tip = useTooltip(`Remove ${label}`);
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "6px 8px",
+        borderRadius: 8,
+        transition: "background .15s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--panel2)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+      }}
+    >
+      <IconTile name={PROVIDER_ICON_NAME[provider] || "Calendar"} size={22} />
+      <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--fg)" }}>{label}</div>
+      <button
+        ref={tip.anchorRef}
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${label}`}
+        style={{
+          display: "grid",
+          placeItems: "center",
+          width: 24,
+          height: 24,
+          padding: 0,
+          border: 0,
+          borderRadius: 999,
+          background: "transparent",
+          color: "var(--faint)",
+          cursor: "pointer",
+          transition: "background .15s ease, color .15s ease",
+        }}
+        onMouseEnter={(e) => {
+          tip.anchorProps.onMouseEnter?.();
+          e.currentTarget.style.background = "var(--panel2)";
+          e.currentTarget.style.color = "var(--danger)";
+        }}
+        onMouseLeave={(e) => {
+          tip.anchorProps.onMouseLeave?.();
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = "var(--faint)";
+        }}
+      >
+        <LuX size={13} />
+      </button>
+      <Tooltip {...tip} />
+    </div>
+  );
+}
 
 function CalendarSettings({ config, setConfig, toast }) {
   const calendars = resolveCalendars(config);
@@ -64,62 +125,14 @@ function CalendarSettings({ config, setConfig, toast }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {calendars.length ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {calendars.map((cal) => {
-            const label = PROVIDER_LABEL[cal.provider] || PROVIDER_LABEL.other;
-            return (
-              <div
-                key={cal.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "6px 8px",
-                  borderRadius: 8,
-                  transition: "background .15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--panel2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <IconTile name={PROVIDER_ICON_NAME[cal.provider] || "Calendar"} size={22} />
-                <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--fg)" }}>
-                  {label}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => remove(cal)}
-                  aria-label={`Remove ${label}`}
-                  title={`Remove ${label}`}
-                  style={{
-                    display: "grid",
-                    placeItems: "center",
-                    width: 24,
-                    height: 24,
-                    padding: 0,
-                    border: 0,
-                    borderRadius: 999,
-                    background: "transparent",
-                    color: "var(--faint)",
-                    cursor: "pointer",
-                    transition: "background .15s ease, color .15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "var(--panel2)";
-                    e.currentTarget.style.color = "var(--danger)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "var(--faint)";
-                  }}
-                >
-                  <LuX size={13} />
-                </button>
-              </div>
-            );
-          })}
+          {calendars.map((cal) => (
+            <CalendarRow
+              key={cal.id}
+              label={PROVIDER_LABEL[cal.provider] || PROVIDER_LABEL.other}
+              provider={cal.provider}
+              onRemove={() => remove(cal)}
+            />
+          ))}
         </div>
       ) : (
         <div style={{ fontSize: 12, color: "var(--faint)" }}>

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useTooltip } from "../useTooltip";
+import Tooltip from "./Tooltip";
 
 // Double-click to rename in place — a task's own words, a world clock's city
 // name. Plain text on the page is unselectable by default (see base.scss);
@@ -7,6 +9,7 @@ function EditableText({ value, onCommit, placeholder = "", ariaLabel, style, inp
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef(null);
+  const tip = useTooltip("Double-click to rename");
 
   useEffect(() => {
     if (!editing) return;
@@ -61,17 +64,21 @@ function EditableText({ value, onCommit, placeholder = "", ariaLabel, style, inp
   }
 
   return (
-    <span
-      title="Double-click to rename"
-      onDoubleClick={(e) => {
-        e.stopPropagation();
-        setDraft(value);
-        setEditing(true);
-      }}
-      style={style}
-    >
-      {value || <span style={{ color: "var(--faint)" }}>{placeholder}</span>}
-    </span>
+    <>
+      <span
+        ref={tip.anchorRef}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          setDraft(value);
+          setEditing(true);
+        }}
+        style={style}
+        {...tip.anchorProps}
+      >
+        {value || <span style={{ color: "var(--faint)" }}>{placeholder}</span>}
+      </span>
+      <Tooltip {...tip} />
+    </>
   );
 }
 

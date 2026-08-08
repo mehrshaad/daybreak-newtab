@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { MONO } from "@daybreak/sdk";
+import { MONO, Tooltip, useTooltip } from "@daybreak/sdk";
 import { formatClock, nextPhase, phaseLength } from "./phases";
 
 function Timer({ options }) {
   const { longFocus, autoStart } = options;
+  const resetTip = useTooltip("Reset round");
   const [phase, setPhase] = useState("Focus");
   const [round, setRound] = useState(1);
   const [running, setRunning] = useState(false);
@@ -110,14 +111,15 @@ function Timer({ options }) {
             </span>
           </button>
           <button
+            ref={resetTip.anchorRef}
             type="button"
             aria-label="Reset round"
-            title="Reset round"
             onClick={(e) => {
               e.stopPropagation();
               setRunning(false);
               setLeft(phaseLength({ phase, longFocus }));
             }}
+            {...resetTip.anchorProps}
             style={{
               padding: "6px 10px",
               borderRadius: 999,
@@ -130,6 +132,7 @@ function Timer({ options }) {
           >
             ↺
           </button>
+          <Tooltip {...resetTip} />
         </div>
       </div>
 

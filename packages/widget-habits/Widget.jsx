@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
-import { MONO, Popover, uid, useWidgetSynced } from "@daybreak/sdk";
+import { MONO, Popover, Tooltip, uid, useTooltip, useWidgetSynced } from "@daybreak/sdk";
 import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
 
@@ -52,6 +52,37 @@ function Stepper({ label, value, min, max, onChange, suffix = "" }) {
   );
 }
 
+// Its own component so each dot's tooltip gets its own hover state.
+function DayDot({ date, habitName, isToday, ticked, dot, onToggle }) {
+  const tip = useTooltip(isToday ? "Today" : date);
+  return (
+    <>
+      <button
+        ref={tip.anchorRef}
+        type="button"
+        aria-label={`${habitName} on ${date}`}
+        aria-pressed={ticked}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        {...tip.anchorProps}
+        style={{
+          width: dot,
+          height: dot,
+          borderRadius: 5,
+          padding: 0,
+          cursor: "pointer",
+          background: ticked ? "var(--accent)" : "var(--line)",
+          border: isToday ? "1.5px solid var(--accentLine)" : "1.5px solid transparent",
+          transition: "background .18s ease, border-color .18s ease",
+        }}
+      />
+      <Tooltip {...tip} />
+    </>
+  );
+}
+
 // One habit's row, plus its settings popover. Broken out so the popover has
 // its own anchor ref to the gear button — a list can't share one ref across
 // rows, and the popover must not shift the rows around it (that was the bug:
@@ -70,6 +101,8 @@ function HabitRow({
   onRemove,
 }) {
   const anchorRef = useRef(null);
+  const goalTip = useTooltip("Target and goal");
+  const removeTip = useTooltip(`Remove ${habit.name}`);
   const target = Number(habit.target) || 5;
   const targetWeeks = Number(habit.targetWeeks) || 0;
 
@@ -88,13 +121,16 @@ function HabitRow({
       >
         <div style={{ minWidth: 0, flex: 1 }}>
           <button
-            ref={anchorRef}
+            ref={(el) => {
+              anchorRef.current = el;
+              goalTip.anchorRef.current = el;
+            }}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onToggleOpen();
             }}
-            title="Target and goal"
+            {...goalTip.anchorProps}
             style={{
               display: "flex",
               alignItems: "flex-start",
@@ -119,6 +155,7 @@ function HabitRow({
               style={{ flex: "none", marginTop: 4, opacity: open ? 1 : 0.4 }}
             />
           </button>
+          <Tooltip {...goalTip} />
 
           <div
             style={{
@@ -161,35 +198,17 @@ function HabitRow({
             alignSelf: "center",
           }}
         >
-          {p.days.map((date) => {
-            const isToday = date === p.today;
-            const ticked = !!done[date];
-            return (
-              <button
-                key={date}
-                type="button"
-                aria-label={`${habit.name} on ${date}`}
-                aria-pressed={ticked}
-                title={isToday ? "Today" : date}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleDay(date);
-                }}
-                style={{
-                  width: dot,
-                  height: dot,
-                  borderRadius: 5,
-                  padding: 0,
-                  cursor: "pointer",
-                  background: ticked ? "var(--accent)" : "var(--line)",
-                  border: isToday
-                    ? "1.5px solid var(--accentLine)"
-                    : "1.5px solid transparent",
-                  transition: "background .18s ease, border-color .18s ease",
-                }}
-              />
-            );
-          })}
+          {p.days.map((date) => (
+            <DayDot
+              key={date}
+              date={date}
+              habitName={habit.name}
+              isToday={date === p.today}
+              ticked={!!done[date]}
+              dot={dot}
+              onToggle={() => onToggleDay(date)}
+            />
+          ))}
         </div>
       </div>
 
@@ -222,10 +241,11 @@ function HabitRow({
             onChange={(v) => onPatch({ targetWeeks: v })}
           />
           <button
+            ref={removeTip.anchorRef}
             type="button"
             onClick={onRemove}
             aria-label={`Remove ${habit.name}`}
-            title={`Remove ${habit.name}`}
+            {...removeTip.anchorProps}
             style={{
               marginLeft: "auto",
               display: "grid",
@@ -241,6 +261,7 @@ function HabitRow({
           >
             <LuTrash2 size={12} />
           </button>
+          <Tooltip {...removeTip} />
         </div>
       </Popover>
     </div>
