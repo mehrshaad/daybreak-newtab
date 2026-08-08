@@ -1,31 +1,35 @@
 // CoinGecko's free tier — keyless, CORS-open, aggressively rate-limited,
 // which is why the widget defaults to a 5-minute refresh and never offers
-// "Live" (§ manifest). The plan's original query string used
-// include_24h_change; the API only honours include_24hr_change (note the
-// "hr") and otherwise silently omits the change field, so that is corrected
-// here.
-const ENDPOINT = "https://api.coingecko.com/api/v3/simple/price";
+// "Live" (§ manifest). One call to /coins/markets carries price, 24h change,
+// logo and a 7-day sparkline together, rather than the three separate
+// requests that would take.
+const ENDPOINT = "https://api.coingecko.com/api/v3/coins/markets";
 
 export function priceUrl(coins, fiat) {
   const ids = (coins || []).filter(Boolean).join(",");
   return (
-    `${ENDPOINT}?ids=${encodeURIComponent(ids)}` +
-    `&vs_currencies=${encodeURIComponent(fiat)}&include_24hr_change=true`
+    `${ENDPOINT}?vs_currency=${encodeURIComponent(fiat)}&ids=${encodeURIComponent(ids)}` +
+    `&sparkline=true&price_change_percentage=24h`
   );
 }
 
-// The change field is keyed "<fiat>_24h_change" — read dynamically rather
-// than assuming "usd", since the base currency is user-configurable.
-export function parsePrices(data, coins, fiat) {
-  if (!data) return null;
-  const changeKey = `${fiat}_24h_change`;
+// Kept in the caller's watchlist order rather than the response's — CoinGecko
+// sorts by market cap, and the user chose their own order on purpose.
+export function parsePrices(data, coins) {
+  if (!Array.isArray(data)) return null;
+  const byId = new Map(data.map((c) => [c.id, c]));
   return (coins || [])
-    .filter((id) => data[id]?.[fiat] != null)
-    .map((id) => ({
-      id,
-      price: data[id][fiat],
-      change: data[id][changeKey] ?? null,
-    }));
+    .filter((id) => byId.get(id)?.current_price != null)
+    .map((id) => {
+      const c = byId.get(id);
+      return {
+        id,
+        price: c.current_price,
+        change: c.price_change_percentage_24h ?? null,
+        image: c.image || null,
+        sparkline: Array.isArray(c.sparkline_in_7d?.price) ? c.sparkline_in_7d.price : null,
+      };
+    });
 }
 
 export function formatPrice(price, fiat) {

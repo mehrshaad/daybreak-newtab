@@ -2,8 +2,130 @@ import { useEffect, useState } from "react";
 import { MONO, useWidgetLocal } from "@daybreak/sdk";
 import { symbolFor } from "./coins";
 import { formatChange, formatPrice, parsePrices, priceUrl } from "./prices";
+import { sparkPath } from "./spark";
 
 const DEFAULT_COINS = ["bitcoin", "ethereum"];
+const SPARK_W = 56;
+const SPARK_H = 20;
+
+function CoinLogo({ src, symbol }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return (
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          flex: "none",
+          display: "grid",
+          placeItems: "center",
+          borderRadius: 999,
+          background: "var(--panel2)",
+          fontFamily: MONO,
+          fontSize: 8,
+          color: "var(--dim)",
+        }}
+      >
+        {symbol.slice(0, 3)}
+      </span>
+    );
+  }
+  // Remote images are fine under the extension's CSP — they aren't remote
+  // code, just pixels.
+  return (
+    <img
+      src={src}
+      alt=""
+      width={18}
+      height={18}
+      style={{ borderRadius: 999, flex: "none" }}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function Sparkline({ points, up }) {
+  if (!points || points.length < 2) return <span style={{ width: SPARK_W, flex: "none" }} />;
+  return (
+    <svg
+      width={SPARK_W}
+      height={SPARK_H}
+      viewBox={`0 0 ${SPARK_W} ${SPARK_H}`}
+      style={{ flex: "none" }}
+      aria-hidden="true"
+    >
+      <polyline
+        points={sparkPath(points, SPARK_W, SPARK_H)}
+        fill="none"
+        stroke={up ? "var(--ok)" : "var(--danger)"}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CoinRow({ coin, fiat }) {
+  const change = formatChange(coin.change);
+  const sparkUp = coin.sparkline
+    ? coin.sparkline[coin.sparkline.length - 1] >= coin.sparkline[0]
+    : coin.change >= 0;
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+      <CoinLogo src={coin.image} symbol={symbolFor(coin.id)} />
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: 11,
+          color: "var(--dim)",
+          flex: "none",
+          width: 34,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {symbolFor(coin.id)}
+      </span>
+      <Sparkline points={coin.sparkline} up={sparkUp} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: 1,
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: MONO,
+            fontSize: 14,
+            color: "var(--fg)",
+            fontWeight: 500,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {formatPrice(coin.price, fiat)}
+        </span>
+        {change ? (
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: 10,
+              color: coin.change >= 0 ? "var(--ok)" : "var(--danger)",
+            }}
+          >
+            {change}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 function Crypto({ id, config, refreshKey }) {
   const fiat = config.fiat || "usd";
@@ -23,7 +145,7 @@ function Crypto({ id, config, refreshKey }) {
       .then((r) => r.json())
       .then((data) => {
         if (!active) return;
-        const parsed = parsePrices(data, coins, fiat);
+        const parsed = parsePrices(data, coins);
         if (!parsed?.length) {
           setStatus("error");
           return;
@@ -73,35 +195,9 @@ function Crypto({ id, config, refreshKey }) {
         minWidth: 0,
       }}
     >
-      {data.coins.map((c) => {
-        const change = formatChange(c.change);
-        return (
-          <div
-            key={c.id}
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}
-          >
-            <span style={{ fontFamily: MONO, fontSize: 12, color: "var(--dim)" }}>
-              {symbolFor(c.id)}
-            </span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span style={{ fontSize: 16, color: "var(--fg)", fontWeight: 500 }}>
-                {formatPrice(c.price, data.fiat)}
-              </span>
-              {change ? (
-                <span
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: 11,
-                    color: c.change >= 0 ? "var(--ok)" : "var(--danger)",
-                  }}
-                >
-                  {change}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        );
-      })}
+      {data.coins.map((c) => (
+        <CoinRow key={c.id} coin={c} fiat={data.fiat} />
+      ))}
       {status === "error" ? (
         <div style={{ fontSize: 11, color: "var(--faint)" }}>
           Showing the last prices — refresh failed.
