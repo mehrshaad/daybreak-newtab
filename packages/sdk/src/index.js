@@ -32,11 +32,15 @@ export { RATE_MS, useMinutes, useRefresh, useSeconds, useTick } from "./useRefre
 
 // Optional Chrome permissions. Requests must be made from a user gesture.
 export {
+  dropOrigin,
   dropPermission,
   hasAllPermissions,
+  hasOrigin,
   hasPermission,
   hasPermissionsApi,
+  originOf,
   requestAllPermissions,
+  requestOrigin,
   requestPermission,
 } from "./permissions";
 

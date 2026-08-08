@@ -56,3 +56,33 @@ export function requestAllPermissions(names = []) {
     );
   });
 }
+
+// Per-origin access, granted one address at a time under
+// optional_host_permissions ("https://*/*" in the manifest) rather than a
+// static host_permissions list — so a calendar or feed URL only unlocks the
+// one origin the user actually pasted, asked for at the moment they paste it.
+export const originOf = (url) => `${new URL(url).origin}/*`;
+
+export function hasOrigin(origin) {
+  if (!origin) return Promise.resolve(false);
+  if (!hasPermissionsApi()) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    chrome.permissions.contains({ origins: [origin] }, (granted) => resolve(!!granted));
+  });
+}
+
+// Must be called synchronously from a click.
+export function requestOrigin(origin) {
+  if (!origin) return Promise.resolve(false);
+  if (!hasPermissionsApi()) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    chrome.permissions.request({ origins: [origin] }, (granted) => resolve(!!granted));
+  });
+}
+
+export function dropOrigin(origin) {
+  if (!origin || !hasPermissionsApi()) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    chrome.permissions.remove({ origins: [origin] }, (removed) => resolve(!!removed));
+  });
+}

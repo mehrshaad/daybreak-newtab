@@ -103,17 +103,21 @@
         to Chrome.
       </p>
       <p>
-        Content that individual widgets create — your scratchpad text, your
-        habit history, and the most recent weather reading kept so the tile
-        still shows something offline — is stored locally on your device only
-        and is not synced. All of this stays in your browser, is never sent to
-        the developer, and is removed if you uninstall the extension. You can
+        Content that individual widgets create is stored locally on your
+        device, and two of these also sync if they are small enough: your
+        scratchpad text (up to about 6KB) and your habit history (trimmed to
+        roughly the last year), each in their own limited slot so a long note
+        cannot crowd out your other settings. Anything over that size simply
+        stays on the device where you wrote it. The most recent weather
+        reading, kept so the tile still shows something offline, always stays
+        local. All of this stays in your browser, is never sent to the
+        developer, and is removed if you uninstall the extension. You can
         export a copy of everything, or erase it, from Settings.
       </p>
 
       <h2>Optional features that read browser data</h2>
       <p>
-        Four features need access to something in your browser, and each one asks
+        These features need access to something in your browser, and each one asks
         for its own permission at the moment you turn it on. Chrome shows the
         request; nothing is read before you accept, and you can revoke any of
         them at any time from Chrome's extension settings. Everything below is
@@ -141,11 +145,30 @@
           extension never creates, edits or deletes a bookmark, and it reads them
           only while you are typing.
         </li>
+        <li>
+          <strong>Site icons — <code>favicon</code>.</strong> Lets search
+          suggestions show a page's real icon. This reads Chrome's own,
+          already-cached favicon store — it does not make a request to the
+          site itself. Requested the first time you turn on one of the search
+          suggestion sources above.
+        </li>
       </ul>
       <p>
         If you do not turn a feature on, its permission is never requested and
         the extension never reads that data. Each source can also be switched off
         individually under Search suggestions in Settings.
+      </p>
+
+      <h2>Optional access to a single address you provide</h2>
+      <p>
+        Some widgets work with a private address you paste in yourself — for
+        example a calendar's iCal link, or a feed URL. When you do this, the
+        extension asks Chrome for permission to fetch that one address, and
+        only that one; nothing is granted for any other site. Chrome shows the
+        request at the moment you add the address, and you can revoke it at
+        any time from Chrome's extension settings. The address itself is
+        stored only in your own synced settings — it is never logged,
+        displayed elsewhere, or sent to the developer.
       </p>
 
       <h2>Information sent to third parties</h2>
@@ -192,16 +215,18 @@
         <strong>storage</strong>, to save and sync your settings.
       </p>
       <p>
-        Four further permissions are <em>optional</em> and requested only when you
+        Further permissions are <em>optional</em> and requested only when you
         turn on the feature that needs one:
         <strong>sessions</strong>, <strong>tabs</strong>,
-        <strong>history</strong> and <strong>bookmarks</strong>, each described
-        above.
+        <strong>history</strong>, <strong>bookmarks</strong> and
+        <strong>favicon</strong>, each described above.
       </p>
       <p>
-        The extension does not request access to the content of the websites you
-        visit, and declares no host permissions: the only addresses it contacts
-        are the weather service below and the search engine you choose.
+        The extension declares no host permissions up front, so it starts with
+        no standing access to the content of any website. A widget that needs
+        to fetch an address you paste in yourself — a calendar link or a feed
+        URL — asks Chrome for access to that one address only, at the moment
+        you add it, as described above.
       </p>
 
       <h2>Data sale and sharing</h2>
