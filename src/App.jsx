@@ -748,6 +748,11 @@ function App() {
         theme={appearance.theme || "system"}
         onNameChange={(name) => update("profile", { name })}
         onThemeChange={(t) => update("appearance", { theme: t })}
+        onEnableSearch={() =>
+          update("behavior", {
+            suggest: { ...(behavior.suggest || {}), tabs: true, bookmarks: true, history: true },
+          })
+        }
         onDismiss={() => update("behavior", { tourDone: true })}
       />
 

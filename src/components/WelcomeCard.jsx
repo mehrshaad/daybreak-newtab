@@ -1,7 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LuLayoutGrid, LuMousePointerClick, LuStore } from "react-icons/lu";
-import { usePresence } from "@daybreak/sdk";
+import { hasPermissionsApi, requestAllPermissions, usePresence } from "@daybreak/sdk";
 import { Pill } from "./primitives";
+
+// Requested together so the results (open tabs, bookmarks, history) come with
+// real site icons rather than a generic placeholder.
+const SEARCH_PERMISSIONS = ["tabs", "bookmarks", "history", "favicon"];
 
 const EXIT_MS = 220;
 
@@ -20,9 +24,21 @@ const THEMES = [
 // One card, shown once on the first tab. No chrome.identity — that only
 // returns an email, not a display name, so the name is just asked for here
 // instead of guessed at the cost of a permission.
-function WelcomeCard({ open, name, theme, onNameChange, onThemeChange, onDismiss }) {
+function WelcomeCard({ open, name, theme, onNameChange, onThemeChange, onEnableSearch, onDismiss }) {
   const [present, closing] = usePresence(open, EXIT_MS);
   const inputRef = useRef(null);
+  // idle: not yet asked (or dev has nothing to ask for) | granted | denied.
+  const [searchState, setSearchState] = useState(hasPermissionsApi() ? "idle" : "denied");
+
+  const enableSearch = async () => {
+    const granted = await requestAllPermissions(SEARCH_PERMISSIONS);
+    if (granted) {
+      onEnableSearch();
+      setSearchState("granted");
+    } else {
+      setSearchState("denied");
+    }
+  };
 
   useEffect(() => {
     if (present) inputRef.current?.focus();
@@ -119,6 +135,29 @@ function WelcomeCard({ open, name, theme, onNameChange, onThemeChange, onDismiss
               </Pill>
             ))}
           </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 12, color: "var(--dim)" }}>Smarter search</span>
+          {searchState === "idle" ? (
+            <>
+              <Pill
+                onClick={enableSearch}
+                style={{ alignSelf: "flex-start", padding: "8px 14px", fontSize: 13 }}
+              >
+                Enable smarter search
+              </Pill>
+              <span style={{ fontSize: 11, color: "var(--faint)", lineHeight: 1.5 }}>
+                Adds your open tabs, bookmarks and history to search suggestions.
+              </span>
+            </>
+          ) : searchState === "granted" ? (
+            <span style={{ fontSize: 12, color: "var(--ok)" }}>Smarter search enabled.</span>
+          ) : (
+            <span style={{ fontSize: 11, color: "var(--faint)", lineHeight: 1.5 }}>
+              You can turn this on any time from Settings.
+            </span>
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
