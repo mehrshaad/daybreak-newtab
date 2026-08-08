@@ -65,18 +65,18 @@ describe("tileStyle blur", () => {
 });
 
 describe("tileStyle states", () => {
-  it("edit mode shows a grab cursor and an accent ring", () => {
+  it("edit mode shows an accent ring but does not change the cursor", () => {
     const s = tileStyle({ editing: true });
-    expect(s.cursor).toBe("grab");
     expect(s.boxShadow).toContain("--accentLine");
   });
 
   // With zoom off a tile does nothing when clicked, so it must not look
-  // clickable.
+  // clickable. Dragging starts from the handle, not the tile body, so being
+  // in edit mode does not change the cursor either.
   it("only offers a pointer cursor when a click would do something", () => {
     expect(tileStyle({ zoomMode: "Camera" }).cursor).toBe("pointer");
     expect(tileStyle({ zoomMode: "None" }).cursor).toBe("default");
-    expect(tileStyle({ zoomMode: "None", editing: true }).cursor).toBe("grab");
+    expect(tileStyle({ zoomMode: "None", editing: true }).cursor).toBe("default");
   });
 
   it("the menu target outranks the edit ring", () => {

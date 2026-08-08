@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useRef } from "react";
+import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import { LuSettings2, LuX } from "react-icons/lu";
 import { Appear, mark, MONO, seedFor, useHover, useLongPress, useRefresh } from "@daybreak/sdk";
 import { tileStyle } from "../core/tileStyle";
@@ -12,26 +12,39 @@ import ErrorBoundary from "./ErrorBoundary";
 // never seen by the board's drag machinery: there is no ancestor relationship
 // between a row and a sibling handle for the event to bubble through.
 //
-// Only interactive during edit mode — outside it, hovering the tile shows
-// where the handle is without inviting a press that would not do anything.
+// Only draggable during edit mode — outside it, a press does nothing — but
+// hoverable whenever it is visible at all, so resting the pointer on it reads
+// as "this is a handle" before the user commits to Edit layout. Three states,
+// escalating: quiet line colour → an accent tint on hover or throughout edit
+// mode → full accent only while actually held, which is also the only time it
+// widens past the hover width.
 function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
+  const [handleHovered, setHandleHovered] = useState(false);
+  const width = dragging ? 56 : handleHovered || editing ? 48 : 36;
+  const background = dragging
+    ? "var(--accent)"
+    : handleHovered || editing
+    ? "var(--accentLine)"
+    : "var(--line)";
   return (
     <div
       onPointerDown={editing ? onPointerDown : undefined}
+      onMouseEnter={() => setHandleHovered(true)}
+      onMouseLeave={() => setHandleHovered(false)}
       title="Drag to move"
       style={{
         position: "absolute",
         bottom: 8,
         left: "50%",
         translate: "-50% 0",
-        width: 36,
+        width,
         height: 4,
         borderRadius: 999,
-        background: "var(--line)",
+        background,
         cursor: dragging ? "grabbing" : "grab",
-        pointerEvents: editing ? "auto" : "none",
+        pointerEvents: editing || tileHovered ? "auto" : "none",
         opacity: editing ? 1 : tileHovered ? 0.5 : 0,
-        transition: "opacity .15s ease",
+        transition: "opacity .15s ease, background .18s ease, width .18s ease",
       }}
     />
   );

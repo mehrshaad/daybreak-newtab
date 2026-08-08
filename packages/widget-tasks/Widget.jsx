@@ -1,17 +1,37 @@
-import { useState } from "react";
-import { LuPlus } from "react-icons/lu";
-import { EditableText, formatDate, MONO, uid } from "@daybreak/sdk";
+import { useRef, useState } from "react";
+import { LuGripVertical, LuPlus } from "react-icons/lu";
+import {
+  Appear,
+  animateExit,
+  EditableText,
+  formatDate,
+  MONO,
+  uid,
+  useFlip,
+  usePointerReorder,
+} from "@daybreak/sdk";
 import DatePicker from "./DatePicker";
+import { reorderVisible } from "./reorder";
 
 const isOverdue = (due) => !!due && due < formatDate(new Date());
 
-function Task({ task, showDates, onToggle, onRemove, onEdit }) {
+function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPointerDown, rowRef }) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <div
+      ref={rowRef}
+      data-flip-id={task.id}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      // A second line of defense, matching every other reorderable list: the
+      // board's own tile drag starts from a handle now, so a row press can no
+      // longer reach it either way.
+      onPointerDown={(e) => {
+        if (!editing) return;
+        e.stopPropagation();
+        onPointerDown(e, task.id);
+      }}
       style={{
         display: "flex",
         alignItems: "center",
@@ -20,8 +40,16 @@ function Task({ task, showDates, onToggle, onRemove, onEdit }) {
         margin: "0 -8px",
         borderRadius: 8,
         background: hovered ? "var(--panel2)" : "transparent",
+        touchAction: "none",
+        cursor: editing ? (held ? "grabbing" : "grab") : "default",
+        zIndex: held ? 5 : undefined,
+        filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
+        transition: "background .15s ease",
       }}
     >
+      <Appear open={editing} style={{ display: "flex", flex: "none" }}>
+        <LuGripVertical size={12} style={{ color: "var(--faint)" }} aria-hidden="true" />
+      </Appear>
       <button
         type="button"
         role="checkbox"
@@ -56,6 +84,7 @@ function Task({ task, showDates, onToggle, onRemove, onEdit }) {
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
+            transition: "color .15s ease",
           }}
           inputStyle={{ display: "block", width: "100%", fontSize: 13 }}
         />
@@ -72,7 +101,7 @@ function Task({ task, showDates, onToggle, onRemove, onEdit }) {
           {task.due.slice(5)}
         </span>
       ) : null}
-      {hovered ? (
+      <Appear open={hovered} style={{ display: "flex", flex: "none" }}>
         <button
           type="button"
           onClick={(e) => {
@@ -93,16 +122,18 @@ function Task({ task, showDates, onToggle, onRemove, onEdit }) {
         >
           ×
         </button>
-      ) : null}
+      </Appear>
     </div>
   );
 }
 
-function Tasks({ options, config, setConfig }) {
+function Tasks({ options, config, setConfig, editing }) {
   const { hideCompleted, showDates } = options;
   const items = Array.isArray(config.items) ? config.items : [];
   const [draft, setDraft] = useState("");
   const [due, setDue] = useState("");
+  const listRef = useRef(null);
+  const rowEls = useRef({});
 
   const save = (next) => setConfig({ items: next });
 
@@ -117,11 +148,30 @@ function Tasks({ options, config, setConfig }) {
   };
 
   const visible = hideCompleted ? items.filter((t) => !t.done) : items;
+  const visibleIds = visible.map((t) => t.id);
   const doneCount = items.filter((t) => t.done).length;
+
+  const { draggingId, onPointerDown } = usePointerReorder({
+    ids: visibleIds,
+    onReorder: (from, to) => save(reorderVisible(items, visibleIds, from, to)),
+    enabled: editing,
+    containerRef: listRef,
+  });
+
+  useFlip(listRef, [visibleIds.join("|")], { skipId: draggingId });
+
+  const removeTask = async (id) => {
+    await animateExit(rowEls.current[id]);
+    save(items.filter((t) => t.id !== id));
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div
+        ref={listRef}
+        // Lifts the list's stacking while a row is held, so it paints above
+        // its neighbours instead of being clipped by the tile.
+        data-dragging={draggingId ? "true" : undefined}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -129,6 +179,7 @@ function Tasks({ options, config, setConfig }) {
           flex: 1,
           overflow: "auto",
           minHeight: 0,
+          ...(draggingId ? { position: "relative", zIndex: 6, overflow: "visible" } : null),
         }}
       >
         {visible.length === 0 ? (
@@ -141,12 +192,16 @@ function Tasks({ options, config, setConfig }) {
               key={task.id}
               task={task}
               showDates={showDates}
+              editing={editing}
+              held={draggingId === task.id}
+              rowRef={(el) => {
+                rowEls.current[task.id] = el;
+              }}
+              onPointerDown={onPointerDown}
               onToggle={() =>
-                save(
-                  items.map((t) => (t.id === task.id ? { ...t, done: !t.done } : t))
-                )
+                save(items.map((t) => (t.id === task.id ? { ...t, done: !t.done } : t)))
               }
-              onRemove={() => save(items.filter((t) => t.id !== task.id))}
+              onRemove={() => removeTask(task.id)}
               onEdit={(text) =>
                 save(items.map((t) => (t.id === task.id ? { ...t, text } : t)))
               }

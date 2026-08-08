@@ -91,6 +91,9 @@ function Timer({ options }) {
               setRunning((v) => !v);
             }}
             style={{
+              // Fixed so the crossfade between "Start" and "Pause" — different
+              // widths — never nudges the reset button beside it.
+              minWidth: 62,
               padding: "6px 14px",
               borderRadius: 999,
               fontSize: 12,
@@ -98,9 +101,13 @@ function Timer({ options }) {
               background: running ? "var(--accent)" : "var(--panel2)",
               color: running ? "var(--onAccent)" : "var(--fg)",
               border: `1px solid ${running ? "transparent" : "var(--line)"}`,
+              transition: "background .18s ease, border-color .18s ease, color .18s ease",
             }}
           >
-            {running ? "Pause" : "Start"}
+            {/* Keyed so the label crossfades on toggle instead of snapping. */}
+            <span key={running ? "on" : "off"} style={{ display: "inline-block", animation: "db-fade .2s ease both" }}>
+              {running ? "Pause" : "Start"}
+            </span>
           </button>
           <button
             type="button"
