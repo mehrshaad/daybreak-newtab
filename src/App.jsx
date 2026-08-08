@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LuArrowLeft } from "react-icons/lu";
 import Backdrop from "./components/Backdrop";
 import Board from "./components/Board";
@@ -467,6 +467,23 @@ function App() {
 
   // --- styling -------------------------------------------------------------
 
+  // The theme tokens go on <html>, not the app root div: Popover portals its
+  // panel to document.body, which sits *outside* the root, so tokens carried
+  // as inline styles there left every portalled panel with an unresolvable
+  // --sheet/--line/--blur-* — no background, no border, no blur, in either
+  // blur mode. On <html>, everything inherits them, portals included.
+  // useLayoutEffect so they are set before the frame paints.
+  const themeTokens = useMemo(
+    () => tokens(theme, accent, appearance.blur !== false),
+    [theme, accent, appearance.blur]
+  );
+  useLayoutEffect(() => {
+    const style = document.documentElement.style;
+    for (const [key, value] of Object.entries(themeTokens)) {
+      style.setProperty(key, value);
+    }
+  }, [themeTokens]);
+
   const rootStyle = useMemo(
     () => ({
       position: "relative",
@@ -479,9 +496,8 @@ function App() {
       // Makes room for an open drawer rather than letting it cover the board.
       paddingRight: shift ? `${shift}px` : 0,
       transition: "padding-right .3s cubic-bezier(.2,.8,.2,1)",
-      ...tokens(theme, accent, appearance.blur !== false),
     }),
-    [theme, accent, appearance.blur, shift]
+    [shift]
   );
 
   // <html> carries the flat base colour only. The gradient stack lives in
@@ -497,6 +513,14 @@ function App() {
     document.body.style.background = "transparent";
     // Tells Chrome to theme form controls and scrollbars to match.
     html.style.colorScheme = theme;
+    // Mirrored for boot.js, which reads it synchronously on the *next* tab so
+    // the pre-React paint is already the right colour instead of flashing
+    // white/dark until chrome.storage resolves.
+    try {
+      localStorage.setItem("daybreakTheme", theme);
+    } catch {
+      /* storage disabled - the boot script falls back to the OS scheme */
+    }
     return () => {
       html.style.backgroundColor = "";
       html.style.colorScheme = "";
