@@ -6,7 +6,7 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { dropPermission, MONO, requestPermission } from "@daybreak/sdk";
+import { dropPermission, MONO, requestAllPermissions } from "@daybreak/sdk";
 import {
   ACCENTS,
   PAGE_ZOOM_MAX,
@@ -243,7 +243,16 @@ function SettingsDrawer({
                 // rejects one that is not tied to a user gesture.
                 onChange={async () => {
                   if (!on && source.permission) {
-                    const granted = await requestPermission(source.permission);
+                    // Requested together, in one call: real site icons in the
+                    // results are worth asking for right alongside the source
+                    // that will actually produce results to show them next
+                    // to. Declining just the icon half of the dialog is not
+                    // possible — Chrome shows one combined prompt — so this
+                    // only fires when there is already a reason to prompt.
+                    const granted = await requestAllPermissions([
+                      source.permission,
+                      "favicon",
+                    ]);
                     if (!granted) {
                       toast(`${source.label} needs the ${source.permission} permission`);
                       return;

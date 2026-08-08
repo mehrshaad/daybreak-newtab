@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { searchCities } from "../utils";
+import Popover from "./Popover";
 
 // Type-ahead city picker over Open-Meteo's geocoder (keyless). Shared by the
 // Weather and World Clocks widgets and their settings panels — the geocoder
@@ -10,6 +11,7 @@ function CitySearch({ onPick, placeholder = "Search a city…", autoFocus = fals
   const [status, setStatus] = useState("idle"); // idle | loading | empty
   const timer = useRef(null);
   const seq = useRef(0);
+  const wrapRef = useRef(null);
 
   useEffect(() => {
     clearTimeout(timer.current);
@@ -34,9 +36,8 @@ function CitySearch({ onPick, placeholder = "Search a city…", autoFocus = fals
 
   return (
     <div
+      ref={wrapRef}
       style={{
-        // Positioning context for the floating result list below.
-        position: "relative",
         display: "flex",
         flexDirection: "column",
         gap: 8,
@@ -67,31 +68,19 @@ function CitySearch({ onPick, placeholder = "Search a city…", autoFocus = fals
       {status === "empty" ? (
         <div style={{ fontSize: 12, color: "var(--faint)" }}>No match.</div>
       ) : null}
-      {results.length ? (
+      <Popover
+        open={results.length > 0}
+        anchorRef={wrapRef}
+        onClose={() => setResults([])}
+      >
         <div
-          // Floats above the tile instead of being squeezed inside it: a small
-          // widget has no room for a result list, and the tile's own overflow
-          // clip would cut it off. `data-dragging` reuses the rule in base.scss
-          // that lifts that clip, so the list can extend past the tile edge.
-          data-dragging="true"
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            left: 0,
-            right: 0,
-            zIndex: 30,
             display: "flex",
             flexDirection: "column",
             gap: 2,
             maxHeight: 210,
             overflow: "auto",
             padding: 4,
-            borderRadius: 12,
-            background: "var(--sheet)",
-            border: "1px solid var(--line)",
-            backdropFilter: "var(--blur-panel)",
-            boxShadow: "0 18px 44px rgba(0,0,0,.34)",
-            animation: "db-rise-in .16s ease both",
           }}
         >
           {results.map((c) => (
@@ -139,7 +128,7 @@ function CitySearch({ onPick, placeholder = "Search a city…", autoFocus = fals
             </button>
           ))}
         </div>
-      ) : null}
+      </Popover>
     </div>
   );
 }

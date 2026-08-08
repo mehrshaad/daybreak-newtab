@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   SOURCES,
   gatherSuggestions,
+  goToSiteSuggestion,
   hostOf,
+  looksLikeUrl,
   mergeSuggestions,
+  normaliseUrl,
+  rankSuggestions,
   suggestLinks,
 } from "./suggest";
 
@@ -53,6 +57,127 @@ describe("suggestLinks", () => {
 
   it("respects the limit", () => {
     expect(suggestLinks("http", links, 2)).toHaveLength(2);
+  });
+});
+
+describe("normaliseUrl", () => {
+  it("drops the scheme, www, hash and a trailing slash", () => {
+    expect(normaliseUrl("https://www.github.com/")).toBe("github.com");
+    expect(normaliseUrl("http://github.com")).toBe("github.com");
+  });
+
+  it("treats different forms of the same page as equal", () => {
+    expect(normaliseUrl("https://www.example.com/path#section")).toBe(
+      normaliseUrl("http://example.com/path")
+    );
+  });
+
+  it("is case-insensitive", () => {
+    expect(normaliseUrl("https://Example.com/Path")).toBe("example.com/path");
+  });
+
+  it("is blank for a missing url", () => {
+    expect(normaliseUrl("")).toBe("");
+    expect(normaliseUrl(undefined)).toBe("");
+  });
+});
+
+describe("looksLikeUrl", () => {
+  it("accepts a bare domain", () => {
+    expect(looksLikeUrl("github.com")).toBe(true);
+    expect(looksLikeUrl("sub.domain.co.uk")).toBe(true);
+  });
+
+  it("accepts a domain with a port or a path", () => {
+    expect(looksLikeUrl("github.com:8080")).toBe(true);
+    expect(looksLikeUrl("github.com/mehrshaad/daybreak")).toBe(true);
+  });
+
+  it("accepts localhost and a dotted IP", () => {
+    expect(looksLikeUrl("localhost")).toBe(true);
+    expect(looksLikeUrl("localhost:3000")).toBe(true);
+    expect(looksLikeUrl("192.168.1.1")).toBe(true);
+  });
+
+  it("accepts a url that already has a scheme", () => {
+    expect(looksLikeUrl("https://github.com")).toBe(true);
+  });
+
+  it("rejects a search phrase", () => {
+    expect(looksLikeUrl("react hooks")).toBe(false);
+    expect(looksLikeUrl("weather")).toBe(false);
+  });
+
+  it("rejects a plain decimal number", () => {
+    // Same two-label shape as a hostname, but no real TLD is purely numeric.
+    expect(looksLikeUrl("3.14")).toBe(false);
+  });
+
+  it("is false for empty input", () => {
+    expect(looksLikeUrl("")).toBe(false);
+    expect(looksLikeUrl("   ")).toBe(false);
+  });
+});
+
+describe("goToSiteSuggestion", () => {
+  it("builds a row that navigates to the typed address", () => {
+    const s = goToSiteSuggestion("github.com");
+    expect(s.kind).toBe("go");
+    expect(s.url).toBe("https://github.com");
+    expect(s.title).toBe("github.com");
+  });
+
+  it("keeps a scheme the user already typed", () => {
+    expect(goToSiteSuggestion("http://example.com").url).toBe("http://example.com");
+  });
+
+  it("is null for a search phrase", () => {
+    expect(goToSiteSuggestion("react hooks")).toBeNull();
+  });
+});
+
+describe("rankSuggestions", () => {
+  it("ranks a host prefix match above a mid-title match", () => {
+    const items = [
+      { id: "a", kind: "history", title: "Some page about gmail", subtitle: "example.com" },
+      { id: "b", kind: "history", title: "Gmail", subtitle: "gmail.com" },
+    ];
+    expect(rankSuggestions("gmail", items).map((i) => i.id)).toEqual(["b", "a"]);
+  });
+
+  it("ranks a title prefix above a host substring match", () => {
+    const items = [
+      { id: "a", kind: "history", title: "Random", subtitle: "mygmail.com" },
+      { id: "b", kind: "history", title: "Gmail inbox", subtitle: "example.com" },
+    ];
+    expect(rankSuggestions("gmail", items).map((i) => i.id)).toEqual(["b", "a"]);
+  });
+
+  it("breaks a tie in match quality by kind: tabs, then bookmarks, then history", () => {
+    const items = [
+      { id: "h", kind: "history", title: "Gmail", subtitle: "gmail.com" },
+      { id: "b", kind: "bookmarks", title: "Gmail", subtitle: "gmail.com" },
+      { id: "t", kind: "tabs", title: "Gmail", subtitle: "gmail.com" },
+    ];
+    expect(rankSuggestions("gmail", items).map((i) => i.id)).toEqual(["t", "b", "h"]);
+  });
+
+  it("keeps a source's own order as the final tiebreaker", () => {
+    // Same rank, same kind: order is untouched — which is recency for
+    // history, since the source itself already returns most-recent-first.
+    const items = [
+      { id: "recent", kind: "history", title: "Gmail one", subtitle: "gmail.com" },
+      { id: "older", kind: "history", title: "Gmail two", subtitle: "gmail.com" },
+    ];
+    expect(rankSuggestions("gmail", items).map((i) => i.id)).toEqual(["recent", "older"]);
+  });
+
+  it("does not add or drop items", () => {
+    const items = [
+      { id: "a", kind: "history", title: "A", subtitle: "a.com" },
+      { id: "b", kind: "tabs", title: "B", subtitle: "b.com" },
+    ];
+    expect(rankSuggestions("x", items)).toHaveLength(2);
   });
 });
 

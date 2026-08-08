@@ -124,6 +124,7 @@ function Header({
   const [items, setItems] = useState([]);
   const [active, setActive] = useState(-1);
   const seq = useRef(0);
+  const formRef = useRef(null);
 
   const suggestEnabled = settings.behavior.suggest || { links: true };
   const linkItems = useMemo(() => {
@@ -250,6 +251,7 @@ function Header({
 
       <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
         <form
+          ref={formRef}
           onSubmit={submit}
           role="search"
           onFocusCapture={() => setSearchActive(true)}
@@ -329,8 +331,13 @@ function Header({
             <SearchSuggestions
               items={items}
               activeIndex={active}
+              anchorRef={formRef}
               onPick={pick}
               onHover={setActive}
+              onClose={() => {
+                setItems([]);
+                setActive(-1);
+              }}
             />
           ) : null}
         </form>

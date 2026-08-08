@@ -12,7 +12,8 @@
     "sessions",
     "tabs",
     "bookmarks",
-    "history"
+    "history",
+    "favicon"
   ],
   "icons": {
     "16": "icon-16.png",

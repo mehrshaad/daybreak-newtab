@@ -36,6 +36,9 @@ export {
   requestPermission,
 } from "./permissions";
 
+// Real site icons from Chrome's own favicon cache — no request to the site.
+export { faviconUrl } from "./favicon";
+
 // Styling helpers. Widgets should otherwise theme themselves from the CSS
 // custom properties on the app root (--fg, --dim, --accent, ...).
 export {
@@ -100,6 +103,7 @@ export {
 export { APPEAR_MS, default as Appear } from "./components/Appear";
 export { default as CitySearch } from "./components/CitySearch";
 export { default as EditableText } from "./components/EditableText";
+export { default as Favicon } from "./components/Favicon";
 export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";
 export { default as Popover } from "./components/Popover";

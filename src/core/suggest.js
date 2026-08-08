@@ -23,6 +23,53 @@ export function hostOf(url) {
   }
 }
 
+// Strips the scheme, a leading "www.", the hash and a trailing slash, so two
+// URLs that point at the same page (one from history, one from a bookmark)
+// compare equal for deduping regardless of which exact form each source
+// happened to store.
+export function normaliseUrl(url) {
+  if (!url) return "";
+  return url
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/#.*$/, "")
+    .replace(/\/$/, "")
+    .toLowerCase();
+}
+
+const LOCALHOST = "localhost";
+const IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+// The bare host at the front of the string, with an optional port and path.
+const HOST_SHAPE = /^([a-z0-9-]+(?:\.[a-z0-9-]+)*)(:\d+)?(\/.*)?$/i;
+
+// True for text that reads as an address rather than a search phrase —
+// "github.com", "localhost:3000", "192.168.1.1/admin" — so the search box can
+// offer "Go to site" ahead of searching for it. A query with a space is never
+// a host; a single word with no dot ("weather") is a search term, not one.
+export function looksLikeUrl(query) {
+  const q = (query || "").trim();
+  if (!q || /\s/.test(q)) return false;
+  const withoutScheme = q.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
+  const match = HOST_SHAPE.exec(withoutScheme);
+  if (!match) return false;
+  const host = match[1].toLowerCase();
+  if (host === LOCALHOST) return true;
+  if (IPV4.test(host)) return true;
+  if (!host.includes(".")) return false;
+  // "3.14" has the same two-label shape as a hostname; a real TLD is never
+  // purely numeric.
+  return !/^\d+$/.test(host.split(".").pop());
+}
+
+// The synthetic row offered when the query itself looks like a destination,
+// rather than something to search for.
+export function goToSiteSuggestion(query) {
+  const q = (query || "").trim();
+  if (!looksLikeUrl(q)) return null;
+  const url = /^[a-z][a-z0-9+.-]*:\/\//i.test(q) ? q : `https://${q}`;
+  return { kind: "go", id: `go:${q}`, title: q, subtitle: "Go to site", url };
+}
+
 const matches = (query, ...fields) => {
   const q = query.toLowerCase();
   return fields.filter(Boolean).some((f) => String(f).toLowerCase().includes(q));
@@ -57,9 +104,12 @@ export function suggestTabs(query, limit = 4) {
             title: t.title || t.url,
             subtitle: hostOf(t.url),
             // Switching to a tab is not a navigation, so it carries the ids
-            // rather than a url.
+            // rather than a url. faviconUrl is separate from url so the
+            // no-dedup, no-navigation behaviour above is untouched — it only
+            // feeds the icon.
             tabId: t.id,
             windowId: t.windowId,
+            faviconUrl: t.url,
           }))
       );
     });
@@ -113,12 +163,15 @@ export function suggestHistory(query, limit = 4) {
 
 // Merge results in source order and drop duplicate destinations, so a page that
 // is both bookmarked and in history appears once, under the better source.
+// Compared via normaliseUrl rather than the raw url, so the same page saved as
+// a bookmark and visited via a slightly different form (a trailing slash, a
+// www.) still collapses to one row.
 export function mergeSuggestions(groups, limit = 8) {
   const out = [];
   const seen = new Set();
   for (const group of groups) {
     for (const item of group) {
-      const key = item.url ? `u:${item.url}` : item.id;
+      const key = item.url ? `u:${normaliseUrl(item.url)}` : item.id;
       if (seen.has(key)) continue;
       seen.add(key);
       out.push(item);
@@ -126,6 +179,38 @@ export function mergeSuggestions(groups, limit = 8) {
     }
   }
   return out;
+}
+
+// How well a suggestion matches what was typed: a host match beats a title
+// match, and a prefix beats a mid-string hit — "gmail.com" for "gm" should not
+// lose to some unrelated page whose title merely contains "gm" partway through.
+function matchRank(query, item) {
+  const q = query.toLowerCase();
+  const host = (item.subtitle || "").toLowerCase();
+  const title = (item.title || "").toLowerCase();
+  if (host.startsWith(q)) return 0;
+  if (title.startsWith(q)) return 1;
+  if (host.includes(q)) return 2;
+  if (title.includes(q)) return 3;
+  return 4;
+}
+
+// Ties within a rank fall back to kind (open tabs beat bookmarks beat
+// history), then to each source's own order — which is already recency for
+// history, since chrome.history.search returns most-recently-visited first.
+const KIND_RANK = { links: 0, tabs: 1, bookmarks: 2, history: 3 };
+
+export function rankSuggestions(query, items) {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const byMatch = matchRank(query, a.item) - matchRank(query, b.item);
+      if (byMatch) return byMatch;
+      const byKind = (KIND_RANK[a.item.kind] ?? 9) - (KIND_RANK[b.item.kind] ?? 9);
+      if (byKind) return byKind;
+      return a.index - b.index;
+    })
+    .map(({ item }) => item);
 }
 
 export async function gatherSuggestions({ query, links, enabled, limit = 8 }) {
@@ -138,5 +223,14 @@ export async function gatherSuggestions({ query, links, enabled, limit = 8 }) {
     on("bookmarks") ? suggestBookmarks(q) : [],
     on("history") ? suggestHistory(q) : [],
   ]);
-  return mergeSuggestions(groups, limit);
+  // Deduped over a wider pool than the final list, so a strong match from a
+  // lower-priority source is not cut before ranking ever sees it.
+  const merged = mergeSuggestions(groups, limit * 2);
+  const goTo = goToSiteSuggestion(q);
+  const ranked = rankSuggestions(q, merged)
+    // A bookmark or history hit for exactly the address just typed would
+    // otherwise repeat the "Go to site" row a moment later.
+    .filter((item) => !goTo || normaliseUrl(item.url) !== normaliseUrl(goTo.url))
+    .slice(0, goTo ? limit - 1 : limit);
+  return goTo ? [goTo, ...ranked] : ranked;
 }
