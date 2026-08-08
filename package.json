@@ -14,6 +14,7 @@
   "dependencies": {
     "@daybreak/sdk": "*",
     "@daybreak/widget-air": "*",
+    "@daybreak/widget-calendar": "*",
     "@daybreak/widget-clock": "*",
     "@daybreak/widget-currency": "*",
     "@daybreak/widget-crypto": "*",
