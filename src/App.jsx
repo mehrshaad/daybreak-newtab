@@ -10,6 +10,7 @@ import { Collapse } from "./components/primitives";
 import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
 import Toast from "./components/Toast";
+import WelcomeCard from "./components/WelcomeCard";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
 import { essentialsFirst } from "./core/essentials";
@@ -703,6 +704,15 @@ function App() {
         boardIds={board.ids}
         onClose={() => setStoreOpen(false)}
         onToggle={toggleFromStore}
+      />
+
+      <WelcomeCard
+        open={!behavior.tourDone}
+        name={profile.name}
+        theme={appearance.theme || "system"}
+        onNameChange={(name) => update("profile", { name })}
+        onThemeChange={(t) => update("appearance", { theme: t })}
+        onDismiss={() => update("behavior", { tourDone: true })}
       />
 
       {/* The menu keeps its last position and contents while it fades out. */}

@@ -224,6 +224,12 @@ function SettingsDrawer({
             onChange={() => update("behavior", { shortcuts: !behavior.shortcuts })}
           />
         </div>
+        <Pill
+          onClick={() => update("behavior", { tourDone: false })}
+          style={{ marginTop: 10, padding: "8px 14px", fontSize: 13 }}
+        >
+          Show the welcome card again
+        </Pill>
       </Section>
 
       <Section title="Search suggestions" style={{ marginBottom: 22 }}>

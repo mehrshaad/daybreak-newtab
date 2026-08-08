@@ -67,6 +67,13 @@ describe("migrateV1", () => {
     expect(odd.behavior.searchEngine).toBe(defaultSettings().behavior.searchEngine);
   });
 
+  // A v1 install is an existing user; v2's welcome card is for a genuinely
+  // fresh install and should never resurface for someone upgrading.
+  it("marks the v2 welcome tour as already done", () => {
+    expect(out.behavior.tourDone).toBe(true);
+    expect(migrateV1({}).behavior.tourDone).toBe(true);
+  });
+
   it("uses the first city for Weather, preserving the unit", () => {
     expect(out.widgets.weather.config.city.name).toBe("Tehran");
     expect(out.widgets.weather.config.city.latitude).toBe(35.6944);
