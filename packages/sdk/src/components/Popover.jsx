@@ -41,9 +41,18 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
 
     const fitsBelow = a.bottom + GAP + h <= window.innerHeight - 12;
     const y =
-      placement === "top-start" || !fitsBelow ? a.top - GAP - h : a.bottom + GAP;
+      placement === "top-start" || placement === "top-center" || !fitsBelow
+        ? a.top - GAP - h
+        : a.bottom + GAP;
+    // Centered placements ignore the anchor's own width for x — a hover card
+    // over a small icon should sit centred on it, not hang off one edge the
+    // way a menu anchored to a wide search box would.
+    const x =
+      placement === "bottom-center" || placement === "top-center"
+        ? a.left + (a.width - w) / 2
+        : a.left;
 
-    setPos({ ...clampToViewport(a.left, y, w, h), width: w });
+    setPos({ ...clampToViewport(x, y, w, h), width: w });
   };
 
   // Measured after the panel has real content, so its height is not a guess.
