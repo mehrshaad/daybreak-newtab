@@ -137,6 +137,8 @@ function TileButton({ label, onClick, children, style }) {
           e.currentTarget.style.background = "var(--panel2)";
           e.currentTarget.style.borderColor = "var(--line)";
         }}
+        onFocus={tip.anchorProps.onFocus}
+        onBlur={tip.anchorProps.onBlur}
       >
         {children}
       </button>

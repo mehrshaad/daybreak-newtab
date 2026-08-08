@@ -247,6 +247,15 @@ function Tasks({ options, config, setConfig, editing }) {
             border: "1px solid var(--line)",
             background: "var(--panel2)",
             color: "var(--fg)",
+            transition: "background .15s ease, border-color .15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--accentSoft)";
+            e.currentTarget.style.borderColor = "var(--accentLine)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "var(--panel2)";
+            e.currentTarget.style.borderColor = "var(--line)";
           }}
         >
           <LuPlus size={13} />
@@ -283,6 +292,13 @@ function Tasks({ options, config, setConfig, editing }) {
               fontSize: 11,
               padding: 0,
               textDecoration: "underline",
+              transition: "color .15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--fg)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--faint)";
             }}
           >
             Clear done

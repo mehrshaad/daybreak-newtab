@@ -106,6 +106,13 @@ function EmptyState({ onSave }) {
             fontSize: 12,
             flex: "none",
             opacity: saving ? 0.7 : 1,
+            transition: "opacity .15s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!saving) e.currentTarget.style.opacity = "0.85";
+          }}
+          onMouseLeave={(e) => {
+            if (!saving) e.currentTarget.style.opacity = "1";
           }}
         >
           {saving ? "…" : "Add"}

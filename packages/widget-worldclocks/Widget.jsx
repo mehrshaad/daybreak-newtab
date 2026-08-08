@@ -218,6 +218,14 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                       padding: 0,
                       display: "grid",
                       placeItems: "center",
+                      borderRadius: 999,
+                      transition: "color .15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "var(--danger)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--faint)";
                     }}
                   >
                     <LuX size={12} />
@@ -250,6 +258,13 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
             fontSize: 12,
             cursor: "pointer",
             alignSelf: "flex-start",
+            transition: "color .15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--accent)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--faint)";
           }}
         >
           <LuPlus size={12} /> Add a city

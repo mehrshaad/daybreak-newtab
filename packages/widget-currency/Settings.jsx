@@ -22,6 +22,7 @@ function Pill({ active, disabled, children, title, ...props }) {
           color: active ? "var(--onAccent)" : disabled ? "var(--faint)" : "var(--fg)",
           border: `1px solid ${active ? "var(--accent)" : "var(--line)"}`,
           opacity: disabled && !active ? 0.5 : 1,
+          transition: "background .15s ease, border-color .15s ease, color .15s ease",
         }}
         {...tip.anchorProps}
         {...props}

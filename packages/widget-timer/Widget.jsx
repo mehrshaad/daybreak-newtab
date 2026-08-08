@@ -119,7 +119,6 @@ function Timer({ options }) {
               setRunning(false);
               setLeft(phaseLength({ phase, longFocus }));
             }}
-            {...resetTip.anchorProps}
             style={{
               padding: "6px 10px",
               borderRadius: 999,
@@ -128,7 +127,20 @@ function Timer({ options }) {
               background: "transparent",
               color: "var(--dim)",
               border: "1px solid var(--line)",
+              transition: "background .15s ease, border-color .15s ease",
             }}
+            onMouseEnter={(e) => {
+              resetTip.anchorProps.onMouseEnter?.();
+              e.currentTarget.style.background = "var(--panel2)";
+              e.currentTarget.style.borderColor = "var(--accentLine)";
+            }}
+            onMouseLeave={(e) => {
+              resetTip.anchorProps.onMouseLeave?.();
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.borderColor = "var(--line)";
+            }}
+            onFocus={resetTip.anchorProps.onFocus}
+            onBlur={resetTip.anchorProps.onBlur}
           >
             ↺
           </button>

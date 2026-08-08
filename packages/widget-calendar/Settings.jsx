@@ -63,6 +63,8 @@ function CalendarRow({ label, provider, onRemove }) {
           e.currentTarget.style.background = "transparent";
           e.currentTarget.style.color = "var(--faint)";
         }}
+        onFocus={tip.anchorProps.onFocus}
+        onBlur={tip.anchorProps.onBlur}
       >
         <LuX size={13} />
       </button>

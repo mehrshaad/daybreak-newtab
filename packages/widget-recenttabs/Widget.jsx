@@ -48,6 +48,8 @@ function TabRow({ entry }) {
           tip.anchorProps.onMouseLeave?.();
           e.currentTarget.style.background = "transparent";
         }}
+        onFocus={tip.anchorProps.onFocus}
+        onBlur={tip.anchorProps.onBlur}
       >
         <span
           style={{

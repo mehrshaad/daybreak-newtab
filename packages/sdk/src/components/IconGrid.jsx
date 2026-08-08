@@ -141,7 +141,6 @@ function RemoveBadge({ label, onRemove }) {
           e.stopPropagation();
           onRemove();
         }}
-        {...tip.anchorProps}
         style={{
           display: "grid",
           placeItems: "center",
@@ -154,7 +153,18 @@ function RemoveBadge({ label, onRemove }) {
           border: "1px solid var(--line)",
           color: "var(--danger)",
           boxShadow: "0 4px 10px rgba(0,0,0,.3)",
+          transition: "background .15s ease",
         }}
+        onMouseEnter={(e) => {
+          tip.anchorProps.onMouseEnter?.();
+          e.currentTarget.style.background = "var(--panel2)";
+        }}
+        onMouseLeave={(e) => {
+          tip.anchorProps.onMouseLeave?.();
+          e.currentTarget.style.background = "var(--sheet)";
+        }}
+        onFocus={tip.anchorProps.onFocus}
+        onBlur={tip.anchorProps.onBlur}
       >
         <LuX size={10} />
       </button>

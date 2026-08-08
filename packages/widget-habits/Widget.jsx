@@ -27,11 +27,27 @@ function Stepper({ label, value, min, max, onChange, suffix = "" }) {
     border: "1px solid var(--line)",
     color: "var(--fg)",
     padding: 0,
+    transition: "background .15s ease, border-color .15s ease",
+  };
+  const onEnter = (e) => {
+    e.currentTarget.style.background = "var(--accentSoft)";
+    e.currentTarget.style.borderColor = "var(--accentLine)";
+  };
+  const onLeave = (e) => {
+    e.currentTarget.style.background = "var(--panel2)";
+    e.currentTarget.style.borderColor = "var(--line)";
   };
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <span style={{ fontSize: 11, color: "var(--dim)" }}>{label}</span>
-      <button type="button" aria-label={`Decrease ${label}`} onClick={step(-1)} style={btn}>
+      <button
+        type="button"
+        aria-label={`Decrease ${label}`}
+        onClick={step(-1)}
+        onMouseEnter={onEnter}
+        onMouseLeave={onLeave}
+        style={btn}
+      >
         <LuMinus size={11} />
       </button>
       <span
@@ -45,7 +61,14 @@ function Stepper({ label, value, min, max, onChange, suffix = "" }) {
       >
         {value === 0 && suffix ? "none" : `${value}${suffix}`}
       </span>
-      <button type="button" aria-label={`Increase ${label}`} onClick={step(1)} style={btn}>
+      <button
+        type="button"
+        aria-label={`Increase ${label}`}
+        onClick={step(1)}
+        onMouseEnter={onEnter}
+        onMouseLeave={onLeave}
+        style={btn}
+      >
         <LuPlus size={11} />
       </button>
     </div>
@@ -245,7 +268,6 @@ function HabitRow({
             type="button"
             onClick={onRemove}
             aria-label={`Remove ${habit.name}`}
-            {...removeTip.anchorProps}
             style={{
               marginLeft: "auto",
               display: "grid",
@@ -257,7 +279,18 @@ function HabitRow({
               background: "transparent",
               border: "1px solid var(--line)",
               color: "var(--danger)",
+              transition: "background .15s ease",
             }}
+            onMouseEnter={(e) => {
+              removeTip.anchorProps.onMouseEnter?.();
+              e.currentTarget.style.background = "var(--panel2)";
+            }}
+            onMouseLeave={(e) => {
+              removeTip.anchorProps.onMouseLeave?.();
+              e.currentTarget.style.background = "transparent";
+            }}
+            onFocus={removeTip.anchorProps.onFocus}
+            onBlur={removeTip.anchorProps.onBlur}
           >
             <LuTrash2 size={12} />
           </button>
@@ -386,6 +419,13 @@ function Habits({ id, options, config, setConfig, size }) {
             cursor: "pointer",
             padding: 0,
             alignSelf: "flex-start",
+            transition: "color .15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--accent)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--faint)";
           }}
         >
           <LuPlus size={13} /> Add habit
