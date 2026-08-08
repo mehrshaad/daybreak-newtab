@@ -18,9 +18,11 @@ export default {
   ],
   defaultSize: [3, 3],
   options: [],
-  // "1 hr" first so it is the default — the plan calls for it, and Hacker
-  // News' front page does not move fast enough to justify 5 min by default.
-  refresh: ["1 hr", "5 min"],
+  // Listed low to high for display; defaultRate (not list order) is what
+  // actually picks "1 hr" as the default — Hacker News' front page does not
+  // move fast enough to justify 5 min out of the box.
+  refresh: ["5 min", "1 hr"],
+  defaultRate: "1 hr",
   permissions: { chrome: [], hosts: ["hacker-news.firebaseio.com"] },
   load: () => import("./Widget.jsx"),
   settingsPanel: {

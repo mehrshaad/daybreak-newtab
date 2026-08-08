@@ -93,13 +93,16 @@ export function resolveOptions(id, stored) {
   return { ...defaultOptions(id), ...(stored || {}) };
 }
 
-// A widget's poll rate: whatever the user picked, or the first entry in the
-// manifest's own refresh list — never a hardcoded "Live", which would ignore
-// a widget's explicit choice not to offer it (crypto's rate-limited API).
+// A widget's poll rate: whatever the user picked, or its declared default —
+// never a hardcoded "Live", which would ignore a widget's explicit choice not
+// to offer it (crypto's rate-limited API). `defaultRate` exists separately
+// from `refresh[0]` so a manifest can list its choices in a sensible display
+// order (low to high) without that order dictating the default.
 export function resolveRate(id, storedRate) {
   const w = getWidget(id);
   const choices = w?.refresh;
   if (storedRate && choices?.includes(storedRate)) return storedRate;
+  if (w?.defaultRate && choices?.includes(w.defaultRate)) return w.defaultRate;
   return choices?.[0] || "Live";
 }
 

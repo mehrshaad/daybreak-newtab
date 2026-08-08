@@ -1,4 +1,5 @@
 import {
+  SiApple,
   SiDropbox,
   SiDuckduckgo,
   SiGithub,
@@ -74,6 +75,9 @@ export const BRANDS = {
   slack: { Glyph: SiSlack, from: "#5fd0a8", to: "#4a154b" },
   x: { Glyph: SiX, from: "#3a3a3a", to: "#000000" },
   twitter: { Glyph: SiX, from: "#3a3a3a", to: "#000000" },
+  // Apple has no single per-service mark in Simple Icons — this is the
+  // company logo, used as the stand-in for iCloud-sourced content.
+  icloud: { Glyph: SiApple, from: "#8e8e93", to: "#1d1d1f" },
 
   // search engines
   google: { Glyph: SiGoogle, from: "#5a9bff", to: "#3d6fe0" },

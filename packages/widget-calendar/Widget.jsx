@@ -5,9 +5,11 @@ import {
   MONO,
   originOf,
   requestOrigin,
+  uid,
   useWidgetLocal,
 } from "@daybreak/sdk";
 import { groupEvents, isToday, relativeLabel } from "./agenda";
+import { providerFor, resolveCalendars } from "./calendars";
 import { parseIcs } from "./ics";
 
 const PROVIDERS = [
@@ -112,6 +114,7 @@ function EmptyState({ onSave }) {
       <div style={{ color: "var(--faint)", lineHeight: 1.5, flex: "none" }}>
         This link is private — anyone who has it can read your calendar. It is
         saved only in your own settings and used only to fetch your events.
+        Add more calendars any time from Widget settings.
       </div>
       {PROVIDERS.map((p) => (
         <div key={p.name} style={{ flex: "none" }}>
@@ -127,10 +130,10 @@ function EmptyState({ onSave }) {
   );
 }
 
-function EventRow({ event, now }) {
+function EventRow({ event, now, hour24 }) {
   const time = event.allDay
     ? "All day"
-    : event.start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    : event.start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: !hour24 });
   const rel = !event.allDay ? relativeLabel(event.start, now) : null;
 
   return (
@@ -162,11 +165,14 @@ function EventRow({ event, now }) {
   );
 }
 
-function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
-  const icsUrl = config.icsUrl;
+function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
+  const calendars = resolveCalendars(config);
+  const calendarsKey = calendars.map((c) => c.url).join("|");
+  const hour24 = !!options?.hour24;
   const [cached, setCached] = useWidgetLocal(id, "events", null);
-  const [status, setStatus] = useState(icsUrl ? "loading" : "empty");
+  const [status, setStatus] = useState(calendars.length ? "loading" : "empty");
   const [live, setLive] = useState(null);
+  const [failedCount, setFailedCount] = useState(0);
   const tall = (size?.[1] ?? 3) >= 3;
   const limit = tall ? 8 : 4;
 
@@ -178,11 +184,12 @@ function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
       toast?.("That doesn't look like a web address");
       return false;
     }
+    const entry = { id: uid(), url, provider: providerFor(url) };
     // No permissions API in this context (e.g. local dev) — nothing to
     // request, so save anyway and let the fetch below surface its own
     // error if the address turns out to be unreachable.
     if (!hasPermissionsApi()) {
-      setConfig({ icsUrl: url });
+      setConfig({ calendars: [...calendars, entry] });
       return true;
     }
     // Must run before any other await, in the same click, or Chrome drops
@@ -192,12 +199,12 @@ function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
       toast?.("Permission needed to fetch that calendar");
       return false;
     }
-    setConfig({ icsUrl: url });
+    setConfig({ calendars: [...calendars, entry] });
     return true;
   };
 
   useEffect(() => {
-    if (!icsUrl) {
+    if (!calendars.length) {
       setStatus("empty");
       return undefined;
     }
@@ -205,22 +212,33 @@ function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
     setStatus((s) => (s === "ok" ? "ok" : "loading"));
 
     const run = async () => {
-      const granted = await hasOrigin(originOf(icsUrl));
+      // One calendar failing (missing permission, blocked, unreachable)
+      // must not blank the others — every calendar settles independently
+      // and whatever arrived gets shown.
+      const results = await Promise.all(
+        calendars.map(async (cal) => {
+          const granted = await hasOrigin(originOf(cal.url));
+          if (!granted) return { ok: false };
+          try {
+            const events = parseIcs(await fetch(cal.url).then((r) => r.text()));
+            return { ok: true, events };
+          } catch {
+            return { ok: false };
+          }
+        })
+      );
       if (!active) return;
-      if (!granted) {
-        setStatus("nopermission");
+
+      const ok = results.filter((r) => r.ok);
+      if (!ok.length) {
+        setStatus("blocked");
         return;
       }
-      try {
-        const text = await fetch(icsUrl).then((r) => r.text());
-        const events = parseIcs(text);
-        if (!active) return;
-        setLive(events);
-        setCached(events);
-        setStatus("ok");
-      } catch {
-        if (active) setStatus("blocked");
-      }
+      const events = ok.flatMap((r) => r.events).sort((a, b) => a.start - b.start);
+      setLive(events);
+      setCached(events);
+      setFailedCount(results.length - ok.length);
+      setStatus("ok");
     };
     run();
 
@@ -229,7 +247,7 @@ function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
     };
     // setCached is stable per key; including it would refetch on every write.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [icsUrl, refreshKey]);
+  }, [calendarsKey, refreshKey]);
 
   if (status === "empty") {
     return <EmptyState onSave={saveUrl} />;
@@ -239,10 +257,9 @@ function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
 
   if (!events) {
     const message =
-      {
-        nopermission: "Needs permission — open settings to grant it.",
-        blocked: "This calendar does not allow browser access.",
-      }[status] || "Loading…";
+      status === "blocked"
+        ? "None of your calendars are reachable right now."
+        : "Loading…";
     return (
       <div
         style={{
@@ -314,13 +331,15 @@ function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
                 {label}
               </div>
             ) : null}
-            <EventRow event={event} now={now} />
+            <EventRow event={event} now={now} hour24={hour24} />
           </div>
         );
       })}
-      {status === "blocked" ? (
+      {status === "ok" && failedCount > 0 ? (
         <div style={{ fontSize: 11, color: "var(--faint)" }}>
-          This calendar does not allow browser access — showing the last events.
+          {failedCount === 1
+            ? "One calendar couldn't be reached — showing the rest."
+            : `${failedCount} calendars couldn't be reached — showing the rest.`}
         </div>
       ) : null}
     </div>
