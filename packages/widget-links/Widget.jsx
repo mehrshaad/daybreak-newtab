@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { LuPlus } from "react-icons/lu";
-import { IconGrid, moveItem, uid } from "@daybreak/sdk";
+import { Favicon, IconGrid, IconTile, MONO, moveItem, uid } from "@daybreak/sdk";
 
 const DEFAULTS = [
   { id: "d1", name: "GitHub", url: "https://github.com" },
@@ -34,7 +34,8 @@ function Links({ options, config, setConfig, size, editing, columns }) {
   const { hideLabels, newTab } = options;
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [draftUrl, setDraftUrl] = useState("");
+  const [draftName, setDraftName] = useState("");
 
   // Columns follow the tile width so icons fill the space at every size.
   const cols = Math.max(3, Math.min(size[0], columns));
@@ -56,12 +57,17 @@ function Links({ options, config, setConfig, size, editing, columns }) {
   const add = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = normalizeUrl(draft);
+    const url = normalizeUrl(draftUrl);
     if (!url) return;
-    setConfig({ items: [...items, { id: uid(), name: nameFromUrl(url), url }] });
-    setDraft("");
+    const name = draftName.trim() || nameFromUrl(url);
+    setConfig({ items: [...items, { id: uid(), name, url }] });
+    setDraftUrl("");
+    setDraftName("");
     setAdding(false);
   };
+
+  const remove = (item) =>
+    setConfig({ items: items.filter((l) => l.id !== item.key) });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
@@ -73,18 +79,68 @@ function Links({ options, config, setConfig, size, editing, columns }) {
         showLabels={!hideLabels}
         onOpen={open}
         onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
+        editing={editing}
+        onRemove={remove}
+        hoverCard={(gridItem) => {
+          const link = items.find((l) => l.id === gridItem.key);
+          if (!link) return null;
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", maxWidth: 240 }}>
+              <Favicon
+                url={link.url}
+                size={20}
+                fallback={<IconTile name={link.name} size={20} />}
+              />
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--fg)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {link.name}
+                </div>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    color: "var(--faint)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {link.url}
+                </div>
+              </div>
+            </div>
+          );
+        }}
         trailing={
           adding ? (
             <form
               onSubmit={add}
               onClick={(e) => e.stopPropagation()}
-              style={{ gridColumn: "span 2", width: "100%", alignSelf: "center" }}
+              onBlur={(e) => {
+                if (e.currentTarget.contains(e.relatedTarget)) return;
+                if (!draftUrl && !draftName) setAdding(false);
+              }}
+              style={{
+                gridColumn: "span 2",
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                alignSelf: "center",
+              }}
             >
               <input
                 autoFocus
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onBlur={() => !draft && setAdding(false)}
+                value={draftUrl}
+                onChange={(e) => setDraftUrl(e.target.value)}
                 placeholder="example.com"
                 aria-label="Link address"
                 style={{
@@ -98,6 +154,25 @@ function Links({ options, config, setConfig, size, editing, columns }) {
                   color: "var(--fg)",
                 }}
               />
+              <input
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder="Name (optional)"
+                aria-label="Link name"
+                style={{
+                  width: "100%",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  background: "var(--panel2)",
+                  border: "1px solid var(--line)",
+                  outline: "none",
+                  fontSize: 12,
+                  color: "var(--fg)",
+                }}
+              />
+              {/* A form with two text fields and no button does not submit
+                  on Enter — this restores that without a visible button. */}
+              <button type="submit" style={{ display: "none" }} aria-hidden="true" />
             </form>
           ) : (
             <button

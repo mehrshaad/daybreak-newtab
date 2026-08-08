@@ -4,12 +4,14 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.1.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
-    "is known, a lettered tile otherwise. Nothing is fetched from the sites " +
-    "themselves, so opening a new tab contacts nobody.",
+    "is known, a lettered tile otherwise. Name a link yourself when you add " +
+    "it, or leave it to the address; hover any icon for its full name, " +
+    "address and site icon. Remove one with the badge that appears in edit " +
+    "mode.",
   sizes: [
     [3, 2],
     [4, 2],
