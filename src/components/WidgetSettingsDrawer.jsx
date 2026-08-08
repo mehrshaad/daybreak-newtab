@@ -1,6 +1,6 @@
 import { Suspense, lazy, useMemo } from "react";
 import { MONO, pill } from "@daybreak/sdk";
-import { getWidget, resolveOptions, resolveSize } from "../widgets/registry";
+import { getWidget, resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
 import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 const panelCache = new Map();
@@ -40,7 +40,7 @@ function WidgetSettingsDrawer({
   if (!manifest) return null;
 
   const currentSize = resolveSize(instanceId, board.sizes);
-  const rate = record.rate || "Live";
+  const rate = resolveRate(instanceId, record.rate);
   const Panel = panelFor(manifest);
 
   return (

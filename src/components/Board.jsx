@@ -2,7 +2,7 @@ import { useMemo, useRef } from "react";
 import { cameraStyle } from "../core/tileStyle";
 import { GRID_GAP } from "../core/tokens";
 import { useFlip, useLongPress, usePointerReorder } from "@daybreak/sdk";
-import { resolveOptions, resolveSize } from "../widgets/registry";
+import { resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
 import Tile from "./Tile";
 
 // Presses that should never turn into "enter edit mode": any interactive
@@ -107,7 +107,7 @@ function Board({
               zoomMode={zoomMode}
               panelOpen={panelOpen}
               menuTarget={menu?.id === instanceId}
-              rate={widgets[instanceId]?.rate}
+              rate={resolveRate(instanceId, widgets[instanceId]?.rate)}
               manualRefresh={manualRefresh[instanceId] || 0}
               tileRef={(el) => registerTile(instanceId, el)}
               onEnterEditing={onEnterEditing}

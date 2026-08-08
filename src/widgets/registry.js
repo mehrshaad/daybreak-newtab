@@ -93,6 +93,16 @@ export function resolveOptions(id, stored) {
   return { ...defaultOptions(id), ...(stored || {}) };
 }
 
+// A widget's poll rate: whatever the user picked, or the first entry in the
+// manifest's own refresh list — never a hardcoded "Live", which would ignore
+// a widget's explicit choice not to offer it (crypto's rate-limited API).
+export function resolveRate(id, storedRate) {
+  const w = getWidget(id);
+  const choices = w?.refresh;
+  if (storedRate && choices?.includes(storedRate)) return storedRate;
+  return choices?.[0] || "Live";
+}
+
 // A widget's declared size, honouring a user override only if the manifest
 // still offers that size. Overrides are keyed by instance id so two copies of
 // the same widget can be different sizes.
