@@ -323,7 +323,11 @@ function Habits({ id, options, config, setConfig, size }) {
       })}
 
       {adding ? (
-        <form onSubmit={add} onClick={(e) => e.stopPropagation()}>
+        <form
+          onSubmit={add}
+          onClick={(e) => e.stopPropagation()}
+          style={{ animation: "db-menu .16s ease both" }}
+        >
           <input
             autoFocus
             value={draft}

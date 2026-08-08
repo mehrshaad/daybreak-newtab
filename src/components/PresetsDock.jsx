@@ -1,6 +1,6 @@
 import { LuBookmark, LuRotateCcw, LuWandSparkles } from "react-icons/lu";
 import { PRESETS, SAVED_LAYOUT } from "../core/schema";
-import { HOVER_LIFT, MONO, primaryButton, softButton } from "@daybreak/sdk";
+import { Appear, HOVER_LIFT, MONO, primaryButton, softButton } from "@daybreak/sdk";
 import { Button, Pill } from "./primitives";
 
 // The floating dock shown in layout-edit mode. Occupies the same spot as the
@@ -101,7 +101,7 @@ function PresetsDock({
           <LuBookmark size={12} />
           {SAVED_LAYOUT}
         </Pill>
-        {hasSaved ? (
+        <Appear open={hasSaved} style={{ display: "flex" }}>
           <Button
             onClick={onSaveCurrent}
             title="Reset your saved layout to the board as it is now"
@@ -120,7 +120,7 @@ function PresetsDock({
           >
             <LuRotateCcw size={13} />
           </Button>
-        ) : null}
+        </Appear>
       </div>
 
       <div style={{ width: 1, height: 22, background: "var(--line)", margin: "0 2px" }} />

@@ -16,7 +16,7 @@ import {
 } from "../core/tokens";
 import { SOURCES } from "../core/suggest";
 import { systemTheme } from "../core/useSystemTheme";
-import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
+import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 
 function SettingsDrawer({
@@ -69,11 +69,11 @@ function SettingsDrawer({
             </Pill>
           ))}
         </div>
-        {(appearance.theme || "system") === "system" ? (
+        <Collapse open={(appearance.theme || "system") === "system"}>
           <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 8 }}>
             Following your {systemTheme()} browser setting.
           </div>
-        ) : null}
+        </Collapse>
       </Section>
 
       <Section title="Accent" style={{ marginBottom: 22 }}>
@@ -320,9 +320,13 @@ function SettingsDrawer({
                 fontSize: 13,
                 color: "var(--danger)",
                 borderColor: confirmReset ? "var(--danger)" : "var(--line)",
+                transition: "border-color .18s ease",
               }}
             >
-              {confirmReset ? "Tap again to confirm" : "Reset everything"}
+              {/* Keyed so the label crossfades on toggle instead of snapping. */}
+              <span key={confirmReset ? "confirm" : "ask"} style={{ animation: "db-fade .2s ease both" }}>
+                {confirmReset ? "Tap again to confirm" : "Reset everything"}
+              </span>
             </Pill>
           </div>
         </div>
