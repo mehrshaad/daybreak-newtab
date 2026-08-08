@@ -217,10 +217,19 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
       // and whatever arrived gets shown.
       const results = await Promise.all(
         calendars.map(async (cal) => {
-          const granted = await hasOrigin(originOf(cal.url));
+          // No permissions API means nothing to check against (e.g. local
+          // dev) — same as the add flow, attempt the fetch directly rather
+          // than reporting every calendar as unreachable.
+          const granted = !hasPermissionsApi() || (await hasOrigin(originOf(cal.url)));
           if (!granted) return { ok: false };
           try {
-            const events = parseIcs(await fetch(cal.url).then((r) => r.text()));
+            const res = await fetch(cal.url);
+            // fetch() only rejects on a network-level failure — a 503 or
+            // 404 still resolves, and parsing whatever error page came back
+            // as ICS would silently read as "zero events" rather than the
+            // failure it actually is.
+            if (!res.ok) return { ok: false };
+            const events = parseIcs(await res.text());
             return { ok: true, events };
           } catch {
             return { ok: false };
