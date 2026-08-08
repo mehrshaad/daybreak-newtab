@@ -29,6 +29,7 @@ function WidgetSettingsDrawer({
   onConfig,
   onRate,
   onRemove,
+  toast,
 }) {
   const manifest = getWidget(instanceId);
   const record = widgets[instanceId] || {};
@@ -78,6 +79,7 @@ function WidgetSettingsDrawer({
                 setConfig={onConfig}
                 options={options}
                 setOptions={onOptions}
+                toast={toast}
               />
             </Suspense>
           </Section>

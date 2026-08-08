@@ -677,6 +677,7 @@ function App() {
           onConfig={(patch) => setWidgetConfig(panelId, patch)}
           onRate={(rate) => updateWidget(panelId, { rate })}
           onRemove={() => removeTile(panelId)}
+          toast={toast}
         />
       ) : null}
 

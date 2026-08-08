@@ -20,6 +20,7 @@
     "@daybreak/widget-gapps": "*",
     "@daybreak/widget-habits": "*",
     "@daybreak/widget-links": "*",
+    "@daybreak/widget-news": "*",
     "@daybreak/widget-onthisday": "*",
     "@daybreak/widget-quote": "*",
     "@daybreak/widget-recenttabs": "*",
