@@ -25,27 +25,45 @@ function IconGridItem({
   hoverCard,
 }) {
   const ref = useRef(null);
+  const wrapRef = useRef(null);
   const [hovered, setHovered] = useState(false);
   // The hover card already covers this, so the tooltip only applies where
   // there is no card to duplicate.
   const tip = useTooltip(hoverCard ? null : item.title || item.name);
 
   return (
-    <div style={{ position: "relative", width: "100%", minWidth: 0 }}>
+    // The grid's own child, so it is what carries `data-flip-id`. Both the
+    // reorder hook and FLIP look for `:scope > [data-flip-id]` — direct
+    // children only, so the board can't mistake an app icon for a tile — and
+    // the marker used to sit on the button *inside* here, where neither query
+    // could see it. Slot geometry came back empty, so an icon lifted and
+    // followed the pointer but never actually reordered, and the icons it
+    // passed never animated. It is also the node the drag translates, so the
+    // remove badge travels with the icon instead of staying behind.
+    <div
+      ref={wrapRef}
+      data-flip-id={item.key}
+      style={{
+        position: "relative",
+        width: "100%",
+        minWidth: 0,
+        zIndex: held ? 5 : undefined,
+        filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
+      }}
+    >
       <button
         ref={(el) => {
           ref.current = el;
           tip.anchorRef.current = el;
         }}
         type="button"
-        data-flip-id={item.key}
         aria-label={item.name}
         // Second line of defense, matching World Clocks' rows: the
         // board's own tile drag now starts from a handle rather than the
         // tile body, so a press here can no longer reach it either way.
         onPointerDown={(e) => {
           e.stopPropagation();
-          onPointerDown(e, item.key);
+          onPointerDown(e, item.key, wrapRef.current);
         }}
         onClick={() => !held && onOpen?.(item)}
         style={{
@@ -61,18 +79,10 @@ function IconGridItem({
           width: "100%",
           minWidth: 0,
           touchAction: "none",
-          // Positioned so z-index actually applies: the button used to be a
-          // grid item (where z-index works bare), but the wrapper div that
-          // carries the remove badge made it a plain block child — leaving
-          // both this and usePointerReorder's imperative lift inert, and the
-          // held icon painting under its later siblings.
-          position: "relative",
-          zIndex: held ? 5 : undefined,
           // Dragged past the grid's edge, the icon reads as "release to
           // remove" instead of "still reordering".
           opacity: danger ? 0.4 : 1,
           boxShadow: danger ? "0 0 0 2px var(--danger)" : "none",
-          filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
           transition: "background .16s ease, opacity .16s ease, box-shadow .16s ease",
         }}
         onMouseEnter={(e) => {
@@ -195,10 +205,16 @@ function IconGrid({
   const gridRef = useRef(null);
   const ids = items.map((i) => i.key);
 
+  // Reordering is always available — an icon can be rearranged without first
+  // entering edit mode. Dropping one *outside* the grid deletes it, though,
+  // and that stays edit-mode only: outside edit mode there is no remove badge
+  // and no undo, so a drag that strayed off the tile would silently destroy a
+  // link the user only meant to move.
+  const canRemoveByDrag = editing && !!onRemoveByDrag;
   const { draggingId, isOutside, onPointerDown } = usePointerReorder({
     ids,
     onReorder,
-    onDropOutside: onRemoveByDrag
+    onDropOutside: canRemoveByDrag
       ? (id) => onRemoveByDrag(items.find((i) => i.key === id))
       : undefined,
     enabled: reorderable && !!onReorder,
@@ -231,7 +247,8 @@ function IconGrid({
           iconSize={iconSize}
           showLabels={showLabels}
           held={draggingId === item.key}
-          danger={draggingId === item.key && isOutside}
+          // Only advertise "release to remove" where releasing actually would.
+          danger={canRemoveByDrag && draggingId === item.key && isOutside}
           anyDragging={!!draggingId}
           onOpen={onOpen}
           onPointerDown={onPointerDown}
