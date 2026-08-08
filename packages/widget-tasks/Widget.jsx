@@ -216,13 +216,39 @@ function Tasks({ options, config, setConfig }) {
 
       <div
         style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           fontFamily: MONO,
           fontSize: 11,
           color: "var(--faint)",
           paddingTop: 8,
         }}
       >
-        {doneCount} of {items.length} done
+        <span>
+          {doneCount} of {items.length} done
+        </span>
+        {doneCount > 0 ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              save(items.filter((t) => !t.done));
+            }}
+            style={{
+              border: 0,
+              background: "transparent",
+              color: "var(--faint)",
+              cursor: "pointer",
+              fontFamily: MONO,
+              fontSize: 11,
+              padding: 0,
+              textDecoration: "underline",
+            }}
+          >
+            Clear done
+          </button>
+        ) : null}
       </div>
     </div>
   );

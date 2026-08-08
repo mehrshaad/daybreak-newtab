@@ -1,3 +1,4 @@
+import { essentialsFirst } from "./essentials";
 import { getWidget, resolveSize } from "../widgets/registry";
 
 // Repack the board so tiles tile neatly instead of leaving the ragged holes
@@ -40,7 +41,9 @@ export function autoArrange(ids, sizes, columns = 12) {
     if (!placedAny) out.push(pending.shift().id);
   }
 
-  return out;
+  // The shelf packing above sorts purely by size, so clock and weather can
+  // land anywhere; move them back to the front once the packing is decided.
+  return essentialsFirst(out);
 }
 
 // How much of the grid the current arrangement leaves empty, as a fraction.

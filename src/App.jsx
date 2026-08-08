@@ -12,6 +12,7 @@ import Store from "./components/Store";
 import Toast from "./components/Toast";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
+import { essentialsFirst } from "./core/essentials";
 import { boardMenu, widgetMenu } from "./core/menus";
 import { DEFAULT_ZOOM_MODE, PRESETS, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
@@ -263,8 +264,10 @@ function App() {
   const applyPreset = useCallback(
     (name) => {
       // A preset only places widgets that exist in this build, and adding one
-      // from a preset also marks it installed.
-      const next = knownIds(PRESETS[name] || []);
+      // from a preset also marks it installed. Clock and weather lead every
+      // preset, so this holds even if a preset's own list is ever edited out
+      // of that order.
+      const next = essentialsFirst(knownIds(PRESETS[name] || []));
       update("board", {
         ids: next,
         sizes: {},

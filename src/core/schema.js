@@ -1,3 +1,4 @@
+import { essentialsFirst } from "./essentials";
 import { DEFAULTS as VISUAL_DEFAULTS } from "./tokens";
 
 export const SCHEMA_VERSION = 2;
@@ -47,7 +48,7 @@ export const PRESETS = {
     "gapps",
     "recenttabs",
   ],
-  Minimal: ["clock", "links", "weather"],
+  Minimal: ["clock", "weather", "links"],
 };
 
 export const DEFAULT_LAYOUT = "Balanced";
@@ -61,7 +62,7 @@ export function defaultSettings() {
   return {
     v: SCHEMA_VERSION,
     board: {
-      ids: [...PRESETS[DEFAULT_LAYOUT]],
+      ids: essentialsFirst(PRESETS[DEFAULT_LAYOUT]),
       sizes: {},
       layoutName: DEFAULT_LAYOUT,
       installed: [...PRESETS[DEFAULT_LAYOUT]],
