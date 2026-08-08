@@ -22,10 +22,19 @@ const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+// getBoundingClientRect reports an element's *transformed* box, so a tile
+// being positioned by hand (the one under the pointer, moved by
+// usePointerReorder) would measure wherever it currently appears rather than
+// where it is laid out. Clearing and restoring the transform inside one task
+// means nothing is painted in between — the same trick usePointerReorder uses
+// for exactly this reason.
 function measure(container) {
   const map = new Map();
   for (const node of container.querySelectorAll(FLIP_ITEMS)) {
+    const applied = node.style.transform;
+    if (applied) node.style.transform = "";
     map.set(node.dataset.flipId, node.getBoundingClientRect());
+    if (applied) node.style.transform = applied;
   }
   return map;
 }
@@ -41,6 +50,16 @@ export function useFlip(containerRef, deps, options = {}) {
     const container = containerRef.current;
     if (!container) return;
 
+    // Cancel anything still in flight BEFORE measuring, not while walking the
+    // nodes below. A running FLIP is mid-transform, and the measurement above
+    // would report that transform as the tile's position — which then gets
+    // cached as `previous` and becomes the next change's starting point. A
+    // drag crosses slots far faster than FLIP_DURATION, so those animations
+    // routinely overlap: the tile was inverted from a position it never
+    // actually occupied, jumped, then resolved back to its real slot.
+    for (const anim of running.current.values()) anim.cancel();
+    running.current.clear();
+
     const next = measure(container);
     const before = previous.current;
     previous.current = next;
@@ -54,9 +73,6 @@ export function useFlip(containerRef, deps, options = {}) {
 
       const last = next.get(id);
       const first = before.get(id);
-
-      running.current.get(id)?.cancel();
-      running.current.delete(id);
 
       if (!last || last.width === 0) continue;
 
