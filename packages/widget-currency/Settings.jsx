@@ -1,4 +1,6 @@
+import { requestOrigin } from "@daybreak/sdk";
 import { CURRENCIES } from "./currencies";
+import { TGJU_ORIGIN } from "./irr";
 
 const MAX_TARGETS = 5;
 
@@ -41,9 +43,14 @@ function CurrencySettings({ config, setConfig }) {
     if (code === base) return;
     if (targets.includes(code)) {
       setConfig({ targets: targets.filter((t) => t !== code) });
-    } else if (targets.length < MAX_TARGETS) {
-      setConfig({ targets: [...targets, code] });
+      return;
     }
+    if (targets.length >= MAX_TARGETS) return;
+    // Best-effort: tgju's own rate needs this permission, but the official
+    // rate needs none at all, so IRR still turns on either way — it just
+    // shows whichever source it actually got.
+    if (code === "IRR") requestOrigin(TGJU_ORIGIN);
+    setConfig({ targets: [...targets, code] });
   };
 
   return (
@@ -51,7 +58,9 @@ function CurrencySettings({ config, setConfig }) {
       <div>
         <div style={{ fontSize: 12, color: "var(--dim)", marginBottom: 8 }}>Base currency</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {CURRENCIES.map(([code, name]) => (
+          {/* IRR is never a base — Frankfurter doesn't quote against it, so
+              there is nothing to cross the other direction through. */}
+          {CURRENCIES.filter(([code]) => code !== "IRR").map(([code, name]) => (
             <Pill key={code} active={code === base} onClick={() => setBase(code)} title={name}>
               {code}
             </Pill>

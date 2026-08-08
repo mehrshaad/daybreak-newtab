@@ -10,12 +10,11 @@ export default {
     "Rates from Frankfurter, built on European Central Bank data — no API " +
     "key, no account, updated once a day. Pick a base currency and up to " +
     "five others to track; the last successful reading is cached so the " +
-    "tile still shows something offline.",
-  sizes: [
-    [3, 2],
-    [3, 3],
-    [4, 3],
-  ],
+    "tile still shows something offline. Iranian Rial is priced from " +
+    "tgju.org's open-market rate (a one-time permission for that single " +
+    "address, asked for when you turn it on) and falls back to the " +
+    "official rate everyone else quotes when that isn't available.",
+  sizes: [[3, 2]],
   defaultSize: [3, 2],
   options: [],
   refresh: null,

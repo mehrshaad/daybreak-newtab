@@ -196,7 +196,13 @@
           <strong>Currency — Frankfurter.</strong> The base currency and the
           currencies you choose to track are sent to Frankfurter
           (<code>api.frankfurter.dev</code>), which serves European Central
-          Bank exchange rate data. No account or API key is involved.
+          Bank exchange rate data. No account or API key is involved. If you
+          turn on the Iranian Rial, its rate is fetched from tgju.org
+          (<code>call1.tgju.org</code>), which needs a one-time permission
+          for that single address, or from exchangerate-api.com's open
+          endpoint (<code>open.er-api.com</code>) when that isn't available
+          — either way, only the request itself is sent, with no query and
+          no personal data.
         </li>
         <li>
           <strong>Crypto — CoinGecko.</strong> The coins and fiat currency you
