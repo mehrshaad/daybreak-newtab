@@ -316,17 +316,52 @@ button {
   transition: color 0.34s ease, fill 0.34s ease;
 }
 
-// Sliders are dragged, so say so.
+// Fully custom rather than relying on accent-color: that leaves the
+// unfilled portion of the track at the browser's own grey in both themes,
+// which does not match either. --range-fill (0%-100%, set inline per
+// slider) draws the filled portion; the rest of the track uses the app's
+// own line colour instead.
 input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
   cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--range-fill, 0%),
+    var(--line) var(--range-fill, 0%)
+  );
 
   &::-webkit-slider-thumb {
+    -webkit-appearance: none;
     cursor: grab;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: var(--accent);
+    border: 2px solid var(--sheet);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   }
 
   &:active::-webkit-slider-thumb {
     cursor: grabbing;
   }
+}
+
+// The header's own clear button (Header.jsx) replaces this — a fixed grey
+// glyph that ignores the theme — rather than showing both at once.
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+// The browser's own placeholder grey is fixed regardless of theme; this
+// keeps it on the same token every other muted label already uses.
+::placeholder {
+  color: var(--faint);
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

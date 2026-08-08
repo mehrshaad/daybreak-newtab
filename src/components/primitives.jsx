@@ -107,6 +107,8 @@ export function Toggle({ on, label, onChange }) {
 }
 
 export function Slider({ label, value, min, max, step, suffix = "", onChange }) {
+  // Drives the filled portion of the custom track styled in base.scss.
+  const fill = `${((value - min) / (max - min)) * 100}%`;
   return (
     <div>
       <div
@@ -132,7 +134,7 @@ export function Slider({ label, value, min, max, step, suffix = "", onChange }) 
         value={value}
         aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: "100%", accentColor: "var(--accent)" }}
+        style={{ width: "100%", "--range-fill": fill }}
       />
     </div>
   );

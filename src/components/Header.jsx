@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuMoon, LuSettings, LuSun } from "react-icons/lu";
+import { LuMoon, LuSettings, LuSun, LuX } from "react-icons/lu";
 import { useSettings } from "../core/settingsContext";
 import { HOVER_LIFT, IconTile, MONO, roundControl, SEARCH_ENGINES, softButton } from "@daybreak/sdk";
 import { gatherSuggestions } from "../core/suggest";
@@ -312,20 +312,48 @@ function Header({
               color: "var(--fg)",
             }}
           />
-          <span
-            aria-hidden="true"
-            style={{
-              fontFamily: MONO,
-              fontSize: "10px",
-              color: "var(--faint)",
-              border: "1px solid var(--line)",
-              borderRadius: "5px",
-              padding: "2px 6px",
-              flex: "none",
-            }}
-          >
-            {isMac() ? "⌘K" : "Ctrl K"}
-          </span>
+          {query ? (
+            // Replaces the browser's own search-cancel glyph (a fixed grey
+            // circle that ignores the theme) with one that matches it.
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                searchRef.current?.focus();
+              }}
+              aria-label="Clear search"
+              style={{
+                display: "grid",
+                placeItems: "center",
+                width: 20,
+                height: 20,
+                padding: 0,
+                border: 0,
+                borderRadius: "999px",
+                background: "transparent",
+                color: "var(--faint)",
+                cursor: "pointer",
+                flex: "none",
+              }}
+            >
+              <LuX size={13} />
+            </button>
+          ) : (
+            <span
+              aria-hidden="true"
+              style={{
+                fontFamily: MONO,
+                fontSize: "10px",
+                color: "var(--faint)",
+                border: "1px solid var(--line)",
+                borderRadius: "5px",
+                padding: "2px 6px",
+                flex: "none",
+              }}
+            >
+              {isMac() ? "⌘K" : "Ctrl K"}
+            </span>
+          )}
 
           {searchActive ? (
             <SearchSuggestions
