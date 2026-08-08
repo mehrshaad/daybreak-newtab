@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LuPlus } from "react-icons/lu";
 import { EditableText, formatDate, MONO, uid } from "@daybreak/sdk";
+import DatePicker from "./DatePicker";
 
 const isOverdue = (due) => !!due && due < formatDate(new Date());
 
@@ -176,24 +177,7 @@ function Tasks({ options, config, setConfig }) {
             color: "var(--fg)",
           }}
         />
-        {showDates ? (
-          <input
-            type="date"
-            value={due}
-            onChange={(e) => setDue(e.target.value)}
-            aria-label="Due date"
-            style={{
-              padding: "6px 8px",
-              borderRadius: 8,
-              background: "var(--panel2)",
-              border: "1px solid var(--line)",
-              outline: "none",
-              fontSize: 12,
-              color: "var(--fg)",
-              colorScheme: "dark light",
-            }}
-          />
-        ) : null}
+        {showDates ? <DatePicker value={due} onChange={setDue} /> : null}
         <button
           type="submit"
           aria-label="Add task"
