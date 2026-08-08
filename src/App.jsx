@@ -14,7 +14,7 @@ import WelcomeCard from "./components/WelcomeCard";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
 import { essentialsFirst } from "./core/essentials";
-import { boardMenu, widgetMenu } from "./core/menus";
+import { boardMenu, isEditableTarget, widgetMenu } from "./core/menus";
 import { DEFAULT_ZOOM_MODE, PRESETS, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
@@ -118,6 +118,22 @@ function App() {
     setMenu(null);
     setSettingsOpen(false);
     setStoreOpen(false);
+  }, []);
+
+  // Shared catch-all: header, hero, dock and the board's own empty space all
+  // open the same board menu on right-click, but never over a text-entry
+  // surface — that needs the native menu for paste.
+  const openBoardMenu = useCallback((e) => {
+    if (isEditableTarget(e.target)) return;
+    e.preventDefault();
+    setMenu({ id: null, x: e.clientX, y: e.clientY });
+  }, []);
+
+  const openTileMenu = useCallback((e, id) => {
+    if (isEditableTarget(e.target)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setMenu({ id, x: e.clientX, y: e.clientY });
   }, []);
 
   // Camera zoom needs the tile's on-screen box measured against the board's,
@@ -571,6 +587,7 @@ function App() {
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
         onOpenSettings={openSettings}
+        onContextMenu={openBoardMenu}
         searchRef={searchRef}
       />
 
@@ -582,6 +599,7 @@ function App() {
           summary={summary}
           layoutName={board.layoutName}
           tileCount={ids.length}
+          onContextMenu={openBoardMenu}
         />
       </Collapse>
 
@@ -601,16 +619,9 @@ function App() {
         boardRef={boardRef}
         registerTile={registerTile}
         onEnterEditing={enterEditing}
-        onBoardMenu={(e) => {
-          e.preventDefault();
-          setMenu({ id: null, x: e.clientX, y: e.clientY });
-        }}
+        onBoardMenu={openBoardMenu}
         onOpenTile={openTile}
-        onTileMenu={(e, id) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setMenu({ id, x: e.clientX, y: e.clientY });
-        }}
+        onTileMenu={openTileMenu}
         onOpenSettings={(id) => setPanel(id)}
         onCloseZoom={closeZoom}
         onResize={cycleSize}
@@ -683,6 +694,7 @@ function App() {
           onAutoArrange={autoArrangeBoard}
           onAddWidget={openStore}
           onDone={toggleEdit}
+          onContextMenu={openBoardMenu}
         />
       ) : null}
 

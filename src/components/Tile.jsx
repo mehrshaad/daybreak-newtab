@@ -103,6 +103,7 @@ function TileButton({ label, onClick, children, style }) {
 
 function Tile({
   instanceId,
+  initialStagger = null,
   appearance,
   columns,
   size,
@@ -130,6 +131,12 @@ function Tile({
   setOptions,
   toast,
 }) {
+  // Board's own "was this an initial tile" ref flips false almost
+  // immediately after mount, so the prop it computes is only trustworthy on
+  // this tile's very first render — frozen here so a later Board re-render
+  // (recomputing it as null) can't strip the animation off mid-flight and
+  // cancel it outright.
+  const [stagger] = useState(() => initialStagger);
   const manifest = getWidget(instanceId);
   // Each tile polls on its own configured rate; `manualRefresh` lets the
   // context menu's "Refresh now" force one immediately.
@@ -179,6 +186,15 @@ function Tile({
       data-flip-id={instanceId}
       style={{
         ...style,
+        // Baked in once at mount and never touched again — a static value
+        // never replays a CSS animation on re-render, which is what keeps
+        // this from firing again on every prop change.
+        ...(stagger !== null
+          ? {
+              animation: "db-menu .28s both",
+              animationDelay: `${Math.min(stagger * 25, 300)}ms`,
+            }
+          : null),
         // Held tiles lift off the board and stop animating their own box, so
         // the pointer transform is the only thing moving them. `scale` is a
         // separate CSS property from `transform`, which usePointerReorder sets

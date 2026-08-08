@@ -103,6 +103,7 @@ function Header({
   onToggleEdit,
   onOpenStore,
   onOpenSettings,
+  onContextMenu,
   searchRef,
 }) {
   const { settings, update } = useSettings();
@@ -209,6 +210,7 @@ function Header({
 
   return (
     <header
+      onContextMenu={onContextMenu}
       style={{
         position: "sticky",
         top: 0,
@@ -236,7 +238,7 @@ function Header({
             fontFamily: MONO,
             letterSpacing: ".16em",
             textTransform: "uppercase",
-            color: "var(--accent)",
+            color: "var(--accentText)",
             fontSize: scrolled ? "10px" : "12px",
             transition: "font-size .25s ease",
             fontWeight: 500,

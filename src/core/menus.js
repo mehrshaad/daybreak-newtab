@@ -13,6 +13,11 @@ export const hint = (spec) => {
 
 const separator = { type: "separator" };
 
+// Right-click inside any text-entry surface needs the native menu (paste,
+// spellcheck) — never hijacked by a custom board/tile/chrome menu.
+export const isEditableTarget = (target) =>
+  !!target?.closest?.('input, textarea, [contenteditable]:not([contenteditable="false"])');
+
 export function boardMenu({
   editing,
   theme,

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { cameraStyle } from "../core/tileStyle";
 import { GRID_GAP } from "../core/tokens";
 import { useFlip, useLongPress, usePointerReorder } from "@daybreak/sdk";
@@ -41,6 +41,17 @@ function Board({
   toast,
 }) {
   const gridRef = useRef(null);
+
+  // Settings resolve before this component ever mounts (SettingsProvider
+  // renders nothing until then), so whichever tiles are here on Board's own
+  // first commit are exactly "the board popping in all at once" — the case
+  // that wants a staggered entrance. Anything added afterward already gets a
+  // smooth arrival from useFlip's own new-item handling, so it's excluded
+  // here rather than double-animated.
+  const isInitialRef = useRef(true);
+  useEffect(() => {
+    isInitialRef.current = false;
+  }, []);
 
   const { draggingId, onPointerDown } = usePointerReorder({
     ids,
@@ -91,10 +102,11 @@ function Board({
     >
       <div ref={boardRef} style={cameraStyle(cam, !!zoom && zoomMode === "Camera")}>
         <div ref={gridRef} style={gridStyle}>
-          {ids.map((instanceId) => (
+          {ids.map((instanceId, index) => (
             <Tile
               key={instanceId}
               instanceId={instanceId}
+              initialStagger={isInitialRef.current ? index : null}
               appearance={appearance}
               columns={columns}
               size={resolveSize(instanceId, board.sizes)}

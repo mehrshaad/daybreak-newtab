@@ -15,9 +15,11 @@ function PresetsDock({
   onAutoArrange,
   onAddWidget,
   onDone,
+  onContextMenu,
 }) {
   return (
     <div
+      onContextMenu={onContextMenu}
       style={{
         position: "fixed",
         // Centred with auto margins rather than translateX(-50%): the db-in
