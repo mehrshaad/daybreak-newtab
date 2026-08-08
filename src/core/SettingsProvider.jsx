@@ -32,13 +32,20 @@ export function SettingsProvider({ children }) {
       set: (value) => Promise.resolve(writeSyncMirror(value)),
     });
   }
+  // Set the moment the user changes anything. Painting from the mirror means
+  // the board is live *before* the authoritative read resolves, so without
+  // this a change made inside that window would be overwritten by the value
+  // the read happened to start with — the edit would vanish with no error,
+  // and the stale value would be written back over the mirror too.
+  const touched = useRef(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
       const saved = await syncArea.get();
       if (saved) {
-        if (active) setSettings(hydrate(saved));
+        if (!active || touched.current) return;
+        setSettings(hydrate(saved));
         // Keeps the mirror in step with the authoritative value even when
         // this device never wrote it itself (e.g. a change synced in from
         // another device), so the next cold start seeds from the right one.
@@ -82,6 +89,7 @@ export function SettingsProvider({ children }) {
   }, []);
 
   const commit = useCallback((next) => {
+    touched.current = true;
     setSettings(next);
     writer.current.write(next);
     mirrorWriter.current.write(next);
@@ -97,6 +105,7 @@ export function SettingsProvider({ children }) {
           ...prev,
           [section]: { ...prev[section], ...patch },
         };
+        touched.current = true;
         writer.current.write(next);
         mirrorWriter.current.write(next);
         return next;
@@ -122,6 +131,7 @@ export function SettingsProvider({ children }) {
             },
           },
         };
+        touched.current = true;
         writer.current.write(next);
         mirrorWriter.current.write(next);
         return next;
