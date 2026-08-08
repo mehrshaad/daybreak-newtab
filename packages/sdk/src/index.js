@@ -9,6 +9,10 @@
 // belongs in the per-widget local bucket.
 export { clearBucket, flushBucket, readBucket, useWidgetLocal, writeBucket } from "./bucket";
 
+// Widget content synced across signed-in Chrome profiles, capped so one
+// widget's content cannot break the 8KB-per-item sync limit.
+export { fitForSync, resolveSynced, useWidgetSynced } from "./synced";
+
 // Storage plumbing. The host owns the settings schema; the sdk owns the
 // mechanics of reading and writing it, so both sides share one implementation.
 export {

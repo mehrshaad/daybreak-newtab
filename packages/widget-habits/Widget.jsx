@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
-import { MONO, Popover, uid, useWidgetLocal } from "@daybreak/sdk";
-import { toggleDay } from "./streak";
+import { MONO, Popover, uid, useWidgetSynced } from "@daybreak/sdk";
+import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
 
 const DEFAULTS = [
@@ -249,8 +249,9 @@ function HabitRow({
 
 function Habits({ id, options, config, setConfig, size }) {
   // Names and per-habit targets are settings (small, worth syncing); tick
-  // history is content that grows, so it lives in the local bucket.
-  const [history, setHistory] = useWidgetLocal(id, "history", {});
+  // history is content that grows, so it syncs separately with its own
+  // budget, trimmed to ~370 days on every write.
+  const [history, setHistory] = useWidgetSynced(id, "history", {}, { trim: trimHistory });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState(null);

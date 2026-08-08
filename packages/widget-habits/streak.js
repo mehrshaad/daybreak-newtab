@@ -34,3 +34,21 @@ export function toggleDay(history, date) {
   else next[date] = true;
   return next;
 }
+
+// Keeps sync's per-item budget from growing without bound: history is
+// per-habit maps of the same shape, so trimming is just a date-string
+// comparison per habit, oldest days first.
+export function trimHistory(history, days = 370, today = new Date()) {
+  const cutoff = new Date(today);
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  const cutoffKey = formatDate(cutoff);
+  const out = {};
+  for (const [habitId, dates] of Object.entries(history || {})) {
+    const kept = {};
+    for (const date of Object.keys(dates || {})) {
+      if (date >= cutoffKey) kept[date] = true;
+    }
+    out[habitId] = kept;
+  }
+  return out;
+}
