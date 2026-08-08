@@ -4,6 +4,8 @@ import {
   Appear,
   CitySearch,
   EditableText,
+  LIST_ROW_HIGHLIGHT,
+  listRow,
   MONO,
   moveItem,
   useFlip,
@@ -130,23 +132,15 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                 e.stopPropagation();
                 onPointerDown(e, id);
               }}
-              style={{
-                display: "flex",
-                alignItems: "center",
+              style={listRow({
                 justifyContent: "space-between",
-                gap: 10,
-                padding: "5px 8px",
-                margin: "0 -8px",
-                borderRadius: 8,
                 // Daytime rows sit slightly proud; night rows recede.
-                background: p.day ? "var(--panel)" : "transparent",
-                minWidth: 0,
+                background: p.day ? LIST_ROW_HIGHLIGHT : "transparent",
                 touchAction: "none",
                 cursor: editing ? (held ? "grabbing" : "grab") : "default",
                 zIndex: held ? 5 : undefined,
                 filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
-                transition: "background .2s ease",
-              }}
+              })}
             >
               <div
                 style={{

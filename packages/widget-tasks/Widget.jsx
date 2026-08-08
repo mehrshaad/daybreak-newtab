@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
-import { LuGripVertical, LuPlus } from "react-icons/lu";
+import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
 import {
   Appear,
   animateExit,
   EditableText,
   formatDate,
+  LIST_ROW_HIGHLIGHT,
+  listRow,
   MONO,
   uid,
   useFlip,
@@ -32,20 +34,13 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
         e.stopPropagation();
         onPointerDown(e, task.id);
       }}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "5px 8px",
-        margin: "0 -8px",
-        borderRadius: 8,
-        background: hovered ? "var(--panel2)" : "transparent",
+      style={listRow({
+        background: hovered ? LIST_ROW_HIGHLIGHT : "transparent",
         touchAction: "none",
         cursor: editing ? (held ? "grabbing" : "grab") : "default",
         zIndex: held ? 5 : undefined,
         filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
-        transition: "background .15s ease",
-      }}
+      })}
     >
       <Appear open={editing} style={{ display: "flex", flex: "none" }}>
         <LuGripVertical size={12} style={{ color: "var(--faint)" }} aria-hidden="true" />
@@ -114,13 +109,21 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
             background: "transparent",
             color: "var(--faint)",
             cursor: "pointer",
-            fontSize: 14,
-            lineHeight: 1,
-            padding: "0 2px",
+            padding: 0,
+            display: "grid",
+            placeItems: "center",
+            borderRadius: 999,
             flex: "none",
+            transition: "color .15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--danger)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--faint)";
           }}
         >
-          ×
+          <LuX size={12} />
         </button>
       </Appear>
     </div>
