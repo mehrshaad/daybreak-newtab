@@ -19,6 +19,16 @@ export default {
   defaultSize: [4, 2],
   options: [
     { key: "monospace", label: "Monospace", type: "boolean", default: false },
+    {
+      key: "fontSize",
+      label: "Font size",
+      type: "number",
+      min: 6,
+      max: 24,
+      step: 2,
+      suffix: "px",
+      default: 13,
+    },
   ],
   refresh: null,
   permissions: { chrome: [], hosts: [] },

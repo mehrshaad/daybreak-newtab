@@ -30,7 +30,7 @@ function Scratchpad({ id, options }) {
           background: "transparent",
           border: 0,
           outline: "none",
-          fontSize: 13,
+          fontSize: Number(options.fontSize) || 13,
           lineHeight: 1.7,
           color: "var(--dim)",
           fontFamily: options.monospace ? MONO : "inherit",
