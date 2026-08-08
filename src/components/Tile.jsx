@@ -27,6 +27,12 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
     ? "var(--accentLine)"
     : "var(--line)";
   return (
+    // The visual line stays exactly as thin as it looks (4px) — this wrapper
+    // is what actually catches the pointer, padded well past the line's own
+    // edges so grabbing it doesn't require pixel-precision. Bottom-anchored
+    // at the tile's padding edge (not the line's old position) so the extra
+    // hit area below the line stays inside the tile's own padding rather
+    // than needing to reach past its `overflow: hidden` clip.
     <div
       onPointerDown={editing ? onPointerDown : undefined}
       onMouseEnter={() => setHandleHovered(true)}
@@ -34,19 +40,30 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
       title="Drag to move"
       style={{
         position: "absolute",
-        bottom: 8,
+        bottom: 0,
         left: "50%",
         translate: "-50% 0",
-        width,
-        height: 4,
-        borderRadius: 999,
-        background,
+        width: Math.max(width + 32, 80),
+        height: 28,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        paddingBottom: 8,
         cursor: dragging ? "grabbing" : "grab",
         pointerEvents: editing || tileHovered ? "auto" : "none",
-        opacity: editing ? 1 : tileHovered ? 0.5 : 0,
-        transition: "opacity .15s ease, background .18s ease, width .18s ease",
       }}
-    />
+    >
+      <div
+        style={{
+          width,
+          height: 4,
+          borderRadius: 999,
+          background,
+          opacity: editing ? 1 : tileHovered ? 0.5 : 0,
+          transition: "opacity .15s ease, background .18s ease, width .18s ease",
+        }}
+      />
+    </div>
   );
 }
 
@@ -322,6 +339,16 @@ function Tile({
               {size.join("×")}
             </TileButton>
           ) : null}
+          <TileButton
+            label="Widget settings"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSettings?.();
+            }}
+            style={{ padding: "4px 6px" }}
+          >
+            <LuSettings2 size={12} />
+          </TileButton>
           <TileButton
             label={`Remove ${manifest.name}`}
             onClick={(e) => {
