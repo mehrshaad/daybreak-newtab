@@ -189,9 +189,16 @@ function Tile({
         // Baked in once at mount and never touched again — a static value
         // never replays a CSS animation on re-render, which is what keeps
         // this from firing again on every prop change.
+        //
+        // Fill mode must be "backwards", not "both": db-menu ends at
+        // `transform: none`, and a "both"/"forwards" fill keeps that
+        // permanently pinned over the node's own style even after the
+        // animation finishes — which silently defeats usePointerReorder's
+        // later `node.style.transform` writes during a drag. "backwards"
+        // only fills the pre-start delay and releases everything once done.
         ...(stagger !== null
           ? {
-              animation: "db-menu .28s both",
+              animation: "db-menu .28s backwards",
               animationDelay: `${Math.min(stagger * 25, 300)}ms`,
             }
           : null),
