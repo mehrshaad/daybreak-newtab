@@ -18,13 +18,16 @@ export { fitForSync, resolveSynced, useWidgetSynced } from "./synced";
 export {
   LOCAL_KEY,
   SYNC_KEY,
+  SYNC_MIRROR_KEY,
   V1_KEY,
   debounceWriter,
   hasChromeLocal,
   hasChromeSync,
   localArea,
+  readSyncMirror,
   readV1Settings,
   syncArea,
+  writeSyncMirror,
 } from "./storage";
 
 // Refresh + clock hooks.
