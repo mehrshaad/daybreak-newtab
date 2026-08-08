@@ -110,18 +110,21 @@ not match the manifest is a common rejection.
 > actually feels like the omnibox.
 >
 > - New: Air quality, Currency, Crypto, On this day, News (Hacker News or your
->   own feed) and Calendar (paste a private iCal link) — all keyless, no
->   account required
+>   own feed) and Calendar (paste a private iCal link, or several) — all
+>   keyless, no account required
 > - Press and hold a tile — or empty space — to enter edit mode; drag from the
 >   handle that appears, no separate toggle needed first
 > - Search suggestions are ranked, show real site icons, and offer "Go to
->   site" for an address you type directly
+>   site" for an address you type directly — turn on tabs, bookmarks and
+>   history right from the welcome card, or later in Settings
 > - Habit history and Scratchpad notes now sync (when small enough) instead of
 >   staying local-only
 > - Quick Links: name a link yourself, remove one with an edit-mode badge, and
 >   hover any icon for its full name and address
 > - Custom date picker for tasks, opening on today without defaulting a new
 >   task's due date to it
+> - Hover any icon-only control for a quick label — what it does, not just
+>   what it looks like
 > - Everything else — sliders, the search box's clear button, dropdown
 >   placement — now matches the theme completely, in both light and dark
 
