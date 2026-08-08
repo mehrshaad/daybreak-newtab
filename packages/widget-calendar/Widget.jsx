@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { hasOrigin, MONO, originOf, requestOrigin, useWidgetLocal } from "@daybreak/sdk";
+import {
+  hasOrigin,
+  hasPermissionsApi,
+  MONO,
+  originOf,
+  requestOrigin,
+  useWidgetLocal,
+} from "@daybreak/sdk";
 import { groupEvents, isToday, relativeLabel } from "./agenda";
 import { parseIcs } from "./ics";
 
@@ -155,7 +162,7 @@ function EventRow({ event, now }) {
   );
 }
 
-function Calendar({ id, config, setConfig, refreshKey, size }) {
+function Calendar({ id, config, setConfig, refreshKey, size, toast }) {
   const icsUrl = config.icsUrl;
   const [cached, setCached] = useWidgetLocal(id, "events", null);
   const [status, setStatus] = useState(icsUrl ? "loading" : "empty");
@@ -168,12 +175,23 @@ function Calendar({ id, config, setConfig, refreshKey, size }) {
     try {
       origin = originOf(url);
     } catch {
+      toast?.("That doesn't look like a web address");
       return false;
+    }
+    // No permissions API in this context (e.g. local dev) — nothing to
+    // request, so save anyway and let the fetch below surface its own
+    // error if the address turns out to be unreachable.
+    if (!hasPermissionsApi()) {
+      setConfig({ icsUrl: url });
+      return true;
     }
     // Must run before any other await, in the same click, or Chrome drops
     // the permission prompt for lacking a user gesture.
     const granted = await requestOrigin(origin);
-    if (!granted) return false;
+    if (!granted) {
+      toast?.("Permission needed to fetch that calendar");
+      return false;
+    }
     setConfig({ icsUrl: url });
     return true;
   };
