@@ -1,5 +1,6 @@
 import googleMark from "../assets/brand/google-favicon-2025.webp";
 import { brandForLink, glyphInk, hashHue } from "../brands";
+import { useSiteIcon } from "../useSiteIcon";
 
 // Google's current favicon, supplied as artwork rather than a monochrome path,
 // so it is used directly instead of being tinted like the glyph brands.
@@ -18,6 +19,11 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
 
   // Full-colour artwork wins over a tinted glyph where we have it.
   const artwork = ARTWORK[key];
+  // Only asked for where nothing better is already known, and only worth
+  // drawing once confirmed to be the site's own icon rather than Chrome's
+  // stand-in globe — see siteIcon.js. Hooks cannot sit below the early
+  // returns, so the conditions are in the argument instead.
+  const siteIcon = useSiteIcon(!brand && !artwork && !bare ? url : null);
   if (artwork) {
     return (
       <img
@@ -50,6 +56,44 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
       >
         {letter}
       </span>
+    );
+  }
+
+  // A verified site icon: its own artwork, so it sits inset on a neutral tile
+  // rather than being stretched to the full square — favicons are drawn to
+  // their own margins and a full-bleed one reads as too heavy next to the
+  // glyph tiles it shares a row with.
+  if (siteIcon) {
+    return (
+      <div
+        aria-hidden="true"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius ?? size * 0.28,
+          background: "var(--panel2)",
+          display: "grid",
+          placeItems: "center",
+          flex: "none",
+          boxShadow: "0 1px 2px rgba(0,0,0,.18)",
+        }}
+      >
+        <img
+          src={siteIcon}
+          alt=""
+          width={Math.round(size * 0.62)}
+          height={Math.round(size * 0.62)}
+          style={{
+            width: Math.round(size * 0.62),
+            height: Math.round(size * 0.62),
+            objectFit: "contain",
+            display: "block",
+            // The monogram was already on screen while this was being
+            // checked, so it arrives rather than snapping in.
+            animation: "db-menu .18s ease both",
+          }}
+        />
+      </div>
     );
   }
 

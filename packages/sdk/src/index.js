@@ -79,6 +79,8 @@ export { clampToViewport } from "./clamp";
 
 // Brand marks for app-style icons.
 export { BRANDS, brandFor, brandForLink, brandForUrl, glyphInk, hashHue } from "./brands";
+export { isUsable, resetSiteIcons, sampleOf, siteIcon } from "./siteIcon";
+export { useSiteIcon } from "./useSiteIcon";
 
 // Animation + drag primitives, shared with the host so a widget's internal
 // grid behaves exactly like the board.
