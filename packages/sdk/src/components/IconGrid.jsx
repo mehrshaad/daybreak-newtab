@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { LuX } from "react-icons/lu";
+import { iconCellSize } from "../iconCellSize";
 import { useFlip } from "../useFlip";
 import { usePointerReorder } from "../usePointerReorder";
 import { useTooltip } from "../useTooltip";
@@ -204,6 +205,13 @@ function IconGrid({
 }) {
   const gridRef = useRef(null);
   const ids = items.map((i) => i.key);
+  // Every column the same fixed width, so an icon's footprint never depends
+  // on how long its own label happens to be — a short "Gmail" and a long
+  // truncated name read as the same size tile, the way an icon grid should.
+  // Wide enough for a typical short label; a `max-content` column would
+  // instead size itself per row from whatever occupied it, drifting wider or
+  // narrower depending on which label landed in which column.
+  const { width: cellWidth } = iconCellSize(iconSize, showLabels);
 
   // Reordering is always available — an icon can be rearranged without first
   // entering edit mode. Dropping one *outside* the grid deletes it, though,
@@ -221,7 +229,7 @@ function IconGrid({
     containerRef: gridRef,
   });
 
-  useFlip(gridRef, [ids.join("|"), cols, iconSize], { skipId: draggingId });
+  useFlip(gridRef, [ids.join("|"), cols, iconSize, showLabels], { skipId: draggingId });
 
   return (
     <div
@@ -231,11 +239,23 @@ function IconGrid({
       data-dragging={draggingId ? "true" : undefined}
       style={{
         display: "grid",
-        gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+        // `auto-fit`, not a fixed count of `cols`: even columns evenly divided
+        // the tile's full width regardless of how wide the icons actually
+        // were, so the leftover space inside each column read as a much
+        // bigger gap than the `gap` below actually was. Fixed-width columns
+        // fix that, but a fixed COUNT of them would just move the wasted
+        // space to the tile's edges instead — `auto-fit` asks the browser how
+        // many actually fit the current width and uses all of them, so a wide
+        // tile with more icons than `cols` shows more per row rather than
+        // wrapping early with dead space on both sides. Collapses unused
+        // trailing tracks to zero width (unlike `auto-fill`), which is what
+        // lets `justifyContent` center a short row instead of centering
+        // within a row's worth of empty columns.
+        gridTemplateColumns: `repeat(auto-fit, ${cellWidth}px)`,
+        justifyContent: "center",
         gap,
         flex: 1,
         alignContent: "center",
-        justifyItems: "center",
         minWidth: 0,
         ...(draggingId ? { position: "relative", zIndex: 6, overflow: "visible" } : null),
       }}
