@@ -1,4 +1,6 @@
+import { essentialsFirst } from "./essentials";
 import { DEFAULTS as VISUAL_DEFAULTS } from "./tokens";
+import { knownIds } from "../widgets/registry";
 
 export const SCHEMA_VERSION = 2;
 
@@ -47,7 +49,7 @@ export const PRESETS = {
     "gapps",
     "recenttabs",
   ],
-  Minimal: ["clock", "links", "weather"],
+  Minimal: ["clock", "weather", "links"],
 };
 
 export const DEFAULT_LAYOUT = "Balanced";
@@ -57,11 +59,28 @@ export const DEFAULT_LAYOUT = "Balanced";
 // exactly, not just which widgets were on the board.
 export const SAVED_LAYOUT = "Yours";
 
+// The board patch for switching to a built-in preset. The first switch would
+// otherwise destroy whatever arrangement was on the board with no way back,
+// so it is captured into `saved` — the "Yours" layout — before being
+// overwritten. Once a snapshot exists (from here, or an explicit save),
+// later preset switches leave it alone rather than repeatedly overwriting it
+// with whatever the board happened to look like right before the click.
+export function presetBoardPatch(name, board) {
+  const next = essentialsFirst(knownIds(PRESETS[name] || []));
+  return {
+    ids: next,
+    sizes: {},
+    layoutName: name,
+    installed: [...new Set([...board.installed, ...next])],
+    ...(board.saved ? null : { saved: { ids: [...board.ids], sizes: { ...board.sizes } } }),
+  };
+}
+
 export function defaultSettings() {
   return {
     v: SCHEMA_VERSION,
     board: {
-      ids: [...PRESETS[DEFAULT_LAYOUT]],
+      ids: essentialsFirst(PRESETS[DEFAULT_LAYOUT]),
       sizes: {},
       layoutName: DEFAULT_LAYOUT,
       installed: [...PRESETS[DEFAULT_LAYOUT]],
@@ -80,6 +99,7 @@ export function defaultSettings() {
     behavior: {
       showGreeting: true,
       shortcuts: true,
+      tourDone: false,
       searchEngine: "google",
       // Only the permission-free source is on by default; the others are
       // opt-in and each asks for its Chrome permission when switched on.
@@ -105,6 +125,10 @@ export function hydrate(saved) {
         : s;
   }
   out.v = SCHEMA_VERSION;
+  // tourDone is new: an install that already had *something* saved predates
+  // it and should not suddenly see a first-run card, so only a genuinely
+  // fresh install (the !saved branch above) leaves it at the false default.
+  if (saved.behavior?.tourDone === undefined) out.behavior.tourDone = true;
   // `installed` must always cover what is on the board.
   const ids = Array.isArray(out.board.ids) ? out.board.ids : [];
   const installed = Array.isArray(out.board.installed) ? out.board.installed : [];

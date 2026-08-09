@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   backupFilename,
   download,
@@ -6,7 +6,7 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { dropPermission, MONO, requestPermission } from "@daybreak/sdk";
+import { dropPermission, MONO, requestAllPermissions } from "@daybreak/sdk";
 import {
   ACCENTS,
   PAGE_ZOOM_MAX,
@@ -16,8 +16,57 @@ import {
 } from "../core/tokens";
 import { SOURCES } from "../core/suggest";
 import { systemTheme } from "../core/useSystemTheme";
-import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
+import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
+
+const SWATCH_FADE = 320;
+
+// The swatch's own fill, crossfaded rather than swapped.
+//
+// Gradients do not interpolate, so `transition: background` does nothing for
+// these — picking a new accent repainted all twelve swatches on the same frame
+// the page behind them was smoothly crossfading, which read as the picker
+// glitching. Backdrop solves this at full size the same way: keep the outgoing
+// fill underneath and fade the incoming one over it.
+function SwatchFill({ css }) {
+  const [layers, setLayers] = useState(() => [{ key: 0, css }]);
+  const shown = useRef(css);
+
+  useEffect(() => {
+    if (shown.current === css) return;
+    shown.current = css;
+    setLayers((prev) => {
+      const last = prev[prev.length - 1];
+      // Only ever one layer underneath, so dragging across the accent row
+      // cannot stack up a dozen gradients per swatch.
+      return [last, { key: last.key + 1, css }];
+    });
+  }, [css]);
+
+  // A timer, not animationend: an occluded tab never fires it and the spent
+  // layer would sit there for the life of the page.
+  useEffect(() => {
+    if (layers.length < 2) return undefined;
+    const t = setTimeout(() => setLayers((prev) => prev.slice(-1)), SWATCH_FADE + 60);
+    return () => clearTimeout(t);
+  }, [layers]);
+
+  return layers.map((layer, i) => (
+    <span
+      key={layer.key}
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        borderRadius: "inherit",
+        background: layer.css,
+        ...(layers.length > 1 && i === layers.length - 1
+          ? { animation: `db-fade ${SWATCH_FADE}ms ease both` }
+          : null),
+      }}
+    />
+  ));
+}
 
 function SettingsDrawer({
   open,
@@ -69,11 +118,11 @@ function SettingsDrawer({
             </Pill>
           ))}
         </div>
-        {(appearance.theme || "system") === "system" ? (
+        <Collapse open={(appearance.theme || "system") === "system"}>
           <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 8 }}>
             Following your {systemTheme()} browser setting.
           </div>
-        ) : null}
+        </Collapse>
       </Section>
 
       <Section title="Accent" style={{ marginBottom: 22 }}>
@@ -118,20 +167,25 @@ function SettingsDrawer({
               aria-pressed={appearance.wall === w}
               onClick={() => update("appearance", { wall: w })}
               style={{
+                position: "relative",
+                overflow: "hidden",
                 height: 54,
                 borderRadius: 10,
                 cursor: "pointer",
                 display: "grid",
                 placeItems: "center",
                 padding: 0,
-                background: backgroundSwatch(theme, appearance.accent, w),
+                background: "transparent",
                 border: `1px solid ${
                   appearance.wall === w ? "var(--accent)" : "var(--line)"
                 }`,
               }}
             >
+              <SwatchFill css={backgroundSwatch(theme, appearance.accent, w)} />
               <span
                 style={{
+                  // Above the fill layers, which are positioned.
+                  position: "relative",
                   fontFamily: MONO,
                   fontSize: 9,
                   color: "var(--fg)",
@@ -224,6 +278,12 @@ function SettingsDrawer({
             onChange={() => update("behavior", { shortcuts: !behavior.shortcuts })}
           />
         </div>
+        <Pill
+          onClick={() => update("behavior", { tourDone: false })}
+          style={{ marginTop: 10, padding: "8px 14px", fontSize: 13 }}
+        >
+          Show the welcome card again
+        </Pill>
       </Section>
 
       <Section title="Search suggestions" style={{ marginBottom: 22 }}>
@@ -243,7 +303,16 @@ function SettingsDrawer({
                 // rejects one that is not tied to a user gesture.
                 onChange={async () => {
                   if (!on && source.permission) {
-                    const granted = await requestPermission(source.permission);
+                    // Requested together, in one call: real site icons in the
+                    // results are worth asking for right alongside the source
+                    // that will actually produce results to show them next
+                    // to. Declining just the icon half of the dialog is not
+                    // possible — Chrome shows one combined prompt — so this
+                    // only fires when there is already a reason to prompt.
+                    const granted = await requestAllPermissions([
+                      source.permission,
+                      "favicon",
+                    ]);
                     if (!granted) {
                       toast(`${source.label} needs the ${source.permission} permission`);
                       return;
@@ -305,9 +374,13 @@ function SettingsDrawer({
                 fontSize: 13,
                 color: "var(--danger)",
                 borderColor: confirmReset ? "var(--danger)" : "var(--line)",
+                transition: "border-color .18s ease",
               }}
             >
-              {confirmReset ? "Tap again to confirm" : "Reset everything"}
+              {/* Keyed so the label crossfades on toggle instead of snapping. */}
+              <span key={confirmReset ? "confirm" : "ask"} style={{ animation: "db-fade .2s ease both" }}>
+                {confirmReset ? "Tap again to confirm" : "Reset everything"}
+              </span>
             </Pill>
           </div>
         </div>

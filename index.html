@@ -2,9 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Placeholder only: src/core/favicon.js replaces this at startup with the
-         light or dark tile, following the browser/OS colour scheme. -->
+    <!-- Placeholder only: boot.js corrects it before the first paint, and
+         src/core/favicon.js keeps it following the browser/OS colour scheme
+         from then on. -->
     <link rel="icon" type="image/png" href="favicon-dark.png" />
+    <!-- Parser-blocking on purpose: paints the page the last-used theme and
+         fixes the icon above before anything is on screen. External file
+         because the extension CSP forbids inline script. 404s harmlessly on
+         the GitHub Pages landing, which has its own fixed styling. -->
+    <script src="./boot.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Tab</title>
     <!-- This file is two things at once.
@@ -25,6 +31,14 @@
          The mark is inline SVG rather than an <img> so it needs no file that
          only exists in one of the two layouts. -->
     <style>
+      /* boot.js sets this, and only ever loads alongside the app — on GitHub
+         Pages it 404s, so the landing below stays visible there. Declared
+         here rather than left to the app's stylesheet because this <style>
+         is already parsed by the time #db-landing is, whereas in dev the
+         stylesheet is injected by JS long after the block has painted. */
+      html.db-app #db-landing {
+        display: none;
+      }
       #db-landing {
         min-height: 100vh;
         margin: 0;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moveItem, pointInRect, slotIndexAt } from "./usePointerReorder";
+import { isOutsideBounds, moveItem, pointInRect, slotIndexAt } from "./usePointerReorder";
 
 // A row of four 100x100 slots, 10px apart.
 const slots = [0, 1, 2, 3].map((i) => ({
@@ -57,6 +57,35 @@ describe("slotIndexAt", () => {
       if (i !== -1 && visited[visited.length - 1] !== i) visited.push(i);
     }
     expect(visited).toEqual([0, 1, 2, 3]);
+  });
+});
+
+describe("isOutsideBounds", () => {
+  const rect = { left: 0, right: 100, top: 0, bottom: 100 };
+
+  it("is false inside the rect", () => {
+    expect(isOutsideBounds(rect, 50, 50)).toBe(false);
+  });
+
+  it("is false within the grace margin past an edge", () => {
+    expect(isOutsideBounds(rect, 110, 50)).toBe(false);
+    expect(isOutsideBounds(rect, -10, 50)).toBe(false);
+    expect(isOutsideBounds(rect, 50, -20)).toBe(false);
+  });
+
+  it("is true once past the grace margin", () => {
+    expect(isOutsideBounds(rect, 130, 50)).toBe(true);
+    expect(isOutsideBounds(rect, -30, 50)).toBe(true);
+    expect(isOutsideBounds(rect, 50, 130)).toBe(true);
+  });
+
+  it("respects a custom margin", () => {
+    expect(isOutsideBounds(rect, 105, 50, 0)).toBe(true);
+    expect(isOutsideBounds(rect, 105, 50, 10)).toBe(false);
+  });
+
+  it("is false for a missing rect", () => {
+    expect(isOutsideBounds(null, 9999, 9999)).toBe(false);
   });
 });
 

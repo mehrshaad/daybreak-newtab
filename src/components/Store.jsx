@@ -98,7 +98,12 @@ function Detail({ widget, installed, onBack, onToggle }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0,1fr) 320px",
+          // The side panel takes 320px where there is room and gives it back
+          // where there is not. A hard 320px set this grid's own minimum
+          // width, so in a narrow window it pushed past the pane it sits in —
+          // which now clips rather than scrolls, and the thing that would
+          // have been cut off is the "Add to home" button.
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 320px)",
           gap: 32,
           alignItems: "start",
         }}
@@ -426,7 +431,8 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
             width: 210,
             padding: "22px 16px",
             borderRight: "1px solid var(--line)",
-            overflow: "auto",
+            overflowY: "auto",
+            overflowX: "hidden",
             display: "flex",
             flexDirection: "column",
             gap: 2,
@@ -470,7 +476,15 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
           })}
         </div>
 
-        <div ref={paneRef} style={{ flex: 1, overflow: "auto", padding: "24px 32px 40px" }}>
+        <div
+          ref={paneRef}
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "24px 32px 40px",
+          }}
+        >
           {detailWidget ? (
             <div
               key={detailWidget.id}

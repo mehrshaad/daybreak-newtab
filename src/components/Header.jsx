@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuMoon, LuSettings, LuSun } from "react-icons/lu";
+import { LuMoon, LuSettings, LuSun, LuX } from "react-icons/lu";
 import { useSettings } from "../core/settingsContext";
-import { HOVER_LIFT, IconTile, MONO, roundControl, SEARCH_ENGINES, softButton } from "@daybreak/sdk";
+import {
+  HOVER_LIFT,
+  IconTile,
+  MONO,
+  roundControl,
+  SEARCH_ENGINES,
+  softButton,
+  Tooltip,
+  useTooltip,
+} from "@daybreak/sdk";
 import { gatherSuggestions } from "../core/suggest";
 import SearchSuggestions from "./SearchSuggestions";
 import { Button } from "./primitives";
@@ -12,6 +21,7 @@ const isMac = () =>
 function EnginePicker({ engine, onPick }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const tip = useTooltip(`Search with ${SEARCH_ENGINES[engine].label}`);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -25,9 +35,9 @@ function EnginePicker({ engine, onPick }) {
   return (
     <div ref={wrapRef} style={{ position: "relative", display: "flex", flex: "none" }}>
       <button
+        ref={tip.anchorRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={`Search with ${SEARCH_ENGINES[engine].label}`}
         aria-label={`Search engine: ${SEARCH_ENGINES[engine].label}`}
         aria-expanded={open}
         style={{
@@ -41,9 +51,11 @@ function EnginePicker({ engine, onPick }) {
           cursor: "pointer",
           flex: "none",
         }}
+        {...tip.anchorProps}
       >
         <IconTile name={engine} size={15} bare />
       </button>
+      <Tooltip {...tip} />
       {open ? (
         <div
           role="menu"
@@ -103,6 +115,7 @@ function Header({
   onToggleEdit,
   onOpenStore,
   onOpenSettings,
+  onContextMenu,
   searchRef,
 }) {
   const { settings, update } = useSettings();
@@ -112,6 +125,8 @@ function Header({
   // `theme` arrives already resolved, so "system" cannot be mistaken for dark.
   const dark = theme !== "light";
   const [now, setNow] = useState(() => new Date());
+  const themeTip = useTooltip(dark ? "Switch to light" : "Switch to dark");
+  const settingsTip = useTooltip("Settings");
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 20000);
@@ -124,6 +139,7 @@ function Header({
   const [items, setItems] = useState([]);
   const [active, setActive] = useState(-1);
   const seq = useRef(0);
+  const formRef = useRef(null);
 
   const suggestEnabled = settings.behavior.suggest || { links: true };
   const linkItems = useMemo(() => {
@@ -208,6 +224,7 @@ function Header({
 
   return (
     <header
+      onContextMenu={onContextMenu}
       style={{
         position: "sticky",
         top: 0,
@@ -235,7 +252,7 @@ function Header({
             fontFamily: MONO,
             letterSpacing: ".16em",
             textTransform: "uppercase",
-            color: "var(--accent)",
+            color: "var(--accentText)",
             fontSize: scrolled ? "10px" : "12px",
             transition: "font-size .25s ease",
             fontWeight: 500,
@@ -250,6 +267,7 @@ function Header({
 
       <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
         <form
+          ref={formRef}
           onSubmit={submit}
           role="search"
           onFocusCapture={() => setSearchActive(true)}
@@ -310,27 +328,60 @@ function Header({
               color: "var(--fg)",
             }}
           />
-          <span
-            aria-hidden="true"
-            style={{
-              fontFamily: MONO,
-              fontSize: "10px",
-              color: "var(--faint)",
-              border: "1px solid var(--line)",
-              borderRadius: "5px",
-              padding: "2px 6px",
-              flex: "none",
-            }}
-          >
-            {isMac() ? "⌘K" : "Ctrl K"}
-          </span>
+          {query ? (
+            // Replaces the browser's own search-cancel glyph (a fixed grey
+            // circle that ignores the theme) with one that matches it.
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                searchRef.current?.focus();
+              }}
+              aria-label="Clear search"
+              style={{
+                display: "grid",
+                placeItems: "center",
+                width: 20,
+                height: 20,
+                padding: 0,
+                border: 0,
+                borderRadius: "999px",
+                background: "transparent",
+                color: "var(--faint)",
+                cursor: "pointer",
+                flex: "none",
+              }}
+            >
+              <LuX size={13} />
+            </button>
+          ) : (
+            <span
+              aria-hidden="true"
+              style={{
+                fontFamily: MONO,
+                fontSize: "10px",
+                color: "var(--faint)",
+                border: "1px solid var(--line)",
+                borderRadius: "5px",
+                padding: "2px 6px",
+                flex: "none",
+              }}
+            >
+              {isMac() ? "⌘K" : "Ctrl K"}
+            </span>
+          )}
 
           {searchActive ? (
             <SearchSuggestions
               items={items}
               activeIndex={active}
+              anchorRef={formRef}
               onPick={pick}
               onHover={setActive}
+              onClose={() => {
+                setItems([]);
+                setActive(-1);
+              }}
             />
           ) : null}
         </form>
@@ -380,31 +431,38 @@ function Header({
         >
           Store
         </Button>
-        <Button
-          onClick={() =>
-            update("appearance", { theme: dark ? "light" : "dark" })
-          }
-          title={dark ? "Switch to light" : "Switch to dark"}
-          aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
-          styleFor={roundControl}
-          hover={HOVER_LIFT}
-        >
-          <span
-            key={dark ? "dark" : "light"}
-            style={{ display: "grid", placeItems: "center", animation: "db-menu .22s ease both" }}
+        {/* Button doesn't forward a ref (and can't take onMouseEnter as a
+            prop without clobbering its own internal hover tracking), so the
+            tooltip anchors to a plain wrapper instead. */}
+        <span ref={themeTip.anchorRef} style={{ display: "inline-flex" }} {...themeTip.anchorProps}>
+          <Button
+            onClick={() =>
+              update("appearance", { theme: dark ? "light" : "dark" })
+            }
+            aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
+            styleFor={roundControl}
+            hover={HOVER_LIFT}
           >
-            {dark ? <LuMoon size={15} /> : <LuSun size={15} />}
-          </span>
-        </Button>
-        <Button
-          onClick={onOpenSettings}
-          title="Settings"
-          aria-label="Settings"
-          styleFor={roundControl}
-          hover={HOVER_LIFT}
-        >
-          <LuSettings size={15} />
-        </Button>
+            <span
+              key={dark ? "dark" : "light"}
+              style={{ display: "grid", placeItems: "center", animation: "db-menu .22s ease both" }}
+            >
+              {dark ? <LuMoon size={15} /> : <LuSun size={15} />}
+            </span>
+          </Button>
+        </span>
+        <Tooltip {...themeTip} />
+        <span ref={settingsTip.anchorRef} style={{ display: "inline-flex" }} {...settingsTip.anchorProps}>
+          <Button
+            onClick={onOpenSettings}
+            aria-label="Settings"
+            styleFor={roundControl}
+            hover={HOVER_LIFT}
+          >
+            <LuSettings size={15} />
+          </Button>
+        </span>
+        <Tooltip {...settingsTip} />
       </div>
     </header>
   );

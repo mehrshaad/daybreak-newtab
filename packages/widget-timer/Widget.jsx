@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { MONO } from "@daybreak/sdk";
+import { MONO, Tooltip, useTooltip } from "@daybreak/sdk";
 import { formatClock, nextPhase, phaseLength } from "./phases";
 
 function Timer({ options }) {
   const { longFocus, autoStart } = options;
+  const resetTip = useTooltip("Reset round");
   const [phase, setPhase] = useState("Focus");
   const [round, setRound] = useState(1);
   const [running, setRunning] = useState(false);
@@ -91,6 +92,9 @@ function Timer({ options }) {
               setRunning((v) => !v);
             }}
             style={{
+              // Fixed so the crossfade between "Start" and "Pause" — different
+              // widths — never nudges the reset button beside it.
+              minWidth: 62,
               padding: "6px 14px",
               borderRadius: 999,
               fontSize: 12,
@@ -98,14 +102,18 @@ function Timer({ options }) {
               background: running ? "var(--accent)" : "var(--panel2)",
               color: running ? "var(--onAccent)" : "var(--fg)",
               border: `1px solid ${running ? "transparent" : "var(--line)"}`,
+              transition: "background .18s ease, border-color .18s ease, color .18s ease",
             }}
           >
-            {running ? "Pause" : "Start"}
+            {/* Keyed so the label crossfades on toggle instead of snapping. */}
+            <span key={running ? "on" : "off"} style={{ display: "inline-block", animation: "db-fade .2s ease both" }}>
+              {running ? "Pause" : "Start"}
+            </span>
           </button>
           <button
+            ref={resetTip.anchorRef}
             type="button"
             aria-label="Reset round"
-            title="Reset round"
             onClick={(e) => {
               e.stopPropagation();
               setRunning(false);
@@ -119,10 +127,24 @@ function Timer({ options }) {
               background: "transparent",
               color: "var(--dim)",
               border: "1px solid var(--line)",
+              transition: "background .15s ease, border-color .15s ease",
             }}
+            onMouseEnter={(e) => {
+              resetTip.anchorProps.onMouseEnter?.();
+              e.currentTarget.style.background = "var(--panel2)";
+              e.currentTarget.style.borderColor = "var(--accentLine)";
+            }}
+            onMouseLeave={(e) => {
+              resetTip.anchorProps.onMouseLeave?.();
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.borderColor = "var(--line)";
+            }}
+            onFocus={resetTip.anchorProps.onFocus}
+            onBlur={resetTip.anchorProps.onBlur}
           >
             ↺
           </button>
+          <Tooltip {...resetTip} />
         </div>
       </div>
 

@@ -13,6 +13,7 @@
 export const SYNC_KEY = "daybreak2";
 export const LOCAL_KEY = "daybreak2local";
 export const V1_KEY = "daybreakSettings";
+export const SYNC_MIRROR_KEY = "daybreak2mirror";
 
 export const hasChromeSync = () =>
   typeof chrome !== "undefined" && !!chrome.storage && !!chrome.storage.sync;
@@ -69,6 +70,19 @@ function makeArea(key, isChromeAvailable, chromeArea) {
 
 export const syncArea = makeArea(SYNC_KEY, hasChromeSync, () => chrome.storage.sync);
 export const localArea = makeArea(LOCAL_KEY, hasChromeLocal, () => chrome.storage.local);
+
+// chrome.storage.sync's read is always async, which leaves the very first
+// frame with nothing to paint. This mirror is a synchronous localStorage
+// copy of the last-written settings, read once for that first frame and then
+// immediately superseded by the real syncArea read. One-way: written on every
+// settings change, never read back into chrome.storage.
+export function readSyncMirror() {
+  return readLocalStorage(SYNC_MIRROR_KEY);
+}
+
+export function writeSyncMirror(value) {
+  writeLocalStorage(SYNC_MIRROR_KEY, value);
+}
 
 // Reads the v1 settings blob so it can be migrated. Checks chrome.storage.sync
 // first (where v1 kept it) and falls back to localStorage (v1's dev fallback,

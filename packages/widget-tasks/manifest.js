@@ -4,11 +4,13 @@ export default {
   glyph: "list",
   category: "Productivity",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.1.0",
   tagline: "A short list you actually finish.",
   description:
-    "A to-do list that lives on your new tab. Tasks sync with your Chrome " +
-    "profile; nothing is sent anywhere else.",
+    "A to-do list that lives on your new tab. Double-click a task to rename " +
+    "it, pick a due date from a themed calendar, and clear finished tasks in " +
+    "one click. Tasks sync with your Chrome profile; nothing is sent " +
+    "anywhere else.",
   sizes: [
     [4, 2],
     [4, 3],

@@ -1,9 +1,111 @@
-import { Suspense, lazy, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { LuSettings2, LuX } from "react-icons/lu";
-import { Appear, mark, MONO, seedFor, useRefresh } from "@daybreak/sdk";
+import {
+  Appear,
+  mark,
+  MONO,
+  seedFor,
+  Tooltip,
+  useHover,
+  useLongPress,
+  useRefresh,
+  useTooltip,
+} from "@daybreak/sdk";
 import { tileStyle } from "../core/tileStyle";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
+
+// The board's own drag start used to live on the tile's root — which is why a
+// pointerdown on, say, a world clock row bubbled straight up into it and
+// dragged the tile at the same time as the row reordered itself. Moving it
+// onto this small handle means a press anywhere else in the tile is simply
+// never seen by the board's drag machinery: there is no ancestor relationship
+// between a row and a sibling handle for the event to bubble through.
+//
+// Only draggable during edit mode — outside it, a press does nothing — but
+// hoverable whenever it is visible at all, so resting the pointer on it reads
+// as "this is a handle" before the user commits to Edit layout. Three states,
+// escalating: quiet line colour → an accent tint on hover or throughout edit
+// mode → full accent only while actually held, which is also the only time it
+// widens past the hover width.
+function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
+  const [handleHovered, setHandleHovered] = useState(false);
+  // No label while the drag is under way: the pointer necessarily sits on the
+  // handle for the whole gesture, so the hint would pop up over the board a
+  // moment into every drag — and it is telling you to do the thing you are
+  // already doing.
+  const tip = useTooltip(dragging ? null : "Drag to move");
+  const width = dragging ? 56 : handleHovered || editing ? 48 : 36;
+  const background = dragging
+    ? "var(--accent)"
+    : handleHovered || editing
+    ? "var(--accentLine)"
+    : "var(--line)";
+  return (
+    <>
+      {/* The visual line stays exactly as thin as it looks (4px) — this
+          wrapper is what actually catches the pointer, padded well past the
+          line's own edges so grabbing it doesn't require pixel-precision.
+          Bottom-anchored at the tile's padding edge (not the line's old
+          position) so the extra hit area below the line stays inside the
+          tile's own padding rather than needing to reach past its
+          `overflow: hidden` clip. */}
+      <div
+        ref={tip.anchorRef}
+        // Dragging does not require edit mode: the handle only appears on
+        // hover, so grabbing it is already deliberate, and rearranging the
+        // board is not an edit-mode-only idea. stopPropagation keeps the
+        // press away from the tile's own long-press-to-edit — the drag
+        // itself escapes that anyway (it cancels past 8px of movement, and a
+        // drag starts at 5px), but holding the handle still would otherwise
+        // drop into edit mode instead of doing nothing.
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          onPointerDown?.(e);
+        }}
+        onMouseEnter={() => {
+          setHandleHovered(true);
+          tip.anchorProps.onMouseEnter?.();
+        }}
+        onMouseLeave={() => {
+          setHandleHovered(false);
+          tip.anchorProps.onMouseLeave?.();
+        }}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: "50%",
+          translate: "-50% 0",
+          width: Math.max(width + 32, 80),
+          height: 28,
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          paddingBottom: 8,
+          cursor: dragging ? "grabbing" : "grab",
+          pointerEvents: dragging || editing || tileHovered ? "auto" : "none",
+        }}
+      >
+        <div
+          style={{
+            width,
+            height: 4,
+            borderRadius: 999,
+            background,
+            // `dragging` has to be here in its own right: a held tile has
+            // pointer-events switched off so it cannot steal hover from the
+            // tiles it passes over, which also means tileHovered goes false
+            // the moment the drag starts — and the line you are holding
+            // faded out from under you.
+            opacity: dragging || editing ? 1 : tileHovered ? 0.5 : 0,
+            transition: "opacity .15s ease, background .18s ease, width .18s ease",
+          }}
+        />
+      </div>
+      <Tooltip {...tip} />
+    </>
+  );
+}
 
 // One lazy component per widget type, memoized so remounting a tile does not
 // re-trigger the dynamic import.
@@ -22,42 +124,51 @@ function lazyFor(manifest) {
 }
 
 function TileButton({ label, onClick, children, style }) {
+  const tip = useTooltip(label);
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "7px",
-        fontSize: "12px",
-        padding: "5px 9px",
-        borderRadius: "999px",
-        cursor: "pointer",
-        background: "var(--panel2)",
-        border: "1px solid var(--line)",
-        color: "var(--fg)",
-        lineHeight: 1,
-        ...style,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--accentSoft)";
-        e.currentTarget.style.borderColor = "var(--accentLine)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "var(--panel2)";
-        e.currentTarget.style.borderColor = "var(--line)";
-      }}
-    >
-      {children}
-    </button>
+    <>
+      <button
+        ref={tip.anchorRef}
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "7px",
+          fontSize: "12px",
+          padding: "5px 9px",
+          borderRadius: "999px",
+          cursor: "pointer",
+          background: "var(--panel2)",
+          border: "1px solid var(--line)",
+          color: "var(--fg)",
+          lineHeight: 1,
+          ...style,
+        }}
+        onMouseEnter={(e) => {
+          tip.anchorProps.onMouseEnter?.();
+          e.currentTarget.style.background = "var(--accentSoft)";
+          e.currentTarget.style.borderColor = "var(--accentLine)";
+        }}
+        onMouseLeave={(e) => {
+          tip.anchorProps.onMouseLeave?.();
+          e.currentTarget.style.background = "var(--panel2)";
+          e.currentTarget.style.borderColor = "var(--line)";
+        }}
+        onFocus={tip.anchorProps.onFocus}
+        onBlur={tip.anchorProps.onBlur}
+      >
+        {children}
+      </button>
+      <Tooltip {...tip} />
+    </>
   );
 }
 
 function Tile({
   instanceId,
+  initialStagger = null,
   appearance,
   columns,
   size,
@@ -80,15 +191,52 @@ function Tile({
   onResize,
   onRemove,
   onPointerDown,
+  onEnterEditing,
   setConfig,
   setOptions,
   toast,
 }) {
+  // Board's own "was this an initial tile" ref flips false almost
+  // immediately after mount, so the prop it computes is only trustworthy on
+  // this tile's very first render — frozen here so a later Board re-render
+  // (recomputing it as null) can't strip the animation off mid-flight and
+  // cancel it outright.
+  const [stagger, setStagger] = useState(() => initialStagger);
+  // Take the entrance animation back off the node once it has played.
+  // Leaving it declared is not inert: reordering the board makes React move
+  // this element among its siblings, and Chrome restarts a CSS animation on a
+  // moved node. A restart re-enters the delay, where "backwards" fills the
+  // from-state — scale(.96), no translation — and a CSS animation outranks an
+  // inline style, so the drag's own `node.style.transform` writes stop having
+  // any visible effect. The tile sits frozen for the rest of the drag while
+  // the pointer walks away from it. With nothing declared there is nothing
+  // left to restart.
+  //
+  // On a timer rather than animationend: that event needs a rendering frame,
+  // and a background tab never produces one, so the declaration would outlive
+  // the animation exactly where it is hardest to notice.
+  useEffect(() => {
+    if (stagger === null) return undefined;
+    const done = setTimeout(() => setStagger(null), Math.min(stagger * 25, 300) + 280 + 60);
+    return () => clearTimeout(done);
+  }, [stagger]);
   const manifest = getWidget(instanceId);
   // Each tile polls on its own configured rate; `manualRefresh` lets the
   // context menu's "Refresh now" force one immediately.
   const tick = useRefresh(rate);
   const refreshKey = tick + manualRefresh;
+  const [tileHovered, hoverBind] = useHover();
+  // Holding the tile body itself (not a control inside it, and not the drag
+  // handle) enters edit mode. Disabled once already editing, so it cannot
+  // fire again mid-arrangement.
+  const onLongPressDown = useLongPress(() => onEnterEditing?.(), {
+    enabled: !editing,
+  });
+  // The handle receives the pointerdown, but the tile itself is what the
+  // board's drag machinery needs to move — kept here so it can be handed to
+  // usePointerReorder explicitly instead of it defaulting to whichever
+  // element the listener happens to be attached to.
+  const rootRef = useRef(null);
   const style = useMemo(
     () =>
       tileStyle({
@@ -113,22 +261,48 @@ function Tile({
 
   return (
     <div
-      ref={tileRef}
+      ref={(el) => {
+        rootRef.current = el;
+        tileRef?.(el);
+      }}
       // FLIP identifies tiles by this across reorders and resizes.
       data-flip-id={instanceId}
       style={{
         ...style,
+        // Baked in once at mount and never touched again — a static value
+        // never replays a CSS animation on re-render, which is what keeps
+        // this from firing again on every prop change.
+        //
+        // Fill mode must be "backwards", not "both": db-menu ends at
+        // `transform: none`, and a "both"/"forwards" fill keeps that
+        // permanently pinned over the node's own style even after the
+        // animation finishes — which silently defeats usePointerReorder's
+        // later `node.style.transform` writes during a drag. "backwards"
+        // only fills the pre-start delay and releases everything once done.
+        ...(stagger !== null
+          ? {
+              animation: "db-menu .28s backwards",
+              animationDelay: `${Math.min(stagger * 25, 300)}ms`,
+            }
+          : null),
         // Held tiles lift off the board and stop animating their own box, so
-        // the pointer transform is the only thing moving them.
+        // the pointer transform is the only thing moving them. `scale` is a
+        // separate CSS property from `transform`, which usePointerReorder sets
+        // imperatively on this same node for the drag translation — using it
+        // here means the lift can't ever clobber that positioning.
         ...(dragging
           ? {
               boxShadow: "0 26px 60px rgba(0,0,0,.42)",
               cursor: "grabbing",
               opacity: 0.97,
+              scale: "1.02",
             }
           : null),
       }}
-      onPointerDown={onPointerDown}
+      {...hoverBind}
+      // No longer the board's drag start (see DragHandle) — a long hold here
+      // enters edit mode instead, and does nothing once already editing.
+      onPointerDown={onLongPressDown}
       onClick={onOpen}
       onContextMenu={onMenu}
       // Focusable so keyboard users can reach a tile and open it with Enter,
@@ -232,6 +406,16 @@ function Tile({
             </TileButton>
           ) : null}
           <TileButton
+            label="Widget settings"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSettings?.();
+            }}
+            style={{ padding: "4px 6px" }}
+          >
+            <LuSettings2 size={12} />
+          </TileButton>
+          <TileButton
             label={`Remove ${manifest.name}`}
             onClick={(e) => {
               e.stopPropagation();
@@ -243,6 +427,13 @@ function Tile({
           </TileButton>
         </>
       </Appear>
+
+      <DragHandle
+        tileHovered={tileHovered}
+        editing={!!editing}
+        dragging={dragging}
+        onPointerDown={(e) => onPointerDown?.(e, rootRef.current)}
+      />
 
       {/* A crashing widget shows a retry inside its own tile rather than
           taking down the board. */}

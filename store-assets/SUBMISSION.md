@@ -1,8 +1,11 @@
-# Chrome Web Store — publishing Daybreak 2.0.0
+# Chrome Web Store — publishing Daybreak 2.1.0
 
 This goes out as **a new version of the existing listing**, not a new item. Open
 the current *Daybreak - New Tab* item in the developer dashboard and upload a new
 package; the item id, URL, installs, ratings and reviews all stay.
+
+The live listing:
+<https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen>
 
 Everything below is ready to paste.
 
@@ -18,7 +21,7 @@ Then zip the **contents** of `dist/` so `manifest.json` sits at the root of the
 archive:
 
 ```powershell
-Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-v2-2.0.0.zip -Force
+Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-v2-2.1.0.zip -Force
 ```
 
 The zip is git-ignored — rebuild it whenever `dist/` changes. The store rejects an
@@ -26,19 +29,30 @@ archive whose `manifest.json` is nested inside a folder.
 
 ## What the reviewer will see change
 
-| | v1.1.0 (live) | 2.0.0 (this upload) |
+| | 2.0.0 (live) | 2.1.0 (this upload) |
 | --- | --- | --- |
 | Name | Daybreak - New Tab | unchanged |
-| Required permissions | `storage`, `bookmarks` | **`storage` only** |
-| Optional permissions | none | `sessions`, `tabs`, `history`, `bookmarks` |
+| Required permissions | `storage` | unchanged |
+| Optional permissions | `sessions`, `tabs`, `history`, `bookmarks` | + **`favicon`** |
 | Host permissions | none | none |
+| Optional host permissions | none | **`https://*/*`** (see below) |
 | Remote code | none | none |
-| Minimum Chrome | unset | 117 |
+| Minimum Chrome | 117 | unchanged |
 
-**Required permissions go down.** Chrome only disables an extension pending user
-re-approval when required permissions increase, so this update installs silently
-for existing users — no re-enable prompt. Bookmark access, which v1 demanded up
-front, is now requested only if the user turns the bookmarks feature on.
+**Required permissions are unchanged**, so this update installs silently for
+existing users — no re-enable prompt. Two things are new for the reviewer to
+notice:
+
+- **`favicon`** (optional) — lets search suggestions show a page's real icon,
+  reading Chrome's own already-cached favicon store. Requested alongside
+  whichever suggestion source (tabs/history/bookmarks) the user turns on
+  first; never requested on its own.
+- **`optional_host_permissions: ["https://*/*"]`** — grants nothing by
+  itself. It is the pattern Chrome requires a per-origin
+  `chrome.permissions.request()` to fall within, used by the new Calendar and
+  News widgets to ask for access to exactly one address (an iCal link or a
+  feed URL) the user pastes in, at the moment they add it. No standing access
+  to any site.
 
 `minimum_chrome_version: 117` is what the animated greeting collapse
 (`grid-template-rows` interpolation) and the OKLCH colour tokens need. Anyone on
@@ -59,9 +73,11 @@ Most are already set on the item. Check these:
 | Privacy policy URL | `https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html` |
 
 The policy URL is unchanged, but **the file behind it has to be republished** —
-`privacy-policy.html` in this repo now describes 2.0.0, including the four
-optional permissions. Push it live before submitting: a policy that does not match
-the manifest is a common rejection.
+`privacy-policy.html` in this repo now describes 2.1.0, including `favicon`,
+the per-origin host permission, and every new widget that talks to its own
+provider (Frankfurter, CoinGecko, Wikipedia, Hacker News, and the calendar
+address a user supplies). Push it live before submitting: a policy that does
+not match the manifest is a common rejection.
 
 ### Detailed description
 
@@ -71,36 +87,66 @@ the manifest is a common rejection.
 > want them. Drag tiles around, cycle their sizes, and keep only what you use —
 > or start from one of four layout presets and save your own.
 >
-> ELEVEN WIDGETS
-> Clock (digital or analog) · World Clocks · Weather · Tasks · Quick Links ·
-> Google Apps · Scratchpad · Focus Timer · Habits · Quote of the day ·
-> Recent Tabs
+> SEVENTEEN WIDGETS
+> Clock (digital or analog) · World Clocks · Weather · Air quality · Tasks ·
+> Quick Links · Google Apps · Scratchpad · Focus Timer · Habits · Currency ·
+> Crypto · On this day · News · Calendar · Quote of the day · Recent Tabs
 >
 > MADE YOURS
-> Dark and light themes, or follow your system. Six accent colours, eight
+> Dark and light themes, or follow your system. Six accent colours, twelve
 > generated backgrounds, adjustable tile opacity, corner radius and page zoom.
 > Frosted glass, or solid surfaces if you prefer.
 >
 > QUIET BY DEFAULT
-> No accounts, no analytics, no ads, no tracking. Your board is saved with
-> Chrome's own sync storage and follows your profile; notes and habit history
-> stay on the device. Everything runs offline except the weather and the search
-> box.
+> No accounts, no analytics, no ads, no tracking, no API keys anywhere. Your
+> board is saved with Chrome's own sync storage and follows your profile. A
+> handful of widgets talk to their own keyless provider — weather, air
+> quality, currency, crypto, on-this-day and news each say exactly what they
+> send and to whom in the privacy policy. A calendar link you paste in is
+> never logged or shown again once saved.
 >
 > Export your whole setup to a file and import it back whenever you like.
 
 ### What's new (release notes)
 
-> A complete rebuild. Daybreak is now a board of widgets you arrange yourself
-> rather than a fixed layout.
+> Six new widgets, a lighter drag-and-drop interaction, and search that
+> actually feels like the omnibox.
 >
-> - Eleven widgets, including world clocks, habits, a focus timer and an analog
->   clock face
-> - Drag tiles anywhere, resize them, save your own layout
-> - A widget browser for adding and removing
-> - Dark, light or system themes, six accents, eight generated backgrounds
-> - Needs less than before: bookmark access is now optional instead of required
-> - Your name, search engine, city, to-dos and shortcuts carry over from v1
+> - New: Air quality, Currency, Crypto, On this day, News (Hacker News or your
+>   own feed) and Calendar (paste a private iCal link, or several) — all
+>   keyless, no account required
+> - Press and hold a tile — or empty space — to enter edit mode; drag from the
+>   handle that appears, no separate toggle needed first
+> - Tiles and Quick Links icons can also be dragged into a new order any time,
+>   without entering edit mode at all
+> - Search suggestions are ranked, show real site icons, and offer "Go to
+>   site" for an address you type directly — turn on tabs, bookmarks and
+>   history right from the welcome card, or later in Settings
+> - Habit history and Scratchpad notes now sync (when small enough) instead of
+>   staying local-only
+> - Habits: double-click a name to rename it, the same as tasks and world
+>   clocks
+> - Quick Links: name a link yourself, remove one with an edit-mode badge, and
+>   hover any icon for its full name and address
+> - Custom date picker for tasks, opening on today without defaulting a new
+>   task's due date to it
+> - Switching layout presets no longer discards your own arrangement — it is
+>   saved as "Yours" automatically the first time, so it is always one click
+>   away
+> - Hover any icon-only control for a quick label — what it does, not just
+>   what it looks like
+> - Quick Links now show the real mark of the site they point at, resolved
+>   from the address rather than the name — so a link you called "Work" still
+>   arrives wearing its own icon. 114 brands built in, and Chrome's own cached
+>   favicon for anything outside that list
+> - Four more backgrounds — Prism, Lattice, Tide and Spot — and every one of
+>   them now reads properly on the neutral accent instead of coming out a
+>   plain page
+> - Dragging a tile is smooth the whole way across the board, including
+>   through a reorder, and the tile it would displace is outlined as you go
+> - An open drawer no longer sits on top of the widgets on a mid-width window
+> - Everything else — sliders, the search box's clear button, dropdown
+>   placement — now matches the theme completely, in both light and dark
 
 ## Images
 
@@ -112,6 +158,7 @@ the manifest is a common rejection.
 | Screenshot 3 (1280x800) | `screenshot-3.png` — layout mode |
 | Screenshot 4 (1280x800) | `screenshot-4.png` — the widget browser |
 | Screenshot 5 (1280x800) | `screenshot-5.png` — themes and backgrounds |
+| Screenshot 6 (1280x800) | `screenshot-6.png` — a board made your own |
 | Small promo tile (440x280) | `promo-tile-440x280.png` |
 | Marquee promo tile (1400x560) | `marquee-1400x560.png` — only used if the store features the item |
 
@@ -144,6 +191,16 @@ dashboard of widgets.
   bookmarks, matched against what they type. Read-only; the extension never
   creates, edits or deletes a bookmark. Requested only when that suggestion
   source is switched on.
+- **favicon** (optional) — Shows a page's real icon next to a search
+  suggestion, reading Chrome's own already-cached favicon store rather than
+  making a request to the site. Requested the first time the user turns on
+  one of the suggestion sources above.
+- **Host permissions (optional, `https://*/*` pattern)** — Used only when the
+  user pastes in a private calendar address (Calendar widget) or a custom
+  feed URL (News widget). Chrome's per-origin permission API requires this
+  pattern in the manifest to request a single origin at runtime; the
+  extension only ever asks for the one address the user just provided, at
+  the moment they provide it, and never for anything broader.
 - **Remote code** — No. All code is bundled in the package; nothing is fetched
   and executed at runtime.
 
@@ -155,21 +212,28 @@ dashboard of widgets.
 - Confirm all three certification checkboxes: no selling data to third parties,
   no use for unrelated purposes, no use to determine creditworthiness.
 
-The city a user picks is sent to Open-Meteo to fetch weather, and search queries
-go to the engine the user chose. Both are described in the privacy policy; both
-are the user's own action and neither reaches the developer, who operates no
-server.
+The city a user picks is sent to Open-Meteo for weather and air quality;
+currency and coin choices go to Frankfurter and CoinGecko; today's date (never
+the year) goes to Wikipedia's on-this-day feed; Hacker News' API is read for
+the News widget's default source, or the user's own feed URL if they switch
+to one; a pasted calendar address is fetched from its own provider; and
+search queries go to the engine the user chose. All of this is described in
+the privacy policy; all of it is the user's own action, and none of it
+reaches the developer, who operates no server.
 
 ## Before you hit submit
 
 - [ ] the updated `privacy-policy.html` is live at the URL on the listing
 - [ ] the zip's `manifest.json` is at the archive root
-- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.0.0`
-- [ ] loaded the built `dist/` unpacked once, over v1 storage, and checked the
-      migration (see below)
-- [ ] store icon, five screenshots, the small promo tile and the marquee uploaded
+- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.1.0`
+- [ ] loaded the built `dist/` unpacked once, over a 2.0.0 profile, and
+      confirmed existing settings, board layout and widget content are intact
+- [ ] store icon, six screenshots, the small promo tile and the marquee
+      uploaded — re-captured on 2026-08-09, each one on a different theme,
+      accent and background so the listing shows what is adjustable
 - [ ] release notes filled in
-- [ ] every permission justification filled in, including the four optional ones
+- [ ] every permission justification filled in, including `favicon` and the
+      optional host permission
 
 ## Checking the migration by hand
 

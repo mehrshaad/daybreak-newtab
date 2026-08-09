@@ -3,6 +3,9 @@ import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
 import {
   Appear,
   CitySearch,
+  EditableText,
+  LIST_ROW_HIGHLIGHT,
+  listRow,
   MONO,
   moveItem,
   useFlip,
@@ -55,6 +58,11 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
 
   const removeZone = (index) =>
     setConfig({ zones: zones.filter((_, i) => i !== index) });
+
+  // Renames the label only — the timezone stays what the geocoder resolved,
+  // so "New York" can become "NYC" without breaking the clock underneath it.
+  const renameZone = (index, city) =>
+    setConfig({ zones: zones.map((z, i) => (i === index ? { ...z, city } : z)) });
 
   if (adding) {
     return (
@@ -116,24 +124,23 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
             <div
               key={id}
               data-flip-id={id}
-              onPointerDown={(e) => onPointerDown(e, id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
+              // The board's own tile drag now starts from a handle rather than
+              // the tile body, so this can no longer reach it either way — kept
+              // as a second line of defense against a row press ever also
+              // dragging the tile.
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                onPointerDown(e, id);
+              }}
+              style={listRow({
                 justifyContent: "space-between",
-                gap: 10,
-                padding: "5px 8px",
-                margin: "0 -8px",
-                borderRadius: 8,
                 // Daytime rows sit slightly proud; night rows recede.
-                background: p.day ? "var(--panel)" : "transparent",
-                minWidth: 0,
+                background: p.day ? LIST_ROW_HIGHLIGHT : "transparent",
                 touchAction: "none",
                 cursor: editing ? (held ? "grabbing" : "grab") : "default",
                 zIndex: held ? 5 : undefined,
                 filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
-                transition: "background .2s ease",
-              }}
+              })}
             >
               <div
                 style={{
@@ -150,17 +157,21 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                     aria-hidden="true"
                   />
                 </Appear>
-                <span
+                <EditableText
+                  value={p.city}
+                  onCommit={(city) => renameZone(i, city)}
+                  ariaLabel={`Rename ${p.city}`}
+                  tooltip="Double-click to rename"
                   style={{
+                    display: "block",
                     fontSize: 13,
                     color: p.day ? "var(--fg)" : "var(--dim)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
-                >
-                  {p.city}
-                </span>
+                  inputStyle={{ fontSize: 13, minWidth: 60 }}
+                />
                 {!hideZone && tall && p.zoneLabel ? (
                   <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--faint)" }}>
                     {p.zoneLabel}
@@ -202,6 +213,14 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                       padding: 0,
                       display: "grid",
                       placeItems: "center",
+                      borderRadius: 999,
+                      transition: "color .15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "var(--danger)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--faint)";
                     }}
                   >
                     <LuX size={12} />
@@ -234,6 +253,13 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
             fontSize: 12,
             cursor: "pointer",
             alignSelf: "flex-start",
+            transition: "color .15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--accent)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--faint)";
           }}
         >
           <LuPlus size={12} /> Add a city

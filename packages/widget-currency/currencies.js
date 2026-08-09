@@ -1,0 +1,76 @@
+// Frankfurter's own currency set (ECB reference rates) — fixed and small
+// enough to bundle rather than fetch just to populate a picker. IRR is not
+// one of Frankfurter's currencies (it comes from irr.js instead) but lives
+// here too so it shares one symbol/name lookup with everything else.
+export const CURRENCIES = [
+  ["AUD", "Australian Dollar"],
+  ["BRL", "Brazilian Real"],
+  ["CAD", "Canadian Dollar"],
+  ["CHF", "Swiss Franc"],
+  ["CNY", "Chinese Renminbi Yuan"],
+  ["CZK", "Czech Koruna"],
+  ["DKK", "Danish Krone"],
+  ["EUR", "Euro"],
+  ["GBP", "British Pound"],
+  ["HKD", "Hong Kong Dollar"],
+  ["HUF", "Hungarian Forint"],
+  ["IDR", "Indonesian Rupiah"],
+  ["ILS", "Israeli New Shekel"],
+  ["INR", "Indian Rupee"],
+  ["IRR", "Iranian Rial"],
+  ["ISK", "Icelandic Krona"],
+  ["JPY", "Japanese Yen"],
+  ["KRW", "South Korean Won"],
+  ["MXN", "Mexican Peso"],
+  ["MYR", "Malaysian Ringgit"],
+  ["NOK", "Norwegian Krone"],
+  ["NZD", "New Zealand Dollar"],
+  ["PHP", "Philippine Peso"],
+  ["PLN", "Polish Zloty"],
+  ["RON", "Romanian Leu"],
+  ["SEK", "Swedish Krona"],
+  ["SGD", "Singapore Dollar"],
+  ["THB", "Thai Baht"],
+  ["TRY", "Turkish Lira"],
+  ["USD", "United States Dollar"],
+  ["ZAR", "South African Rand"],
+];
+
+// One consistent style — text symbols, not flags (a currency is not a
+// country). Codes with no widely-recognised symbol fall back to the code
+// itself at the call site rather than listing every one here.
+const SYMBOLS = {
+  AUD: "$",
+  BRL: "R$",
+  CAD: "$",
+  CHF: "Fr",
+  CNY: "¥",
+  CZK: "Kč",
+  DKK: "kr",
+  EUR: "€",
+  GBP: "£",
+  HKD: "$",
+  HUF: "Ft",
+  IDR: "Rp",
+  ILS: "₪",
+  INR: "₹",
+  IRR: "﷼",
+  ISK: "kr",
+  JPY: "¥",
+  KRW: "₩",
+  MXN: "$",
+  MYR: "RM",
+  NOK: "kr",
+  NZD: "$",
+  PHP: "₱",
+  PLN: "zł",
+  RON: "lei",
+  SEK: "kr",
+  SGD: "$",
+  THB: "฿",
+  TRY: "₺",
+  USD: "$",
+  ZAR: "R",
+};
+
+export const symbolFor = (code) => SYMBOLS[code] || code;

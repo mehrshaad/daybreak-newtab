@@ -90,6 +90,43 @@ export const HOVER_LIFT = {
   transform: "translateY(-1px)",
 };
 
+// One row in a widget's list — Tasks and World Clocks sit side by side on the
+// default board, so their rows have to read as the same object. Shared rather
+// than copied because the two used to drift: the padding matched on paper, but
+// World Clocks' taller mono time made its row 30px against Tasks' 27px, and
+// the highlights used different tokens. The height is pinned here so a row
+// stays the same size whatever it happens to contain.
+export const LIST_ROW_HEIGHT = 30;
+
+// `--panel`, not `--panel2`: the brighter token reads as a pressed state next
+// to a daytime World Clocks row.
+export const LIST_ROW_HIGHLIGHT = "var(--panel)";
+
+// How far a row's highlight reaches past its text column on each side, out to
+// the tile's own padding edge, so it reads as a full-width row.
+//
+// A row is therefore 2x this WIDER than the column it sits in. Anything that
+// scrolls such a list has to allow for that — matching horizontal padding on
+// the scroller, so the bleed happens inside it — or the extra width becomes
+// scrollable overflow and a vertically-scrolling list grows a horizontal
+// scrollbar along the bottom.
+export const LIST_BLEED = 8;
+
+export function listRow(extra) {
+  return {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    minHeight: `${LIST_ROW_HEIGHT}px`,
+    padding: `5px ${LIST_BLEED}px`,
+    margin: `0 -${LIST_BLEED}px`,
+    borderRadius: "8px",
+    minWidth: 0,
+    transition: "background .15s ease",
+    ...extra,
+  };
+}
+
 // The round 36px header controls.
 export function roundControl(extra) {
   return {

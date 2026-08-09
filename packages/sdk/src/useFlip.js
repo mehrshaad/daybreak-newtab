@@ -13,6 +13,12 @@ import { useLayoutEffect, useRef } from "react";
 // board treat individual app icons as though they were tiles.
 
 export const FLIP_DURATION = 380;
+// Reordering under the pointer wants to keep up with the hand, not glide:
+// at 380ms the neighbours are still sliding several slots later, which reads
+// as the board sloshing around behind the tile. Used whenever a drag is in
+// progress; everything else — resizing, adding, switching preset — keeps the
+// slower, more deliberate move.
+export const DRAG_FLIP_DURATION = 220;
 export const FLIP_EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 export const ENTER_DURATION = 260;
 
@@ -22,10 +28,19 @@ const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+// getBoundingClientRect reports an element's *transformed* box, so a tile
+// being positioned by hand (the one under the pointer, moved by
+// usePointerReorder) would measure wherever it currently appears rather than
+// where it is laid out. Clearing and restoring the transform inside one task
+// means nothing is painted in between — the same trick usePointerReorder uses
+// for exactly this reason.
 function measure(container) {
   const map = new Map();
   for (const node of container.querySelectorAll(FLIP_ITEMS)) {
+    const applied = node.style.transform;
+    if (applied) node.style.transform = "";
     map.set(node.dataset.flipId, node.getBoundingClientRect());
+    if (applied) node.style.transform = applied;
   }
   return map;
 }
@@ -41,6 +56,22 @@ export function useFlip(containerRef, deps, options = {}) {
     const container = containerRef.current;
     if (!container) return;
 
+    // Where every tile *appears* at this instant, in-flight transforms and
+    // all. Taken before the cancel below, because cancelling drops a tile
+    // straight onto its layout box: interrupt a move 80ms in and it is still
+    // ~116px from where it was heading, so restarting from the layout box
+    // alone is a visible lurch. A drag crosses slots far faster than
+    // FLIP_DURATION, so interrupting is the normal case, not the rare one.
+    const seen = measure(container);
+
+    // Cancel anything still in flight BEFORE measuring the layout, not while
+    // walking the nodes below. A running FLIP is mid-transform, and the
+    // measurement would report that transform as the tile's position — which
+    // then gets cached as `previous` and becomes the next change's starting
+    // point, inverting the tile from somewhere it never actually was.
+    for (const anim of running.current.values()) anim.cancel();
+    running.current.clear();
+
     const next = measure(container);
     const before = previous.current;
     previous.current = next;
@@ -54,9 +85,6 @@ export function useFlip(containerRef, deps, options = {}) {
 
       const last = next.get(id);
       const first = before.get(id);
-
-      running.current.get(id)?.cancel();
-      running.current.delete(id);
 
       if (!last || last.width === 0) continue;
 
@@ -73,8 +101,17 @@ export function useFlip(containerRef, deps, options = {}) {
         continue;
       }
 
-      const dx = first.left - last.left;
-      const dy = first.top - last.top;
+      // Whatever the cancelled animation was still applying. Adding it back
+      // starts this move from where the tile looked a moment ago rather than
+      // from its layout box, so an interrupted shuffle carries straight on
+      // instead of snapping backwards first. Zero when nothing was running,
+      // which leaves the ordinary case as plain FLIP.
+      const inFlight = seen.get(id);
+      const heldX = inFlight ? inFlight.left - last.left : 0;
+      const heldY = inFlight ? inFlight.top - last.top : 0;
+
+      const dx = first.left - last.left + heldX;
+      const dy = first.top - last.top + heldY;
       const sx = first.width / last.width;
       const sy = first.height / last.height;
 
@@ -90,7 +127,11 @@ export function useFlip(containerRef, deps, options = {}) {
           },
           { transformOrigin: "top left", transform: "none" },
         ],
-        { duration: FLIP_DURATION, easing: FLIP_EASING, fill: "none" }
+        {
+          duration: skipId ? DRAG_FLIP_DURATION : FLIP_DURATION,
+          easing: FLIP_EASING,
+          fill: "none",
+        }
       );
       running.current.set(id, anim);
     }

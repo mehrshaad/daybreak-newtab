@@ -107,6 +107,8 @@ export function Toggle({ on, label, onChange }) {
 }
 
 export function Slider({ label, value, min, max, step, suffix = "", onChange }) {
+  // Drives the filled portion of the custom track styled in base.scss.
+  const fill = `${((value - min) / (max - min)) * 100}%`;
   return (
     <div>
       <div
@@ -132,7 +134,7 @@ export function Slider({ label, value, min, max, step, suffix = "", onChange }) 
         value={value}
         aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: "100%", accentColor: "var(--accent)" }}
+        style={{ width: "100%", "--range-fill": fill }}
       />
     </div>
   );
@@ -198,7 +200,18 @@ export function Drawer({ open, onClose, width = 340, label, children }) {
           backdropFilter: "var(--blur-sheet)",
           boxShadow: "-18px 0 50px rgba(0,0,0,.22)",
           padding: "24px",
-          overflow: "auto",
+          // Vertical only. A drawer is a fixed-width column of settings; if
+          // something inside it ever fails to fit, the answer is to wrap or
+          // truncate it, never to make the whole panel slide sideways.
+          overflowY: "auto",
+          overflowX: "hidden",
+          // The board behind is taller than the viewport, so it has a scrollbar
+          // of its own. Without this, a wheel that reaches the end of the
+          // drawer keeps going into the page underneath: the board slides away
+          // behind the panel while the user is only trying to reach the last
+          // setting, and closing the drawer leaves them somewhere they never
+          // meant to scroll to.
+          overscrollBehavior: "contain",
           animation: closing
             ? `db-slide-out ${EXIT_MS}ms ease both`
             : "db-slide-in .3s cubic-bezier(.2,.8,.2,1) both",

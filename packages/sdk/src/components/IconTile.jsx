@@ -1,21 +1,29 @@
 import googleMark from "../assets/brand/google-favicon-2025.webp";
-import { brandFor, hashHue } from "../brands";
+import { brandForLink, glyphInk, hashHue } from "../brands";
+import { useSiteIcon } from "../useSiteIcon";
 
 // Google's current favicon, supplied as artwork rather than a monochrome path,
 // so it is used directly instead of being tinted like the glyph brands.
 const ARTWORK = { google: googleMark };
 
 // A rounded app-icon tile with a brand glyph, falling back to a monogram on a
-// hashed-hue gradient so any name renders something recognizable.
-function IconTile({ name = "", size = 40, radius, bare = false }) {
+// hashed-hue gradient so any name renders something recognizable. Pass `url`
+// wherever the thing has an address — it identifies the site far more reliably
+// than whatever the user chose to call it.
+function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
   const key = String(name).toLowerCase().trim();
-  const brand = brandFor(name);
+  const brand = brandForLink(url, name);
   const hue = hashHue(key || "?");
   const Glyph = brand?.Glyph;
   const letter = String(name).trim()[0]?.toUpperCase() || "?";
 
   // Full-colour artwork wins over a tinted glyph where we have it.
   const artwork = ARTWORK[key];
+  // Only asked for where nothing better is already known, and only worth
+  // drawing once confirmed to be the site's own icon rather than Chrome's
+  // stand-in globe — see siteIcon.js. Hooks cannot sit below the early
+  // returns, so the conditions are in the argument instead.
+  const siteIcon = useSiteIcon(!brand && !artwork && !bare ? url : null);
   if (artwork) {
     return (
       <img
@@ -51,9 +59,50 @@ function IconTile({ name = "", size = 40, radius, bare = false }) {
     );
   }
 
+  // A verified site icon: its own artwork, so it sits inset on a neutral tile
+  // rather than being stretched to the full square — favicons are drawn to
+  // their own margins and a full-bleed one reads as too heavy next to the
+  // glyph tiles it shares a row with.
+  if (siteIcon) {
+    return (
+      <div
+        aria-hidden="true"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius ?? size * 0.28,
+          background: "var(--panel2)",
+          display: "grid",
+          placeItems: "center",
+          flex: "none",
+          boxShadow: "0 1px 2px rgba(0,0,0,.18)",
+        }}
+      >
+        <img
+          src={siteIcon}
+          alt=""
+          width={Math.round(size * 0.62)}
+          height={Math.round(size * 0.62)}
+          style={{
+            width: Math.round(size * 0.62),
+            height: Math.round(size * 0.62),
+            objectFit: "contain",
+            display: "block",
+            // The monogram was already on screen while this was being
+            // checked, so it arrives rather than snapping in.
+            animation: "db-menu .18s ease both",
+          }}
+        />
+      </div>
+    );
+  }
+
   const gradient = brand
     ? `linear-gradient(160deg, ${brand.from}, ${brand.to})`
     : `linear-gradient(160deg, hsl(${hue} 72% 64%), hsl(${(hue + 28) % 360} 68% 48%))`;
+  // The hashed hues are held at a lightness that always takes a white glyph;
+  // only the real brand colours reach far enough up the scale to need ink.
+  const ink = brand ? glyphInk(brand.to) : "#fff";
 
   return (
     <div
@@ -70,12 +119,12 @@ function IconTile({ name = "", size = 40, radius, bare = false }) {
       }}
     >
       {Glyph ? (
-        <Glyph size={Math.round(size * 0.5)} color="#fff" />
+        <Glyph size={Math.round(size * 0.5)} color={ink} />
       ) : (
         <span
           style={{
             fontSize: size * 0.42,
-            color: "#fff",
+            color: ink,
             fontWeight: 600,
             lineHeight: 1,
           }}

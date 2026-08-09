@@ -5,11 +5,15 @@ import {
   background,
   backgroundSwatch,
   baseColor,
+  darkenFor,
   luminance,
   normalizeAccent,
   onAccentFor,
   tokens,
+  WALLPAPERS,
 } from "./tokens";
+
+const contrast = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 
 describe("normalizeAccent", () => {
   it("keeps valid 6-digit hex", () => {
@@ -61,6 +65,33 @@ describe("onAccentFor", () => {
   });
 });
 
+describe("darkenFor", () => {
+  it("clears the default 4.5:1 target against a light background for every accent", () => {
+    for (const a of ACCENTS) {
+      const darkened = darkenFor(a);
+      expect(contrast(luminance(darkened), luminance("#f3f3f1"))).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("leaves an accent that already clears the target untouched", () => {
+    expect(darkenFor("#1a1a2e")).toBe("#1a1a2e");
+  });
+
+  it("darkens the near-white accent noticeably", () => {
+    const darkened = darkenFor("#e8e6df");
+    expect(luminance(darkened)).toBeLessThan(luminance("#e8e6df"));
+  });
+
+  it("never returns undefined or breaks on black/white", () => {
+    expect(darkenFor("#ffffff")).toMatch(/^#[0-9a-f]{6}$/);
+    expect(darkenFor("#000000")).toBe("#000000");
+  });
+
+  it("falls back to the default accent for invalid input", () => {
+    expect(darkenFor("nope")).toBe(darkenFor(DEFAULTS.accent));
+  });
+});
+
 describe("tokens", () => {
   it("derives the accent ramp with alpha suffixes", () => {
     const t = tokens("dark", "#6f9bff");
@@ -76,6 +107,17 @@ describe("tokens", () => {
     expect(d["--panel"]).not.toBe(l["--panel"]);
     expect(d["--danger"]).toBe("#ff8189");
     expect(l["--danger"]).toBe("#c0323c");
+  });
+
+  it("keeps --accentText as-is in dark theme but darkens it for light", () => {
+    const paleAccent = "#e8e6df";
+    const d = tokens("dark", paleAccent);
+    const l = tokens("light", paleAccent);
+    expect(d["--accentText"]).toBe(paleAccent);
+    expect(l["--accentText"]).not.toBe(paleAccent);
+    expect(contrast(luminance(l["--accentText"]), luminance("#f3f3f1"))).toBeGreaterThanOrEqual(
+      4.5
+    );
   });
 
   it("emits every token as a CSS custom property name", () => {
@@ -145,6 +187,38 @@ describe("background", () => {
   it("Dusk and Grain are distinct from Mesh and each other", () => {
     const made = ["Mesh", "Dusk", "Grain"].map((w) => background("dark", "#6f9bff", w));
     expect(new Set(made).size).toBe(3);
+  });
+
+  // The per-wallpaper checks above predate half the list. These cover whatever
+  // WALLPAPERS holds, so a new one cannot be added as a near-duplicate of an
+  // existing one or as something too faint to see.
+  it("every wallpaper in the list is distinct, in both themes and in the picker", () => {
+    for (const theme of ["dark", "light"]) {
+      const full = WALLPAPERS.map((w) => background(theme, "#6f9bff", w));
+      expect(new Set(full).size, `${theme} backgrounds`).toBe(WALLPAPERS.length);
+      const swatches = WALLPAPERS.map((w) => backgroundSwatch(theme, "#6f9bff", w));
+      expect(new Set(swatches).size, `${theme} swatches`).toBe(WALLPAPERS.length);
+    }
+  });
+
+  it("every wallpaper but Flat carries enough alpha to be seen", () => {
+    const strongest = (css) => {
+      const alphas = [...css.matchAll(/#[0-9a-f]{6}([0-9a-f]{2})/gi)].map(
+        (m) => parseInt(m[1], 16) / 255
+      );
+      return alphas.length ? Math.max(...alphas) : 0;
+    };
+    for (const theme of ["dark", "light"]) {
+      for (const wall of WALLPAPERS.filter((w) => w !== "Flat")) {
+        expect(strongest(background(theme, "#6f9bff", wall)), `${theme}/${wall}`).toBeGreaterThan(
+          0.1
+        );
+      }
+    }
+  });
+
+  it("the default wallpaper is one the list actually offers", () => {
+    expect(WALLPAPERS).toContain(DEFAULTS.wall);
   });
 
   it("defaults unknown wallpapers to Mesh", () => {

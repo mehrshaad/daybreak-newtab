@@ -3,9 +3,10 @@ import { greeting, MONO } from "@daybreak/sdk";
 // The design's hero carried invented copy ("2 meetings, 4 open tasks, and clear
 // skies until Thursday"). This builds the same line from what is actually on
 // the board, and simply omits any part it cannot source.
-function Hero({ name, summary, layoutName, tileCount }) {
+function Hero({ name, summary, layoutName, tileCount, onContextMenu }) {
   return (
     <div
+      onContextMenu={onContextMenu}
       style={{
         padding: "16px 28px 22px",
         display: "flex",

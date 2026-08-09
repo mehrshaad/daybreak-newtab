@@ -5,6 +5,8 @@ customizable widget dashboard — a grid of tiles you arrange yourself, with a
 clock, weather, world clocks, tasks, quick links and more. Built with React and
 Vite.
 
+[**Install from the Chrome Web Store**](https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen)
+
 ## Features
 
 - 🧩 **A board you arrange** — drag tiles around, resize them, and keep as many
@@ -13,7 +15,7 @@ Vite.
   choose from, including a camera zoom that scales the whole board toward the
   tile you picked.
 - 🎨 **Themed end to end** — dark and light (or follow your system), six accent
-  colours, eight generated backgrounds, and sliders for corner radius, tile
+  colours, twelve generated backgrounds, and sliders for corner radius, tile
   opacity and page zoom. Frosted glass on, or solid surfaces off.
 - 🛍️ **A widget browser** — search the catalog by name or category, read what
   each widget does and what it can access, and add or remove it in a click.
@@ -29,12 +31,18 @@ Vite.
 | Clock | Time and today's date, digital or as an analog face |
 | World Clocks | Up to four cities at once, reorderable, with a day-offset badge |
 | Weather | Conditions and the hours ahead; bigger sizes show more, not just larger |
+| Air quality | US AQI and PM2.5/PM10 for a city you pick |
 | Tasks | A to-do list with optional due dates |
-| Quick Links | Pinned shortcuts with generated app-style icons |
+| Quick Links | Pinned shortcuts with generated app-style icons, your own names, and a hover card with the site's real favicon |
 | Google Apps | The launcher grid, without the extra click |
-| Scratchpad | One text field that saves as you type |
+| Scratchpad | One text field that saves as you type, syncing up to 6KB |
 | Focus Timer | Pomodoro rounds with a long break every fourth |
 | Habits | A seven-day dot grid per habit, each with its own weekly target and goal |
+| Currency | Exchange rates for a base currency and up to five others |
+| Crypto | A short price watchlist with 24-hour change |
+| On this day | One historical event, changed daily, more on a taller tile |
+| News | Hacker News' top stories by default, or your own RSS/Atom feed |
+| Calendar | Your next two weeks of events from a pasted private iCal link |
 | Quote of the day | One line, changed daily |
 | Recent Tabs | Reopen what you closed by accident (optional permission) |
 
@@ -49,7 +57,7 @@ scratchpad text and habit history stays local. Nothing is sent to the
 developer — no analytics, no tracking, no accounts.
 
 The extension requests **one** permission up front: `storage`, to save your
-settings. Four more are **optional**, each requested only when you turn on the
+settings. Five more are **optional**, each requested only when you turn on the
 feature that needs it, and revocable at any time:
 
 | Permission | Used by |
@@ -58,22 +66,29 @@ feature that needs it, and revocable at any time:
 | `tabs` | search suggestions from the tabs you already have open |
 | `history` | search suggestions from pages you have visited |
 | `bookmarks` | search suggestions from your bookmarks (read-only) |
+| `favicon` | real site icons in search suggestions, from Chrome's own favicon cache — no request to the site |
 
-It never asks for access to the content of the sites you visit, and declares no
-host permissions.
+It declares no host permissions up front, so it starts with no standing access
+to any site's content. Calendar and a custom News feed instead ask Chrome, at
+the moment you paste the address in, for access to that **one** address only —
+never a blanket grant.
 
-The only outbound requests are your chosen **city** to
-[Open-Meteo](https://open-meteo.com/) for weather — no API key and no account —
-and your **search queries** to whichever engine you've selected. Icons and
-backgrounds are bundled or generated, so simply opening a new tab contacts
-nobody. Full policy:
+The only outbound requests are: your chosen **city** to
+[Open-Meteo](https://open-meteo.com/) for weather and air quality — no API key
+and no account; your currency/coin choices to Frankfurter and CoinGecko;
+today's date (never the year) to Wikipedia's on-this-day feed; Hacker News' own
+public API, or a feed you choose instead; a calendar address you paste in,
+fetched only from its own provider; and your **search queries** to whichever
+engine you've selected. Icons and backgrounds are bundled or generated, so
+simply opening a new tab contacts nobody. Full policy:
 [Privacy Policy](https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html).
 
 ## Install
 
 ### Chrome Web Store
 
-_Coming soon._
+[**Daybreak - New Tab**](https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen)
+— add it to Chrome and open a new tab. Updates arrive automatically.
 
 ### Load unpacked
 
