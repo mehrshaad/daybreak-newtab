@@ -1,15 +1,17 @@
 import googleMark from "../assets/brand/google-favicon-2025.webp";
-import { brandFor, hashHue } from "../brands";
+import { brandForLink, glyphInk, hashHue } from "../brands";
 
 // Google's current favicon, supplied as artwork rather than a monochrome path,
 // so it is used directly instead of being tinted like the glyph brands.
 const ARTWORK = { google: googleMark };
 
 // A rounded app-icon tile with a brand glyph, falling back to a monogram on a
-// hashed-hue gradient so any name renders something recognizable.
-function IconTile({ name = "", size = 40, radius, bare = false }) {
+// hashed-hue gradient so any name renders something recognizable. Pass `url`
+// wherever the thing has an address — it identifies the site far more reliably
+// than whatever the user chose to call it.
+function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
   const key = String(name).toLowerCase().trim();
-  const brand = brandFor(name);
+  const brand = brandForLink(url, name);
   const hue = hashHue(key || "?");
   const Glyph = brand?.Glyph;
   const letter = String(name).trim()[0]?.toUpperCase() || "?";
@@ -54,6 +56,9 @@ function IconTile({ name = "", size = 40, radius, bare = false }) {
   const gradient = brand
     ? `linear-gradient(160deg, ${brand.from}, ${brand.to})`
     : `linear-gradient(160deg, hsl(${hue} 72% 64%), hsl(${(hue + 28) % 360} 68% 48%))`;
+  // The hashed hues are held at a lightness that always takes a white glyph;
+  // only the real brand colours reach far enough up the scale to need ink.
+  const ink = brand ? glyphInk(brand.to) : "#fff";
 
   return (
     <div
@@ -70,12 +75,12 @@ function IconTile({ name = "", size = 40, radius, bare = false }) {
       }}
     >
       {Glyph ? (
-        <Glyph size={Math.round(size * 0.5)} color="#fff" />
+        <Glyph size={Math.round(size * 0.5)} color={ink} />
       ) : (
         <span
           style={{
             fontSize: size * 0.42,
-            color: "#fff",
+            color: ink,
             fontWeight: 600,
             lineHeight: 1,
           }}

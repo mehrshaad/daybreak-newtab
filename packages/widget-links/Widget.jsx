@@ -79,7 +79,17 @@ function Links({ options, config, setConfig, size, editing, columns }) {
   const iconSize = hideLabels ? Math.round(baseIconSize * 1.3) : baseIconSize;
 
   const gridItems = useMemo(
-    () => items.map((l) => ({ key: l.id, name: l.name, title: l.url, iconName: l.name })),
+    () =>
+      items.map((l) => ({
+        key: l.id,
+        name: l.name,
+        title: l.url,
+        // Both, in that order of authority: the address names the site even
+        // when the user called it "Work", and the label still gets its say
+        // for an address we don't recognise.
+        iconUrl: l.url,
+        iconName: l.name,
+      })),
     [items]
   );
 
@@ -127,7 +137,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
               <Favicon
                 url={link.url}
                 size={20}
-                fallback={<IconTile name={link.name} size={20} />}
+                fallback={<IconTile name={link.name} url={link.url} size={20} />}
               />
               <div style={{ minWidth: 0 }}>
                 <div

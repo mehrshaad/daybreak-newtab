@@ -1,9 +1,50 @@
 import {
+  SiAirbnb,
+  SiAirtable,
+  SiAliexpress,
+  SiAmazon,
+  SiAnthropic,
   SiApple,
+  SiApplemusic,
+  SiArxiv,
+  SiAsana,
+  SiBandcamp,
+  SiBehance,
+  SiBinance,
+  SiBitbucket,
+  SiBluesky,
+  SiBrave,
+  SiBuymeacoffee,
+  SiCanva,
+  SiClaude,
+  SiClickup,
+  SiCloudflare,
+  SiCodepen,
+  SiCodesandbox,
+  SiCoinbase,
+  SiConfluence,
+  SiCoursera,
+  SiCrunchyroll,
+  SiDevdotto,
+  SiDigitalocean,
+  SiDiscord,
+  SiDocker,
+  SiDribbble,
   SiDropbox,
   SiDuckduckgo,
+  SiDuolingo,
+  SiEbay,
+  SiEdx,
+  SiEpicgames,
+  SiEvernote,
+  SiFacebook,
+  SiFigma,
+  SiFirebase,
+  SiFirefox,
   SiGithub,
+  SiGitlab,
   SiGmail,
+  SiGoodreads,
   SiGoogle,
   SiGoogleanalytics,
   SiGooglecalendar,
@@ -34,19 +75,92 @@ import {
   SiGoogleslides,
   SiGoogletasks,
   SiGoogletranslate,
+  SiGrammarly,
+  SiHackerrank,
+  SiHashnode,
+  SiHeroku,
+  SiHuggingface,
+  SiImdb,
   SiInstagram,
+  SiItchdotio,
+  SiJellyfin,
+  SiJira,
+  SiJupyter,
+  SiKaggle,
+  SiKhanacademy,
+  SiKofi,
+  SiKubernetes,
+  SiLeetcode,
+  SiLetterboxd,
+  SiLine,
+  SiLinear,
   SiLinkedin,
+  SiMastodon,
+  SiMedium,
   SiMega,
+  SiMessenger,
+  SiMiro,
+  SiMongodb,
   SiNetflix,
+  SiNetlify,
+  SiNintendo,
   SiNotion,
+  SiNpm,
+  SiObsidian,
   SiOpenai,
+  SiOpera,
+  SiOverleaf,
+  SiPatreon,
+  SiPaypal,
+  SiPerplexity,
+  SiPinterest,
+  SiPlaystation,
+  SiPlex,
+  SiPostgresql,
+  SiPrimevideo,
+  SiProtonmail,
+  SiQuora,
   SiReddit,
+  SiRedis,
+  SiRevolut,
+  SiSafari,
+  SiSignal,
   SiSlack,
+  SiSnapchat,
+  SiSoundcloud,
   SiSpotify,
+  SiStackexchange,
+  SiStackoverflow,
+  SiSteam,
+  SiStripe,
+  SiSubstack,
+  SiSupabase,
   SiTelegram,
+  SiThreads,
+  SiTidal,
+  SiTiktok,
+  SiTodoist,
+  SiTrello,
+  SiTripadvisor,
+  SiTumblr,
+  SiTwitch,
+  SiUber,
+  SiUdemy,
+  SiUnsplash,
+  SiVercel,
+  SiViber,
+  SiVimeo,
+  SiVk,
+  SiWechat,
   SiWhatsapp,
+  SiWikipedia,
+  SiWise,
   SiX,
+  SiYcombinator,
   SiYoutube,
+  SiZapier,
+  SiZoho,
+  SiZoom,
 } from "react-icons/si";
 import { SiMicrosoftbing } from "./components/brandIcons";
 
@@ -117,7 +231,203 @@ export const BRANDS = {
   fonts: { Glyph: SiGooglefonts, from: "#5a9bff", to: "#4285f4" },
   // The Google G is the authentic mark for the account entry itself.
   account: { Glyph: SiGoogle, from: "#5a9bff", to: "#3d6fe0" },
+
+
+  // social and messaging
+  facebook: { Glyph: SiFacebook, from: "#488eff", to: "#0866ff" },
+  messenger: { Glyph: SiMessenger, from: "#42c6ff", to: "#00b2ff" },
+  tiktok: { Glyph: SiTiktok, from: "#424242", to: "#000000" },
+  snapchat: { Glyph: SiSnapchat, from: "#fffd42", to: "#fffc00" },
+  pinterest: { Glyph: SiPinterest, from: "#ce4857", to: "#bd081c" },
+  tumblr: { Glyph: SiTumblr, from: "#6a7687", to: "#36465d" },
+  mastodon: { Glyph: SiMastodon, from: "#8c8cff", to: "#6364ff" },
+  threads: { Glyph: SiThreads, from: "#424242", to: "#000000" },
+  bluesky: { Glyph: SiBluesky, from: "#44a5ff", to: "#0285ff" },
+  discord: { Glyph: SiDiscord, from: "#838df5", to: "#5865f2" },
+  signal: { Glyph: SiSignal, from: "#6d9af4", to: "#3a76f0" },
+  wechat: { Glyph: SiWechat, from: "#47d189", to: "#07c160" },
+  line: { Glyph: SiLine, from: "#42d342", to: "#00c300" },
+  viber: { Glyph: SiViber, from: "#9789f5", to: "#7360f2" },
+  vk: { Glyph: SiVk, from: "#429aff", to: "#0077ff" },
+
+  // media and streaming
+  twitch: { Glyph: SiTwitch, from: "#ae76ff", to: "#9146ff" },
+  vimeo: { Glyph: SiVimeo, from: "#56caef", to: "#1ab7ea" },
+  soundcloud: { Glyph: SiSoundcloud, from: "#ff8142", to: "#ff5500" },
+  applemusic: { Glyph: SiApplemusic, from: "#fb5d6f", to: "#fa243c" },
+  tidal: { Glyph: SiTidal, from: "#424242", to: "#000000" },
+  bandcamp: { Glyph: SiBandcamp, from: "#72a3b0", to: "#408294" },
+  crunchyroll: { Glyph: SiCrunchyroll, from: "#f7995b", to: "#f47521" },
+  primevideo: { Glyph: SiPrimevideo, from: "#42bfe9", to: "#00a8e1" },
+  plex: { Glyph: SiPlex, from: "#f0c442", to: "#ebaf00" },
+  jellyfin: { Glyph: SiJellyfin, from: "#42bce5", to: "#00a4dc" },
+
+  // shopping and travel
+  amazon: { Glyph: SiAmazon, from: "#ffb442", to: "#ff9900" },
+  ebay: { Glyph: SiEbay, from: "#ec676c", to: "#e53238" },
+  aliexpress: { Glyph: SiAliexpress, from: "#ff7777", to: "#ff4747" },
+  airbnb: { Glyph: SiAirbnb, from: "#ff8589", to: "#ff5a5f" },
+  uber: { Glyph: SiUber, from: "#424242", to: "#000000" },
+  tripadvisor: { Glyph: SiTripadvisor, from: "#69e8b9", to: "#34e0a1" },
+
+  // development
+  stackoverflow: { Glyph: SiStackoverflow, from: "#f8a15e", to: "#f58025" },
+  stackexchange: { Glyph: SiStackexchange, from: "#5980b2", to: "#1e5397" },
+  gitlab: { Glyph: SiGitlab, from: "#fd935e", to: "#fc6d26" },
+  bitbucket: { Glyph: SiBitbucket, from: "#427fd9", to: "#0052cc" },
+  npm: { Glyph: SiNpm, from: "#d96c6b", to: "#cb3837" },
+  docker: { Glyph: SiDocker, from: "#5db1f2", to: "#2496ed" },
+  kubernetes: { Glyph: SiKubernetes, from: "#6792ec", to: "#326ce5" },
+  vercel: { Glyph: SiVercel, from: "#424242", to: "#000000" },
+  netlify: { Glyph: SiNetlify, from: "#42d6ca", to: "#00c7b7" },
+  cloudflare: { Glyph: SiCloudflare, from: "#f6a15a", to: "#f38020" },
+  digitalocean: { Glyph: SiDigitalocean, from: "#42a1ff", to: "#0080ff" },
+  heroku: { Glyph: SiHeroku, from: "#7442b3", to: "#430098" },
+  mongodb: { Glyph: SiMongodb, from: "#77ba78", to: "#47a248" },
+  postgresql: { Glyph: SiPostgresql, from: "#7290e9", to: "#4169e1" },
+  redis: { Glyph: SiRedis, from: "#ff756c", to: "#ff4438" },
+  supabase: { Glyph: SiSupabase, from: "#71dbab", to: "#3fcf8e" },
+  firebase: { Glyph: SiFirebase, from: "#e66342", to: "#dd2c00" },
+  codepen: { Glyph: SiCodepen, from: "#424242", to: "#000000" },
+  codesandbox: { Glyph: SiCodesandbox, from: "#525252", to: "#151515" },
+  leetcode: { Glyph: SiLeetcode, from: "#ffb953", to: "#ffa116" },
+  hackerrank: { Glyph: SiHackerrank, from: "#42ef8c", to: "#00ea64" },
+  kaggle: { Glyph: SiKaggle, from: "#5acfff", to: "#20beff" },
+  jupyter: { Glyph: SiJupyter, from: "#f69a5e", to: "#f37626" },
+
+  // work and planning
+  jira: { Glyph: SiJira, from: "#427fd9", to: "#0052cc" },
+  confluence: { Glyph: SiConfluence, from: "#53627b", to: "#172b4d" },
+  trello: { Glyph: SiTrello, from: "#427fd9", to: "#0052cc" },
+  asana: { Glyph: SiAsana, from: "#f49191", to: "#f06a6a" },
+  clickup: { Glyph: SiClickup, from: "#9d8ff2", to: "#7b68ee" },
+  linear: { Glyph: SiLinear, from: "#8891de", to: "#5e6ad2" },
+  figma: { Glyph: SiFigma, from: "#f57c59", to: "#f24e1e" },
+  canva: { Glyph: SiCanva, from: "#42d3d9", to: "#00c4cc" },
+  miro: { Glyph: SiMiro, from: "#ffdc65", to: "#ffd02f" },
+  airtable: { Glyph: SiAirtable, from: "#54d0ff", to: "#18bfff" },
+  zapier: { Glyph: SiZapier, from: "#ff7d42", to: "#ff4f00" },
+  zoom: { Glyph: SiZoom, from: "#4a86ff", to: "#0b5cff" },
+  obsidian: { Glyph: SiObsidian, from: "#9e6df2", to: "#7c3aed" },
+  todoist: { Glyph: SiTodoist, from: "#eb7467", to: "#e44332" },
+  evernote: { Glyph: SiEvernote, from: "#42bf64", to: "#00a82d" },
+  grammarly: { Glyph: SiGrammarly, from: "#44a094", to: "#027e6f" },
+  dribbble: { Glyph: SiDribbble, from: "#ef7ba8", to: "#ea4c89" },
+  behance: { Glyph: SiBehance, from: "#5390ff", to: "#1769ff" },
+
+  // reading and reference
+  wikipedia: { Glyph: SiWikipedia, from: "#8c8c8e", to: "#636466" },
+  medium: { Glyph: SiMedium, from: "#424242", to: "#000000" },
+  substack: { Glyph: SiSubstack, from: "#ff8f55", to: "#ff6719" },
+  devto: { Glyph: SiDevdotto, from: "#4a4a4a", to: "#0a0a0a" },
+  hashnode: { Glyph: SiHashnode, from: "#618bff", to: "#2962ff" },
+  quora: { Glyph: SiQuora, from: "#cb625f", to: "#b92b27" },
+  goodreads: { Glyph: SiGoodreads, from: "#6b5b50", to: "#372213" },
+  imdb: { Glyph: SiImdb, from: "#f8d454", to: "#f5c518" },
+  letterboxd: { Glyph: SiLetterboxd, from: "#42e16a", to: "#00d735" },
+  arxiv: { Glyph: SiArxiv, from: "#c75656", to: "#b31b1b" },
+  overleaf: { Glyph: SiOverleaf, from: "#77b972", to: "#47a141" },
+  ycombinator: { Glyph: SiYcombinator, from: "#f48d65", to: "#f0652f" },
+
+  // money
+  paypal: { Glyph: SiPaypal, from: "#4266a6", to: "#003087" },
+  stripe: { Glyph: SiStripe, from: "#8c86ff", to: "#635bff" },
+  wise: { Glyph: SiWise, from: "#b8ee95", to: "#9fe870" },
+  revolut: { Glyph: SiRevolut, from: "#555759", to: "#191c1f" },
+  coinbase: { Glyph: SiCoinbase, from: "#427fff", to: "#0052ff" },
+  binance: { Glyph: SiBinance, from: "#f4cb4a", to: "#f0b90b" },
+
+  // learning
+  duolingo: { Glyph: SiDuolingo, from: "#83d944", to: "#58cc02" },
+  coursera: { Glyph: SiCoursera, from: "#4282de", to: "#0056d2" },
+  udemy: { Glyph: SiUdemy, from: "#bc6af4", to: "#a435f0" },
+  khanacademy: { Glyph: SiKhanacademy, from: "#51d0b1", to: "#14bf96" },
+  edx: { Glyph: SiEdx, from: "#445e62", to: "#02262b" },
+
+  // games
+  steam: { Glyph: SiSteam, from: "#53565b", to: "#171a21" },
+  epicgames: { Glyph: SiEpicgames, from: "#676767", to: "#313131" },
+  playstation: { Glyph: SiPlaystation, from: "#426bae", to: "#003791" },
+  nintendo: { Glyph: SiNintendo, from: "#ed4250", to: "#e60012" },
+  itch: { Glyph: SiItchdotio, from: "#fb8686", to: "#fa5c5c" },
+
+  // ai
+  claude: { Glyph: SiClaude, from: "#e39a83", to: "#d97757" },
+  anthropic: { Glyph: SiAnthropic, from: "#555555", to: "#191919" },
+  perplexity: { Glyph: SiPerplexity, from: "#59cada", to: "#1fb8cd" },
+  huggingface: { Glyph: SiHuggingface, from: "#ffde59", to: "#ffd21e" },
+
+  // browsers and mail
+  brave: { Glyph: SiBrave, from: "#fc8062", to: "#fb542b" },
+  firefox: { Glyph: SiFirefox, from: "#ff966c", to: "#ff7139" },
+  opera: { Glyph: SiOpera, from: "#ff5664", to: "#ff1b2d" },
+  safari: { Glyph: SiSafari, from: "#4292ff", to: "#006cff" },
+  protonmail: { Glyph: SiProtonmail, from: "#9379ff", to: "#6d4aff" },
+  zoho: { Glyph: SiZoho, from: "#eb5e5f", to: "#e42527" },
+
+  // creators
+  patreon: { Glyph: SiPatreon, from: "#424242", to: "#000000" },
+  kofi: { Glyph: SiKofi, from: "#ff8886", to: "#ff5e5b" },
+  buymeacoffee: { Glyph: SiBuymeacoffee, from: "#ffe642", to: "#ffdd00" },
+  unsplash: { Glyph: SiUnsplash, from: "#424242", to: "#000000" },
 };
+
+// Hosts whose brand cannot be read off the address itself. Everything absent
+// from here resolves by its own name — github.com is `github`, notion.so is
+// `notion` — so only the genuine mismatches are listed: Google's per-service
+// subdomains, short share domains, and the few brands whose key differs from
+// the domain they answer on.
+const HOST_BRANDS = {
+  "google.com": "google",
+  "mail.google.com": "gmail",
+  "drive.google.com": "drive",
+  "calendar.google.com": "calendar",
+  "docs.google.com": "docs",
+  "sheets.google.com": "sheets",
+  "slides.google.com": "slides",
+  "forms.google.com": "forms",
+  "keep.google.com": "keep",
+  "tasks.google.com": "tasks",
+  "photos.google.com": "photos",
+  "maps.google.com": "maps",
+  "meet.google.com": "meet",
+  "chat.google.com": "chat",
+  "messages.google.com": "messages",
+  "news.google.com": "news",
+  "play.google.com": "play",
+  "translate.google.com": "translate",
+  "classroom.google.com": "classroom",
+  "scholar.google.com": "scholar",
+  "colab.google.com": "colab",
+  "colab.research.google.com": "colab",
+  "gemini.google.com": "gemini",
+  "analytics.google.com": "analytics",
+  "cloud.google.com": "cloud",
+  "fonts.google.com": "fonts",
+  "earth.google.com": "earth",
+  "lens.google.com": "lens",
+  "fit.google.com": "fit",
+  "pay.google.com": "pay",
+  "home.google.com": "home",
+  "myaccount.google.com": "account",
+  "accounts.google.com": "account",
+
+  "youtu.be": "youtube",
+  "t.me": "telegram",
+  "wa.me": "whatsapp",
+  "amzn.to": "amazon",
+  "dev.to": "devto",
+  "ko-fi.com": "kofi",
+  "news.ycombinator.com": "ycombinator",
+  "chat.openai.com": "chatgpt",
+  "music.apple.com": "applemusic",
+  "proton.me": "protonmail",
+  "twitter.com": "twitter",
+};
+
+// Domains that sit one level deeper than a bare TLD, so the brand label is the
+// part before them rather than before the last dot: "bbc.co.uk" is bbc, not co.
+const SECOND_LEVEL = new Set(["co", "com", "org", "net", "ac", "gov", "edu"]);
 
 export function hashHue(str) {
   let h = 0;
@@ -125,15 +435,69 @@ export function hashHue(str) {
   return h;
 }
 
-// Resolve a display name (or a URL host) to a brand entry.
+// A brand's own colour decides whether its glyph reads as white or as ink.
+// Several authentic marks are bright yellow or lime — Snapchat, Buy Me a
+// Coffee, Hugging Face, Wise — and a white glyph on those is close to
+// invisible. Rec. 709 luminance, with the threshold set so the existing
+// mid-tone brands keep the white glyph they were designed around.
+export function glyphInk(hex) {
+  const n = parseInt(String(hex).slice(1), 16);
+  if (Number.isNaN(n)) return "#fff";
+  const r = ((n >> 16) & 255) / 255;
+  const g = ((n >> 8) & 255) / 255;
+  const b = (n & 255) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.62 ? "#1a1a1a" : "#fff";
+}
+
+// Resolve a display name to a brand entry.
 export function brandFor(name) {
   const key = String(name || "").toLowerCase().trim();
   if (BRANDS[key]) return BRANDS[key];
   // "Google Drive" -> "drive"
   const stripped = key.replace(/^google\s+/, "");
   if (BRANDS[stripped]) return BRANDS[stripped];
-  // "mail.google.com" -> "gmail", "github.com" -> "github"
+  // A bare host handed in as a name: "github.com" -> "github".
   const host = key.replace(/^www\./, "").split(".")[0];
   if (BRANDS[host]) return BRANDS[host];
   return null;
+}
+
+function hostOf(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`);
+    return parsed.hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+// The address is a far better signal than the label the user typed above it:
+// a link they called "Work" still deserves its real mark, and one called
+// "Mail" should not be guessed at. Longest host match wins, so
+// mail.google.com is Gmail rather than Google.
+export function brandForUrl(url) {
+  const host = hostOf(url);
+  if (!host) return null;
+
+  const parts = host.split(".");
+  for (let i = 0; i < parts.length; i += 1) {
+    const named = HOST_BRANDS[parts.slice(i).join(".")];
+    if (named && BRANDS[named]) return BRANDS[named];
+  }
+
+  // Otherwise the domain's own label: "en.wikipedia.org" -> wikipedia.
+  if (parts.length < 2) return BRANDS[parts[0]] || null;
+  const tail = parts[parts.length - 1];
+  const deep = parts.length >= 3 && tail.length === 2 && SECOND_LEVEL.has(parts[parts.length - 2]);
+  return BRANDS[parts[parts.length - (deep ? 3 : 2)]] || null;
+}
+
+// What a quick link should wear. The address decides it where we know the
+// site, the user's own label is the second opinion, and a monogram on a hue
+// hashed from the name is what is left — always something, never a borrowed
+// mark and never an empty square.
+export function brandForLink(url, name) {
+  return brandForUrl(url) || brandFor(name);
 }

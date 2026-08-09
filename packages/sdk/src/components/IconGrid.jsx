@@ -98,7 +98,11 @@ function IconGridItem({
           setHovered(false);
         }}
       >
-        <IconTile name={item.iconName || item.key || item.name} size={iconSize} />
+        <IconTile
+          name={item.iconName || item.key || item.name}
+          url={item.iconUrl}
+          size={iconSize}
+        />
         {showLabels ? (
           <span
             style={{
