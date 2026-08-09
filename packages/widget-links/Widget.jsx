@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { LuPlus } from "react-icons/lu";
-import { Favicon, IconGrid, IconTile, MONO, moveItem, uid } from "@daybreak/sdk";
+import { Favicon, IconGrid, IconTile, MONO, moveItem, Popover, uid } from "@daybreak/sdk";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.
@@ -63,10 +63,20 @@ function Links({ options, config, setConfig, size, editing, columns }) {
   const [adding, setAdding] = useState(false);
   const [draftUrl, setDraftUrl] = useState("");
   const [draftName, setDraftName] = useState("");
+  const addBtnRef = useRef(null);
+
+  const closeAdd = () => {
+    setAdding(false);
+    setDraftUrl("");
+    setDraftName("");
+  };
 
   // Columns follow the tile width so icons fill the space at every size.
   const cols = Math.max(3, Math.min(size[0], columns));
-  const iconSize = Math.max(24, Math.min(42, Math.round(150 / cols)));
+  const baseIconSize = Math.max(24, Math.min(42, Math.round(150 / cols)));
+  // Without a label underneath, that row of vertical space is otherwise just
+  // left empty rather than going back into the icon itself.
+  const iconSize = hideLabels ? Math.round(baseIconSize * 1.3) : baseIconSize;
 
   const gridItems = useMemo(
     () => items.map((l) => ({ key: l.id, name: l.name, title: l.url, iconName: l.name })),
@@ -88,9 +98,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
     if (!url) return;
     const name = draftName.trim() || nameFromUrl(url);
     setConfig({ items: [...items, { id: uid(), name, url }] });
-    setDraftUrl("");
-    setDraftName("");
-    setAdding(false);
+    closeAdd();
   };
 
   const remove = (item) =>
@@ -102,7 +110,9 @@ function Links({ options, config, setConfig, size, editing, columns }) {
         items={gridItems}
         cols={cols}
         iconSize={iconSize}
-        gap={6}
+        // Matches the icon-to-label gap inside each item, so horizontal and
+        // vertical rhythm read as the same spacing scaled by icon size.
+        gap={Math.max(4, Math.round(iconSize * 0.16))}
         showLabels={!hideLabels}
         onOpen={open}
         onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
@@ -148,102 +158,98 @@ function Links({ options, config, setConfig, size, editing, columns }) {
           );
         }}
         trailing={
-          adding ? (
-            <form
-              onSubmit={add}
-              onClick={(e) => e.stopPropagation()}
-              onBlur={(e) => {
-                if (e.currentTarget.contains(e.relatedTarget)) return;
-                if (!draftUrl && !draftName) setAdding(false);
-              }}
+          <button
+            ref={addBtnRef}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAdding((v) => !v);
+            }}
+            aria-label="Add a link"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: Math.max(4, Math.round(iconSize * 0.16)),
+              padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
+              borderRadius: 12,
+              cursor: "pointer",
+              border: 0,
+              background: "transparent",
+              color: "var(--faint)",
+              width: "100%",
+              animation: "db-menu .16s ease both",
+              transition: "color .2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--accent)";
+              e.currentTarget.firstElementChild.style.borderColor = "var(--accent)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--faint)";
+              e.currentTarget.firstElementChild.style.borderColor = "var(--line)";
+            }}
+          >
+            <span
               style={{
-                gridColumn: "span 2",
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                alignSelf: "center",
-                animation: "db-menu .16s ease both",
+                width: iconSize,
+                height: iconSize,
+                borderRadius: iconSize * 0.28,
+                border: "1.5px dashed var(--line)",
+                display: "grid",
+                placeItems: "center",
+                transition: "border-color .2s",
               }}
             >
-              <label style={FIELD_LABEL_STYLE}>
-                Name
-                <input
-                  autoFocus
-                  value={draftName}
-                  onChange={(e) => setDraftName(e.target.value)}
-                  placeholder="Optional"
-                  aria-label="Link name"
-                  style={FIELD_INPUT_STYLE}
-                />
-              </label>
-              <label style={FIELD_LABEL_STYLE}>
-                Link
-                <input
-                  value={draftUrl}
-                  onChange={(e) => setDraftUrl(e.target.value)}
-                  placeholder="example.com"
-                  aria-label="Link address"
-                  style={FIELD_INPUT_STYLE}
-                />
-              </label>
-              {/* A form with two text fields and no button does not submit
-                  on Enter — this restores that without a visible button. */}
-              <button type="submit" style={{ display: "none" }} aria-hidden="true" />
-            </form>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setAdding(true);
-              }}
-              aria-label="Add a link"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: Math.max(4, Math.round(iconSize * 0.16)),
-                padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
-                borderRadius: 12,
-                cursor: "pointer",
-                border: 0,
-                background: "transparent",
-                color: "var(--faint)",
-                width: "100%",
-                animation: "db-menu .16s ease both",
-                transition: "color .2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--accent)";
-                e.currentTarget.firstElementChild.style.borderColor = "var(--accent)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--faint)";
-                e.currentTarget.firstElementChild.style.borderColor = "var(--line)";
-              }}
-            >
-              <span
-                style={{
-                  width: iconSize,
-                  height: iconSize,
-                  borderRadius: iconSize * 0.28,
-                  border: "1.5px dashed var(--line)",
-                  display: "grid",
-                  placeItems: "center",
-                  transition: "border-color .2s",
-                }}
-              >
-                <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
-              </span>
-              {hideLabels ? null : (
-                <span style={{ fontSize: Math.max(9, Math.round(iconSize * 0.3)) }}>Add</span>
-              )}
-            </button>
-          )
+              <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
+            </span>
+            {hideLabels ? null : (
+              <span style={{ fontSize: Math.max(9, Math.round(iconSize * 0.3)) }}>Add</span>
+            )}
+          </button>
         }
       />
 
+      {/* Floating rather than a grid item: an inline form used to grow the
+          grid's own row to fit two text fields, which shifted every icon
+          below it for as long as the form was open. A popover sits over the
+          board instead, so opening it never moves anything. */}
+      <Popover open={adding} anchorRef={addBtnRef} onClose={closeAdd} width={220}>
+        <form
+          onSubmit={add}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            padding: "10px 12px",
+          }}
+        >
+          <label style={FIELD_LABEL_STYLE}>
+            Name
+            <input
+              autoFocus
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              placeholder="Optional"
+              aria-label="Link name"
+              style={FIELD_INPUT_STYLE}
+            />
+          </label>
+          <label style={FIELD_LABEL_STYLE}>
+            Link
+            <input
+              value={draftUrl}
+              onChange={(e) => setDraftUrl(e.target.value)}
+              placeholder="example.com"
+              aria-label="Link address"
+              style={FIELD_INPUT_STYLE}
+            />
+          </label>
+          {/* A form with two text fields and no button does not submit
+              on Enter — this restores that without a visible button. */}
+          <button type="submit" style={{ display: "none" }} aria-hidden="true" />
+        </form>
+      </Popover>
     </div>
   );
 }
