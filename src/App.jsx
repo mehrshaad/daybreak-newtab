@@ -13,9 +13,8 @@ import Toast from "./components/Toast";
 import WelcomeCard from "./components/WelcomeCard";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
-import { essentialsFirst } from "./core/essentials";
 import { boardMenu, isEditableTarget, widgetMenu } from "./core/menus";
-import { DEFAULT_ZOOM_MODE, PRESETS, SAVED_LAYOUT } from "./core/schema";
+import { DEFAULT_ZOOM_MODE, presetBoardPatch, SAVED_LAYOUT } from "./core/schema";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
@@ -280,21 +279,11 @@ function App() {
 
   const applyPreset = useCallback(
     (name) => {
-      // A preset only places widgets that exist in this build, and adding one
-      // from a preset also marks it installed. Clock and weather lead every
-      // preset, so this holds even if a preset's own list is ever edited out
-      // of that order.
-      const next = essentialsFirst(knownIds(PRESETS[name] || []));
-      update("board", {
-        ids: next,
-        sizes: {},
-        layoutName: name,
-        installed: [...new Set([...board.installed, ...next])],
-      });
+      update("board", presetBoardPatch(name, board));
       closeZoom();
       toast(`${name} layout applied`);
     },
-    [board.installed, update, closeZoom, toast]
+    [board, update, closeZoom, toast]
   );
 
   // The user's own layout: a snapshot of ids and per-tile sizes, so restoring
