@@ -4,6 +4,9 @@ This goes out as **a new version of the existing listing**, not a new item. Open
 the current *Daybreak - New Tab* item in the developer dashboard and upload a new
 package; the item id, URL, installs, ratings and reviews all stay.
 
+The live listing:
+<https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen>
+
 Everything below is ready to paste.
 
 ## The package

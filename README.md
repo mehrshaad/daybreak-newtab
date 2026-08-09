@@ -5,6 +5,8 @@ customizable widget dashboard — a grid of tiles you arrange yourself, with a
 clock, weather, world clocks, tasks, quick links and more. Built with React and
 Vite.
 
+[**Install from the Chrome Web Store**](https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen)
+
 ## Features
 
 - 🧩 **A board you arrange** — drag tiles around, resize them, and keep as many
@@ -13,7 +15,7 @@ Vite.
   choose from, including a camera zoom that scales the whole board toward the
   tile you picked.
 - 🎨 **Themed end to end** — dark and light (or follow your system), six accent
-  colours, eight generated backgrounds, and sliders for corner radius, tile
+  colours, twelve generated backgrounds, and sliders for corner radius, tile
   opacity and page zoom. Frosted glass on, or solid surfaces off.
 - 🛍️ **A widget browser** — search the catalog by name or category, read what
   each widget does and what it can access, and add or remove it in a click.
@@ -85,7 +87,8 @@ simply opening a new tab contacts nobody. Full policy:
 
 ### Chrome Web Store
 
-_Coming soon._
+[**Daybreak - New Tab**](https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen)
+— add it to Chrome and open a new tab. Updates arrive automatically.
 
 ### Load unpacked
 

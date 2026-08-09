@@ -18,9 +18,11 @@ dist-ssr
 # Local env
 *.local
 
-# Implementation plans (local working docs, deliberately untracked). Not
-# anchored to the root: a copy moved into a subfolder should stay ignored too.
+# Implementation plans and the working to-do list (local docs, deliberately
+# untracked). Not anchored to the root: a copy moved into a subfolder should
+# stay ignored too.
 V*-PLAN.md
+TODO.md
 
 # Store upload artifact: rebuilt from dist/ whenever it changes.
 /store-assets/*.zip
