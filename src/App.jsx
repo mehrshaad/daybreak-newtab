@@ -19,7 +19,7 @@ import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
 import { background, baseColor, tokens } from "./core/tokens";
-import { useColumns } from "./core/useColumns";
+import { boardShift, useColumns, useViewportWidth } from "./core/useColumns";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { resolveTheme, useSystemTheme } from "./core/useSystemTheme";
 import { animateExit, clearBucket, hasPermissionsApi, moveItem, requestAllPermissions, usePresence } from "@daybreak/sdk";
@@ -67,6 +67,7 @@ function App() {
   const toastTimer = useRef(null);
   const scrolled = useScrolled();
   const columns = useColumns();
+  const viewportWidth = useViewportWidth();
 
   // Only render ids the catalog actually knows, so a widget removed from a
   // build can never leave an empty tile behind.
@@ -83,13 +84,12 @@ function App() {
   if (panel) lastPanel.current = panel;
   const panelId = panel || lastPanel.current;
 
-  // An open drawer overlaps the board on anything but a very wide window, so
-  // the content shifts left by the drawer's width instead of hiding under it.
+  // An open drawer overlaps the board on all but a very wide window, so the
+  // content moves left by however much it actually overlaps rather than hiding
+  // under it. Measured against the live width, so a resize while a drawer is
+  // open is accounted for too.
   const openDrawerWidth = settingsOpen ? 400 : panel ? 340 : 0;
-  const shift =
-    openDrawerWidth && typeof window !== "undefined" && window.innerWidth < 1600
-      ? openDrawerWidth
-      : 0;
+  const shift = boardShift(viewportWidth, openDrawerWidth);
 
   const toast = useCallback((message) => {
     clearTimeout(toastTimer.current);

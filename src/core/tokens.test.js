@@ -10,6 +10,7 @@ import {
   normalizeAccent,
   onAccentFor,
   tokens,
+  WALLPAPERS,
 } from "./tokens";
 
 const contrast = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
@@ -186,6 +187,38 @@ describe("background", () => {
   it("Dusk and Grain are distinct from Mesh and each other", () => {
     const made = ["Mesh", "Dusk", "Grain"].map((w) => background("dark", "#6f9bff", w));
     expect(new Set(made).size).toBe(3);
+  });
+
+  // The per-wallpaper checks above predate half the list. These cover whatever
+  // WALLPAPERS holds, so a new one cannot be added as a near-duplicate of an
+  // existing one or as something too faint to see.
+  it("every wallpaper in the list is distinct, in both themes and in the picker", () => {
+    for (const theme of ["dark", "light"]) {
+      const full = WALLPAPERS.map((w) => background(theme, "#6f9bff", w));
+      expect(new Set(full).size, `${theme} backgrounds`).toBe(WALLPAPERS.length);
+      const swatches = WALLPAPERS.map((w) => backgroundSwatch(theme, "#6f9bff", w));
+      expect(new Set(swatches).size, `${theme} swatches`).toBe(WALLPAPERS.length);
+    }
+  });
+
+  it("every wallpaper but Flat carries enough alpha to be seen", () => {
+    const strongest = (css) => {
+      const alphas = [...css.matchAll(/#[0-9a-f]{6}([0-9a-f]{2})/gi)].map(
+        (m) => parseInt(m[1], 16) / 255
+      );
+      return alphas.length ? Math.max(...alphas) : 0;
+    };
+    for (const theme of ["dark", "light"]) {
+      for (const wall of WALLPAPERS.filter((w) => w !== "Flat")) {
+        expect(strongest(background(theme, "#6f9bff", wall)), `${theme}/${wall}`).toBeGreaterThan(
+          0.1
+        );
+      }
+    }
+  });
+
+  it("the default wallpaper is one the list actually offers", () => {
+    expect(WALLPAPERS).toContain(DEFAULTS.wall);
   });
 
   it("defaults unknown wallpapers to Mesh", () => {

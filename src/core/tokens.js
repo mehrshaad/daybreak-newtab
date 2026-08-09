@@ -26,6 +26,10 @@ export const WALLPAPERS = [
   "Halo",
   "Ridge",
   "Nebula",
+  "Prism",
+  "Lattice",
+  "Tide",
+  "Spot",
 ];
 
 export const DEFAULTS = {
@@ -34,7 +38,7 @@ export const DEFAULTS = {
   // token lookup.
   theme: "system",
   accent: ACCENTS[0],
-  wall: "Mesh",
+  wall: "Nebula",
   radius: 18,
   // Tile opacity is absolute now (100% is a solid card), so the default sits
   // where the tile still reads as glass and the blur behind it is visible.
@@ -208,7 +212,7 @@ export const baseColor = (theme) => (theme !== "light" ? "#0a0b0e" : "#f3f3f1");
 // Shift a hex colour around the hue wheel, keeping its saturation and
 // lightness. Used by the multi-hue backgrounds so they stay tied to the chosen
 // accent instead of introducing arbitrary colours.
-export function rotateHue(hex, degrees) {
+function hslOf(hex) {
   const h = normalizeAccent(hex).slice(1);
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
   const max = Math.max(r, g, b);
@@ -223,8 +227,10 @@ export function rotateHue(hex, degrees) {
     else hue = (r - g) / d + 4;
     hue *= 60;
   }
-  hue = (((hue + degrees) % 360) + 360) % 360;
+  return [(((hue % 360) + 360) % 360), s, l];
+}
 
+function hexOfHsl(hue, s, l) {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
   const m = l - c / 2;
@@ -240,6 +246,30 @@ export function rotateHue(hex, degrees) {
   return `#${rgb.map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("")}`;
 }
 
+export function rotateHue(hex, degrees) {
+  const [hue, s, l] = hslOf(hex);
+  return hexOfHsl((((hue + degrees) % 360) + 360) % 360, s, l);
+}
+
+// A wallpaper is the accent laid over the base, so an accent already close to
+// the base has nothing to show: on the light theme every option built from the
+// near-white neutral came out the same plain page, whatever the gradients did.
+//
+// Only the lightness moves, and only downward — hue and saturation are left
+// alone, so a neutral accent stays neutral and simply becomes visible instead
+// of turning into a colour the user did not pick. The ceiling scales with
+// saturation because a saturated colour still reads at a lightness where a
+// grey has already disappeared: at full saturation it sits above every accent
+// in the palette and nothing changes at all.
+export function wallTint(accent, dark) {
+  const hex = normalizeAccent(accent);
+  // The dark base is far from every accent offered, so there is nothing to fix.
+  if (dark) return hex;
+  const [hue, s, l] = hslOf(hex);
+  const ceiling = 0.58 + 0.14 * Math.min(1, s);
+  return l <= ceiling ? hex : hexOfHsl(hue, s, ceiling);
+}
+
 // The design's own values were far too weak to read as different backgrounds:
 // in light theme Mesh resolved to an accent at 0.19 alpha over #f3f3f1 and
 // Grain to black at 0.03, so all four looked like the same flat page. These are
@@ -252,7 +282,8 @@ export function background(
 ) {
   const dark = theme !== "light";
   const base = baseColor(theme);
-  const a = normalizeAccent(accentInput);
+  // Floored so a near-white accent still produces a visible page.
+  const a = wallTint(accentInput, dark);
 
   if (wall === "Flat") return base;
 
@@ -319,7 +350,63 @@ export function background(
     );
   }
 
-  // Mesh is the default: two accent blooms plus a counter-light.
+  if (wall === "Prism") {
+    // Colour that changes with angle rather than with distance — the one
+    // option here not built out of blooms. The conic runs the accent through
+    // both of its thirds, and a radial closes it back to the base at the
+    // edges so it reads as light rather than as a colour wheel.
+    //
+    // Its origin sits above the viewport on purpose: every conic converges to
+    // a hard point at its centre, and on-screen that point is a visible pinch
+    // with all three hues meeting at it. Off the top edge, only the smooth
+    // part of the sweep is ever in view.
+    const b1 = rotateHue(a, 120);
+    const b2 = rotateHue(a, -120);
+    const s = dark ? "3a" : "46";
+    return (
+      `radial-gradient(1500px 1000px at 50% -18%, transparent 30%, ${base} 86%), ` +
+      `conic-gradient(from 232deg at 50% -18%, ${a}${s}, ${b1}${s}, ${b2}${s}, ${a}${s}), ` +
+      base
+    );
+  }
+
+  if (wall === "Lattice") {
+    // Fine ruling in both directions, lit from one corner. Grain and Ridge
+    // both run diagonally; this is the square one.
+    const line = dark ? `${a}1a` : `${a}24`;
+    return (
+      `repeating-linear-gradient(0deg, ${line} 0 1px, transparent 1px 28px), ` +
+      `repeating-linear-gradient(90deg, ${line} 0 1px, transparent 1px 28px), ` +
+      `radial-gradient(1000px 700px at 12% 6%, ${a}${dark ? "34" : "42"}, transparent 62%), ` +
+      base
+    );
+  }
+
+  if (wall === "Tide") {
+    // Light along the bottom edge instead of the top, so the board sits above
+    // the glow rather than inside it.
+    const alt = rotateHue(a, -35);
+    return (
+      `radial-gradient(1400px 420px at 50% 104%, ${a}${dark ? "52" : "60"}, transparent 68%), ` +
+      `radial-gradient(900px 300px at 14% 112%, ${alt}${dark ? "3a" : "46"}, transparent 66%), ` +
+      `linear-gradient(0deg, ${a}${dark ? "14" : "1c"}, transparent 46%), ` +
+      base
+    );
+  }
+
+  if (wall === "Spot") {
+    // One core behind the board closing to the base at the edges. Halo is a
+    // ring with its middle left empty; this is the filled version of it.
+    return (
+      `radial-gradient(900px 700px at 50% 26%, ${a}${dark ? "44" : "54"}, transparent 62%), ` +
+      `radial-gradient(1500px 1100px at 50% 30%, transparent 38%, ` +
+      `${dark ? "#00000066" : "#0b13261a"} 92%), ` +
+      base
+    );
+  }
+
+  // Mesh is what an unrecognised name falls back to: two accent blooms plus a
+  // counter-light.
   return (
     `radial-gradient(1100px 720px at 8% -12%, ${a}${dark ? "4a" : "5c"}, transparent 62%), ` +
     `radial-gradient(900px 640px at 96% 4%, ${a}${dark ? "2b" : "38"}, transparent 58%), ` +
@@ -333,7 +420,9 @@ export function background(
 export function backgroundSwatch(theme, accent, wall) {
   const dark = theme !== "light";
   const base = baseColor(theme);
-  const a = normalizeAccent(accent);
+  // Same flooring as the full page, so the picker cannot promise a
+  // background the page will not deliver.
+  const a = wallTint(accent, dark);
   if (wall === "Flat") return base;
   if (wall === "Dusk")
     return dark
@@ -370,6 +459,22 @@ export function backgroundSwatch(theme, accent, wall) {
       `radial-gradient(34px 30px at 56% 92%, ${b2}66, transparent 66%), ${base}`
     );
   }
+  if (wall === "Prism") {
+    const b1 = rotateHue(a, 120);
+    const b2 = rotateHue(a, -120);
+    return `conic-gradient(from 200deg at 50% 40%, ${a}90, ${b1}90, ${b2}90, ${a}90), ${base}`;
+  }
+  if (wall === "Lattice") {
+    const line = `${a}${dark ? "3a" : "48"}`;
+    return (
+      `repeating-linear-gradient(0deg, ${line} 0 1px, transparent 1px 8px), ` +
+      `repeating-linear-gradient(90deg, ${line} 0 1px, transparent 1px 8px), ${base}`
+    );
+  }
+  if (wall === "Tide")
+    return `radial-gradient(60px 22px at 50% 98%, ${a}95, transparent 68%), ${base}`;
+  if (wall === "Spot")
+    return `radial-gradient(30px 26px at 50% 42%, ${a}95, transparent 70%), ${base}`;
   return (
     `radial-gradient(46px 32px at 24% 12%, ${a}${dark ? "70" : "80"}, transparent 68%), ` +
     `radial-gradient(40px 30px at 88% 90%, ${a}40, transparent 65%), ${base}`

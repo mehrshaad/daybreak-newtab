@@ -205,6 +205,13 @@ export function Drawer({ open, onClose, width = 340, label, children }) {
           // truncate it, never to make the whole panel slide sideways.
           overflowY: "auto",
           overflowX: "hidden",
+          // The board behind is taller than the viewport, so it has a scrollbar
+          // of its own. Without this, a wheel that reaches the end of the
+          // drawer keeps going into the page underneath: the board slides away
+          // behind the panel while the user is only trying to reach the last
+          // setting, and closing the drawer leaves them somewhere they never
+          // meant to scroll to.
+          overscrollBehavior: "contain",
           animation: closing
             ? `db-slide-out ${EXIT_MS}ms ease both`
             : "db-slide-in .3s cubic-bezier(.2,.8,.2,1) both",
