@@ -90,7 +90,7 @@ not match the manifest is a common rejection.
 > Crypto · On this day · News · Calendar · Quote of the day · Recent Tabs
 >
 > MADE YOURS
-> Dark and light themes, or follow your system. Six accent colours, eight
+> Dark and light themes, or follow your system. Six accent colours, twelve
 > generated backgrounds, adjustable tile opacity, corner radius and page zoom.
 > Frosted glass, or solid surfaces if you prefer.
 >
@@ -132,6 +132,16 @@ not match the manifest is a common rejection.
 >   away
 > - Hover any icon-only control for a quick label — what it does, not just
 >   what it looks like
+> - Quick Links now show the real mark of the site they point at, resolved
+>   from the address rather than the name — so a link you called "Work" still
+>   arrives wearing its own icon. 114 brands built in, and Chrome's own cached
+>   favicon for anything outside that list
+> - Four more backgrounds — Prism, Lattice, Tide and Spot — and every one of
+>   them now reads properly on the neutral accent instead of coming out a
+>   plain page
+> - Dragging a tile is smooth the whole way across the board, including
+>   through a reorder, and the tile it would displace is outlined as you go
+> - An open drawer no longer sits on top of the widgets on a mid-width window
 > - Everything else — sliders, the search box's clear button, dropdown
 >   placement — now matches the theme completely, in both light and dark
 
@@ -145,6 +155,7 @@ not match the manifest is a common rejection.
 | Screenshot 3 (1280x800) | `screenshot-3.png` — layout mode |
 | Screenshot 4 (1280x800) | `screenshot-4.png` — the widget browser |
 | Screenshot 5 (1280x800) | `screenshot-5.png` — themes and backgrounds |
+| Screenshot 6 (1280x800) | `screenshot-6.png` — a board made your own |
 | Small promo tile (440x280) | `promo-tile-440x280.png` |
 | Marquee promo tile (1400x560) | `marquee-1400x560.png` — only used if the store features the item |
 
@@ -214,8 +225,9 @@ reaches the developer, who operates no server.
 - [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.1.0`
 - [ ] loaded the built `dist/` unpacked once, over a 2.0.0 profile, and
       confirmed existing settings, board layout and widget content are intact
-- [ ] store icon, five screenshots, the small promo tile and the marquee
-      uploaded — re-captured to include at least one of the six new widgets
+- [ ] store icon, six screenshots, the small promo tile and the marquee
+      uploaded — re-captured on 2026-08-09, each one on a different theme,
+      accent and background so the listing shows what is adjustable
 - [ ] release notes filled in
 - [ ] every permission justification filled in, including `favicon` and the
       optional host permission

@@ -9,7 +9,7 @@
 //
 //   node scripts/store-assets.mjs <raw-dir>
 //
-// <raw-dir> holds the captures named 1.jpg .. 5.jpg (see CARDS below for what
+// <raw-dir> holds the captures named 1.jpg .. 6.jpg (see CARDS below for what
 // each one is meant to show). Outputs land in store-assets/.
 
 import { mkdir, readdir, writeFile } from "node:fs/promises";
@@ -42,13 +42,13 @@ const CARDS = [
   },
   {
     file: "2.jpg",
-    title: "Eleven widgets, all offline-first",
+    title: "Seventeen widgets, all offline-first",
     sub: "Weather, world clocks, tasks, habits, links, a focus timer, a scratchpad and more.",
   },
   {
     file: "3.jpg",
     title: "Rearrange it in seconds",
-    sub: "Layout mode: drag tiles anywhere, cycle sizes, or start from a preset.",
+    sub: "Pick a tile up and the rest move aside — drop it wherever it should live.",
   },
   {
     file: "4.jpg",
@@ -57,8 +57,13 @@ const CARDS = [
   },
   {
     file: "5.jpg",
-    title: "Dark, light, and eight backgrounds",
+    title: "Dark, light, and twelve backgrounds",
     sub: "Six accents, adjustable tile opacity and corner radius, generated wallpapers.",
+  },
+  {
+    file: "6.jpg",
+    title: "Customize your own way",
+    sub: "Same widgets, a board of your own: your colour, your backdrop, your arrangement.",
   },
 ];
 
@@ -98,9 +103,13 @@ const caption = ({ title, sub }) =>
         fill="${FG}" fill-opacity=".62">${escape(sub)}</text>
 </svg>`);
 
+// Up in the caption band, opposite the title, rather than along the bottom of
+// the card. A capture is taller than the space under the caption, so the
+// screenshot runs off the bottom edge on purpose — and a wordmark down there
+// landed on top of the board rather than under it.
 const footer = () =>
-  Buffer.from(`<svg width="${W}" height="40" xmlns="http://www.w3.org/2000/svg">
-  <text x="${W / 2}" y="26" text-anchor="middle" font-family="${FONTS}" font-size="15"
+  Buffer.from(`<svg width="${W}" height="220" xmlns="http://www.w3.org/2000/svg">
+  <text x="${W - 64}" y="104" text-anchor="end" font-family="${FONTS}" font-size="15"
         letter-spacing="3" fill="${FG}" fill-opacity=".38">DAYBREAK</text>
 </svg>`);
 
@@ -128,11 +137,22 @@ async function rounded(buffer, width, radius) {
 // the extension, so it is trimmed off.
 const SCROLLBAR = 12;
 
+// A capture taken through browser automation carries a highlight along its
+// edges, and the mouse pointer has to be parked somewhere — the far corner is
+// the only place it is not over the UI. Both live in this band, and losing it
+// costs nothing: the board's outermost pixels are background either way.
+const EDGE = 24;
+
 async function card(rawPath, meta) {
   const src = sharp(rawPath);
   const { width: rawW, height: rawH } = await src.metadata();
   const raw = await src
-    .extract({ left: 0, top: 0, width: rawW - SCROLLBAR, height: rawH })
+    .extract({
+      left: EDGE,
+      top: EDGE,
+      width: rawW - SCROLLBAR - EDGE * 2,
+      height: rawH - EDGE * 2,
+    })
     .toBuffer();
   const shotWidth = 1160;
   const shot = await rounded(raw, shotWidth, 14);
@@ -178,7 +198,7 @@ async function card(rawPath, meta) {
         top: y,
       },
       { input: caption(meta), left: 0, top: 40 },
-      { input: footer(), left: 0, top: H - 62 },
+      { input: footer(), left: 0, top: 40 },
     ])
     // No alpha: the store wants 24-bit PNG.
     .flatten({ background: BASE })
@@ -190,6 +210,8 @@ async function card(rawPath, meta) {
 // the left, a slice of the real board on the right. The slice is cropped out of a
 // screenshot rather than shrunk from the whole page, so the UI in it stays at a
 // size where it reads as a product and not as texture.
+const SLICE_W = 880;
+
 async function marquee(rawPath) {
   const W2 = 1400;
   const H2 = 560;
@@ -198,14 +220,21 @@ async function marquee(rawPath) {
   const { width: rawW, height: rawH } = await src.metadata();
   // The tiles, not the header: from just under the greeting to the bottom of the
   // capture, and stopping short of the scrollbar.
+  const width = Math.min(rawW - EDGE - SCROLLBAR, Math.round(rawW * 0.58));
+  const top = Math.round(rawH * 0.4);
+  // The slice is scaled to SLICE_W on the tile and its shadow needs 40px of
+  // margin all round, so the crop cannot be taller than what leaves room for
+  // both. Derived rather than fixed: a capture from a taller window would
+  // otherwise produce a shot bigger than the canvas it composites onto.
+  const maxHeight = Math.floor((width * (H2 - 80)) / SLICE_W);
   const crop = {
-    left: 24,
-    top: Math.round(rawH * 0.4),
-    width: Math.min(rawW - 24 - SCROLLBAR, Math.round(rawW * 0.58)),
-    height: rawH - Math.round(rawH * 0.4),
+    left: EDGE,
+    top,
+    width,
+    height: Math.min(rawH - top - EDGE, maxHeight),
   };
   const slice = await src.extract(crop).toBuffer();
-  const shot = await rounded(slice, 880, 16);
+  const shot = await rounded(slice, SLICE_W, 16);
 
   const icon = await sharp(join(root, "public", "icon-128.png"))
     .resize({ width: 96 })
