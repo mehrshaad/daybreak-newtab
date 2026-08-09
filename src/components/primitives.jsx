@@ -200,7 +200,11 @@ export function Drawer({ open, onClose, width = 340, label, children }) {
           backdropFilter: "var(--blur-sheet)",
           boxShadow: "-18px 0 50px rgba(0,0,0,.22)",
           padding: "24px",
-          overflow: "auto",
+          // Vertical only. A drawer is a fixed-width column of settings; if
+          // something inside it ever fails to fit, the answer is to wrap or
+          // truncate it, never to make the whole panel slide sideways.
+          overflowY: "auto",
+          overflowX: "hidden",
           animation: closing
             ? `db-slide-out ${EXIT_MS}ms ease both`
             : "db-slide-in .3s cubic-bezier(.2,.8,.2,1) both",
