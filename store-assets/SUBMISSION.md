@@ -114,15 +114,22 @@ not match the manifest is a common rejection.
 >   keyless, no account required
 > - Press and hold a tile — or empty space — to enter edit mode; drag from the
 >   handle that appears, no separate toggle needed first
+> - Tiles and Quick Links icons can also be dragged into a new order any time,
+>   without entering edit mode at all
 > - Search suggestions are ranked, show real site icons, and offer "Go to
 >   site" for an address you type directly — turn on tabs, bookmarks and
 >   history right from the welcome card, or later in Settings
 > - Habit history and Scratchpad notes now sync (when small enough) instead of
 >   staying local-only
+> - Habits: double-click a name to rename it, the same as tasks and world
+>   clocks
 > - Quick Links: name a link yourself, remove one with an edit-mode badge, and
 >   hover any icon for its full name and address
 > - Custom date picker for tasks, opening on today without defaulting a new
 >   task's due date to it
+> - Switching layout presets no longer discards your own arrangement — it is
+>   saved as "Yours" automatically the first time, so it is always one click
+>   away
 > - Hover any icon-only control for a quick label — what it does, not just
 >   what it looks like
 > - Everything else — sliders, the search box's clear button, dropdown
