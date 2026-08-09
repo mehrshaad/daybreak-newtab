@@ -89,7 +89,13 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
         {value || placeholder}
       </button>
 
-      <Popover open={open} anchorRef={anchorRef} onClose={() => setOpen(false)} width={230}>
+      <Popover
+        open={open}
+        anchorRef={anchorRef}
+        onClose={() => setOpen(false)}
+        placement="bottom-center"
+        width={230}
+      >
         <div style={{ padding: 10 }}>
           <div
             style={{

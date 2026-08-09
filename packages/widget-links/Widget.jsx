@@ -214,7 +214,13 @@ function Links({ options, config, setConfig, size, editing, columns }) {
           grid's own row to fit two text fields, which shifted every icon
           below it for as long as the form was open. A popover sits over the
           board instead, so opening it never moves anything. */}
-      <Popover open={adding} anchorRef={addBtnRef} onClose={closeAdd} width={220}>
+      <Popover
+        open={adding}
+        anchorRef={addBtnRef}
+        onClose={closeAdd}
+        placement="bottom-center"
+        width={220}
+      >
         <form
           onSubmit={add}
           style={{
