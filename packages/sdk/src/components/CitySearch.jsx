@@ -108,7 +108,7 @@ function CitySearch({ onPick, placeholder = "Search a city…", autoFocus = fals
                 textAlign: "left",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--panel2)";
+                e.currentTarget.style.background = "var(--sheetHover)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";

@@ -27,7 +27,7 @@ function CalendarRow({ label, provider, onRemove }) {
         transition: "background .15s ease",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--panel2)";
+        e.currentTarget.style.background = "var(--sheetHover)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = "transparent";
@@ -55,7 +55,7 @@ function CalendarRow({ label, provider, onRemove }) {
         }}
         onMouseEnter={(e) => {
           tip.anchorProps.onMouseEnter?.();
-          e.currentTarget.style.background = "var(--panel2)";
+          e.currentTarget.style.background = "var(--sheetHover)";
           e.currentTarget.style.color = "var(--danger)";
         }}
         onMouseLeave={(e) => {

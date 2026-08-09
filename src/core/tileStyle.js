@@ -57,7 +57,11 @@ export function tileStyle({
     // opacity change or the blur toggle ease in rather than snapping.
     transition:
       "transform .3s cubic-bezier(.22,1,.36,1), opacity .3s, border-color .2s, " +
-      "box-shadow .3s, background-color .34s ease, backdrop-filter .34s ease",
+      "box-shadow .3s, background-color .34s ease, backdrop-filter .34s ease, " +
+      // `scale` is its own property here, not part of `transform`, so it needs
+      // naming separately — without it the 1.02 lift a dragged tile carries
+      // snaps back the instant the drag ends.
+      "scale .2s ease",
     boxShadow: dark
       ? "0 1px 0 rgba(255,255,255,.04) inset"
       : "0 1px 2px rgba(20,22,28,.05)",

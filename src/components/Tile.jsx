@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { LuSettings2, LuX } from "react-icons/lu";
 import {
   Appear,
@@ -30,7 +30,11 @@ import ErrorBoundary from "./ErrorBoundary";
 // widens past the hover width.
 function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
   const [handleHovered, setHandleHovered] = useState(false);
-  const tip = useTooltip("Drag to move");
+  // No label while the drag is under way: the pointer necessarily sits on the
+  // handle for the whole gesture, so the hint would pop up over the board a
+  // moment into every drag — and it is telling you to do the thing you are
+  // already doing.
+  const tip = useTooltip(dragging ? null : "Drag to move");
   const width = dragging ? 56 : handleHovered || editing ? 48 : 36;
   const background = dragging
     ? "var(--accent)"
@@ -79,7 +83,7 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
           justifyContent: "center",
           paddingBottom: 8,
           cursor: dragging ? "grabbing" : "grab",
-          pointerEvents: editing || tileHovered ? "auto" : "none",
+          pointerEvents: dragging || editing || tileHovered ? "auto" : "none",
         }}
       >
         <div
@@ -88,7 +92,12 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
             height: 4,
             borderRadius: 999,
             background,
-            opacity: editing ? 1 : tileHovered ? 0.5 : 0,
+            // `dragging` has to be here in its own right: a held tile has
+            // pointer-events switched off so it cannot steal hover from the
+            // tiles it passes over, which also means tileHovered goes false
+            // the moment the drag starts — and the line you are holding
+            // faded out from under you.
+            opacity: dragging || editing ? 1 : tileHovered ? 0.5 : 0,
             transition: "opacity .15s ease, background .18s ease, width .18s ease",
           }}
         />
@@ -192,7 +201,25 @@ function Tile({
   // this tile's very first render — frozen here so a later Board re-render
   // (recomputing it as null) can't strip the animation off mid-flight and
   // cancel it outright.
-  const [stagger] = useState(() => initialStagger);
+  const [stagger, setStagger] = useState(() => initialStagger);
+  // Take the entrance animation back off the node once it has played.
+  // Leaving it declared is not inert: reordering the board makes React move
+  // this element among its siblings, and Chrome restarts a CSS animation on a
+  // moved node. A restart re-enters the delay, where "backwards" fills the
+  // from-state — scale(.96), no translation — and a CSS animation outranks an
+  // inline style, so the drag's own `node.style.transform` writes stop having
+  // any visible effect. The tile sits frozen for the rest of the drag while
+  // the pointer walks away from it. With nothing declared there is nothing
+  // left to restart.
+  //
+  // On a timer rather than animationend: that event needs a rendering frame,
+  // and a background tab never produces one, so the declaration would outlive
+  // the animation exactly where it is hardest to notice.
+  useEffect(() => {
+    if (stagger === null) return undefined;
+    const done = setTimeout(() => setStagger(null), Math.min(stagger * 25, 300) + 280 + 60);
+    return () => clearTimeout(done);
+  }, [stagger]);
   const manifest = getWidget(instanceId);
   // Each tile polls on its own configured rate; `manualRefresh` lets the
   // context menu's "Refresh now" force one immediately.

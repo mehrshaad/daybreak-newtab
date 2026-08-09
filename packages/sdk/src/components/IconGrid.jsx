@@ -168,7 +168,7 @@ function RemoveBadge({ label, onRemove }) {
         }}
         onMouseEnter={(e) => {
           tip.anchorProps.onMouseEnter?.();
-          e.currentTarget.style.background = "var(--panel2)";
+          e.currentTarget.style.background = "var(--sheetHover)";
         }}
         onMouseLeave={(e) => {
           tip.anchorProps.onMouseLeave?.();

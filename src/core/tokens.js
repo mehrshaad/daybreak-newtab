@@ -179,6 +179,12 @@ export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent, bl
     "--panel": dark ? "rgba(255,255,255,.05)" : "rgba(255,255,255,.62)",
     "--panel2": dark ? "rgba(255,255,255,.10)" : "rgba(255,255,255,.92)",
     "--sheet": sheet,
+    // A row highlight for things sitting *on* a sheet — menus, dropdowns,
+    // popovers. --panel2 cannot do this job: it lifts a surface off the board
+    // by whitening it, which in light mode is near-opaque white, and a sheet
+    // is already near-white. Hovering a context-menu item painted white on
+    // white and simply did not show.
+    "--sheetHover": dark ? "rgba(255,255,255,.10)" : "rgba(20,22,28,.06)",
     "--storeBg": dark ? "rgba(10,11,14,.97)" : "rgba(244,244,242,.98)",
     // With blur on, the store's own fill is deliberately thinner so the blurred
     // board reads through it as depth. With blur off it has to be opaque, or

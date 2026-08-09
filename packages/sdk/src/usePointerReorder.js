@@ -38,12 +38,16 @@ const measureLayoutRect = (node) => {
   return rect;
 };
 
-// L — where the element's layout centre is *now*.
+// L — where the element's layout centre is *now*. Returns the box it measured
+// so callers can also show where the item would land.
 const rebase = (s) => {
   const rect = measureLayoutRect(s.node);
   s.layoutX = rect.left + rect.width / 2;
   s.layoutY = rect.top + rect.height / 2;
+  return rect;
 };
+
+const boxOf = (r) => ({ left: r.left, top: r.top, width: r.width, height: r.height });
 
 const apply = (s, clientX, clientY) => {
   s.lastX = clientX;
@@ -80,6 +84,11 @@ export function isOutsideBounds(rect, x, y, margin = OUTSIDE_MARGIN) {
 export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = true, containerRef }) {
   const [draggingId, setDraggingId] = useState(null);
   const [isOutside, setIsOutside] = useState(false);
+  // The slot the held item would drop into, in viewport coordinates, so a
+  // caller can outline it. Follows the order as it changes, because the
+  // reorder is already committed live — the gap under the tile *is* the
+  // destination.
+  const [slotRect, setSlotRect] = useState(null);
   const state = useRef(null);
 
   // Latest order and callbacks, without re-binding the window listeners.
@@ -98,7 +107,7 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
     st.anim?.cancel();
     st.node.style.zIndex = "";
     st.node.style.willChange = "";
-    st.node.style.transition = "";
+    st.node.style.transition = st.prevTransition;
     setDraggingId(null);
   }, []);
 
@@ -107,6 +116,7 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
     state.current = null;
     document.body.style.userSelect = "";
     setIsOutside(false);
+    setSlotRect(null);
 
     const node = s?.node;
     if (!node) {
@@ -123,12 +133,13 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
     // instead. A press that never became a drag has no offset to settle, and
     // neither does one released exactly on its slot.
     const held = s.active ? node.style.transform : "";
+    const prevTransition = s.prevTransition || "";
     endSettle();
     node.style.transform = "";
     if (!held || !node.animate || reducedMotion()) {
       node.style.zIndex = "";
       node.style.willChange = "";
-      node.style.transition = "";
+      node.style.transition = prevTransition;
       setDraggingId(null);
       return;
     }
@@ -156,12 +167,15 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
       anim.cancel();
       node.style.zIndex = "";
       node.style.willChange = "";
-      node.style.transition = "";
+      // Put the tile's own transition back before React drops the dragging
+      // styles, so the lift's shadow and scale ease off instead of snapping.
+      node.style.transition = prevTransition;
       setDraggingId(null);
     };
     settling.current = {
       node,
       anim,
+      prevTransition,
       // A backstop, because `finished` never settles while the tab is in the
       // background — animations do not advance there. Without it, dropping a
       // tile and immediately switching away would leave it stuck lifted and
@@ -241,36 +255,71 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
         s.node.style.willChange = "transform";
         // Keeps the held tile from taking hover states off its neighbours.
         s.node.style.pointerEvents = "none";
-        // The tile is positioned by hand from here on; no transition to fight.
+        // The tile is positioned by hand from here on, and its own transition
+        // animates `transform` — leaving that in place would have every
+        // pointer update ease over 300ms, so the tile would swim along behind
+        // the cursor. Kept, not discarded, so the drop can put it back: clear
+        // it to nothing instead and React never restores it, because the value
+        // it renders has not changed, and the lift's shadow and scale then
+        // snap off at the end of the drag.
+        s.prevTransition = s.node.style.transition;
         s.node.style.transition = "box-shadow .2s ease";
+        // A CSS animation outranks an inline style, so anything still playing
+        // on this node owns `transform` and the drag below cannot move it at
+        // all — the tile just sits there while the pointer walks away from it.
+        // The board's entrance stagger is the one that bites: it runs for its
+        // delay plus 280ms after a fresh load, and a drag started inside that
+        // window would be dead on arrival. Send them to their end state, which
+        // is where they were heading anyway.
+        for (const a of s.node.getAnimations?.() || []) {
+          try {
+            a.finish();
+          } catch {
+            // An animation with no finite end (none here today) cannot be
+            // finished; cancelling still hands `transform` back.
+            a.cancel();
+          }
+        }
         document.body.style.userSelect = "none";
         setDraggingId(s.id);
+        // Nothing has moved yet, so the item is still sitting in its slot.
+        setSlotRect(boxOf(s.node.getBoundingClientRect()));
       }
 
       event.preventDefault();
       apply(s, event.clientX, event.clientY);
 
+      // Everything below asks "where is the thing being dragged", not "where
+      // is the finger". They are not the same point: a tile is grabbed by a
+      // handle at its bottom edge, so the pointer sits half a tile below what
+      // the user is actually moving, and slots would swap late — or in the
+      // wrong row entirely. This is the centre of the tile as drawn, which is
+      // what iOS and Android reorder against too: the item swaps when *it*
+      // covers the slot, not when the finger does.
+      const heldX = s.grabX + (event.clientX - s.startX);
+      const heldY = s.grabY + (event.clientY - s.startY);
+
       // Past the container's edge (plus a grace margin) is a delete zone, not
       // a reorder target. Callers that don't offer drop-to-delete never see
       // this: without onDropOutside there is nothing for it to trigger.
-      const outside = isOutsideBounds(s.containerRect, event.clientX, event.clientY);
+      const outside = isOutsideBounds(s.containerRect, heldX, heldY);
       if (outside !== s.outside) {
         s.outside = outside;
         setIsOutside(outside);
       }
       if (outside) return;
 
-      // Target index comes from the SLOT the pointer is over, using geometry
-      // captured once at drag start — not from whichever element happens to be
-      // under the pointer right now.
+      // Target index comes from the SLOT the held item's centre is over, using
+      // geometry captured once at drag start — not from whichever element
+      // happens to be under it right now.
       //
       // Hit-testing live elements feeds back on itself: a swap shifts every
       // item, so the next pointermove finds a different neighbour in the same
       // spot and swaps again, walking the item to the end of the list. Slot
       // geometry, by contrast, is fixed for the duration of the drag — a grid's
-      // cells stay put and only their occupants change — so "pointer is over
+      // cells stay put and only their occupants change — so "the tile covers
       // slot 3" resolves to index 3 and stays there.
-      const slot = slotIndexAt(s.slots, event.clientX, event.clientY);
+      const slot = slotIndexAt(s.slots, heldX, heldY);
       if (slot === -1) return;
 
       // One reorder at a time. `latest.current.ids` only catches up when the
@@ -317,7 +366,7 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
     if (!s) return;
     s.pending = null;
     if (!s.active || !s.node) return;
-    rebase(s);
+    setSlotRect(boxOf(rebase(s)));
     apply(s, s.lastX, s.lastY);
   }, [orderKey]);
 
@@ -326,7 +375,7 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
     if (!enabled && state.current) finish();
   }, [enabled, finish]);
 
-  return { draggingId, isOutside, onPointerDown };
+  return { draggingId, isOutside, slotRect, onPointerDown };
 }
 
 // Move an item within an array, returning a new array.

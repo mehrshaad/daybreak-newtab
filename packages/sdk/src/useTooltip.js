@@ -16,6 +16,18 @@ export function useTooltip(label) {
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
+  // Dropping the label takes the hover handlers away with it, so nothing is
+  // left to close this: a reveal already counting down still fires, and a
+  // tooltip already open has no way back down. Whatever was in flight is
+  // abandoned here instead, so a caller that suppresses its label part-way
+  // through a hover — the drag handle does, for the length of a drag — comes
+  // back closed rather than showing the moment the label returns.
+  useEffect(() => {
+    if (label) return;
+    clearTimeout(timerRef.current);
+    setOpen(false);
+  }, [label]);
+
   const show = () => {
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setOpen(true), SHOW_DELAY);

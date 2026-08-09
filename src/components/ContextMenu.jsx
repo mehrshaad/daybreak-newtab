@@ -44,7 +44,7 @@ function MenuItem({ item, onClose }) {
         cursor: "pointer",
         textAlign: "left",
         border: 0,
-        background: hovered ? "var(--panel2)" : "transparent",
+        background: hovered ? "var(--sheetHover)" : "transparent",
         color: item.danger ? "var(--danger)" : "var(--fg)",
       }}
     >

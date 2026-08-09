@@ -13,6 +13,12 @@ import { useLayoutEffect, useRef } from "react";
 // board treat individual app icons as though they were tiles.
 
 export const FLIP_DURATION = 380;
+// Reordering under the pointer wants to keep up with the hand, not glide:
+// at 380ms the neighbours are still sliding several slots later, which reads
+// as the board sloshing around behind the tile. Used whenever a drag is in
+// progress; everything else — resizing, adding, switching preset — keeps the
+// slower, more deliberate move.
+export const DRAG_FLIP_DURATION = 220;
 export const FLIP_EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 export const ENTER_DURATION = 260;
 
@@ -121,7 +127,11 @@ export function useFlip(containerRef, deps, options = {}) {
           },
           { transformOrigin: "top left", transform: "none" },
         ],
-        { duration: FLIP_DURATION, easing: FLIP_EASING, fill: "none" }
+        {
+          duration: skipId ? DRAG_FLIP_DURATION : FLIP_DURATION,
+          easing: FLIP_EASING,
+          fill: "none",
+        }
       );
       running.current.set(id, anim);
     }

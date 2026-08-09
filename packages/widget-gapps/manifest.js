@@ -11,13 +11,14 @@ export default {
     "site you click, exactly like a bookmark would. Drag an icon out of the " +
     "grid in edit mode to hide it; restore hidden apps from this widget's " +
     "settings.",
+  // Two widths, one height. The taller sizes filled the extra rows by
+  // showing more of the long tail of Google's apps, which is exactly what
+  // the "+N more" toggle is for. Anyone already on one of the dropped sizes
+  // falls back to defaultSize, which resolveSize does for any stored size a
+  // widget no longer offers.
   sizes: [
     [4, 2],
     [5, 2],
-    [6, 2],
-    [6, 3],
-    [8, 3],
-    [8, 4],
   ],
   defaultSize: [5, 2],
   options: [

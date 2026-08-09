@@ -306,7 +306,7 @@ function HabitRow({
             }}
             onMouseEnter={(e) => {
               removeTip.anchorProps.onMouseEnter?.();
-              e.currentTarget.style.background = "var(--panel2)";
+              e.currentTarget.style.background = "var(--sheetHover)";
             }}
             onMouseLeave={(e) => {
               removeTip.anchorProps.onMouseLeave?.();

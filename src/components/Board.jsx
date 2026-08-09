@@ -53,7 +53,7 @@ function Board({
     isInitialRef.current = false;
   }, []);
 
-  const { draggingId, onPointerDown } = usePointerReorder({
+  const { draggingId, slotRect, onPointerDown } = usePointerReorder({
     ids,
     onReorder,
     // Not gated on edit mode: a tile can be rearranged straight from the
@@ -105,6 +105,31 @@ function Board({
       onContextMenu={onBoardMenu}
       onPointerDown={onEmptyLongPress}
     >
+      {/* Where the held tile would land. The reorder is already committed as
+          the tile moves, so the gap it leaves behind *is* the destination —
+          this just outlines it, the same dashed box as "+ Add widget" with
+          nothing written in it. Transitioned rather than jumped, so it slides
+          between slots with the neighbours it is moving through. */}
+      {slotRect ? (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            left: slotRect.left,
+            top: slotRect.top,
+            width: slotRect.width,
+            height: slotRect.height,
+            borderRadius: `${appearance.radius}px`,
+            border: "1.5px dashed var(--line)",
+            pointerEvents: "none",
+            zIndex: 1,
+            transition:
+              "left .22s cubic-bezier(.2,.8,.2,1), top .22s cubic-bezier(.2,.8,.2,1)," +
+              " width .22s cubic-bezier(.2,.8,.2,1), height .22s cubic-bezier(.2,.8,.2,1)",
+          }}
+        />
+      ) : null}
+
       <div ref={boardRef} style={cameraStyle(cam, !!zoom && zoomMode === "Camera")}>
         <div ref={gridRef} style={gridStyle}>
           {ids.map((instanceId, index) => (

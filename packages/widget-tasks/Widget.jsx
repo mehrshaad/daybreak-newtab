@@ -27,6 +27,12 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
       data-flip-id={task.id}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      // Keyboard gets the same reveal as the pointer, so the delete button is
+      // not permanently invisible to it now that it no longer mounts on hover.
+      onFocus={() => setHovered(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setHovered(false);
+      }}
       // A second line of defense, matching every other reorderable list: the
       // board's own tile drag starts from a handle now, so a row press can no
       // longer reach it either way.
@@ -97,36 +103,43 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
           {task.due.slice(5)}
         </span>
       ) : null}
-      <Appear open={hovered} style={{ display: "flex", flex: "none" }}>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          aria-label={`Delete ${task.text}`}
-          style={{
-            border: 0,
-            background: "transparent",
-            color: "var(--faint)",
-            cursor: "pointer",
-            padding: 0,
-            display: "grid",
-            placeItems: "center",
-            borderRadius: 999,
-            flex: "none",
-            transition: "color .15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--danger)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--faint)";
-          }}
-        >
-          <LuX size={12} />
-        </button>
-      </Appear>
+      {/* Always in the layout, only ever faded. Mounting it on hover took its
+          width with it, so a row's due date jumped sideways the moment the
+          pointer arrived or left — the fade was animated, the reflow was not. */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        aria-label={`Delete ${task.text}`}
+        style={{
+          border: 0,
+          background: "transparent",
+          color: "var(--faint)",
+          cursor: "pointer",
+          padding: 0,
+          display: "grid",
+          placeItems: "center",
+          width: 14,
+          height: 14,
+          borderRadius: 999,
+          flex: "none",
+          opacity: hovered ? 1 : 0,
+          // Still reachable by keyboard — focus reveals the row's controls the
+          // same way hovering does.
+          pointerEvents: hovered ? "auto" : "none",
+          transition: "opacity .15s ease, color .15s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "var(--danger)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "var(--faint)";
+        }}
+      >
+        <LuX size={12} />
+      </button>
     </div>
   );
 }
