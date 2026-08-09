@@ -212,6 +212,15 @@ function Links({ options, config, setConfig, size, editing, columns }) {
                 color: "var(--faint)",
                 width: "100%",
                 animation: "db-menu .16s ease both",
+                transition: "color .2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "var(--accent)";
+                e.currentTarget.firstElementChild.style.borderColor = "var(--accent)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "var(--faint)";
+                e.currentTarget.firstElementChild.style.borderColor = "var(--line)";
               }}
             >
               <span
@@ -222,6 +231,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
                   border: "1.5px dashed var(--line)",
                   display: "grid",
                   placeItems: "center",
+                  transition: "border-color .2s",
                 }}
               >
                 <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
