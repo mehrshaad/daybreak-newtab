@@ -2,14 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { useTooltip } from "../useTooltip";
 import Tooltip from "./Tooltip";
 
-// Double-click to rename in place — a task's own words, a world clock's city
-// name. Plain text on the page is unselectable by default (see base.scss);
-// this is the one deliberate way in, and only while actually editing.
-function EditableText({ value, onCommit, placeholder = "", ariaLabel, style, inputStyle }) {
+// Double-click to edit in place — a task's own words, a habit's name, a
+// world clock's city label. Plain text on the page is unselectable by
+// default (see base.scss); this is the one deliberate way in, and only while
+// actually editing.
+function EditableText({
+  value,
+  onCommit,
+  placeholder = "",
+  ariaLabel,
+  style,
+  inputStyle,
+  tooltip = "Double-click to edit",
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef(null);
-  const tip = useTooltip("Double-click to rename");
+  const tip = useTooltip(tooltip);
 
   useEffect(() => {
     if (!editing) return;

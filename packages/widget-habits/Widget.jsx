@@ -1,6 +1,14 @@
 import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
-import { MONO, Popover, Tooltip, uid, useTooltip, useWidgetSynced } from "@daybreak/sdk";
+import {
+  EditableText,
+  MONO,
+  Popover,
+  Tooltip,
+  uid,
+  useTooltip,
+  useWidgetSynced,
+} from "@daybreak/sdk";
 import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
 
@@ -39,7 +47,10 @@ function Stepper({ label, value, min, max, onChange, suffix = "" }) {
   };
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <span style={{ fontSize: 11, color: "var(--dim)" }}>{label}</span>
+      {/* Fixed rather than sized to each label: "per week" and "goal" are
+          different lengths, and without this the -/+ controls on the two
+          stepper rows land at different x positions instead of lining up. */}
+      <span style={{ fontSize: 11, color: "var(--dim)", minWidth: 56 }}>{label}</span>
       <button
         type="button"
         aria-label={`Decrease ${label}`}
@@ -121,10 +132,11 @@ function HabitRow({
   onToggleOpen,
   onToggleDay,
   onPatch,
+  onRename,
   onRemove,
 }) {
   const anchorRef = useRef(null);
-  const goalTip = useTooltip("Target and goal");
+  const goalTip = useTooltip("Habit settings");
   const removeTip = useTooltip(`Remove ${habit.name}`);
   const target = Number(habit.target) || 5;
   const targetWeeks = Number(habit.targetWeeks) || 0;
@@ -143,42 +155,61 @@ function HabitRow({
         }}
       >
         <div style={{ minWidth: 0, flex: 1 }}>
-          <button
-            ref={(el) => {
-              anchorRef.current = el;
-              goalTip.anchorRef.current = el;
-            }}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleOpen();
-            }}
-            {...goalTip.anchorProps}
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 6,
-              border: 0,
-              background: "transparent",
-              padding: 0,
-              cursor: "pointer",
-              textAlign: "left",
-              color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
-              fontSize: 14,
-              lineHeight: 1.3,
-              width: "100%",
-            }}
-          >
-            {/* Wraps instead of being truncated, however long the name. */}
-            <span className="db-selectable" style={{ overflowWrap: "anywhere", minWidth: 0 }}>
-              {habit.name}
-            </span>
-            <LuSettings2
-              size={11}
-              style={{ flex: "none", marginTop: 4, opacity: open ? 1 : 0.4 }}
+          {/* The name and the settings trigger used to be one button — a
+              double-click to rename fires as two ordinary clicks before the
+              dblclick event itself, which toggled the popover open then
+              closed on the way there. Siblings instead: EditableText owns
+              the double-click, the gear owns the popover, and neither
+              competes with the other. */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 6, width: "100%" }}>
+            <EditableText
+              value={habit.name}
+              onCommit={onRename}
+              ariaLabel={`Rename ${habit.name}`}
+              style={{
+                display: "block",
+                overflowWrap: "anywhere",
+                // Not flex: 1 — sized to its own text, so the gear sits right
+                // after a short name instead of pinned to the row's far edge.
+                minWidth: 0,
+                flexShrink: 1,
+                textAlign: "left",
+                color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
+                fontSize: 14,
+                lineHeight: 1.3,
+              }}
+              inputStyle={{ display: "block", width: "100%", fontSize: 14 }}
             />
-          </button>
-          <Tooltip {...goalTip} />
+            <button
+              ref={(el) => {
+                anchorRef.current = el;
+                goalTip.anchorRef.current = el;
+              }}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleOpen();
+              }}
+              aria-label="Habit settings"
+              {...goalTip.anchorProps}
+              style={{
+                flex: "none",
+                marginTop: 3,
+                display: "grid",
+                placeItems: "center",
+                width: 18,
+                height: 18,
+                border: 0,
+                background: "transparent",
+                padding: 0,
+                cursor: "pointer",
+                color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
+              }}
+            >
+              <LuSettings2 size={11} style={{ opacity: open ? 1 : 0.4 }} />
+            </button>
+            <Tooltip {...goalTip} />
+          </div>
 
           <div
             style={{
@@ -235,45 +266,37 @@ function HabitRow({
         </div>
       </div>
 
-      {/* No explicit width: matches the name column's own width, which is
-          usually enough to fit both steppers and the remove button on one
-          line, and gracefully wraps to two on the narrowest tile size. */}
-      <Popover open={open} anchorRef={anchorRef} onClose={onToggleOpen}>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 14,
-            padding: "10px 12px",
-          }}
-        >
-          <Stepper
-            label="per week"
-            value={target}
-            min={1}
-            max={7}
-            onChange={(v) => onPatch({ target: v })}
-          />
-          <Stepper
-            label="goal"
-            value={targetWeeks}
-            min={0}
-            max={52}
-            suffix="w"
-            onChange={(v) => onPatch({ targetWeeks: v })}
-          />
+      {/* The anchor is the small settings gear now, not the full-width name
+          button it used to be, so an explicit width replaces the old
+          "matches the anchor's own width" default — an 18px icon's width
+          made the popover fold the steppers into an unreadable sliver. Each
+          row stacked rather than side by side, so the two steppers' -/+
+          controls line up under one another instead of wrapping wherever
+          280px happened to run out. */}
+      <Popover
+        open={open}
+        anchorRef={anchorRef}
+        onClose={onToggleOpen}
+        placement="bottom-center"
+        width={220}
+      >
+        <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 10, padding: "10px 12px" }}>
+          {/* Corner rather than its own footer row + divider: both steppers
+              together are barely taller than the badge itself, so giving
+              removal a whole extra row was mostly empty space. */}
           <button
             ref={removeTip.anchorRef}
             type="button"
             onClick={onRemove}
             aria-label={`Remove ${habit.name}`}
             style={{
-              marginLeft: "auto",
+              position: "absolute",
+              top: 8,
+              right: 8,
               display: "grid",
               placeItems: "center",
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               borderRadius: 7,
               cursor: "pointer",
               background: "transparent",
@@ -292,9 +315,24 @@ function HabitRow({
             onFocus={removeTip.anchorProps.onFocus}
             onBlur={removeTip.anchorProps.onBlur}
           >
-            <LuTrash2 size={12} />
+            <LuTrash2 size={11} />
           </button>
           <Tooltip {...removeTip} />
+          <Stepper
+            label="per week"
+            value={target}
+            min={1}
+            max={7}
+            onChange={(v) => onPatch({ target: v })}
+          />
+          <Stepper
+            label="goal"
+            value={targetWeeks}
+            min={0}
+            max={52}
+            suffix="w"
+            onChange={(v) => onPatch({ targetWeeks: v })}
+          />
         </div>
       </Popover>
     </div>
@@ -368,6 +406,7 @@ function Habits({ id, options, config, setConfig, size }) {
             onToggleOpen={() => setEditing((cur) => (cur === habit.id ? null : habit.id))}
             onToggleDay={(date) => toggle(habit.id, date)}
             onPatch={(changes) => patch(habit.id, changes)}
+            onRename={(name) => patch(habit.id, { name })}
             onRemove={() => {
               setEditing(null);
               setConfig({ habits: habits.filter((h) => h.id !== habit.id) });

@@ -161,6 +161,7 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                   value={p.city}
                   onCommit={(city) => renameZone(i, city)}
                   ariaLabel={`Rename ${p.city}`}
+                  tooltip="Double-click to rename"
                   style={{
                     display: "block",
                     fontSize: 13,
