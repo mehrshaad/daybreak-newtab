@@ -9,7 +9,8 @@
 //
 //   node scripts/store-assets.mjs <raw-dir>
 //
-// <raw-dir> holds the captures named 1.jpg .. 6.jpg (see CARDS below for what
+// <raw-dir> holds the captures named 1.jpg .. 5.jpg — and 5-dark.jpg /
+// 5-light.jpg, the two halves the split card is built from (see CARDS for what
 // each one is meant to show). Outputs land in store-assets/.
 
 import { mkdir, readdir, writeFile } from "node:fs/promises";
@@ -57,13 +58,11 @@ const CARDS = [
   },
   {
     file: "5.jpg",
-    title: "Dark, light, and twelve backgrounds",
-    sub: "Six accents, adjustable tile opacity and corner radius, generated wallpapers.",
-  },
-  {
-    file: "6.jpg",
+    // Built from the two halves rather than captured: the same board, same
+    // arrangement, same moment, under both themes.
+    split: ["5-dark.jpg", "5-light.jpg"],
     title: "Customize your own way",
-    sub: "Same widgets, a board of your own: your colour, your backdrop, your arrangement.",
+    sub: "Dark or light, six accents, twelve generated backgrounds, and dials for the rest.",
   },
 ];
 
@@ -104,9 +103,7 @@ const caption = ({ title, sub }) =>
 </svg>`);
 
 // Up in the caption band, opposite the title, rather than along the bottom of
-// the card. A capture is taller than the space under the caption, so the
-// screenshot runs off the bottom edge on purpose — and a wordmark down there
-// landed on top of the board rather than under it.
+// the card, where it landed on top of the screenshot.
 const footer = () =>
   Buffer.from(`<svg width="${W}" height="220" xmlns="http://www.w3.org/2000/svg">
   <text x="${W - 64}" y="104" text-anchor="end" font-family="${FONTS}" font-size="15"
@@ -138,26 +135,86 @@ async function rounded(buffer, width, radius) {
 const SCROLLBAR = 12;
 
 // A capture taken through browser automation carries a highlight along its
-// edges, and the mouse pointer has to be parked somewhere — the far corner is
-// the only place it is not over the UI. Both live in this band, and losing it
-// costs nothing: the board's outermost pixels are background either way.
-const EDGE = 24;
+// edges, and the mouse pointer has to be parked somewhere — the bottom-right
+// corner is the only place it is not over the UI.
+//
+// Per side rather than one number: the highlight is a few pixels, but the
+// pointer and the scrollbar are only ever bottom and right. Trimming all four
+// sides by enough to lose the pointer took the wordmark in the page's own
+// top-left corner with it.
+const TRIM = { top: 8, left: 8, right: 26, bottom: 26 };
 
-async function card(rawPath, meta) {
+// The card's own margins. The screenshot is fitted inside what is left under
+// the caption — it used to be pinned to a fixed 1160px wide at a fixed y, which
+// is only ever right for one capture aspect: anything taller ran off the bottom
+// of the card with no margin under it at all, which is exactly what it looked
+// like. Sizing to the box instead means a capture of any shape lands centred
+// with the same air around it.
+const MARGIN = 56;
+const SHOT_TOP = 196;
+
+// Trim, then fit into the card's box without cropping or distorting.
+async function place(rawPath) {
   const src = sharp(rawPath);
   const { width: rawW, height: rawH } = await src.metadata();
+  const trimmedW = rawW - TRIM.left - TRIM.right - SCROLLBAR;
+  const trimmedH = rawH - TRIM.top - TRIM.bottom;
   const raw = await src
-    .extract({
-      left: EDGE,
-      top: EDGE,
-      width: rawW - SCROLLBAR - EDGE * 2,
-      height: rawH - EDGE * 2,
-    })
+    .extract({ left: TRIM.left, top: TRIM.top, width: trimmedW, height: trimmedH })
     .toBuffer();
-  const shotWidth = 1160;
-  const shot = await rounded(raw, shotWidth, 14);
-  const x = Math.round((W - shot.width) / 2);
-  const y = 252;
+
+  const boxW = W - MARGIN * 2;
+  const boxH = H - MARGIN - SHOT_TOP;
+  const width = Math.round(Math.min(boxW, (trimmedW * boxH) / trimmedH));
+
+  const shot = await rounded(raw, width, 14);
+  return {
+    shot,
+    x: Math.round((W - shot.width) / 2),
+    y: SHOT_TOP + Math.round((boxH - shot.height) / 2),
+  };
+}
+
+// One image of the same screen in both themes, split down the middle. Saying
+// "dark and light" in a caption is weaker than showing the seam, and the two
+// halves have to be the same board in the same arrangement or it reads as two
+// unrelated screenshots rather than one page under two themes.
+//
+// Both captures must be the same size, which they are: nothing between them
+// changes but the stored theme.
+async function splitThemes(darkPath, lightPath, outPath) {
+  const dark = sharp(darkPath);
+  const { width, height } = await dark.metadata();
+  const light = sharp(lightPath);
+  const lightMeta = await light.metadata();
+  if (lightMeta.width !== width || lightMeta.height !== height) {
+    throw new Error(
+      `split halves differ: ${width}x${height} vs ${lightMeta.width}x${lightMeta.height}`
+    );
+  }
+
+  const half = Math.round(width / 2);
+  const left = await dark.extract({ left: 0, top: 0, width: half, height }).toBuffer();
+  const right = await light
+    .extract({ left: half, top: 0, width: width - half, height })
+    .toBuffer();
+
+  const joined = await sharp({
+    create: { width, height, channels: 3, background: BASE },
+  })
+    .composite([
+      { input: left, left: 0, top: 0 },
+      { input: right, left: half, top: 0 },
+    ])
+    .jpeg({ quality: 92 })
+    .toBuffer();
+
+  await writeFile(outPath, joined);
+  return outPath;
+}
+
+async function card(rawPath, meta) {
+  const { shot, x, y } = await place(rawPath);
 
   // A soft drop shadow: the same rounded rect, blurred, under the screenshot.
   const shadow = await sharp({
@@ -220,7 +277,7 @@ async function marquee(rawPath) {
   const { width: rawW, height: rawH } = await src.metadata();
   // The tiles, not the header: from just under the greeting to the bottom of the
   // capture, and stopping short of the scrollbar.
-  const width = Math.min(rawW - EDGE - SCROLLBAR, Math.round(rawW * 0.58));
+  const width = Math.min(rawW - TRIM.left - TRIM.right - SCROLLBAR, Math.round(rawW * 0.58));
   const top = Math.round(rawH * 0.4);
   // The slice is scaled to SLICE_W on the tile and its shadow needs 40px of
   // margin all round, so the crop cannot be taller than what leaves room for
@@ -228,10 +285,10 @@ async function marquee(rawPath) {
   // otherwise produce a shot bigger than the canvas it composites onto.
   const maxHeight = Math.floor((width * (H2 - 80)) / SLICE_W);
   const crop = {
-    left: EDGE,
+    left: TRIM.left,
     top,
     width,
-    height: Math.min(rawH - top - EDGE, maxHeight),
+    height: Math.min(rawH - top - TRIM.bottom, maxHeight),
   };
   const slice = await src.extract(crop).toBuffer();
   const shot = await rounded(slice, SLICE_W, 16);
@@ -347,6 +404,16 @@ await mkdir(outDir, { recursive: true });
 const present = new Set(await readdir(rawDir));
 
 for (const [i, meta] of CARDS.entries()) {
+  // A split card's own file is generated from its two halves, so it is the
+  // halves that have to be on disk.
+  if (meta.split && meta.split.every((half) => present.has(half))) {
+    await splitThemes(
+      join(rawDir, meta.split[0]),
+      join(rawDir, meta.split[1]),
+      join(rawDir, meta.file)
+    );
+    present.add(meta.file);
+  }
   if (!present.has(meta.file)) {
     console.warn(`skipped ${meta.file} — not in ${rawDir}`);
     continue;

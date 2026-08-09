@@ -155,10 +155,12 @@ not match the manifest is a common rejection.
 | Store icon (128x128) | `store-icon-128.png` — the mark at 96x96 with the transparent padding the image guidelines ask for. Not `public/icon-128.png`, which is full-bleed for Chrome's own surfaces. |
 | Screenshot 1 (1280x800) | `screenshot-1.png` — the board |
 | Screenshot 2 (1280x800) | `screenshot-2.png` — widgets in use |
-| Screenshot 3 (1280x800) | `screenshot-3.png` — layout mode |
+| Screenshot 3 (1280x800) | `screenshot-3.png` — layout mode, mid-drag |
 | Screenshot 4 (1280x800) | `screenshot-4.png` — the widget browser |
-| Screenshot 5 (1280x800) | `screenshot-5.png` — themes and backgrounds |
-| Screenshot 6 (1280x800) | `screenshot-6.png` — a board made your own |
+| Screenshot 5 (1280x800) | `screenshot-5.png` — one board split down the middle, dark on the left and light on the right, built by the generator from `raw/5-dark.jpg` and `raw/5-light.jpg` |
+
+Five is the store's maximum, so each card has to carry its own idea — no two
+show the same theme, accent, background or name.
 | Small promo tile (440x280) | `promo-tile-440x280.png` |
 | Marquee promo tile (1400x560) | `marquee-1400x560.png` — only used if the store features the item |
 
@@ -228,7 +230,7 @@ reaches the developer, who operates no server.
 - [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.1.0`
 - [ ] loaded the built `dist/` unpacked once, over a 2.0.0 profile, and
       confirmed existing settings, board layout and widget content are intact
-- [ ] store icon, six screenshots, the small promo tile and the marquee
+- [ ] store icon, five screenshots, the small promo tile and the marquee
       uploaded — re-captured on 2026-08-09, each one on a different theme,
       accent and background so the listing shows what is adjustable
 - [ ] release notes filled in
