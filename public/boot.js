@@ -23,6 +23,15 @@
   var dark = stored ? stored !== "light" : prefersDark;
 
   var html = document.documentElement;
+  // Marks the page as the app rather than the GitHub Pages landing, which
+  // serves this same index.html but never loads this file. index.html hides
+  // #db-landing on the strength of this class, from a <style> already in
+  // <head> — so the block is gone before it has even been parsed. The app's
+  // stylesheet hides it too, but only once that stylesheet exists: in the
+  // packaged build it is render-blocking and beats the first paint, while in
+  // dev it arrives with the JS, a good half second after the landing has
+  // already painted.
+  html.classList.add("db-app");
   // Must match baseColor() in src/core/tokens.js.
   html.style.backgroundColor = dark ? "#0a0b0e" : "#f3f3f1";
   html.style.colorScheme = dark ? "dark" : "light";

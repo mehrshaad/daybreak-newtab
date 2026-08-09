@@ -31,6 +31,14 @@
          The mark is inline SVG rather than an <img> so it needs no file that
          only exists in one of the two layouts. -->
     <style>
+      /* boot.js sets this, and only ever loads alongside the app — on GitHub
+         Pages it 404s, so the landing below stays visible there. Declared
+         here rather than left to the app's stylesheet because this <style>
+         is already parsed by the time #db-landing is, whereas in dev the
+         stylesheet is injected by JS long after the block has painted. */
+      html.db-app #db-landing {
+        display: none;
+      }
       #db-landing {
         min-height: 100vh;
         margin: 0;

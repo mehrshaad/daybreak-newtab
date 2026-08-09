@@ -56,10 +56,13 @@ textarea,
 }
 
 // index.html doubles as the project's landing page on GitHub Pages, where the
-// module script 404s and the page would otherwise be blank. In the extension the
-// app's stylesheet loads from <head> and is render-blocking, so this hides the
-// block before the first paint — no flash, and no inline script, which the
-// extension's CSP would refuse anyway.
+// module script 404s and the page would otherwise be blank.
+//
+// The block is already hidden by index.html's own <style>, keyed off the class
+// boot.js sets — that runs parser-blocking in <head>, so it beats the first
+// paint in dev as well as in the packaged build. This is the fallback for the
+// case where boot.js itself fails to load: the landing must not show through
+// behind a working app.
 #db-landing {
   display: none;
 }
