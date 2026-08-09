@@ -386,7 +386,8 @@ function Habits({ id, options, config, setConfig, size }) {
         justifyContent: "center",
         minWidth: 0,
         minHeight: 0,
-        overflow: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       {habits.map((habit) => {

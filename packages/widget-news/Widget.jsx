@@ -114,7 +114,8 @@ function News({ id, config, refreshKey, size }) {
         gap: 8,
         flex: 1,
         minHeight: 0,
-        overflow: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       {data.items.slice(0, limit).map((item, i) => (

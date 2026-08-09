@@ -66,7 +66,8 @@ function EmptyState({ onSave }) {
         gap: 10,
         flex: 1,
         minHeight: 0,
-        overflow: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
         fontSize: 12,
       }}
     >
@@ -320,7 +321,8 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
         gap: 10,
         flex: 1,
         minHeight: 0,
-        overflow: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       {shown.map((event, i) => {

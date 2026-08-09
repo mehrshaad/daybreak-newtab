@@ -55,6 +55,7 @@ export { faviconUrl } from "./favicon";
 export {
   CONTROL_TRANSITION,
   HOVER_LIFT,
+  LIST_BLEED,
   LIST_ROW_HEIGHT,
   LIST_ROW_HIGHLIGHT,
   MONO,

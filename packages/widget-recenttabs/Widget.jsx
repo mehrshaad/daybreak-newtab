@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { LuExternalLink, LuLayers } from "react-icons/lu";
-import { hasPermission, requestPermission, Tooltip, useTooltip } from "@daybreak/sdk";
+import { hasPermission, LIST_BLEED, requestPermission, Tooltip, useTooltip } from "@daybreak/sdk";
 
 const hasSessions = () => typeof chrome !== "undefined" && !!chrome.sessions;
 
@@ -30,8 +30,8 @@ function TabRow({ entry }) {
           gap: 10,
           alignItems: "center",
           fontSize: 12,
-          padding: "6px 8px",
-          margin: "0 -8px",
+          padding: `6px ${LIST_BLEED}px`,
+          margin: `0 -${LIST_BLEED}px`,
           borderRadius: 8,
           cursor: "pointer",
           border: 0,
@@ -218,7 +218,14 @@ function RecentTabs({ options, refreshKey, size, toast }) {
         flexDirection: "column",
         gap: 2,
         flex: 1,
-        overflow: "auto",
+        // Rows reach LIST_BLEED past this column on each side so their hover
+        // highlight meets the tile's padding edge; the matching padding keeps
+        // that inside the scroller rather than turning it into horizontal
+        // overflow (a scrollbar) or letting overflowX clip it away.
+        margin: `0 -${LIST_BLEED}px`,
+        padding: `0 ${LIST_BLEED}px`,
+        overflowY: "auto",
+        overflowX: "hidden",
         minHeight: 0,
       }}
     >

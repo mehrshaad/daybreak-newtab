@@ -68,7 +68,8 @@ function OnThisDay({ id, size }) {
         gap: 10,
         flex: 1,
         minHeight: 0,
-        overflow: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       {events.slice(0, limit).map((e, i) => (

@@ -102,16 +102,24 @@ export const LIST_ROW_HEIGHT = 30;
 // to a daytime World Clocks row.
 export const LIST_ROW_HIGHLIGHT = "var(--panel)";
 
+// How far a row's highlight reaches past its text column on each side, out to
+// the tile's own padding edge, so it reads as a full-width row.
+//
+// A row is therefore 2x this WIDER than the column it sits in. Anything that
+// scrolls such a list has to allow for that — matching horizontal padding on
+// the scroller, so the bleed happens inside it — or the extra width becomes
+// scrollable overflow and a vertically-scrolling list grows a horizontal
+// scrollbar along the bottom.
+export const LIST_BLEED = 8;
+
 export function listRow(extra) {
   return {
     display: "flex",
     alignItems: "center",
     gap: 10,
     minHeight: `${LIST_ROW_HEIGHT}px`,
-    // The negative margin lets the highlight bleed past the text column to
-    // the tile's own padding edge, so it reads as a full-width row.
-    padding: "5px 8px",
-    margin: "0 -8px",
+    padding: `5px ${LIST_BLEED}px`,
+    margin: `0 -${LIST_BLEED}px`,
     borderRadius: "8px",
     minWidth: 0,
     transition: "background .15s ease",

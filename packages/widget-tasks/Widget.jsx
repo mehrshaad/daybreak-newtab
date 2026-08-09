@@ -5,6 +5,7 @@ import {
   animateExit,
   EditableText,
   formatDate,
+  LIST_BLEED,
   LIST_ROW_HIGHLIGHT,
   listRow,
   MONO,
@@ -180,9 +181,24 @@ function Tasks({ options, config, setConfig, editing }) {
           flexDirection: "column",
           gap: 2,
           flex: 1,
-          overflow: "auto",
+          // Rows are LIST_BLEED wider than this column on each side so their
+          // highlight reaches the tile's padding edge. Without the matching
+          // padding here that extra width is scrollable overflow, and a list
+          // that only ever scrolls vertically grows a horizontal scrollbar
+          // along the bottom; the negative margin puts the text column back
+          // where it was. overflowX is pinned off as well, so no future
+          // content can reintroduce one.
+          margin: `0 -${LIST_BLEED}px`,
+          padding: `0 ${LIST_BLEED}px`,
+          overflowY: "auto",
+          overflowX: "hidden",
           minHeight: 0,
-          ...(draggingId ? { position: "relative", zIndex: 6, overflow: "visible" } : null),
+          // Longhands, not the `overflow` shorthand: React clears a shorthand
+          // it no longer sees on the next render, which would wipe the
+          // longhands above with it when a drag ends.
+          ...(draggingId
+            ? { position: "relative", zIndex: 6, overflowX: "visible", overflowY: "visible" }
+            : null),
         }}
       >
         {visible.length === 0 ? (

@@ -79,7 +79,8 @@ function CitySearch({ onPick, placeholder = "Search a city…", autoFocus = fals
             flexDirection: "column",
             gap: 2,
             maxHeight: 210,
-            overflow: "auto",
+            overflowY: "auto",
+        overflowX: "hidden",
             padding: 4,
           }}
         >
