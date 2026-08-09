@@ -50,13 +50,19 @@ export function useFlip(containerRef, deps, options = {}) {
     const container = containerRef.current;
     if (!container) return;
 
-    // Cancel anything still in flight BEFORE measuring, not while walking the
-    // nodes below. A running FLIP is mid-transform, and the measurement above
-    // would report that transform as the tile's position — which then gets
-    // cached as `previous` and becomes the next change's starting point. A
-    // drag crosses slots far faster than FLIP_DURATION, so those animations
-    // routinely overlap: the tile was inverted from a position it never
-    // actually occupied, jumped, then resolved back to its real slot.
+    // Where every tile *appears* at this instant, in-flight transforms and
+    // all. Taken before the cancel below, because cancelling drops a tile
+    // straight onto its layout box: interrupt a move 80ms in and it is still
+    // ~116px from where it was heading, so restarting from the layout box
+    // alone is a visible lurch. A drag crosses slots far faster than
+    // FLIP_DURATION, so interrupting is the normal case, not the rare one.
+    const seen = measure(container);
+
+    // Cancel anything still in flight BEFORE measuring the layout, not while
+    // walking the nodes below. A running FLIP is mid-transform, and the
+    // measurement would report that transform as the tile's position — which
+    // then gets cached as `previous` and becomes the next change's starting
+    // point, inverting the tile from somewhere it never actually was.
     for (const anim of running.current.values()) anim.cancel();
     running.current.clear();
 
@@ -89,8 +95,17 @@ export function useFlip(containerRef, deps, options = {}) {
         continue;
       }
 
-      const dx = first.left - last.left;
-      const dy = first.top - last.top;
+      // Whatever the cancelled animation was still applying. Adding it back
+      // starts this move from where the tile looked a moment ago rather than
+      // from its layout box, so an interrupted shuffle carries straight on
+      // instead of snapping backwards first. Zero when nothing was running,
+      // which leaves the ordinary case as plain FLIP.
+      const inFlight = seen.get(id);
+      const heldX = inFlight ? inFlight.left - last.left : 0;
+      const heldY = inFlight ? inFlight.top - last.top : 0;
+
+      const dx = first.left - last.left + heldX;
+      const dy = first.top - last.top + heldY;
       const sx = first.width / last.width;
       const sy = first.height / last.height;
 

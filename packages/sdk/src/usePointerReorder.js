@@ -18,6 +18,16 @@ import { FLIP_ITEMS } from "./useFlip";
 
 const START_THRESHOLD = 5; // px before a press becomes a drag, so clicks survive
 
+// How long a dropped item takes to travel from under the pointer into the slot
+// it landed in. Shorter than a FLIP so the tile arrives before, or with, the
+// neighbours settling around it rather than trailing them.
+const SETTLE_MS = 190;
+const SETTLE_EASING = "cubic-bezier(.2,.8,.2,1)";
+
+const reducedMotion = () =>
+  typeof window !== "undefined" &&
+  !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
 // Measure the element's untransformed layout box. Clearing and restoring the
 // transform inside one task means nothing is painted in between.
 const measureLayoutRect = (node) => {
@@ -76,21 +86,93 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
   const latest = useRef({ ids, onReorder, onDropOutside });
   latest.current = { ids, onReorder, onDropOutside };
 
+  // A drop still easing home, so a fresh grab can cut it short rather than
+  // have its cleanup land in the middle of the new drag.
+  const settling = useRef(null);
+
+  const endSettle = useCallback(() => {
+    const st = settling.current;
+    if (!st) return;
+    settling.current = null;
+    clearTimeout(st.timer);
+    st.anim?.cancel();
+    st.node.style.zIndex = "";
+    st.node.style.willChange = "";
+    st.node.style.transition = "";
+    setDraggingId(null);
+  }, []);
+
   const finish = useCallback(() => {
     const s = state.current;
     state.current = null;
-    if (s?.node) {
-      s.node.style.transform = "";
-      s.node.style.zIndex = "";
-      s.node.style.cursor = "";
-      s.node.style.pointerEvents = "";
-      s.node.style.willChange = "";
-      s.node.style.transition = "";
-    }
     document.body.style.userSelect = "";
-    setDraggingId(null);
     setIsOutside(false);
-  }, []);
+
+    const node = s?.node;
+    if (!node) {
+      setDraggingId(null);
+      return;
+    }
+    node.style.cursor = "";
+    node.style.pointerEvents = "";
+
+    // The held tile sits under the pointer, while its slot is wherever the
+    // last reorder left it — so at the moment of release the transform is
+    // still whatever is left of the grab offset, and dropping it outright
+    // teleports the tile that far in a single frame. Ease it into the slot
+    // instead. A press that never became a drag has no offset to settle, and
+    // neither does one released exactly on its slot.
+    const held = s.active ? node.style.transform : "";
+    endSettle();
+    node.style.transform = "";
+    if (!held || !node.animate || reducedMotion()) {
+      node.style.zIndex = "";
+      node.style.willChange = "";
+      node.style.transition = "";
+      setDraggingId(null);
+      return;
+    }
+
+    // WAAPI rather than a transition: this outranks the inline style React
+    // rewrites as the tile drops out of its dragging state, so the settle
+    // cannot be cancelled halfway by an unrelated re-render.
+    const anim = node.animate(
+      [{ transform: held }, { transform: "none" }],
+      { duration: SETTLE_MS, easing: SETTLE_EASING, fill: "none" }
+    );
+    // Still counts as dragging until it has actually arrived: that keeps the
+    // tile above its neighbours, keeps FLIP's hands off it, and keeps the
+    // board's overflow open — which would otherwise snap back to `clip` and
+    // cut the tile off mid-flight if it was released overhanging the grid.
+    const land = () => {
+      const st = settling.current;
+      if (!st || st.anim !== anim) return;
+      settling.current = null;
+      clearTimeout(st.timer);
+      // A no-op once it has played out. It matters when the backstop below is
+      // what got here: the animation is then frozen part-way — a background
+      // tab does not advance it — and leaving it alive would keep applying
+      // that half-finished offset to a tile that is no longer being dragged.
+      anim.cancel();
+      node.style.zIndex = "";
+      node.style.willChange = "";
+      node.style.transition = "";
+      setDraggingId(null);
+    };
+    settling.current = {
+      node,
+      anim,
+      // A backstop, because `finished` never settles while the tab is in the
+      // background — animations do not advance there. Without it, dropping a
+      // tile and immediately switching away would leave it stuck lifted and
+      // still flagged as dragging until the tab was looked at again.
+      timer: setTimeout(land, SETTLE_MS + 120),
+    };
+    anim.finished.catch(() => {}).then(land);
+  }, [endSettle]);
+
+  // Nothing should outlive the component that started it.
+  useEffect(() => endSettle, [endSettle]);
 
   const onPointerDown = useCallback(
     (event, id, dragNode) => {
@@ -101,6 +183,11 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
       // so a blanket check would block every icon drag.
       const control = event.target.closest("button, a, input, textarea, select");
       if (control && control !== event.currentTarget) return;
+
+      // Grabbing again mid-settle: land the previous drop now, so its cleanup
+      // cannot fire part-way through this one and so the node starts from a
+      // known state rather than inheriting a running animation.
+      endSettle();
 
       // Most callers attach onPointerDown directly to the thing that should
       // move (an icon-grid item, a world-clock row), so event.currentTarget is
@@ -127,7 +214,7 @@ export function usePointerReorder({ ids, onReorder, onDropOutside, enabled = tru
         active: false,
       };
     },
-    [enabled]
+    [enabled, endSettle]
   );
 
   useEffect(() => {
