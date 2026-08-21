@@ -1,9 +1,14 @@
+import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
 // The app must run both as a packaged extension and as a plain page
 // (`npm run dev`), so `chrome` is intentionally absent by default in tests.
 // Individual tests opt in with `installChromeMock()`.
 afterEach(() => {
+  // Unmount anything a component test rendered. Without this every render in a
+  // file stacks up in the same document and queries start finding two of
+  // everything.
+  cleanup();
   delete globalThis.chrome;
   localStorage.clear();
   vi.restoreAllMocks();

@@ -9,12 +9,13 @@ import PresetsDock from "./components/PresetsDock";
 import { Collapse } from "./components/primitives";
 import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
-import Toast from "./components/Toast";
+import Notifications from "./components/Notifications";
 import WelcomeCard from "./components/WelcomeCard";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
 import { boardMenu, isEditableTarget, widgetMenu } from "./core/menus";
 import { DEFAULT_ZOOM_MODE, presetBoardPatch, SAVED_LAYOUT } from "./core/schema";
+import { useNotices } from "./core/noticeContext";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
@@ -58,13 +59,11 @@ function App() {
   const [menu, setMenu] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
-  const [toastMsg, setToastMsg] = useState("");
   const [manualRefresh, setManualRefresh] = useState({});
 
   const searchRef = useRef(null);
   const boardRef = useRef(null);
   const tileEls = useRef({});
-  const toastTimer = useRef(null);
   const scrolled = useScrolled();
   const columns = useColumns();
   const viewportWidth = useViewportWidth();
@@ -91,13 +90,11 @@ function App() {
   const openDrawerWidth = settingsOpen ? 400 : panel ? 340 : 0;
   const shift = boardShift(viewportWidth, openDrawerWidth);
 
-  const toast = useCallback((message) => {
-    clearTimeout(toastTimer.current);
-    setToastMsg(message);
-    toastTimer.current = setTimeout(() => setToastMsg(""), 1900);
-  }, []);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  // One shared queue for the whole app — see core/notify.jsx. `notify` takes a
+  // bare string as well as an object, so every existing toast("…") call reads
+  // the same and lands in the "confirmations" category.
+  const { notify } = useNotices();
+  const toast = notify;
 
   const registerTile = useCallback((id, el) => {
     if (el) tileEls.current[id] = el;
@@ -670,7 +667,7 @@ function App() {
         </button>
       ) : null}
 
-      <Toast message={toastMsg} hidden={editing} />
+      <Notifications hidden={editing} />
 
       {dockPresent ? (
         <PresetsDock

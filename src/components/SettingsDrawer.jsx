@@ -14,6 +14,7 @@ import {
   WALLPAPERS,
   backgroundSwatch,
 } from "../core/tokens";
+import { CATEGORIES, CATEGORY_LABELS } from "../core/notices";
 import { SOURCES } from "../core/suggest";
 import { systemTheme } from "../core/useSystemTheme";
 import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
@@ -80,6 +81,7 @@ function SettingsDrawer({
 }) {
   const { appearance, behavior, profile } = settings;
   const suggest = behavior.suggest || { links: true };
+  const notices = behavior.notifications || { enabled: true, categories: {} };
   const fileRef = useRef(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -284,6 +286,54 @@ function SettingsDrawer({
         >
           Show the welcome card again
         </Pill>
+      </Section>
+
+      <Section title="Notifications" style={{ marginBottom: 22 }}>
+        <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5, marginBottom: 8 }}>
+          Messages that appear at the bottom of the page. Each kind can be
+          silenced on its own — undo prompts and version notices are not the
+          same sort of message.
+        </div>
+        <Toggle
+          label="Show notifications"
+          on={notices.enabled !== false}
+          onChange={() =>
+            update("behavior", {
+              notifications: { ...notices, enabled: notices.enabled === false },
+            })
+          }
+        />
+        <Collapse open={notices.enabled !== false}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              paddingLeft: 12,
+              marginTop: 2,
+              borderLeft: "1px solid var(--line)",
+            }}
+          >
+            {CATEGORIES.map((key) => (
+              <Toggle
+                key={key}
+                label={CATEGORY_LABELS[key]}
+                on={notices.categories?.[key] !== false}
+                onChange={() =>
+                  update("behavior", {
+                    notifications: {
+                      ...notices,
+                      categories: {
+                        ...notices.categories,
+                        [key]: notices.categories?.[key] === false,
+                      },
+                    },
+                  })
+                }
+              />
+            ))}
+          </div>
+        </Collapse>
       </Section>
 
       <Section title="Search suggestions" style={{ marginBottom: 22 }}>
