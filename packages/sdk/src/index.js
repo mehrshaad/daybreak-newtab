@@ -108,6 +108,18 @@ export { iconCellSize } from "./iconCellSize";
 // Small utilities.
 export { onSyncQuotaError } from "./storage";
 
+// Jalali (Solar Hijri) dates, for the countdown and calendar widgets.
+export {
+  formatJalali,
+  fromJalali,
+  isJalaliLeapYear,
+  JALALI_MONTHS,
+  JALALI_MONTHS_FA,
+  jalaliMonthLength,
+  toFarsiDigits,
+  toJalali,
+} from "./jalali";
+
 // Sun and moon, worked out locally — no network, no key. Shared by the Sun &
 // daylight, Moon phase and Prayer times widgets.
 export {

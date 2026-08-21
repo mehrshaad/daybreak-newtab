@@ -4,7 +4,7 @@ export default {
   glyph: "calendarRange",
   category: "Productivity",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.2.0",
   tagline: "Your next events, from a pasted iCal link.",
   description:
     "Paste a private iCal address from Google, Outlook or iCloud and see " +

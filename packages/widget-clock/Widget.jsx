@@ -5,7 +5,7 @@ import AnalogFace from "./AnalogFace";
 // like a page zoom, so a tile that rearranged itself on the way in would look
 // out of place. Sizing keys off the tile's own span instead.
 function Clock({ options, size }) {
-  const { hour24, seconds, hideDate, analog, align } = options;
+  const { hour24, seconds, hideDate, analog, align, accentFace } = options;
   const bySecond = useSeconds(!!seconds);
   const byMinute = useMinutes();
   const now = seconds ? bySecond : byMinute;
@@ -58,8 +58,7 @@ function Clock({ options, size }) {
     </div>
   );
 
-  if (analog) {
-    return (
+  const body = analog ? (
       <div
         style={{
           display: "flex",
@@ -75,14 +74,12 @@ function Clock({ options, size }) {
           date={now}
           size={tall ? "min(74%, 208px)" : narrow ? "min(92%, 92px)" : "min(88%, 122px)"}
           showSeconds={!!seconds}
+          accentFace={!!accentFace}
           label={time}
         />
         {date}
       </div>
-    );
-  }
-
-  return (
+  ) : (
     <div
       style={{
         display: "flex",
@@ -132,6 +129,21 @@ function Clock({ options, size }) {
       </div>
 
       {date}
+    </div>
+  );
+
+  // Keyed on the *options*, never on the time: a change of mode remounts and
+  // fades, while a tick does not. Keying on the displayed value instead would
+  // re-fade the whole clock every second with the second hand switched on.
+  //
+  // Alignment is deliberately absent from the key — it animates by sliding its
+  // own margins, and a remount would throw that away and snap instead.
+  return (
+    <div
+      key={`${analog ? "analog" : "digital"}-${seconds ? "s" : ""}-${hideDate ? "" : "d"}`}
+      style={{ display: "flex", flex: 1, minWidth: 0, animation: "db-fade .28s ease both" }}
+    >
+      {body}
     </div>
   );
 }

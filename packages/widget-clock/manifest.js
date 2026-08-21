@@ -4,7 +4,7 @@ export default {
   glyph: "clock",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.1.0",
+  version: "2.2.0",
   tagline: "The time and today's date, digital or analog.",
   description:
     "A large, quiet clock with the full date underneath, or an analog face " +
@@ -23,6 +23,7 @@ export default {
   defaultSize: [3, 2],
   options: [
     { key: "analog", label: "Analog face", type: "boolean", default: false },
+    { key: "accentFace", label: "Accent dial edge", type: "boolean", default: false },
     { key: "hour24", label: "24-hour time", type: "boolean", default: false },
     { key: "seconds", label: "Show seconds", type: "boolean", default: false },
     { key: "hideDate", label: "Hide the date", type: "boolean", default: false },

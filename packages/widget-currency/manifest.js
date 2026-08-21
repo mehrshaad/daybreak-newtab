@@ -4,7 +4,7 @@ export default {
   glyph: "currency",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.2.0",
   tagline: "Exchange rates, no key required.",
   description:
     "Rates from Frankfurter, built on European Central Bank data — no API " +
