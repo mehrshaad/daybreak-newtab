@@ -23,10 +23,32 @@ export default {
   defaultSize: [3, 2],
   options: [
     { key: "analog", label: "Analog face", type: "boolean", default: false },
-    { key: "accentFace", label: "Accent dial edge", type: "boolean", default: false },
-    { key: "hour24", label: "24-hour time", type: "boolean", default: false },
-    { key: "seconds", label: "Show seconds", type: "boolean", default: false },
-    { key: "hideDate", label: "Hide the date", type: "boolean", default: false },
+    // Analog only. Without showIf these sat beside the digital settings doing
+    // nothing in whichever mode was not selected.
+    {
+      key: "face",
+      label: "Face",
+      type: "enum",
+      of: ["round", "squared"],
+      labels: { round: "Round", squared: "Squared" },
+      default: "round",
+      showIf: { analog: true },
+    },
+    {
+      key: "dialDate",
+      label: "Date in the dial",
+      type: "boolean",
+      default: false,
+      showIf: { analog: true },
+    },
+    {
+      key: "accentFace",
+      label: "Accent dial edge",
+      type: "boolean",
+      default: false,
+      showIf: { analog: true },
+    },
+    // Digital only: there is nothing to align on a dial.
     {
       key: "align",
       label: "Align",
@@ -34,7 +56,12 @@ export default {
       of: ["left", "center", "right"],
       labels: { left: "Left", center: "Centre", right: "Right" },
       default: "left",
+      showIf: { analog: false },
     },
+    // Both modes.
+    { key: "hour24", label: "24-hour time", type: "boolean", default: false },
+    { key: "seconds", label: "Show seconds", type: "boolean", default: false },
+    { key: "hideDate", label: "Hide the date", type: "boolean", default: false },
   ],
   refresh: null,
   permissions: { chrome: [], hosts: [] },

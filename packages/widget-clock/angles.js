@@ -14,6 +14,22 @@ export function handAngles(date) {
   };
 }
 
+// Hands are moved by transitioning a CSS rotation, and a transition
+// interpolates the *number*: going from 354deg to 0deg runs the hand
+// anticlockwise all the way across the dial rather than the last six degrees
+// forward. That happened once an hour on the minute hand and once every twelve
+// on the hour hand.
+//
+// The cure is to stop reducing the angle into 0..360 and let it accumulate:
+// 354 -> 360 -> 366. Every step then takes the short way round because it is
+// the only way round. Pure so the wrap is actually testable.
+export function continueAngle(shown, last, next) {
+  let delta = next - last;
+  if (delta < -180) delta += 360;
+  else if (delta > 180) delta -= 360;
+  return shown + delta;
+}
+
 // Endpoint of a hand of the given length, for a face of radius 50 centred at
 // (50, 50). Degrees are clockwise from twelve, so 0 points straight up.
 export function handPoint(degrees, length, centre = 50) {

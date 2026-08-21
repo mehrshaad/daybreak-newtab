@@ -88,7 +88,23 @@ function WidgetSettingsDrawer({
         {manifest.options.length ? (
           <Section title="Options">
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {manifest.options.map((o) => {
+              {manifest.options
+                // An option can say which mode it belongs to. Without this the
+                // clock offered "Analog face" alongside "Accent dial edge" and
+                // "24-hour time" all at once, half of them doing nothing
+                // whatever mode you were in. `showIf` is a plain map of
+                // option key to accepted values, so it stays declarative and a
+                // widget cannot smuggle a function into its manifest.
+                .filter((o) => {
+                  if (!o.showIf) return true;
+                  return Object.entries(o.showIf).every(([key, accepted]) => {
+                    const current = options[key] ?? manifest.options.find((x) => x.key === key)?.default;
+                    return Array.isArray(accepted)
+                      ? accepted.includes(current)
+                      : accepted === current;
+                  });
+                })
+                .map((o) => {
                 // Options started out boolean-only; enum and number let a
                 // widget ask for a choice or a count without needing its own
                 // settings panel.
