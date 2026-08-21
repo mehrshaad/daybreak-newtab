@@ -107,6 +107,21 @@ export { iconCellSize } from "./iconCellSize";
 
 // Small utilities.
 export { onSyncQuotaError } from "./storage";
+
+// Sun and moon, worked out locally — no network, no key. Shared by the Sun &
+// daylight, Moon phase and Prayer times widgets.
+export {
+  dayLengthDelta,
+  dayProgress,
+  daysUntilPhase,
+  moonPhase,
+  moonPhaseName,
+  MOON_PHASE_NAMES,
+  sunPosition,
+  sunTimes,
+  SUN_ANGLES,
+  SYNODIC_MONTH,
+} from "./astro";
 export {
   SEARCH_ENGINES,
   clamp,

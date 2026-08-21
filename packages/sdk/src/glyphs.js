@@ -9,11 +9,13 @@ import {
   LuLayoutGrid,
   LuHistory,
   LuLink,
+  LuMoon,
   LuNewspaper,
   LuNotebookPen,
   LuQuote,
   LuSquareCheck,
   LuSun,
+  LuSunrise,
   LuTimer,
   LuWind,
 } from "react-icons/lu";
@@ -25,6 +27,8 @@ import {
 // can never render an empty chip.
 export const GLYPHS = {
   air: LuWind,
+  moon: LuMoon,
+  sun: LuSunrise,
   bookmark: LuBookmark,
   calendar: LuCalendarCheck,
   calendarDays: LuCalendarDays,

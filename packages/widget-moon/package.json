@@ -1,0 +1,15 @@
+{
+  "name": "@daybreak/widget-moon",
+  "version": "2.2.0",
+  "private": true,
+  "description": "Tonight's moon, drawn as it actually looks.",
+  "type": "module",
+  "main": "manifest.js",
+  "dependencies": {
+    "@daybreak/sdk": "*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-icons": "^5.4.0"
+  }
+}
