@@ -8,7 +8,8 @@ export default {
   tagline: "Pomodoro rounds, quietly.",
   description:
     "Twenty-five minutes of focus, five off, a longer break every fourth " +
-    "round. Runs entirely in the page — closing the tab resets it.",
+    "round. Keeps running when you close the tab, and every new tab shows the " +
+    "same countdown.",
   sizes: [[3, 2]],
   defaultSize: [3, 2],
   options: [

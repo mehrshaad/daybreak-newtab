@@ -5,6 +5,7 @@ import {
   MONO,
   originOf,
   requestOrigin,
+  requestOrigins,
   uid,
   useWidgetLocal,
 } from "@daybreak/sdk";
@@ -181,6 +182,13 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
   const [status, setStatus] = useState(calendars.length ? "loading" : "empty");
   const [live, setLive] = useState(null);
   const [failedCount, setFailedCount] = useState(0);
+  // Which origins came back refused rather than merely unreachable. Kept apart
+  // because the remedies are different: one is a button the user can press, the
+  // other is waiting for someone else's server.
+  const [needsPermission, setNeedsPermission] = useState([]);
+  // Bumped to re-run the fetch after a grant, without touching refreshKey,
+  // which belongs to the widget's own refresh rate.
+  const [retry, setRetry] = useState(0);
   const tall = (size?.[1] ?? 3) >= 3;
   const limit = tall ? 8 : 4;
 
@@ -228,8 +236,9 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
           // No permissions API means nothing to check against (e.g. local
           // dev) — same as the add flow, attempt the fetch directly rather
           // than reporting every calendar as unreachable.
-          const granted = !hasPermissionsApi() || (await hasOrigin(originOf(cal.url)));
-          if (!granted) return { ok: false };
+          const origin = originOf(cal.url);
+          const granted = !hasPermissionsApi() || (await hasOrigin(origin));
+          if (!granted) return { ok: false, origin };
           try {
             const res = await fetch(cal.url);
             // fetch() only rejects on a network-level failure — a 503 or
@@ -247,6 +256,7 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
       if (!active) return;
 
       const ok = results.filter((r) => r.ok);
+      setNeedsPermission([...new Set(results.filter((r) => r.origin).map((r) => r.origin))]);
       if (!ok.length) {
         setStatus("blocked");
         return;
@@ -264,7 +274,7 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
     };
     // setCached is stable per key; including it would refetch on every write.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calendarsKey, refreshKey]);
+  }, [calendarsKey, refreshKey, retry]);
 
   if (status === "empty") {
     return <EmptyState onSave={saveUrl} />;
@@ -273,23 +283,63 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
   const events = reviveDates(live || cached);
 
   if (!events) {
-    const message =
-      status === "blocked"
-        ? "None of your calendars are reachable right now."
-        : "Loading…";
+    // A calendar refused for want of permission is not the same as one that is
+    // down, and it used to render the same sentence: a dead end that told the
+    // user nothing could be done, when in fact one click fixes it. Nothing ever
+    // asked again after the first refusal.
+    const blockedOnPermission = status === "blocked" && needsPermission.length > 0;
+    const message = blockedOnPermission
+      ? needsPermission.length > 1
+        ? "Daybreak needs your permission to reach these calendars."
+        : "Daybreak needs your permission to reach this calendar."
+      : status === "blocked"
+      ? "None of your calendars are reachable right now."
+      : "Loading…";
+
     return (
       <div
         style={{
           flex: 1,
-          display: "grid",
-          placeItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
           fontSize: 12,
           color: "var(--faint)",
           textAlign: "center",
           padding: "0 10px",
         }}
       >
-        {message}
+        <div>{message}</div>
+        {blockedOnPermission ? (
+          <button
+            type="button"
+            onClick={async () => {
+              // First await in the handler, and one call for every missing
+              // origin at once: Chrome wants a user gesture, and awaiting
+              // anything before this — or prompting twice — spends it.
+              const granted = await requestOrigins(needsPermission);
+              if (!granted) {
+                toast?.("Permission is needed to read your calendar");
+                return;
+              }
+              setStatus("loading");
+              setRetry((n) => n + 1);
+            }}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 999,
+              border: "1px solid var(--accentLine)",
+              background: "var(--accentSoft)",
+              color: "var(--accentText)",
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            Grant access
+          </button>
+        ) : null}
       </div>
     );
   }

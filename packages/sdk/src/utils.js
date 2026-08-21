@@ -121,6 +121,25 @@ export const formatDate = (date) => {
 
 export const todayKey = () => formatDate(new Date());
 
+// The inverse of formatDate, and it has to be hand-rolled: formatDate builds
+// its key from local getters, but `new Date("2026-08-07")` is parsed as UTC
+// midnight, which in any negative offset is the previous day. Reading the parts
+// out and handing them to the local constructor round-trips exactly.
+export const parseDateKey = (key) => {
+  const [y, m, d] = String(key).split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const date = new Date(y, m - 1, d);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+// "Wed". Through the browser's own locale rather than a hardcoded table, so it
+// follows the user's language the way every other date in the app does.
+export const weekdayShort = (key, locale) => {
+  const date = typeof key === "string" ? parseDateKey(key) : key;
+  if (!date) return "";
+  return date.toLocaleDateString(locale, { weekday: "short" });
+};
+
 // Stable id without pulling in a uuid dependency.
 export const uid = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;

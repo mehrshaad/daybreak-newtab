@@ -44,6 +44,7 @@ export {
   originOf,
   requestAllPermissions,
   requestOrigin,
+  requestOrigins,
   requestPermission,
 } from "./permissions";
 
@@ -110,10 +111,12 @@ export {
   clamp,
   classNames,
   formatDate,
+  parseDateKey,
   geocodeCity,
   greeting,
   searchCities,
   todayKey,
+  weekdayShort,
   uid,
   wmoWeather,
 } from "./utils";

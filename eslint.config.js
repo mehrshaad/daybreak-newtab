@@ -10,7 +10,13 @@ export default [
     files: ['**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: { ...globals.browser, chrome: 'readonly' },
+      globals: {
+        ...globals.browser,
+        chrome: 'readonly',
+        // Stamped in by vite.config.js at build time.
+        __APP_VERSION__: 'readonly',
+        __BUILD_DATE__: 'readonly',
+      },
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },

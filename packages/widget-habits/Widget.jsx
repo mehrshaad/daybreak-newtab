@@ -8,6 +8,7 @@ import {
   uid,
   useTooltip,
   useWidgetSynced,
+  weekdayShort,
 } from "@daybreak/sdk";
 import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
@@ -88,7 +89,10 @@ function Stepper({ label, value, min, max, onChange, suffix = "" }) {
 
 // Its own component so each dot's tooltip gets its own hover state.
 function DayDot({ date, habitName, isToday, ticked, dot, onToggle }) {
-  const tip = useTooltip(isToday ? "Today" : date);
+  // Weekday as well as the date: "was that Tuesday or Wednesday" is the actual
+  // question when you are looking back along the row.
+  const label = `${weekdayShort(date)} ${date.slice(5)}`;
+  const tip = useTooltip(isToday ? `Today · ${label}` : label);
   return (
     <>
       <button
@@ -346,6 +350,12 @@ function Habits({ id, options, config, setConfig, size }) {
   const [history, setHistory] = useWidgetSynced(id, "history", {}, { trim: trimHistory });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
+  // Target and goal are set here rather than only in the row's own settings
+  // afterwards: "five times a week for eight weeks" is the whole shape of a
+  // habit, and having to create it and then go and configure it made the new
+  // habit briefly mean something the user never asked for.
+  const [draftTarget, setDraftTarget] = useState(5);
+  const [draftWeeks, setDraftWeeks] = useState(0);
   const [editing, setEditing] = useState(null);
 
   const habits =
@@ -371,8 +381,15 @@ function Habits({ id, options, config, setConfig, size }) {
     e.stopPropagation();
     const name = draft.trim();
     if (!name) return;
-    setConfig({ habits: [...habits, { id: uid(), name, target: 5, targetWeeks: 0 }] });
+    setConfig({
+      habits: [
+        ...habits,
+        { id: uid(), name, target: draftTarget, targetWeeks: draftWeeks },
+      ],
+    });
     setDraft("");
+    setDraftTarget(5);
+    setDraftWeeks(0);
     setAdding(false);
   };
 
@@ -383,7 +400,13 @@ function Habits({ id, options, config, setConfig, size }) {
         flexDirection: "column",
         gap: 12,
         flex: 1,
-        justifyContent: "center",
+        // `safe center` and not plain `center`: a centred flex column overflows
+        // *both* ends when it outgrows the tile, and the overflow above the
+        // start edge cannot be scrolled to — the first habit simply became
+        // unreachable. `safe` falls back to flex-start exactly when that would
+        // happen, and keeps centring the rest of the time. Chrome 115+, and the
+        // extension's floor is 117.
+        justifyContent: "safe center",
         minWidth: 0,
         minHeight: 0,
         overflowY: "auto",
@@ -426,7 +449,14 @@ function Habits({ id, options, config, setConfig, size }) {
             autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => !draft && setAdding(false)}
+            // Only closes if nothing has been typed *and* focus left the form
+            // altogether — reaching for a stepper used to dismiss the whole
+            // thing mid-edit.
+            onBlur={(e) => {
+              if (draft) return;
+              if (e.currentTarget.form?.contains(e.relatedTarget)) return;
+              setAdding(false);
+            }}
             placeholder="Habit name"
             aria-label="Habit name"
             style={{
@@ -440,6 +470,35 @@ function Habits({ id, options, config, setConfig, size }) {
               color: "var(--fg)",
             }}
           />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              marginTop: 8,
+            }}
+          >
+            <Stepper
+              label="per week"
+              value={draftTarget}
+              min={1}
+              max={7}
+              onChange={setDraftTarget}
+            />
+            <Stepper
+              label="goal"
+              value={draftWeeks}
+              min={0}
+              max={52}
+              suffix="w"
+              onChange={setDraftWeeks}
+            />
+            {/* A form whose only control is a text field does not submit on
+                Enter once other controls join it — this restores that without
+                a visible button, the same trick the quick-links form uses. */}
+            <button type="submit" style={{ display: "none" }} aria-hidden="true" />
+          </div>
         </form>
       ) : (
         <button

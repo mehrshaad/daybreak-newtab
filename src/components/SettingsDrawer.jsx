@@ -15,6 +15,7 @@ import {
   backgroundSwatch,
 } from "../core/tokens";
 import { CATEGORIES, CATEGORY_LABELS } from "../core/notices";
+import { versionLabel } from "../core/version";
 import { SOURCES } from "../core/suggest";
 import { systemTheme } from "../core/useSystemTheme";
 import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
@@ -377,6 +378,23 @@ function SettingsDrawer({
               />
             );
           })}
+        </div>
+      </Section>
+
+      <Section title="About" style={{ marginBottom: 22 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 10,
+            fontSize: 13,
+          }}
+        >
+          <span style={{ color: "var(--dim)" }}>Version</span>
+          <span style={{ fontFamily: MONO, fontSize: 12, color: "var(--fg)" }}>
+            {versionLabel() || "—"}
+          </span>
         </div>
       </Section>
 
