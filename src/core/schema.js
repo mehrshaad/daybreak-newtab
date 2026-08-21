@@ -99,6 +99,7 @@ export function defaultSettings() {
       // nothing. "none" gives that row's height back to the widget rather than
       // leaving it blank.
       tileLabels: VISUAL_DEFAULTS.tileLabels,
+      boardWidth: VISUAL_DEFAULTS.boardWidth,
     },
     behavior: {
       showGreeting: true,

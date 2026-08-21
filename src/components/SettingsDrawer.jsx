@@ -226,6 +226,28 @@ function SettingsDrawer({
             onChange={(alpha) => update("appearance", { alpha })}
           />
           <div>
+            <div style={{ fontSize: 13, marginBottom: 7 }}>Board width</div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+              {[
+                ["comfortable", "Comfortable"],
+                ["wide", "Wide"],
+                ["full", "Full"],
+              ].map(([value, label]) => (
+                <Pill
+                  key={value}
+                  active={(appearance.boardWidth || "comfortable") === value}
+                  onClick={() => update("appearance", { boardWidth: value })}
+                  style={{ fontSize: 11, padding: "5px 10px" }}
+                >
+                  {label}
+                </Pill>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 6 }}>
+              How far the board spreads on a wide screen.
+            </div>
+          </div>
+          <div>
             <div style={{ fontSize: 13, marginBottom: 7 }}>Widget labels</div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
               {[

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { cameraStyle } from "../core/tileStyle";
+import { boardMaxWidth } from "../core/useColumns";
 import { GRID_GAP } from "../core/tokens";
 import { useFlip, useLongPress, usePointerReorder } from "@daybreak/sdk";
 import { resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
@@ -86,10 +87,13 @@ function Board({
       gridAutoRows: "96px",
       gridAutoFlow: "row dense",
       gap: `${GRID_GAP}px`,
-      maxWidth: "1560px",
+      maxWidth: boardMaxWidth(appearance.boardWidth),
       margin: "0 auto",
+      // Transitioned so changing the setting slides the board out rather than
+      // snapping. The grid tracks are 1fr, so they follow the cap continuously.
+      transition: "max-width .34s cubic-bezier(.22,1,.36,1)",
     }),
-    [columns]
+    [columns, appearance.boardWidth]
   );
 
   return (

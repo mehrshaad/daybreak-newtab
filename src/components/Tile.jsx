@@ -265,8 +265,13 @@ function Tile({
   const labels = appearance.tileLabels || "both";
   const showIcon = labels === "both" || labels === "icon";
   const showName = labels === "both" || labels === "name";
-  const chromeOut = !!(editing || focused || menuTarget);
-  const headerHidden = !showIcon && !showName && !chromeOut;
+  // Only what actually occupies the header row may keep it open, and that is
+  // just the zoom chrome. Edit-mode controls are absolutely positioned above the
+  // tile on purpose (see the comment where they are rendered) and a right-click
+  // puts nothing in the row at all — so including either of those meant that
+  // with labels hidden, right-clicking a widget pushed its content down by the
+  // height of a row that then showed nothing.
+  const headerHidden = !showIcon && !showName && !focused;
 
   return (
     <div

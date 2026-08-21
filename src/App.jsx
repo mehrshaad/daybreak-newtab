@@ -89,7 +89,7 @@ function App() {
   // under it. Measured against the live width, so a resize while a drawer is
   // open is accounted for too.
   const openDrawerWidth = settingsOpen ? 400 : panel ? 340 : 0;
-  const shift = boardShift(viewportWidth, openDrawerWidth);
+  const shift = boardShift(viewportWidth, openDrawerWidth, appearance.boardWidth);
 
   // One shared queue for the whole app — see core/notify.jsx. `notify` takes a
   // bare string as well as an object, so every existing toast("…") call reads
