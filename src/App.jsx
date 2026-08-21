@@ -16,6 +16,7 @@ import { autoArrange } from "./core/autoArrange";
 import { boardMenu, isEditableTarget, widgetMenu } from "./core/menus";
 import { DEFAULT_ZOOM_MODE, presetBoardPatch, SAVED_LAYOUT } from "./core/schema";
 import { useNotices } from "./core/noticeContext";
+import { useConditions } from "./core/useConditions";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
@@ -95,6 +96,15 @@ function App() {
   // the same and lands in the "confirmations" category.
   const { notify } = useNotices();
   const toast = notify;
+
+  // Sync failing, the extension having updated itself, and the page dropping
+  // frames — see core/useConditions.js. All three were previously either silent
+  // or impossible for a user to find out about.
+  useConditions({
+    notify,
+    blurOn: appearance.blur !== false,
+    onTurnOffBlur: () => update("appearance", { blur: false }),
+  });
 
   const registerTile = useCallback((id, el) => {
     if (el) tileEls.current[id] = el;

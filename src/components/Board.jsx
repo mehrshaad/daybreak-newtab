@@ -131,7 +131,13 @@ function Board({
       ) : null}
 
       <div ref={boardRef} style={cameraStyle(cam, !!zoom && zoomMode === "Camera")}>
-        <div ref={gridRef} style={gridStyle}>
+        {/* Same marker the icon grids and the task list already use. Beyond
+            the CSS that reads it, the performance check needs to know when
+            something is genuinely happening: a still page renders almost
+            nothing, and calling that "slow" would flag every machine there is.
+            A tile drag is the heaviest thing the board does, so it is exactly
+            the moment worth measuring. */}
+        <div ref={gridRef} style={gridStyle} data-dragging={draggingId ? "true" : undefined}>
           {ids.map((instanceId, index) => (
             <Tile
               key={instanceId}

@@ -106,6 +106,7 @@ export { useTooltip } from "./useTooltip";
 export { iconCellSize } from "./iconCellSize";
 
 // Small utilities.
+export { onSyncQuotaError } from "./storage";
 export {
   SEARCH_ENGINES,
   clamp,

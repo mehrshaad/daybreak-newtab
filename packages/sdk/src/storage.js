@@ -15,6 +15,27 @@ export const LOCAL_KEY = "daybreak2local";
 export const V1_KEY = "daybreakSettings";
 export const SYNC_MIRROR_KEY = "daybreak2mirror";
 
+// A sync write that fails is not a nothing: settings quietly stop following the
+// profile from that moment on, and until now nobody was told. The SDK cannot
+// show a notification itself — it has no idea what the app's UI looks like — so
+// it reports and lets the app decide.
+const quotaListeners = new Set();
+
+export function onSyncQuotaError(listener) {
+  quotaListeners.add(listener);
+  return () => quotaListeners.delete(listener);
+}
+
+function reportQuotaError(message) {
+  for (const listener of quotaListeners) {
+    try {
+      listener(message);
+    } catch {
+      /* a broken listener must not take the write down with it */
+    }
+  }
+}
+
 export const hasChromeSync = () =>
   typeof chrome !== "undefined" && !!chrome.storage && !!chrome.storage.sync;
 
@@ -55,8 +76,12 @@ function makeArea(key, isChromeAvailable, chromeArea) {
         return new Promise((resolve) => {
           chromeArea().set({ [key]: value }, () => {
             // Quota errors must not lose data: keep a local copy as a backstop.
-            if (typeof chrome !== "undefined" && chrome.runtime?.lastError) {
+            const failure = typeof chrome !== "undefined" ? chrome.runtime?.lastError : null;
+            if (failure) {
               writeLocalStorage(key, value);
+              // Only for sync. A local write failing is a different problem and
+              // does not mean anything about following the profile around.
+              if (key === SYNC_KEY) reportQuotaError(failure.message || "");
             }
             resolve();
           });
