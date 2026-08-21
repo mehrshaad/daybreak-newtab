@@ -45,6 +45,7 @@ export const DEFAULTS = {
   alpha: 50,
   pageZoom: 100,
   blur: true,
+  tileLabels: "both",
 };
 
 // Surfaces read their blur from these rather than hardcoding backdrop-filter,

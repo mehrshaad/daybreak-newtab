@@ -11,6 +11,7 @@ export default {
     "rather than picked from a set of icons. Worked out from the date on this " +
     "machine — nothing is fetched, and it needs no key.",
   sizes: [
+    [2, 2],
     [3, 2],
     [3, 3],
     [4, 2],

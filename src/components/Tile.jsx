@@ -259,6 +259,15 @@ function Tile({
   if (!manifest) return null;
   const Widget = lazyFor(manifest);
 
+  // What the tile puts above its content. "none" frees the row entirely, but
+  // never while the edit chrome is out — the resize and remove buttons live in
+  // that row and cannot be collapsed out from under the user.
+  const labels = appearance.tileLabels || "both";
+  const showIcon = labels === "both" || labels === "icon";
+  const showName = labels === "both" || labels === "name";
+  const chromeOut = !!(editing || focused || menuTarget);
+  const headerHidden = !showIcon && !showName && !chromeOut;
+
   return (
     <div
       ref={(el) => {
@@ -324,27 +333,43 @@ function Tile({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "12px",
           gap: "8px",
           flex: "none",
+          // With nothing to show and no chrome open, the row gives its height
+          // back to the widget rather than sitting there empty — hiding a label
+          // should buy space, not just blank it. Transitioned so the content
+          // rises into the gap instead of jumping.
+          maxHeight: headerHidden ? 0 : 40,
+          marginBottom: headerHidden ? 0 : "12px",
+          opacity: headerHidden ? 0 : 1,
+          overflow: "hidden",
+          transition:
+            "max-height .3s cubic-bezier(.22,1,.36,1), margin-bottom .3s cubic-bezier(.22,1,.36,1), opacity .2s ease",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-          <div style={mark(seedFor(typeOf(instanceId)), 14)} />
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: "10px",
-              letterSpacing: ".14em",
-              textTransform: "uppercase",
-              color: "var(--faint)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {manifest.name}
-          </span>
+          {/* Appear rather than a ternary: it unmounts when closed, so the
+              space is genuinely returned, and it fades both ways. */}
+          <Appear open={showIcon} style={{ display: "flex", flex: "none" }}>
+            <div style={mark(seedFor(typeOf(instanceId)), 14)} />
+          </Appear>
+          <Appear open={showName} style={{ minWidth: 0 }}>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: "10px",
+                letterSpacing: ".14em",
+                textTransform: "uppercase",
+                color: "var(--faint)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                display: "block",
+              }}
+            >
+              {manifest.name}
+            </span>
+          </Appear>
         </div>
 
         <div style={{ display: "flex", gap: "6px", flex: "none" }}>

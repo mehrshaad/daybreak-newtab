@@ -225,6 +225,29 @@ function SettingsDrawer({
             value={appearance.alpha}
             onChange={(alpha) => update("appearance", { alpha })}
           />
+          <div>
+            <div style={{ fontSize: 13, marginBottom: 7 }}>Widget labels</div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+              {[
+                ["both", "Dot & name"],
+                ["name", "Name"],
+                ["icon", "Dot"],
+                ["none", "Neither"],
+              ].map(([value, label]) => (
+                <Pill
+                  key={value}
+                  active={(appearance.tileLabels || "both") === value}
+                  onClick={() => update("appearance", { tileLabels: value })}
+                  style={{ fontSize: 11, padding: "5px 10px" }}
+                >
+                  {label}
+                </Pill>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 6 }}>
+              Hiding both gives that row&rsquo;s height back to the widget.
+            </div>
+          </div>
           <Toggle
             label="Blur behind panels"
             on={appearance.blur !== false}

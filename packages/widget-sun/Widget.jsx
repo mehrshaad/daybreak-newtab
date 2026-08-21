@@ -118,7 +118,16 @@ function Sun({ config, setConfig, options, size }) {
   const tall = size?.[1] >= 3;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 10 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+        gap: 10,
+        overflow: "hidden",
+      }}
+    >
       <div
         style={{
           position: "relative",
@@ -237,29 +246,23 @@ function Sun({ config, setConfig, options, size }) {
         <Row
           label="Daylight"
           value={
-            times.dayLength == null
-              ? position.altitude > 0
-                ? "All day"
-                : "None"
-              : lengthLabel(times.dayLength)
+            <>
+              {times.dayLength == null
+                ? position.altitude > 0
+                  ? "All day"
+                  : "None"
+                : lengthLabel(times.dayLength)}
+              {showDelta && delta != null ? (
+                <span style={{ color: "var(--faint)", fontSize: 10, marginLeft: 6 }}>
+                  {deltaLabel(delta, true)}
+                </span>
+              ) : null}
+            </>
           }
         />
         {showAzimuth ? <Row label="Bearing" value={`${Math.round(position.azimuth)}°`} /> : null}
       </div>
 
-      {!daytime ? (
-        <div style={{ fontSize: 10, color: "var(--faint)", fontFamily: MONO }}>
-          {times.sunrise && times.sunrise > now
-            ? `Sunrise ${timeLabel(times.sunrise, hour24, zone)}`
-            : "Below the horizon"}
-        </div>
-      ) : null}
-
-      {showDelta && delta != null ? (
-        <div style={{ fontSize: 10, color: "var(--faint)", fontFamily: MONO }}>
-          {deltaLabel(delta)}
-        </div>
-      ) : null}
     </div>
   );
 }

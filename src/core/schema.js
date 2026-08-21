@@ -95,6 +95,10 @@ export function defaultSettings() {
       alpha: VISUAL_DEFAULTS.alpha,
       pageZoom: VISUAL_DEFAULTS.pageZoom,
       blur: VISUAL_DEFAULTS.blur,
+      // What sits above a widget's content: its dot, its name, both, or
+      // nothing. "none" gives that row's height back to the widget rather than
+      // leaving it blank.
+      tileLabels: VISUAL_DEFAULTS.tileLabels,
     },
     behavior: {
       showGreeting: true,

@@ -14,6 +14,9 @@ export default {
   // board. The taller size is the one that earns its space, with a much bigger
   // readout and a full analog face.
   sizes: [
+    // 2x2 for anyone who wants the time small and out of the way. The digits
+    // and the date step down with it rather than being clipped.
+    [2, 2],
     [3, 2],
     [3, 3],
   ],
@@ -23,6 +26,14 @@ export default {
     { key: "hour24", label: "24-hour time", type: "boolean", default: false },
     { key: "seconds", label: "Show seconds", type: "boolean", default: false },
     { key: "hideDate", label: "Hide the date", type: "boolean", default: false },
+    {
+      key: "align",
+      label: "Align",
+      type: "enum",
+      of: ["left", "center", "right"],
+      labels: { left: "Left", center: "Centre", right: "Right" },
+      default: "left",
+    },
   ],
   refresh: null,
   permissions: { chrome: [], hosts: [] },

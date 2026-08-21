@@ -5,7 +5,7 @@ import AnalogFace from "./AnalogFace";
 // like a page zoom, so a tile that rearranged itself on the way in would look
 // out of place. Sizing keys off the tile's own span instead.
 function Clock({ options, size }) {
-  const { hour24, seconds, hideDate, analog } = options;
+  const { hour24, seconds, hideDate, analog, align } = options;
   const bySecond = useSeconds(!!seconds);
   const byMinute = useMinutes();
   const now = seconds ? bySecond : byMinute;
@@ -24,12 +24,35 @@ function Clock({ options, size }) {
 
   // The taller size exists to be bigger, so it drives the type and the face.
   const tall = (size?.[1] ?? 2) >= 3;
+  // A two-column tile is a third the width of a three-column one, so the
+  // digits have to come down or they simply do not fit.
+  const narrow = (size?.[0] ?? 3) <= 2;
+
+  // Transitioned rather than swapped: alignment is a thing the user changes
+  // while looking at it, and the digits sliding across reads as the setting
+  // taking effect. `align-items` cannot be transitioned, so the row is laid out
+  // with auto margins, which can.
+  const centred = align === "center";
+  const right = align === "right";
 
   const date = hideDate ? null : (
-    <div style={{ fontSize: tall ? 14 : 13, color: "var(--dim)", marginTop: 10 }}>
+    <div
+      style={{
+        fontSize: tall ? 14 : narrow ? 11 : 13,
+        color: "var(--dim)",
+        marginTop: narrow ? 6 : 10,
+        // Same auto-margin trick as the digits, so the two move together.
+        marginInlineStart: centred || right ? "auto" : 0,
+        marginInlineEnd: centred ? "auto" : 0,
+        transition: "margin .32s cubic-bezier(.22,1,.36,1)",
+        whiteSpace: "nowrap",
+      }}
+    >
       {now.toLocaleDateString(undefined, {
-        weekday: "long",
-        month: "long",
+        // A long weekday and month will not fit two columns; the short forms
+        // still say everything the line is for.
+        weekday: narrow ? "short" : "long",
+        month: narrow ? "short" : "long",
         day: "numeric",
       })}
     </div>
@@ -50,7 +73,7 @@ function Clock({ options, size }) {
       >
         <AnalogFace
           date={now}
-          size={tall ? "min(74%, 208px)" : "min(88%, 122px)"}
+          size={tall ? "min(74%, 208px)" : narrow ? "min(92%, 92px)" : "min(88%, 122px)"}
           showSeconds={!!seconds}
           label={time}
         />
@@ -69,10 +92,24 @@ function Clock({ options, size }) {
         minWidth: 0,
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 8,
+          width: "fit-content",
+          marginInlineStart: centred || right ? "auto" : 0,
+          marginInlineEnd: centred ? "auto" : 0,
+          transition: "margin .32s cubic-bezier(.22,1,.36,1)",
+        }}
+      >
         <span
           style={{
-            fontSize: tall ? "clamp(44px, 6.4vw, 84px)" : "clamp(28px, 3.6vw, 44px)",
+            fontSize: tall
+              ? "clamp(44px, 6.4vw, 84px)"
+              : narrow
+              ? "clamp(22px, 2.4vw, 32px)"
+              : "clamp(28px, 3.6vw, 44px)",
             fontWeight: 500,
             letterSpacing: "-.035em",
             lineHeight: 1,
@@ -85,7 +122,7 @@ function Clock({ options, size }) {
           <span
             style={{
               fontFamily: MONO,
-              fontSize: tall ? 16 : 13,
+              fontSize: tall ? 16 : narrow ? 11 : 13,
               color: "var(--faint)",
             }}
           >

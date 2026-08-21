@@ -101,3 +101,10 @@ describe("deltaLabel", () => {
     expect(deltaLabel(null)).toBe("");
   });
 });
+
+describe("deltaLabel, short", () => {
+  it("drops the trailing words where the row already implies them", () => {
+    expect(deltaLabel(134, true)).toBe("+2m 14s");
+    expect(deltaLabel(-42, true)).toBe("−42s");
+  });
+});

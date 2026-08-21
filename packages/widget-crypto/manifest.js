@@ -13,6 +13,7 @@ export default {
     "refreshes at most every 5 minutes and caches the last reading rather " +
     "than going blank.",
   sizes: [
+    [2, 2],
     [3, 2],
     [3, 3],
     [4, 3],

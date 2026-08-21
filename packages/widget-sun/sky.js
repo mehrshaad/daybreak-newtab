@@ -80,12 +80,12 @@ export function lengthLabel(seconds) {
 // "+2m 14s longer than yesterday", or the other direction. Seconds are worth
 // keeping: near a solstice the daily change is under a minute, and rounding it
 // away leaves the line reading "the same as yesterday" for a fortnight.
-export function deltaLabel(seconds) {
+export function deltaLabel(seconds, short = false) {
   if (seconds == null) return "";
   const sign = seconds >= 0 ? "+" : "−";
   const abs = Math.abs(Math.round(seconds));
   const minutes = Math.floor(abs / 60);
   const rest = abs % 60;
   const amount = minutes ? `${minutes}m ${String(rest).padStart(2, "0")}s` : `${rest}s`;
-  return `${sign}${amount} on yesterday`;
+  return short ? `${sign}${amount}` : `${sign}${amount} on yesterday`;
 }

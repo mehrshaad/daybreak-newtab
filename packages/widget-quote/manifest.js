@@ -10,6 +10,7 @@ export default {
     "A short quote picked from a bundled list by the day of the year — the " +
     "same one all day, and no network call to get it.",
   sizes: [
+    [2, 2],
     [3, 2],
     [4, 2],
   ],
