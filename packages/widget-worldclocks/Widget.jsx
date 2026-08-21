@@ -232,7 +232,12 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
         })}
       </div>
 
+      {/* Only while arranging the board. Adding a city is a change to what the
+          tile contains, not something done at a glance, and a resting tile reads
+          better without a permanent invitation. Appear rather than a ternary so
+          it leaves the way it arrived and hands its space back. */}
       {zones.length < MAX_ZONES ? (
+        <Appear open={!!editing} style={{ alignSelf: "flex-start" }}>
         <button
           type="button"
           onClick={(e) => {
@@ -264,6 +269,7 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
         >
           <LuPlus size={12} /> Add a city
         </button>
+        </Appear>
       ) : null}
     </div>
   );

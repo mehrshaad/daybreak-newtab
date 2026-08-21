@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { LuPlus } from "react-icons/lu";
-import { Favicon, IconGrid, IconTile, MONO, moveItem, Popover, uid } from "@daybreak/sdk";
+import { Appear, Favicon, IconGrid, IconTile, MONO, moveItem, Popover, uid } from "@daybreak/sdk";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.
@@ -167,7 +167,13 @@ function Links({ options, config, setConfig, size, editing, columns }) {
             </div>
           );
         }}
+        // Only while arranging the board: adding a link changes what the tile
+        // holds rather than being something done at a glance, and a resting grid
+        // of icons reads better without a permanent empty slot at the end.
+        // Appear rather than a ternary so it leaves the way it arrived and the
+        // grid closes up after it.
         trailing={
+          <Appear open={!!editing} style={{ minWidth: 0 }}>
           <button
             ref={addBtnRef}
             type="button"
@@ -188,7 +194,6 @@ function Links({ options, config, setConfig, size, editing, columns }) {
               background: "transparent",
               color: "var(--faint)",
               width: "100%",
-              animation: "db-menu .16s ease both",
               transition: "color .2s",
             }}
             onMouseEnter={(e) => {
@@ -217,6 +222,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
               <span style={{ fontSize: Math.max(9, Math.round(iconSize * 0.3)) }}>Add</span>
             )}
           </button>
+          </Appear>
         }
       />
 

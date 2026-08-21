@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
 import {
+  Appear,
   EditableText,
   MONO,
   Popover,
@@ -343,7 +344,7 @@ function HabitRow({
   );
 }
 
-function Habits({ id, options, config, setConfig, size }) {
+function Habits({ id, options, config, setConfig, size, editing }) {
   // Names and per-habit targets are settings (small, worth syncing); tick
   // history is content that grows, so it syncs separately with its own
   // budget, trimmed to ~370 days on every write.
@@ -356,7 +357,9 @@ function Habits({ id, options, config, setConfig, size }) {
   // habit briefly mean something the user never asked for.
   const [draftTarget, setDraftTarget] = useState(5);
   const [draftWeeks, setDraftWeeks] = useState(0);
-  const [editing, setEditing] = useState(null);
+  // Which row has its settings popover open. Named apart from the board's own
+  // `editing` prop, which is a different idea entirely and now arrives here too.
+  const [settingsFor, setSettingsFor] = useState(null);
 
   const habits =
     Array.isArray(config.habits) && config.habits.length ? config.habits : DEFAULTS;
@@ -422,17 +425,17 @@ function Habits({ id, options, config, setConfig, size }) {
           <HabitRow
             key={habit.id}
             habit={habit}
-            open={editing === habit.id}
+            open={settingsFor === habit.id}
             dot={dot}
             p={p}
             done={done}
             showStreaks={options.showStreaks}
-            onToggleOpen={() => setEditing((cur) => (cur === habit.id ? null : habit.id))}
+            onToggleOpen={() => setSettingsFor((cur) => (cur === habit.id ? null : habit.id))}
             onToggleDay={(date) => toggle(habit.id, date)}
             onPatch={(changes) => patch(habit.id, changes)}
             onRename={(name) => patch(habit.id, { name })}
             onRemove={() => {
-              setEditing(null);
+              setSettingsFor(null);
               setConfig({ habits: habits.filter((h) => h.id !== habit.id) });
             }}
           />
@@ -501,6 +504,13 @@ function Habits({ id, options, config, setConfig, size }) {
           </div>
         </form>
       ) : (
+        // Only while arranging the board. Adding a habit changes what the tile
+        // contains rather than being something done at a glance, and a resting
+        // tile reads better without a permanent invitation. Appear rather than a
+        // ternary so it leaves the way it arrived and hands its space back.
+        // Tasks deliberately keeps its own input: typing a task is that
+        // widget's whole purpose, not configuration.
+        <Appear open={!!editing} style={{ alignSelf: "flex-start" }}>
         <button
           type="button"
           onClick={(e) => {
@@ -529,6 +539,7 @@ function Habits({ id, options, config, setConfig, size }) {
         >
           <LuPlus size={13} /> Add habit
         </button>
+        </Appear>
       )}
     </div>
   );
