@@ -13,7 +13,8 @@
     "tabs",
     "bookmarks",
     "history",
-    "favicon"
+    "favicon",
+    "topSites"
   ],
   "optional_host_permissions": [
     "https://*/*"
