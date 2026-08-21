@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
-import { EditableText, MONO, Tooltip, uid, useTooltip } from "@daybreak/sdk";
+import { LuCalendarDays, LuMinus, LuX } from "react-icons/lu";
+import { EditableText, MONO, Tooltip, toggleStyles, uid, useTooltip } from "@daybreak/sdk";
 import { formatRemaining, nextOccurrence } from "./countdown";
 
-// A short set to pick from rather than a full emoji picker, which is a project
-// of its own and not one this widget needs. Covers what people actually count
-// toward.
-const EMOJI = ["🎂", "✈️", "🚀", "🎓", "💍", "🏖️", "🎄", "📦", "🏁", "⭐", "❤️", ""];
+// Six and a blank, down from twelve. A swatch row is something you take in at a
+// glance; past half a dozen it stops being a row and turns back into a sticker
+// sheet, which is what this panel looked like. These are the things people
+// actually count toward, and the name beside them already says the rest.
+const EMOJI = ["", "🎂", "✈️", "🚀", "🎓", "🎄", "🏁"];
 
+// The app's own text field, verbatim, so a widget panel's inputs are the same
+// object as the ones in Settings.
 const FIELD = {
   width: "100%",
-  padding: "7px 10px",
-  borderRadius: 8,
+  padding: "8px 12px",
+  borderRadius: 10,
   background: "var(--panel2)",
   border: "1px solid var(--line)",
   outline: "none",
@@ -19,41 +22,172 @@ const FIELD = {
   color: "var(--fg)",
 };
 
-function EntryRow({ entry, onPatch, onRemove }) {
-  const removeTip = useTooltip(`Remove ${entry.title || "this date"}`);
-  const occurrence = nextOccurrence(entry);
+// Same field, mono numerals, for the native date control.
+//
+// Chrome draws the little calendar button from the input's own shadow tree
+// (::-webkit-calendar-picker-indicator), which an inline style cannot reach —
+// so the button stays Chrome's glyph rather than a Lu* one. The two hooks that
+// do carry: color-scheme, which App already sets on <html>, so the button and
+// the popup follow the theme instead of coming up light on a dark panel; and
+// accent-color, honoured inside the picker where Chrome supports it.
+const DATE_FIELD = {
+  ...FIELD,
+  fontFamily: MONO,
+  fontSize: 12,
+  fontVariantNumeric: "tabular-nums",
+  accentColor: "var(--accent)",
+};
 
+// The app's Toggle, rebuilt here because primitives live in the host app and a
+// widget package cannot import them. The switch itself is the shared
+// toggleStyles factory, so the only thing copied is the row around it.
+function ToggleRow({ label, on, onChange }) {
+  const t = toggleStyles(on);
   return (
-    <div
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onChange}
       style={{
         display: "flex",
-        flexDirection: "column",
-        gap: 7,
-        padding: "10px 11px",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "10px 12px",
         borderRadius: 10,
-        background: "var(--panel)",
-        border: "1px solid var(--line)",
+        cursor: "pointer",
+        width: "100%",
+        background: "transparent",
+        border: 0,
+        textAlign: "left",
+        transition: "background .18s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--panel)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <LuGripVertical size={13} style={{ color: "var(--faint)", flex: "none" }} aria-hidden="true" />
-        <div style={{ flex: 1, minWidth: 0, fontSize: 13 }}>
+      <span style={{ fontSize: 13, color: "var(--fg)" }}>{label}</span>
+      <span style={t.track}>
+        <span style={t.knob} />
+      </span>
+    </button>
+  );
+}
+
+// Marked the way an accent is marked in Settings: a ring held off the swatch by
+// the sheet colour, rather than a border that would make every option look
+// like a button. Unpicked ones sit back at reduced opacity so the row reads as
+// one chosen mark and six alternatives, not seven equal controls.
+function EmojiSwatch({ emoji, selected, onPick }) {
+  return (
+    <button
+      type="button"
+      aria-label={emoji ? `Mark with ${emoji}` : "No mark"}
+      aria-pressed={selected}
+      onClick={onPick}
+      style={{
+        width: 26,
+        height: 26,
+        display: "grid",
+        placeItems: "center",
+        padding: 0,
+        border: 0,
+        borderRadius: 999,
+        flex: "none",
+        cursor: "pointer",
+        background: "var(--panel2)",
+        color: "var(--faint)",
+        fontSize: 13,
+        lineHeight: 1,
+        opacity: selected ? 1 : 0.6,
+        boxShadow: selected ? "0 0 0 2px var(--sheet), 0 0 0 4px var(--accent)" : "none",
+        transition: "opacity .15s ease, background .15s ease, box-shadow .18s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.opacity = 1;
+        e.currentTarget.style.background = "var(--panel)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.opacity = selected ? 1 : 0.6;
+        e.currentTarget.style.background = "var(--panel2)";
+      }}
+    >
+      {emoji || <LuMinus size={11} aria-hidden="true" />}
+    </button>
+  );
+}
+
+// Its own component so each entry's remove-button tooltip gets its own hover
+// state, independent of the others.
+function EntryRow({ entry, onPatch, onRemove }) {
+  const label = entry.title || "this date";
+  const removeTip = useTooltip(`Remove ${label}`);
+  const occurrence = nextOccurrence(entry);
+  const emoji = entry.emoji || "";
+
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "6px 8px",
+          borderRadius: 8,
+          transition: "background .15s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "var(--sheetHover)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "transparent";
+        }}
+      >
+        {/* The row's own identity tile, in the shape IconTile uses elsewhere:
+            the chosen mark if there is one, the widget's own glyph if not. */}
+        <span
+          aria-hidden="true"
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: 6,
+            flex: "none",
+            display: "grid",
+            placeItems: "center",
+            background: "var(--panel2)",
+            color: "var(--faint)",
+            fontSize: 12,
+            lineHeight: 1,
+          }}
+        >
+          {emoji || <LuCalendarDays size={12} />}
+        </span>
+
+        <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--fg)" }}>
           <EditableText
             value={entry.title}
-            onChange={(title) => onPatch({ title })}
+            onCommit={(title) => onPatch({ title })}
+            placeholder="Untitled"
             ariaLabel="Countdown name"
+            inputStyle={{ display: "block", width: "100%", fontSize: 13 }}
           />
         </div>
+
         <button
           ref={removeTip.anchorRef}
           type="button"
-          aria-label={`Remove ${entry.title || "this date"}`}
           onClick={onRemove}
+          aria-label={`Remove ${label}`}
           style={{
             display: "grid",
             placeItems: "center",
-            width: 22,
-            height: 22,
+            width: 24,
+            height: 24,
             padding: 0,
             border: 0,
             borderRadius: 999,
@@ -76,82 +210,76 @@ function EntryRow({ entry, onPatch, onRemove }) {
           onFocus={removeTip.anchorProps.onFocus}
           onBlur={removeTip.anchorProps.onBlur}
         >
-          <LuX size={12} />
+          <LuX size={13} />
         </button>
         <Tooltip {...removeTip} />
       </div>
 
-      <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
-        <input
-          type="date"
-          value={entry.date || ""}
-          onChange={(e) => onPatch({ date: e.target.value })}
-          aria-label="Date"
-          style={{ ...FIELD, width: "auto", flex: "1 1 130px", fontFamily: MONO, fontSize: 12 }}
-        />
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 12,
-            color: "var(--dim)",
-            cursor: "pointer",
-            flex: "none",
-          }}
-        >
+      {/* Hung off the row rather than boxed with it — the same rule the drawer
+          uses for anything that belongs to the setting above it. */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          marginLeft: 18,
+          marginTop: 2,
+          paddingLeft: 12,
+          borderLeft: "1px solid var(--line)",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <input
-            type="checkbox"
-            checked={!!entry.yearly}
-            onChange={(e) => onPatch({ yearly: e.target.checked })}
+            type="date"
+            value={entry.date || ""}
+            onChange={(e) => onPatch({ date: e.target.value })}
+            aria-label={`Date for ${label}`}
+            style={DATE_FIELD}
           />
-          Every year
-        </label>
-      </div>
-
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-        {EMOJI.map((emoji) => (
-          <button
-            key={emoji || "none"}
-            type="button"
-            aria-label={emoji ? `Use ${emoji}` : "No emoji"}
-            aria-pressed={(entry.emoji || "") === emoji}
-            onClick={() => onPatch({ emoji })}
-            style={{
-              width: 26,
-              height: 26,
-              display: "grid",
-              placeItems: "center",
-              borderRadius: 7,
-              cursor: "pointer",
-              fontSize: 13,
-              background: (entry.emoji || "") === emoji ? "var(--accentSoft)" : "transparent",
-              border: `1px solid ${
-                (entry.emoji || "") === emoji ? "var(--accentLine)" : "var(--line)"
-              }`,
-              color: "var(--faint)",
-              transition: "background .15s ease, border-color .15s ease",
-            }}
-          >
-            {emoji || "—"}
-          </button>
-        ))}
-      </div>
-
-      {occurrence ? (
-        <div style={{ fontFamily: MONO, fontSize: 10, color: "var(--faint)" }}>
-          {formatRemaining(occurrence)}
-          {" · "}
-          {occurrence.toLocaleDateString(undefined, {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
+          {occurrence ? (
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                color: "var(--faint)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {formatRemaining(occurrence)}
+              {" · "}
+              {occurrence.toLocaleDateString(undefined, {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </div>
+          ) : (
+            <div style={{ fontSize: 11, color: "var(--danger)" }}>Pick a date for this one.</div>
+          )}
         </div>
-      ) : (
-        <div style={{ fontSize: 10, color: "var(--danger)" }}>Pick a date for this one.</div>
-      )}
+
+        <ToggleRow
+          label="Every year"
+          on={!!entry.yearly}
+          onChange={() => onPatch({ yearly: !entry.yearly })}
+        />
+
+        <div
+          role="group"
+          aria-label={`Mark for ${label}`}
+          style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "0 2px 2px" }}
+        >
+          {EMOJI.map((choice) => (
+            <EmojiSwatch
+              key={choice || "none"}
+              emoji={choice}
+              selected={emoji === choice}
+              onPick={() => onPatch({ emoji: choice })}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -184,9 +312,9 @@ function CountdownSettings({ config, setConfig }) {
   const remove = (id) => setConfig({ entries: entries.filter((entry) => entry.id !== id) });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {entries.length ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {entries.map((entry) => (
             <EntryRow
               key={entry.id}
@@ -202,7 +330,7 @@ function CountdownSettings({ config, setConfig }) {
         </div>
       )}
 
-      <form onSubmit={add} style={{ display: "flex", gap: 7 }}>
+      <form onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -212,13 +340,11 @@ function CountdownSettings({ config, setConfig }) {
         />
         <button
           type="submit"
-          aria-label="Add countdown"
           style={{
-            display: "grid",
-            placeItems: "center",
-            width: 34,
-            flex: "none",
-            borderRadius: 8,
+            alignSelf: "flex-start",
+            padding: "7px 14px",
+            borderRadius: 999,
+            fontSize: 12,
             cursor: "pointer",
             background: "var(--panel2)",
             border: "1px solid var(--line)",
@@ -226,7 +352,7 @@ function CountdownSettings({ config, setConfig }) {
             transition: "background .15s ease, border-color .15s ease",
           }}
         >
-          <LuPlus size={14} />
+          Add date
         </button>
       </form>
     </div>

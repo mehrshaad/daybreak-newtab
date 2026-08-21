@@ -1,3 +1,4 @@
+import { answerFor } from "./answers";
 // Search suggestions, gathered from whatever the user has allowed.
 //
 // Quick links are free — they are already in settings. Open tabs, bookmarks and
@@ -227,10 +228,21 @@ export async function gatherSuggestions({ query, links, enabled, limit = 8 }) {
   // lower-priority source is not cut before ranking ever sees it.
   const merged = mergeSuggestions(groups, limit * 2);
   const goTo = goToSiteSuggestion(q);
+  // An answer goes first, above even "Go to site": if what was typed evaluates
+  // to something, that is what the person wanted, and answerFor is deliberately
+  // conservative about saying so (see core/answers.js) precisely because a false
+  // positive here would hijack a real search.
+  const answer = answerFor(q);
+  const fixed = [
+    ...(answer
+      ? [{ kind: "answer", id: `answer:${q}`, title: answer.display, subtitle: answer.detail }]
+      : []),
+    ...(goTo ? [goTo] : []),
+  ];
   const ranked = rankSuggestions(q, merged)
     // A bookmark or history hit for exactly the address just typed would
     // otherwise repeat the "Go to site" row a moment later.
     .filter((item) => !goTo || normaliseUrl(item.url) !== normaliseUrl(goTo.url))
-    .slice(0, goTo ? limit - 1 : limit);
-  return goTo ? [goTo, ...ranked] : ranked;
+    .slice(0, Math.max(0, limit - fixed.length));
+  return [...fixed, ...ranked];
 }

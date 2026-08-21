@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LuMoon, LuSettings, LuSun, LuX } from "react-icons/lu";
+import { useNotices } from "../core/noticeContext";
 import { useSettings } from "../core/settingsContext";
 import {
   HOVER_LIFT,
@@ -119,6 +120,7 @@ function Header({
   searchRef,
 }) {
   const { settings, update } = useSettings();
+  const { notify } = useNotices();
   const engine = SEARCH_ENGINES[settings.behavior.searchEngine]
     ? settings.behavior.searchEngine
     : "google";
@@ -181,6 +183,16 @@ function Header({
 
   const pick = useCallback(
     (item) => {
+      // An answer has nowhere to navigate to, so taking it copies it. That is
+      // the only thing anyone wants from a calculator result, and the click is
+      // the user gesture the clipboard API requires.
+      if (item.kind === "answer") {
+        navigator.clipboard?.writeText(item.title).then(
+          () => notify({ message: `Copied ${item.title}` }),
+          () => notify({ message: "Could not copy that", category: "error" })
+        );
+        return;
+      }
       if (item.kind === "tabs" && typeof chrome !== "undefined" && chrome.tabs) {
         // Switching to an existing tab, not navigating this one.
         chrome.tabs.update(item.tabId, { active: true });
@@ -191,7 +203,7 @@ function Header({
       }
       if (item.url) go(item.url);
     },
-    [go]
+    [go, notify]
   );
 
   const submit = (e) => {

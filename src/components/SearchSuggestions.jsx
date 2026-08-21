@@ -1,4 +1,4 @@
-import { LuArrowRight, LuBookmark, LuClock, LuExternalLink, LuLink } from "react-icons/lu";
+import { LuArrowRight, LuBookmark, LuClock, LuEqual, LuExternalLink, LuLink } from "react-icons/lu";
 import { Favicon, MONO, Popover } from "@daybreak/sdk";
 
 const KIND_ICON = {
@@ -7,6 +7,7 @@ const KIND_ICON = {
   bookmarks: LuBookmark,
   history: LuClock,
   go: LuArrowRight,
+  answer: LuEqual,
 };
 
 const KIND_LABEL = {
@@ -14,6 +15,7 @@ const KIND_LABEL = {
   tabs: "open tab",
   bookmarks: "bookmark",
   history: "history",
+  answer: "answer",
 };
 
 // Dropdown under the search box. Purely presentational — the parent owns the
