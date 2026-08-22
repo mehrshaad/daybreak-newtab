@@ -111,9 +111,18 @@ function d2j(jdn) {
     }
     k -= 186;
   } else {
+    // Before Nowruz, so this date belongs to the previous Jalali year.
+    //
+    // `r.leap` and not `jalCal(jy).leap` after the decrement, which is what
+    // this did and what made every date between 1 January and Nowruz come out
+    // a day early. jalCal's `leap` is the number of years *since* the last
+    // leap year, so asking it of the year we have just stepped back into is
+    // asking about the wrong year: what matters is whether the year that is
+    // now being counted through had 366 days, and `r` — computed above, for
+    // the year before the decrement — is the value that answers that.
     jy -= 1;
     k += 179;
-    if (jalCal(jy).leap === 1) k += 1;
+    if (r.leap === 1) k += 1;
   }
 
   const jm = 7 + div(k, 30);

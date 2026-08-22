@@ -132,6 +132,8 @@ export { addMonths, monthGrid, WEEKDAY_LABELS } from "./monthGrid";
 // Small utilities.
 export { onSyncQuotaError } from "./storage";
 
+export { formatHijri, hijriAvailable, toHijri } from "./hijri";
+
 // Jalali (Solar Hijri) dates, for the countdown and calendar widgets.
 export {
   formatJalali,

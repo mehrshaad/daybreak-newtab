@@ -24,9 +24,24 @@ describe("toJalali", () => {
   });
 
   it("handles the day before Nowruz, which is the last of Esfand", () => {
-    const before = toJalali(new Date(2025, 2, 20));
-    expect(before.jm).toBe(12);
-    expect(before.jy).toBe(1403);
+    // The day matters as much as the month, and this test used to check only
+    // the month and the year. That is how a one-day error in every date
+    // between 1 January and Nowruz survived: 1403 was a leap year, so its
+    // Esfand ran to 30, and the answer here was 28.
+    expect(toJalali(new Date(2025, 2, 20))).toEqual({ jy: 1403, jm: 12, jd: 30 });
+    // And a non-leap year, where the last of Esfand is the 29th.
+    expect(toJalali(new Date(2026, 2, 20))).toEqual({ jy: 1404, jm: 12, jd: 29 });
+  });
+
+  it("is right on both sides of 1 January, which is mid Dey", () => {
+    // Every date between 1 January and Nowruz goes through the branch that was
+    // wrong, and the round-trip fixtures happened to include 1 Jan 2024 — where
+    // the two leap-year readings coincide — and not 1 Jan 2025, where they do
+    // not. Both are here now.
+    expect(toJalali(new Date(2024, 0, 1))).toEqual({ jy: 1402, jm: 10, jd: 11 });
+    expect(toJalali(new Date(2025, 0, 1))).toEqual({ jy: 1403, jm: 10, jd: 12 });
+    expect(toJalali(new Date(2026, 0, 1))).toEqual({ jy: 1404, jm: 10, jd: 11 });
+    expect(toJalali(new Date(2027, 0, 1))).toEqual({ jy: 1405, jm: 10, jd: 11 });
   });
 
   it("reads local date parts, not UTC ones", () => {
