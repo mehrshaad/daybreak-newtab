@@ -138,7 +138,8 @@ function CalendarSettings({ config, setConfig, toast }) {
         </div>
       ) : (
         <div style={{ fontSize: 12, color: "var(--faint)" }}>
-          No calendars connected yet — paste a link on the tile itself.
+          No calendars connected yet. Paste a link below and the month grid will
+          start showing your own events.
         </div>
       )}
 
@@ -147,7 +148,7 @@ function CalendarSettings({ config, setConfig, toast }) {
           type="url"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Add another calendar's iCal link"
+          placeholder="Paste an iCal link"
           aria-label="Calendar iCal address"
           style={{
             padding: "8px 12px",

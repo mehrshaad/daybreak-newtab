@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMonths, monthGrid } from "./monthGrid";
+import { addMonths, monthGrid, weekdayLabels, WEEKDAY_LABELS } from "./monthGrid";
 
 describe("monthGrid", () => {
   it("starts every row on Sunday", () => {
@@ -66,5 +66,59 @@ describe("addMonths", () => {
 
   it("is a no-op for a zero delta", () => {
     expect(addMonths(2026, 4, 0)).toEqual({ year: 2026, month: 4 });
+  });
+});
+
+describe("a week that starts somewhere other than Sunday", () => {
+  it("still gives six full weeks, whatever the start day", () => {
+    for (const weekStart of [0, 1, 6]) {
+      for (const month of [0, 1, 5, 11]) {
+        const grid = monthGrid(2026, month, weekStart);
+        expect(grid, `${month}/${weekStart}`).toHaveLength(42);
+        // Every row is one week and the first cell of every row is the start
+        // day, which is the property a grid is unreadable without.
+        for (let row = 0; row < 6; row += 1) {
+          expect(grid[row * 7].date.getDay(), `row ${row} of ${month}/${weekStart}`).toBe(weekStart);
+        }
+      }
+    }
+  });
+
+  it("holds every day of the month, once, in order", () => {
+    for (const weekStart of [0, 1, 6]) {
+      const grid = monthGrid(2026, 1, weekStart);
+      const inMonth = grid.filter((c) => c.inMonth).map((c) => c.date.getDate());
+      // February 2026 has 28 days.
+      expect(inMonth, String(weekStart)).toEqual(Array.from({ length: 28 }, (_, i) => i + 1));
+    }
+  });
+
+  it("reaches back a whole week, never zero, when the 1st is the start day", () => {
+    // 1 February 2026 is a Sunday. With a Sunday start the first cell is the
+    // 1st itself; the arithmetic must not reach back seven days and show a
+    // leading week nobody asked for, nor reach back a negative amount.
+    const sunday = monthGrid(2026, 1, 0);
+    expect(sunday[0].date.getDate()).toBe(1);
+    expect(sunday[0].inMonth).toBe(true);
+    // With a Monday start the same month leads in with six days of January.
+    const monday = monthGrid(2026, 1, 1);
+    expect(monday[0].inMonth).toBe(false);
+    expect(monday.filter((c) => !c.inMonth && c.date.getMonth() === 0)).toHaveLength(6);
+  });
+
+  it("defaults to Sunday, so the date picker is untouched", () => {
+    expect(monthGrid(2026, 1)).toEqual(monthGrid(2026, 1, 0));
+  });
+});
+
+describe("weekdayLabels", () => {
+  it("rotates to match the start day", () => {
+    expect(weekdayLabels(0)).toEqual(WEEKDAY_LABELS);
+    expect(weekdayLabels(1)).toEqual(["M", "T", "W", "T", "F", "S", "S"]);
+    expect(weekdayLabels(6)).toEqual(["S", "S", "M", "T", "W", "T", "F"]);
+  });
+
+  it("always gives seven, and copes with nonsense", () => {
+    for (const start of [0, 1, 6, 7, 13, -1]) expect(weekdayLabels(start)).toHaveLength(7);
   });
 });
