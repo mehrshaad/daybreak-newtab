@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
-import { formatDate, MONO, Popover } from "@daybreak/sdk";
-import { WEEKDAY_LABELS, addMonths, monthGrid } from "./calendar";
+import { formatDate } from "../utils";
+import { MONO } from "../styles";
+import { addMonths, monthGrid, WEEKDAY_LABELS } from "../monthGrid";
+import Popover from "./Popover";
 
 const navBtn = {
   width: 22,
@@ -30,9 +32,12 @@ const linkBtn = {
 // half the world's timezones.
 const parse = (value) => (value ? new Date(`${value}T00:00:00`) : null);
 
-// A themed due-date picker, replacing the native <input type="date"> — the
-// browser's own control was the one piece of the widget that did not follow
-// the app's own dark/light styling.
+// A themed date picker, replacing the native <input type="date">.
+//
+// Shared rather than living inside the tasks widget, because the native control
+// is the one thing that cannot be made to follow the app's own theme: Chrome
+// draws its calendar button and popup inside its own shadow tree, out of reach
+// of any style here. Any widget that needs a date should import this one.
 function DatePicker({ value, onChange, placeholder = "Due date" }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(null);

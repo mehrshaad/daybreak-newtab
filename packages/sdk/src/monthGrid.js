@@ -1,6 +1,6 @@
-import { formatDate } from "@daybreak/sdk";
+import { formatDate } from "./utils";
 
-// Month-grid maths for the due-date picker. Weeks start on Sunday — a date
+// Month-grid maths for the shared date picker. Weeks start on Sunday — a date
 // picker's own convention, independent of the habits widget's
 // user-configurable week start, so this stays a small, self-contained module
 // rather than sharing weeks.js's per-user-preference machinery.

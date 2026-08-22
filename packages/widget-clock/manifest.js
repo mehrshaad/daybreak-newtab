@@ -59,7 +59,14 @@ export default {
       showIf: { analog: false },
     },
     // Both modes.
-    { key: "hour24", label: "24-hour time", type: "boolean", default: false },
+    // Digital only: a dial has twelve hours on it whatever this says.
+    {
+      key: "hour24",
+      label: "24-hour time",
+      type: "boolean",
+      default: false,
+      showIf: { analog: false },
+    },
     { key: "seconds", label: "Show seconds", type: "boolean", default: false },
     { key: "hideDate", label: "Hide the date", type: "boolean", default: false },
   ],

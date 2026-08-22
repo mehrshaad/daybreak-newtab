@@ -12,8 +12,8 @@ import {
   uid,
   useFlip,
   usePointerReorder,
+  DatePicker,
 } from "@daybreak/sdk";
-import DatePicker from "./DatePicker";
 import { reorderVisible } from "./reorder";
 
 const isOverdue = (due) => !!due && due < formatDate(new Date());

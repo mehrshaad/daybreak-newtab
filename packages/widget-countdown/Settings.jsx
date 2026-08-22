@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LuCalendarDays, LuMinus, LuX } from "react-icons/lu";
-import { EditableText, MONO, Tooltip, toggleStyles, uid, useTooltip } from "@daybreak/sdk";
+import { DatePicker, EditableText, MONO, Tooltip, toggleStyles, uid, useTooltip } from "@daybreak/sdk";
 import { formatRemaining, nextOccurrence } from "./countdown";
 
 // Six and a blank, down from twelve. A swatch row is something you take in at a
@@ -20,22 +20,6 @@ const FIELD = {
   outline: "none",
   fontSize: 13,
   color: "var(--fg)",
-};
-
-// Same field, mono numerals, for the native date control.
-//
-// Chrome draws the little calendar button from the input's own shadow tree
-// (::-webkit-calendar-picker-indicator), which an inline style cannot reach —
-// so the button stays Chrome's glyph rather than a Lu* one. The two hooks that
-// do carry: color-scheme, which App already sets on <html>, so the button and
-// the popup follow the theme instead of coming up light on a dark panel; and
-// accent-color, honoured inside the picker where Chrome supports it.
-const DATE_FIELD = {
-  ...FIELD,
-  fontFamily: MONO,
-  fontSize: 12,
-  fontVariantNumeric: "tabular-nums",
-  accentColor: "var(--accent)",
 };
 
 // The app's Toggle, rebuilt here because primitives live in the host app and a
@@ -229,14 +213,12 @@ function EntryRow({ entry, onPatch, onRemove }) {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <input
-            type="date"
-            value={entry.date || ""}
-            onChange={(e) => onPatch({ date: e.target.value })}
-            aria-label={`Date for ${label}`}
-            style={DATE_FIELD}
-          />
-          {occurrence ? (
+        <DatePicker
+          value={entry.date || ""}
+          onChange={(date) => onPatch({ date })}
+          placeholder="Pick a date"
+        />
+{occurrence ? (
             <div
               style={{
                 fontFamily: MONO,

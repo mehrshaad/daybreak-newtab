@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMonths, monthGrid } from "./calendar";
+import { addMonths, monthGrid } from "./monthGrid";
 
 describe("monthGrid", () => {
   it("starts every row on Sunday", () => {

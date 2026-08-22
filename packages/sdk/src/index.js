@@ -104,6 +104,7 @@ export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
 export { iconCellSize } from "./iconCellSize";
+export { addMonths, monthGrid, WEEKDAY_LABELS } from "./monthGrid";
 
 // Small utilities.
 export { onSyncQuotaError } from "./storage";
@@ -152,6 +153,7 @@ export {
 // Shared components.
 export { APPEAR_MS, default as Appear } from "./components/Appear";
 export { default as CitySearch } from "./components/CitySearch";
+export { default as DatePicker } from "./components/DatePicker";
 export { default as EditableText } from "./components/EditableText";
 export { default as Favicon } from "./components/Favicon";
 export { default as IconGrid } from "./components/IconGrid";

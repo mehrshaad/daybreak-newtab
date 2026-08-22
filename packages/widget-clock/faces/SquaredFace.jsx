@@ -63,17 +63,24 @@ function markEnds(degrees) {
   };
 }
 
-function SquaredFace({ date, size, showSeconds, showDate, label, accentFace }) {
+function SquaredFace({ date, showSeconds, showDate, label, accentFace }) {
   const { hour, minute, second } = handAngles(date);
   const day = date.getDate();
 
   return (
-    <svg
-      viewBox="0 0 100 100"
-      style={{ width: size, aspectRatio: "1 / 1", display: "block", flex: "none" }}
-      role="img"
-      aria-label={label}
-    >
+    // The svg is taken out of flow inside a box that flex has already sized.
+    // Left in flow with width and height at 100%, it has no definite parent
+    // height to resolve against, falls back to its own 1:1 ratio, and a wide
+    // tile makes it as tall as it is wide — which the tile then clips.
+    // Absolute inside a relative box gives it both dimensions outright, and
+    // preserveAspectRatio (xMidYMid meet, the default) centres the square in it.
+    <div style={{ position: "relative", flex: 1, minHeight: 0, width: "100%" }}>
+      <svg
+        viewBox="0 0 100 100"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
+        role="img"
+        aria-label={label}
+      >
       <path
         d={OUTLINE}
         fill="none"
@@ -149,7 +156,8 @@ function SquaredFace({ date, size, showSeconds, showDate, label, accentFace }) {
           style={{ transform: `rotate(${second}deg)`, transformOrigin: "50px 50px" }}
         />
       ) : null}
-    </svg>
+      </svg>
+    </div>
   );
 }
 

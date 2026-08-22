@@ -76,11 +76,16 @@ function Clock({ options, size }) {
           gap: 4,
           flex: 1,
           minWidth: 0,
+          minHeight: 0,
         }}
       >
+        {/* No pixel cap: the face fills whatever the tile has left after the
+            label row and the date line, and the viewBox letterboxes itself
+            inside that box. The old caps left a 2x2 tile mostly empty, because
+            92px was a guess about how much room there would be rather than a
+            measurement of it. */}
         <Face
           date={now}
-          size={tall ? "min(74%, 208px)" : narrow ? "min(92%, 92px)" : "min(88%, 122px)"}
           showSeconds={!!seconds}
           showDate={inDial}
           accentFace={!!accentFace}
