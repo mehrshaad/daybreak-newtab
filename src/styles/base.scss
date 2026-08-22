@@ -146,6 +146,18 @@ button {
   z-index: 60;
 }
 
+// The same lift, for a widget that clips inside its own tile. Google Apps does,
+// to keep a part-fitting row of icons from spilling past the last row that
+// actually fits, and that clip swallowed a dragged icon exactly as the tile's
+// own used to: it vanished at the widget's edge instead of at the tile's, so
+// dragging one out to remove it looked like losing it. Quick Links never had
+// the bug because it never clipped. Applied by the widget only while it is not
+// scrolling: lifting overflow on a scrolled box would snap it back to the top
+// mid-drag and move every slot the drag is being measured against.
+.db-clip:has([data-dragging="true"]) {
+  overflow: visible !important;
+}
+
 .db-sr-only {
   position: absolute;
   width: 1px;

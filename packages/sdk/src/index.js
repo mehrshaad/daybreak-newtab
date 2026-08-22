@@ -79,7 +79,16 @@ export { GLYPHS, glyphNames } from "./glyphs";
 export { clampToViewport } from "./clamp";
 
 // Brand marks for app-style icons.
-export { BRANDS, brandFor, brandForLink, brandForUrl, glyphInk, hashHue } from "./brands";
+export {
+  BRANDS,
+  brandFor,
+  brandForLink,
+  brandForUrl,
+  hashHue,
+  inkSafeGradient,
+  relativeLuminance,
+  whiteContrast,
+} from "./brands";
 export { isUsable, resetSiteIcons, sampleOf, siteIcon } from "./siteIcon";
 export { useSiteIcon } from "./useSiteIcon";
 
@@ -100,6 +109,7 @@ export {
   usePointerReorder,
 } from "./usePointerReorder";
 export { useHover } from "./useHover";
+export { usePointerExit } from "./usePointerExit";
 export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";

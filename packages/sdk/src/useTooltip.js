@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePointerExit } from "./usePointerExit";
 
 const SHOW_DELAY = 400;
 
@@ -37,65 +38,23 @@ export function useTooltip(label) {
     hide();
   }, [label, hide]);
 
-  // The ways a tooltip gets stuck, all of which are "mouseleave never arrived".
-  //
-  // onMouseLeave is the only thing that closed this, and it does not fire when
-  // the anchor stops being under the pointer without the pointer moving off it:
-  // a double-click swaps an EditableText's span for an input, entering edit
-  // mode re-renders the chrome around it, a reorder slides the element out from
-  // under the cursor, and a tile being dragged takes its handle with it. In
-  // every one of those the element the pointer "left" no longer exists, so
-  // nothing ever told the tooltip to go away and it sat there for good.
-  //
-  // Rather than patch each caller, the truth is checked directly: on any mouse
-  // movement, if the anchor is gone from the document or no longer matches
-  // :hover, close. Plus the obvious interruptions — a press, a keystroke, the
-  // window losing focus, the tab being hidden.
+  // Every way the pointer can end up somewhere else, including the ones that
+  // never fire a mouseleave. See usePointerExit — the anchor being replaced
+  // under a stationary pointer, and the pointer crossing onto another monitor,
+  // are both handled there rather than patched per caller.
+  usePointerExit(anchorRef, open || pending, hide);
+
+  // The tooltip's own dismissal policy, on top of that: a label is help for
+  // something you have not done yet, so starting to do anything takes it away.
+  // Deliberately not part of usePointerExit, because a hover background wants
+  // the opposite — it should survive the click that happens on top of it.
   useEffect(() => {
     if (!open && !pending) return undefined;
-
-    // The pointer arriving anywhere else. This is the dependable signal:
-    // mouseover fires on whatever is entered next, so it reports the truth even
-    // when the anchor was hidden rather than left — and unlike :hover it does
-    // not depend on the browser re-running hit-testing.
-    const onOver = (event) => {
-      const el = anchorRef.current;
-      if (!el || !el.isConnected || !el.contains(event.target)) hide();
-    };
-
-    // A backstop for movement that never enters a new element: the pointer
-    // sliding within a large region while the anchor was taken away underneath.
-    const onMove = () => {
-      const el = anchorRef.current;
-      if (!el || !el.isConnected) {
-        hide();
-        return;
-      }
-      try {
-        // Only trusted to *close*, never to keep it open: :hover reflects the
-        // browser's own hit-testing and can lag a layout change.
-        if (!el.matches(":hover")) hide();
-      } catch {
-        hide();
-      }
-    };
-
-    // Capture phase, so a handler that stops propagation cannot keep the
-    // tooltip alive.
-    document.addEventListener("mouseover", onOver, true);
-    document.addEventListener("mousemove", onMove, true);
     document.addEventListener("pointerdown", hide, true);
     document.addEventListener("keydown", hide, true);
-    document.addEventListener("visibilitychange", hide);
-    window.addEventListener("blur", hide);
-
     return () => {
-      document.removeEventListener("mouseover", onOver, true);
-      document.removeEventListener("mousemove", onMove, true);
       document.removeEventListener("pointerdown", hide, true);
       document.removeEventListener("keydown", hide, true);
-      document.removeEventListener("visibilitychange", hide);
-      window.removeEventListener("blur", hide);
     };
   }, [open, pending, hide]);
 
@@ -119,3 +78,4 @@ export function useTooltip(label) {
     anchorProps: { onMouseEnter: show, onMouseLeave: hide, onFocus: show, onBlur: hide },
   };
 }
+

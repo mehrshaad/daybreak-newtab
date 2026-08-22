@@ -435,18 +435,81 @@ export function hashHue(str) {
   return h;
 }
 
-// A brand's own colour decides whether its glyph reads as white or as ink.
-// Several authentic marks are bright yellow or lime — Snapchat, Buy Me a
-// Coffee, Hugging Face, Wise — and a white glyph on those is close to
-// invisible. Rec. 709 luminance, with the threshold set so the existing
-// mid-tone brands keep the white glyph they were designed around.
-export function glyphInk(hex) {
+// White ink on every icon tile, and a background dark enough to carry it.
+//
+// A few authentic marks are bright yellow or lime - Drive and Slides at
+// #f4b400, Keep at #fbbc04, Snapchat, Buy Me a Coffee, Wise - and a white glyph
+// on those is close to invisible. The fix used to be to flip those tiles to
+// near-black ink instead. That is right for one tile in isolation and wrong for
+// a set: a row of Google apps came out as mostly white marks with three black
+// ones punched into it, and the three read as a different kind of thing rather
+// than as the same thing in a different colour.
+//
+// So the ink stays white and the colour gives. Hue and saturation are what makes
+// a brand recognisable; its exact lightness is the part nobody could name from
+// memory. Both gradient stops are scaled by one factor, which holds the hue and
+// saturation exactly - scaling every channel by the same amount leaves the
+// ratios between them untouched, where an HSL round trip would drift - until
+// white on the darker stop clears 3:1, the WCAG minimum for a graphic, which a
+// glyph is.
+const WHITE_ON_GRAPHIC = 3;
+
+function channels(hex) {
   const n = parseInt(String(hex).slice(1), 16);
-  if (Number.isNaN(n)) return "#fff";
-  const r = ((n >> 16) & 255) / 255;
-  const g = ((n >> 8) & 255) / 255;
-  const b = (n & 255) / 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.62 ? "#1a1a1a" : "#fff";
+  if (Number.isNaN(n)) return null;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function toHex(rgb) {
+  return `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function linear(value) {
+  const c = value / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+
+// Gamma-corrected, unlike the raw Rec. 709 sum this replaces. That one read
+// #f4b400 as bright enough to need dark ink at a 0.62 threshold but gave no way
+// to say how much darker it would have to be to take white, because its answer
+// was not on the same scale as a contrast ratio.
+export function relativeLuminance(hex) {
+  const rgb = channels(hex);
+  if (!rgb) return 0;
+  const [r, g, b] = rgb.map(linear);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+export function whiteContrast(hex) {
+  return 1.05 / (relativeLuminance(hex) + 0.05);
+}
+
+function scaled(hex, factor) {
+  const rgb = channels(hex);
+  return rgb ? toHex(rgb.map((v) => v * factor)) : hex;
+}
+
+const gradients = new Map();
+
+// The two stops a tile should actually paint, darkened together if the brand's
+// own pair cannot carry a white glyph. Memoised: the search below runs once per
+// brand rather than once per icon per render.
+export function inkSafeGradient(from, to) {
+  const cacheKey = `${from}|${to}`;
+  const cached = gradients.get(cacheKey);
+  if (cached) return cached;
+
+  // Stepped rather than solved. Luminance runs through the sRGB transfer curve,
+  // which has no tidy inverse, and twenty-odd multiplications once per brand is
+  // cheaper than an approximation that could land just under the threshold.
+  let factor = 1;
+  while (factor > 0.2 && whiteContrast(scaled(to, factor)) < WHITE_ON_GRAPHIC) {
+    factor -= 0.02;
+  }
+  const result =
+    factor >= 1 ? { from, to } : { from: scaled(from, factor), to: scaled(to, factor) };
+  gradients.set(cacheKey, result);
+  return result;
 }
 
 // Resolve a display name to a brand entry.

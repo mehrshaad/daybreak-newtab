@@ -49,11 +49,11 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
   // rows whenever nothing ends up hidden — most of the time. Try the full
   // height first, and only fall back to the reserved figure if that count
   // would actually need the button. The figure itself is the button's own
-  // rendered box (17px, fontSize 10 / padding "2px 8px") plus its 4px
+  // rendered box (25px, fontSize 10 / padding "6px 18px") plus its 2px
   // marginTop — measured directly rather than estimated, since `floor()`
   // a few lines down turns a couple of guessed pixels into a whole missing
   // row.
-  const MORE_ROW_SPACE = 21;
+  const MORE_ROW_SPACE = 27;
 
   // Before the first measurement lands, fall back to gridFor's estimate
   // rather than showing nothing. Once real dimensions are in, they are what
@@ -84,6 +84,11 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
   return (
     <div
       ref={wrapRef}
+      // db-clip is what lets an icon be dragged out of here at all: base.scss
+      // drops the clip below for the length of a drag. Not applied while the
+      // expanded list is scrolling, because unclipping a scrolled box returns
+      // it to the top and moves the slots the drag is measured against.
+      className={showAll ? undefined : "db-clip"}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -116,7 +121,7 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
             setShowAll((v) => !v);
           }}
           style={{
-            marginTop: 4,
+            marginTop: 2,
             alignSelf: "center",
             border: 0,
             background: "transparent",
@@ -125,7 +130,18 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
             fontSize: 10,
             letterSpacing: ".08em",
             cursor: "pointer",
-            padding: "2px 8px",
+            // Ten point text in a 17px box, sitting exactly where the tile's
+            // drag handle puts its own hit area: the handle covered 71% of this
+            // button, measured, so most of a click on it started a drag
+            // instead. Two fixes, because either alone leaves it awkward. The
+            // padding makes the target worth aiming at, and being positioned
+            // with a stack level above the handle's `auto` is what lets it keep
+            // the pixels it now covers. The handle is left alone at its full
+            // size: it still owns the strip below this, which is where its line
+            // actually sits, so grabbing the line is no harder than before.
+            position: "relative",
+            zIndex: 1,
+            padding: "6px 18px",
             flex: "none",
           }}
         >

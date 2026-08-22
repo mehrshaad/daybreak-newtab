@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { LuX } from "react-icons/lu";
 import { iconCellSize } from "../iconCellSize";
 import { useFlip } from "../useFlip";
 import { usePointerReorder } from "../usePointerReorder";
+import { useHover } from "../useHover";
 import { useTooltip } from "../useTooltip";
 import Appear from "./Appear";
 import IconTile from "./IconTile";
@@ -27,10 +28,19 @@ function IconGridItem({
 }) {
   const ref = useRef(null);
   const wrapRef = useRef(null);
-  const [hovered, setHovered] = useState(false);
+  // Hover as state rather than a background written straight onto the node.
+  // The imperative form could not be undone once its mouseleave went missing,
+  // and in a grid that reorders under the pointer it went missing often: an
+  // icon that had been passed over kept its highlight until it was hovered
+  // again. useHover closes itself (see usePointerExit), and a render driven by
+  // state is a render that cannot disagree with what the node currently says.
+  const [hovered, bind] = useHover();
   // The hover card already covers this, so the tooltip only applies where
   // there is no card to duplicate.
   const tip = useTooltip(hoverCard ? null : item.title || item.name);
+  // A card is a deliberate reveal, so it stays out of the way of the two
+  // things that are not one: a grid mid-drag, and the icon being carried.
+  const cardOpen = hovered && !anyDragging && !held;
 
   return (
     // The grid's own child, so it is what carries `data-flip-id`. Both the
@@ -75,7 +85,6 @@ function IconGridItem({
           padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
           borderRadius: 12,
           border: 0,
-          background: "transparent",
           cursor: held ? "grabbing" : "pointer",
           width: "100%",
           minWidth: 0,
@@ -83,19 +92,17 @@ function IconGridItem({
           // Dragged past the grid's edge, the icon reads as "release to
           // remove" instead of "still reordering".
           opacity: danger ? 0.4 : 1,
+          background: hovered && !held ? "var(--panel2)" : "transparent",
           boxShadow: danger ? "0 0 0 2px var(--danger)" : "none",
           transition: "background .16s ease, opacity .16s ease, box-shadow .16s ease",
         }}
         onMouseEnter={(e) => {
           tip.anchorProps.onMouseEnter?.();
-          if (held) return;
-          e.currentTarget.style.background = "var(--panel2)";
-          if (!anyDragging) setHovered(true);
+          bind.onMouseEnter(e);
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={() => {
           tip.anchorProps.onMouseLeave?.();
-          e.currentTarget.style.background = "transparent";
-          setHovered(false);
+          bind.onMouseLeave();
         }}
       >
         <IconTile
@@ -128,9 +135,9 @@ function IconGridItem({
 
       {hoverCard && !editing ? (
         <Popover
-          open={hovered}
+          open={cardOpen}
           anchorRef={ref}
-          onClose={() => setHovered(false)}
+          onClose={bind.onMouseLeave}
           placement="bottom-center"
           width={230}
         >

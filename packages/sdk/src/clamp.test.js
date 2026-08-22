@@ -14,6 +14,22 @@ describe("clampToViewport", () => {
     window.innerHeight = original.height;
   });
 
+  it("keeps a box clear of the scrollbar, not just of the window edge", () => {
+    // jsdom reports 0 for clientWidth, which is what makes the fallback fire in
+    // every other test here. A real page with a scrollbar reports less than
+    // innerWidth, and that difference is the strip a right-aligned box used to
+    // be parked under.
+    const root = document.documentElement;
+    Object.defineProperty(root, "clientWidth", { value: 985, configurable: true });
+    Object.defineProperty(root, "clientHeight", { value: 800, configurable: true });
+    try {
+      expect(clampToViewport(950, 100, 200, 100)).toEqual({ left: 773, top: 100 });
+    } finally {
+      delete root.clientWidth;
+      delete root.clientHeight;
+    }
+  });
+
   it("leaves a box that already fits untouched", () => {
     expect(clampToViewport(100, 100, 200, 100)).toEqual({ left: 100, top: 100 });
   });

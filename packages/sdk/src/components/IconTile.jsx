@@ -1,5 +1,5 @@
 import googleMark from "../assets/brand/google-favicon-2025.webp";
-import { brandForLink, glyphInk, hashHue } from "../brands";
+import { brandForLink, hashHue, inkSafeGradient } from "../brands";
 import { useSiteIcon } from "../useSiteIcon";
 
 // Google's current favicon, supplied as artwork rather than a monochrome path,
@@ -97,12 +97,15 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
     );
   }
 
-  const gradient = brand
-    ? `linear-gradient(160deg, ${brand.from}, ${brand.to})`
+  // Darkened first where the brand's own pair is too light for a white glyph,
+  // so every tile in a grid carries the same colour of mark. See
+  // inkSafeGradient: the alternative was three black glyphs in a row of white
+  // ones, which read as three different kinds of thing.
+  const safe = brand ? inkSafeGradient(brand.from, brand.to) : null;
+  const gradient = safe
+    ? `linear-gradient(160deg, ${safe.from}, ${safe.to})`
     : `linear-gradient(160deg, hsl(${hue} 72% 64%), hsl(${(hue + 28) % 360} 68% 48%))`;
-  // The hashed hues are held at a lightness that always takes a white glyph;
-  // only the real brand colours reach far enough up the scale to need ink.
-  const ink = brand ? glyphInk(brand.to) : "#fff";
+  const ink = "#fff";
 
   return (
     <div

@@ -63,8 +63,15 @@ function Tooltip({ anchorRef, open, label, placement = "bottom-center" }) {
         backdropFilter: "var(--blur-panel)",
         boxShadow: "0 8px 24px rgba(0,0,0,.28)",
         fontSize: 11,
+        lineHeight: 1.35,
         color: "var(--fg)",
-        whiteSpace: "nowrap",
+        // Wraps rather than running on. With nowrap the maxWidth above did
+        // nothing useful: a long label overflowed its own rounded box and
+        // painted past the border, and since the box is centred on the anchor
+        // by its own offsetWidth, the ink ended up sitting off to one side of
+        // where it was supposed to be. Wrapping is what makes the box actually
+        // contain what it is measuring.
+        textAlign: "center",
         pointerEvents: "none",
         animation: closing
           ? `db-pop-out ${EXIT_MS}ms ease both`
