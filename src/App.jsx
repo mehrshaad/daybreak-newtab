@@ -578,7 +578,6 @@ function App() {
       <Backdrop background={background(theme, accent, wall)} />
       <Header
         scrolled={scrolled}
-        theme={theme}
         editing={editing}
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}

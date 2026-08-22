@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuMoon, LuSettings, LuSun, LuX } from "react-icons/lu";
+import { LuLayoutGrid, LuMonitor, LuMoon, LuPlus, LuSettings, LuSun, LuX } from "react-icons/lu";
 import { useNotices } from "../core/noticeContext";
 import { useSettings } from "../core/settingsContext";
 import {
+  Appear,
   HOVER_LIFT,
   IconTile,
   MONO,
@@ -12,7 +13,10 @@ import {
   Tooltip,
   useTooltip,
 } from "@daybreak/sdk";
+import { barTier, searchWidth } from "../core/barLayout";
 import { gatherSuggestions } from "../core/suggest";
+import { nextTheme, THEME_LABELS } from "../core/themeCycle";
+import { useViewportWidth } from "../core/useColumns";
 import SearchSuggestions from "./SearchSuggestions";
 import { Button } from "./primitives";
 
@@ -22,7 +26,9 @@ const isMac = () =>
 function EnginePicker({ engine, onPick }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-  const tip = useTooltip(`Search with ${SEARCH_ENGINES[engine].label}`);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
+  const tip = useTooltip(open ? null : `Search with ${SEARCH_ENGINES[engine].label}`);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -33,12 +39,63 @@ function EnginePicker({ engine, onPick }) {
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
 
+  // Opening moves focus into the menu, onto whichever engine is in use. That is
+  // what makes the arrow keys below work at all: this is a roving-focus menu,
+  // so the browser's own focus is the highlight, and nothing needs to track a
+  // separate index that could disagree with it.
+  useEffect(() => {
+    if (!open) return;
+    menuRef.current?.querySelector('[aria-checked="true"]')?.focus();
+  }, [open]);
+
+  const close = (returnFocus) => {
+    setOpen(false);
+    if (returnFocus) buttonRef.current?.focus();
+  };
+
+  // Menus are expected to work from the keyboard, and this one did not: it
+  // opened, and then the only way out was a click somewhere else. Escape had no
+  // effect and the engines could not be reached at all.
+  const onMenuKeyDown = (e) => {
+    const items = [...(menuRef.current?.querySelectorAll("[role=menuitemradio]") || [])];
+    const at = items.indexOf(document.activeElement);
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      close(true);
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const step = e.key === "ArrowDown" ? 1 : -1;
+      // Wraps, so holding one direction reaches everything without having to
+      // know which end you started from.
+      items[(at + step + items.length) % items.length]?.focus();
+    } else if (e.key === "Home" || e.key === "End") {
+      e.preventDefault();
+      (e.key === "Home" ? items[0] : items[items.length - 1])?.focus();
+    } else if (e.key === "Tab") {
+      // Tabbing out of an open menu closes it rather than leaving it hanging
+      // over the board with focus somewhere else entirely.
+      close(false);
+    }
+  };
+
   return (
     <div ref={wrapRef} style={{ position: "relative", display: "flex", flex: "none" }}>
       <button
-        ref={tip.anchorRef}
+        ref={(el) => {
+          buttonRef.current = el;
+          tip.anchorRef.current = el;
+        }}
         type="button"
         onClick={() => setOpen((v) => !v)}
+        // Down-arrow opens a collapsed menu, which is what the pattern leads a
+        // keyboard user to try first.
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" && !open) {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+        aria-haspopup="menu"
         aria-label={`Search engine: ${SEARCH_ENGINES[engine].label}`}
         aria-expanded={open}
         style={{
@@ -60,6 +117,9 @@ function EnginePicker({ engine, onPick }) {
       {open ? (
         <div
           role="menu"
+          ref={menuRef}
+          onKeyDown={onMenuKeyDown}
+          aria-label="Search engine"
           style={{
             position: "absolute",
             top: "calc(100% + 10px)",
@@ -81,9 +141,10 @@ function EnginePicker({ engine, onPick }) {
               type="button"
               role="menuitemradio"
               aria-checked={key === engine}
+              tabIndex={-1}
               onClick={() => {
                 onPick(key);
-                setOpen(false);
+                close(true);
               }}
               style={{
                 display: "flex",
@@ -111,7 +172,6 @@ function EnginePicker({ engine, onPick }) {
 
 function Header({
   scrolled,
-  theme,
   editing,
   onToggleEdit,
   onOpenStore,
@@ -124,11 +184,19 @@ function Header({
   const engine = SEARCH_ENGINES[settings.behavior.searchEngine]
     ? settings.behavior.searchEngine
     : "google";
-  // `theme` arrives already resolved, so "system" cannot be mistaken for dark.
-  const dark = theme !== "light";
+  // The theme *setting*, not the resolved theme the rest of the app renders
+  // with. The button used to take the resolved one, which cannot tell "dark"
+  // apart from "system, at night" — and that is exactly how it managed to write
+  // an explicit theme over a board that had been following the system.
+  const themeSetting = settings.appearance.theme || "system";
   const [now, setNow] = useState(() => new Date());
-  const themeTip = useTooltip(dark ? "Switch to light" : "Switch to dark");
+  const width = useViewportWidth();
+  const tier = barTier(width);
+  const nextThemeValue = nextTheme(themeSetting);
+  const themeTip = useTooltip(`Switch to ${THEME_LABELS[nextThemeValue]}`);
   const settingsTip = useTooltip("Settings");
+  const editTip = useTooltip(tier.labels ? null : editing ? "Done editing" : "Edit layout");
+  const storeTip = useTooltip(tier.labels ? null : "Add a widget");
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 20000);
@@ -241,43 +309,67 @@ function Header({
         position: "sticky",
         top: 0,
         zIndex: 40,
-        display: "flex",
+        // Three columns rather than a row with a spacer at each end. The search
+        // field was centred by giving both end groups the same hardcoded
+        // 190px, which meant every change to either end moved the field: the
+        // Edit button carried a minWidth purely so its label swapping between
+        // "Edit layout" and "Editing" would not slide the search sideways. A
+        // middle column that is its own width is centred because the two
+        // outside columns are equal by definition, whatever is in them.
+        //
+        // minmax(0, 1fr) and not 1fr: a plain fr floors at min-content, so a
+        // long enough label on either end would still shove the field off
+        // centre instead of being clipped.
+        display: "grid",
+        gridTemplateColumns: `minmax(0, 1fr) minmax(0, ${searchWidth(width, {
+          active: searchActive,
+          scrolled,
+        })}px) minmax(0, 1fr)`,
         alignItems: "center",
         gap: "20px",
         padding: scrolled ? "10px 28px" : "20px 28px",
         background: scrolled ? "var(--sheet)" : "transparent",
         borderBottom: `1px solid ${scrolled ? "var(--line)" : "transparent"}`,
         backdropFilter: scrolled ? "var(--blur-panel)" : "none",
-        transition: "padding .25s ease, background .25s ease, border-color .25s ease",
+        transition:
+          "grid-template-columns .28s cubic-bezier(.2,.8,.2,1), padding .25s ease, " +
+          "background .25s ease, border-color .25s ease",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: "10px",
-          minWidth: "190px",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: MONO,
-            letterSpacing: ".16em",
-            textTransform: "uppercase",
-            color: "var(--accentText)",
-            fontSize: scrolled ? "10px" : "12px",
-            transition: "font-size .25s ease",
-            fontWeight: 500,
-          }}
-        >
-          Daybreak
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: "11px", color: "var(--faint)" }}>
-          {now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
-        </span>
+      {/* Both end groups are their own column now, so neither needs a width:
+          they take what they take and the field stays put regardless. */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: "10px", minWidth: 0 }}>
+        <Appear open={tier.wordmark} style={{ display: "flex" }}>
+          <span
+            style={{
+              fontFamily: MONO,
+              letterSpacing: ".16em",
+              textTransform: "uppercase",
+              color: "var(--accentText)",
+              fontSize: scrolled ? "10px" : "12px",
+              transition: "font-size .25s ease",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Daybreak
+          </span>
+        </Appear>
+        <Appear open={tier.clock} style={{ display: "flex" }}>
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: "11px",
+              color: "var(--faint)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+          </span>
+        </Appear>
       </div>
 
-      <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", minWidth: 0 }}>
         <form
           ref={formRef}
           onSubmit={submit}
@@ -291,9 +383,11 @@ function Header({
             display: "flex",
             alignItems: "center",
             gap: "10px",
+            // The column is the width now (see the grid above), so the field
+            // fills it. Widening on focus happens by the column widening, which
+            // means the two sides give up the room rather than the field
+            // stealing it and pushing a control off the edge.
             width: "100%",
-            // Widen a little on focus so typing feels like the field opened up.
-            maxWidth: searchActive ? "640px" : scrolled ? "440px" : "560px",
             padding: scrolled ? "7px 15px" : "10px 16px",
             borderRadius: "999px",
             background:
@@ -310,7 +404,7 @@ function Header({
               ? "0 3px 12px rgba(0,0,0,.10)"
               : "none",
             transition:
-              "max-width .28s cubic-bezier(.2,.8,.2,1), background .2s ease, border-color .2s ease, box-shadow .2s ease, padding .25s ease",
+              "background .2s ease, border-color .2s ease, box-shadow .2s ease, padding .25s ease",
           }}
         >
           <EnginePicker
@@ -404,62 +498,93 @@ function Header({
           display: "flex",
           alignItems: "center",
           gap: "8px",
-          minWidth: "190px",
+          minWidth: 0,
           justifyContent: "flex-end",
         }}
       >
-        <Button
-          onClick={onToggleEdit}
-          aria-pressed={editing}
-          style={{
-            padding: "9px 14px",
-            borderRadius: "999px",
-            fontSize: "13px",
-            cursor: "pointer",
-            // Wide enough for the longer of the two labels. Without this the
-            // button shrinks on toggle, the header's right-hand group narrows
-            // and the whole search bar slides sideways.
-            minWidth: "104px",
-            border: editing ? "0" : "1px solid var(--line)",
-            background: editing ? "var(--accent)" : "var(--panel)",
-            color: editing ? "var(--onAccent)" : "var(--fg)",
-            fontWeight: editing ? 500 : 400,
-          }}
-          hover={editing ? { opacity: 0.9, transform: "translateY(-1px)" } : HOVER_LIFT}
-        >
-          {/* Keyed so the label crossfades on toggle instead of swapping
-              between frames. */}
-          <span
-            key={editing ? "on" : "off"}
-            style={{ animation: "db-fade .2s ease both" }}
+        {/* Below the widest tier these two lose their labels and keep their
+            place, which is the trade the search field needs: about 150px back,
+            for two buttons a person learns once and then finds by position.
+            The tooltip carries the name that the label used to. */}
+        <span ref={editTip.anchorRef} style={{ display: "inline-flex" }} {...editTip.anchorProps}>
+          <Button
+            onClick={onToggleEdit}
+            aria-pressed={editing}
+            aria-label={editing ? "Done editing" : "Edit layout"}
+            style={{
+              padding: tier.labels ? "9px 14px" : 0,
+              width: tier.labels ? undefined : 36,
+              height: tier.labels ? undefined : 36,
+              display: tier.labels ? undefined : "grid",
+              placeItems: tier.labels ? undefined : "center",
+              borderRadius: "999px",
+              fontSize: "13px",
+              cursor: "pointer",
+              border: editing ? "0" : "1px solid var(--line)",
+              background: editing ? "var(--accent)" : "var(--panel)",
+              color: editing ? "var(--onAccent)" : "var(--fg)",
+              fontWeight: editing ? 500 : 400,
+            }}
+            hover={editing ? { opacity: 0.9, transform: "translateY(-1px)" } : HOVER_LIFT}
           >
-            {editing ? "Editing" : "Edit layout"}
-          </span>
-        </Button>
-        <Button
-          onClick={onOpenStore}
-          styleFor={softButton}
-          hover={HOVER_LIFT}
-        >
-          Store
-        </Button>
+            {/* Keyed so the label crossfades on toggle instead of swapping
+                between frames. */}
+            <span
+              key={`${editing ? "on" : "off"}-${tier.labels ? "text" : "icon"}`}
+              style={{
+                animation: "db-fade .2s ease both",
+                display: tier.labels ? undefined : "grid",
+                placeItems: tier.labels ? undefined : "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {tier.labels ? (editing ? "Editing" : "Edit layout") : <LuLayoutGrid size={15} />}
+            </span>
+          </Button>
+        </span>
+        <Tooltip {...editTip} />
+
+        <span ref={storeTip.anchorRef} style={{ display: "inline-flex" }} {...storeTip.anchorProps}>
+          <Button
+            onClick={onOpenStore}
+            aria-label="Add a widget"
+            styleFor={tier.labels ? softButton : roundControl}
+            hover={HOVER_LIFT}
+          >
+            <span
+              key={tier.labels ? "text" : "icon"}
+              style={{ animation: "db-fade .2s ease both", whiteSpace: "nowrap" }}
+            >
+              {tier.labels ? "Store" : <LuPlus size={16} />}
+            </span>
+          </Button>
+        </span>
+        <Tooltip {...storeTip} />
+
         {/* Button doesn't forward a ref (and can't take onMouseEnter as a
             prop without clobbering its own internal hover tracking), so the
             tooltip anchors to a plain wrapper instead. */}
         <span ref={themeTip.anchorRef} style={{ display: "inline-flex" }} {...themeTip.anchorProps}>
           <Button
-            onClick={() =>
-              update("appearance", { theme: dark ? "light" : "dark" })
-            }
-            aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
+            onClick={() => update("appearance", { theme: nextThemeValue })}
+            aria-label={`Theme: ${THEME_LABELS[themeSetting]}. Switch to ${THEME_LABELS[nextThemeValue]}`}
             styleFor={roundControl}
             hover={HOVER_LIFT}
           >
+            {/* Shows the setting, not what it resolved to, so a board following
+                the system says so instead of showing a moon that looks like a
+                choice somebody made. */}
             <span
-              key={dark ? "dark" : "light"}
+              key={themeSetting}
               style={{ display: "grid", placeItems: "center", animation: "db-menu .22s ease both" }}
             >
-              {dark ? <LuMoon size={15} /> : <LuSun size={15} />}
+              {themeSetting === "system" ? (
+                <LuMonitor size={15} />
+              ) : themeSetting === "light" ? (
+                <LuSun size={15} />
+              ) : (
+                <LuMoon size={15} />
+              )}
             </span>
           </Button>
         </span>
