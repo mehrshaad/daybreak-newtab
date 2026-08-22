@@ -31,7 +31,6 @@ import {
   SiDocker,
   SiDribbble,
   SiDropbox,
-  SiDuckduckgo,
   SiDuolingo,
   SiEbay,
   SiEdx,
@@ -162,7 +161,7 @@ import {
   SiZoho,
   SiZoom,
 } from "react-icons/si";
-import { SiMicrosoftbing } from "./components/brandIcons";
+import { SiDuckduckgo, SiMicrosoftbing } from "./components/brandIcons";
 
 // name -> { Glyph, from, to }. Every entry is a real brand mark: react-icons
 // where it has one, and a bundled CC0 Simple Icons path where it does not

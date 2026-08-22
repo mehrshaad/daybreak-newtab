@@ -4,8 +4,8 @@ import { useNotices } from "../core/noticeContext";
 import { useSettings } from "../core/settingsContext";
 import {
   Appear,
+  EngineMark,
   HOVER_LIFT,
-  IconTile,
   MONO,
   roundControl,
   SEARCH_ENGINES,
@@ -111,7 +111,7 @@ function EnginePicker({ engine, onPick }) {
         }}
         {...tip.anchorProps}
       >
-        <IconTile name={engine} size={15} bare />
+        <EngineMark engine={engine} size={15} />
       </button>
       <Tooltip {...tip} />
       {open ? (
@@ -160,7 +160,7 @@ function EnginePicker({ engine, onPick }) {
                 textAlign: "left",
               }}
             >
-              <IconTile name={key} size={14} bare />
+              <EngineMark engine={key} size={14} />
               {e.label}
             </button>
           ))}

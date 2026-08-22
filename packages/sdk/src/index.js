@@ -76,6 +76,7 @@ export { GLYPHS, glyphNames } from "./glyphs";
 
 // Keeps a floating rectangle inside the viewport. Shared by the context menu
 // and Popover, so there is one implementation of "don't run off the screen".
+export { default as EngineMark } from "./components/EngineMark";
 export { clampToViewport } from "./clamp";
 
 // Brand marks for app-style icons.
