@@ -11,12 +11,14 @@ import {
   SEARCH_ENGINES,
   softButton,
   Tooltip,
+  useRovingMenu,
   useTooltip,
 } from "@daybreak/sdk";
 import { barTier, searchWidth } from "../core/barLayout";
 import { gatherSuggestions } from "../core/suggest";
 import { nextTheme, THEME_LABELS } from "../core/themeCycle";
 import { useViewportWidth } from "../core/useColumns";
+import ProfileSwitcher from "./ProfileSwitcher";
 import SearchSuggestions from "./SearchSuggestions";
 import { Button } from "./primitives";
 
@@ -39,44 +41,14 @@ function EnginePicker({ engine, onPick }) {
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
 
-  // Opening moves focus into the menu, onto whichever engine is in use. That is
-  // what makes the arrow keys below work at all: this is a roving-focus menu,
-  // so the browser's own focus is the highlight, and nothing needs to track a
-  // separate index that could disagree with it.
-  useEffect(() => {
-    if (!open) return;
-    menuRef.current?.querySelector('[aria-checked="true"]')?.focus();
-  }, [open]);
-
-  const close = (returnFocus) => {
+  const close = useCallback((returnFocus) => {
     setOpen(false);
     if (returnFocus) buttonRef.current?.focus();
-  };
+  }, []);
 
-  // Menus are expected to work from the keyboard, and this one did not: it
-  // opened, and then the only way out was a click somewhere else. Escape had no
-  // effect and the engines could not be reached at all.
-  const onMenuKeyDown = (e) => {
-    const items = [...(menuRef.current?.querySelectorAll("[role=menuitemradio]") || [])];
-    const at = items.indexOf(document.activeElement);
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      close(true);
-    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      const step = e.key === "ArrowDown" ? 1 : -1;
-      // Wraps, so holding one direction reaches everything without having to
-      // know which end you started from.
-      items[(at + step + items.length) % items.length]?.focus();
-    } else if (e.key === "Home" || e.key === "End") {
-      e.preventDefault();
-      (e.key === "Home" ? items[0] : items[items.length - 1])?.focus();
-    } else if (e.key === "Tab") {
-      // Tabbing out of an open menu closes it rather than leaving it hanging
-      // over the board with focus somewhere else entirely.
-      close(false);
-    }
-  };
+  // Arrows, Home/End, Escape and Tab, shared with every other menu in the app
+  // so the next one cannot ship without them (see useRovingMenu).
+  const onMenuKeyDown = useRovingMenu(menuRef, { open, onClose: close });
 
   return (
     <div ref={wrapRef} style={{ position: "relative", display: "flex", flex: "none" }}>
@@ -179,7 +151,7 @@ function Header({
   onContextMenu,
   searchRef,
 }) {
-  const { settings, update } = useSettings();
+  const { settings, update, profiles } = useSettings();
   const { notify } = useNotices();
   const engine = SEARCH_ENGINES[settings.behavior.searchEngine]
     ? settings.behavior.searchEngine
@@ -196,6 +168,9 @@ function Header({
   const themeTip = useTooltip(`Switch to ${THEME_LABELS[nextThemeValue]}`);
   const settingsTip = useTooltip("Settings");
   const editTip = useTooltip(tier.labels ? null : editing ? "Done editing" : "Edit layout");
+  // More than one board to be on. The wordmark stands down for the chip rather
+  // than sitting beside it.
+  const hasProfiles = (profiles?.list?.length || 1) > 1;
   const storeTip = useTooltip(tier.labels ? null : "Add a widget");
 
   useEffect(() => {
@@ -338,8 +313,14 @@ function Header({
     >
       {/* Both end groups are their own column now, so neither needs a width:
           they take what they take and the field stays put regardless. */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: "10px", minWidth: 0 }}>
-        <Appear open={tier.wordmark} style={{ display: "flex" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+        {/* Renders nothing at all on a single-profile install, which is most of
+            them, so the bar is unchanged for anyone not using profiles. When it
+            does appear it takes the wordmark's place rather than crowding it:
+            which board you are looking at is worth a permanent spot in the bar
+            and a wordmark on your own new tab is not. */}
+        <ProfileSwitcher compact={!tier.labels} onManage={onOpenSettings} />
+        <Appear open={tier.wordmark && !hasProfiles} style={{ display: "flex" }}>
           <span
             style={{
               fontFamily: MONO,

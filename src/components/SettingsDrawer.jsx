@@ -20,6 +20,7 @@ import { versionLabel } from "../core/version";
 import { SOURCES } from "../core/suggest";
 import { systemTheme } from "../core/useSystemTheme";
 import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
+import ProfilesSection from "./ProfilesSection";
 
 
 const SWATCH_FADE = 320;
@@ -404,6 +405,12 @@ function SettingsDrawer({
             ))}
           </div>
         </Collapse>
+      </Section>
+
+      {/* Above search and below the board's own look: a profile owns both, so
+          it reads as the thing the sections beneath it belong to. */}
+      <Section title="Profiles" style={{ marginBottom: 22 }}>
+        <ProfilesSection />
       </Section>
 
       <Section title="Search suggestions" style={{ marginBottom: 22 }}>

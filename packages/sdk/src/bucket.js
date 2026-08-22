@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { debounceWriter, localArea } from "./storage";
+import { debounceWriter, localAreaFor, readActiveProfile } from "./storage";
 
 // Per-widget storage in chrome.storage.local, namespaced as "<widgetId>:<key>".
 //
@@ -10,11 +10,17 @@ import { debounceWriter, localArea } from "./storage";
 //
 // One shared cache backs every hook so two widgets reading the same area never
 // race each other's writes.
+//
+// Bound to the active profile at module load, which is safe because a page only
+// ever serves one profile: switching reloads. Before this the bucket was shared,
+// so a second profile opened with the first one's scratchpad notes in it — its
+// own board, with somebody else's writing on it.
+const area = localAreaFor(readActiveProfile());
 
 let cache = null;
 let loading = null;
 const listeners = new Set();
-const writer = debounceWriter(localArea, 300);
+const writer = debounceWriter(area, 300);
 
 function notify() {
   for (const fn of listeners) fn();
@@ -23,7 +29,7 @@ function notify() {
 async function ensureLoaded() {
   if (cache) return cache;
   if (!loading) {
-    loading = localArea.get().then((data) => {
+    loading = area.get().then((data) => {
       cache = data && typeof data === "object" ? data : {};
       loading = null;
       notify();

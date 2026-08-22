@@ -16,17 +16,28 @@ export { fitForSync, resolveSynced, useWidgetSynced } from "./synced";
 // Storage plumbing. The host owns the settings schema; the sdk owns the
 // mechanics of reading and writing it, so both sides share one implementation.
 export {
+  ACTIVE_PROFILE_KEY,
   LOCAL_KEY,
+  PROFILES_KEY,
   SYNC_KEY,
   SYNC_MIRROR_KEY,
   V1_KEY,
   debounceWriter,
+  forgetProfileStorage,
   hasChromeLocal,
   hasChromeSync,
   localArea,
+  localAreaFor,
+  localKeyFor,
+  profilesArea,
+  readActiveProfile,
   readSyncMirror,
   readV1Settings,
   syncArea,
+  syncAreaFor,
+  syncKeyFor,
+  syncMirrorKeyFor,
+  writeActiveProfile,
   writeSyncMirror,
 } from "./storage";
 
@@ -111,6 +122,7 @@ export {
 } from "./usePointerReorder";
 export { useHover } from "./useHover";
 export { usePointerExit } from "./usePointerExit";
+export { useRovingMenu } from "./useRovingMenu";
 export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
