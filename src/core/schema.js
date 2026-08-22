@@ -108,7 +108,10 @@ export function defaultSettings() {
       searchEngine: "google",
       // Only the permission-free source is on by default; the others are
       // opt-in and each asks for its Chrome permission when switched on.
-      suggest: { links: true, tabs: false, bookmarks: false, history: false },
+      // `answers` needs no permission and is on by default: it only ever fires
+      // on something that already evaluates to a number, so it costs a person
+      // who does not want it nothing until they type a sum.
+      suggest: { links: true, tabs: false, bookmarks: false, history: false, answers: true },
       // All on by default, and switchable one kind at a time: "undo" and
       // "a new version is available" are not the same sort of message, so one
       // master switch would have made silencing update nags cost you the undo

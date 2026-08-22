@@ -389,10 +389,22 @@ function SettingsDrawer({
 
       <Section title="Search suggestions" style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5, marginBottom: 8 }}>
-          What the search box offers as you type. Each source beyond your quick
-          links needs a Chrome permission, asked for only when you switch it on.
+          What the search box offers as you type. Answers are worked out here and
+          need nothing; every source beyond your quick links needs a Chrome
+          permission, asked for only when you switch it on.
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Not one of SOURCES: those are places to look things up, each
+              gated on a Chrome permission, and this is the box working out an
+              answer on its own. It had no setting at all until now — the one
+              feature in the search box that could not be turned off. */}
+          <Toggle
+            label="Answers and conversions"
+            on={suggest.answers !== false}
+            onChange={() =>
+              update("behavior", { suggest: { ...suggest, answers: suggest.answers === false } })
+            }
+          />
           {SOURCES.map((source) => {
             const on = !!suggest[source.key];
             return (

@@ -1,4 +1,4 @@
-import { LuBookmark, LuRotateCcw, LuWandSparkles } from "react-icons/lu";
+import { LuBookmark, LuBookmarkCheck, LuWandSparkles } from "react-icons/lu";
 import { PRESETS, SAVED_LAYOUT } from "../core/schema";
 import { Appear, HOVER_LIFT, MONO, primaryButton, softButton, Tooltip, useTooltip } from "@daybreak/sdk";
 import { Button, Pill } from "./primitives";
@@ -9,6 +9,7 @@ function PresetsDock({
   closing,
   layoutName,
   hasSaved,
+  savedState,
   onPreset,
   onApplySaved,
   onSaveCurrent,
@@ -20,7 +21,12 @@ function PresetsDock({
   const savedTip = useTooltip(
     hasSaved ? "Switch to the layout you saved" : "Save the current board as your layout"
   );
-  const resetTip = useTooltip("Reset your saved layout to the board as it is now");
+  // Only offered when the board has actually moved away from the snapshot, so
+  // its presence is the answer to "is what I am looking at saved".
+  const changed = savedState === "changed";
+  const saveTip = useTooltip(
+    changed ? "Save the board as it is now, over what Yours holds" : "Yours matches this board"
+  );
   const autoArrangeTip = useTooltip("Tidy the current widgets into neat rows");
   return (
     <div
@@ -106,28 +112,34 @@ function PresetsDock({
           </Pill>
         </span>
         <Tooltip {...savedTip} />
-        <Appear open={hasSaved} style={{ display: "flex" }}>
-          <span ref={resetTip.anchorRef} style={{ display: "inline-flex" }} {...resetTip.anchorProps}>
+        {/* Was a 28px rotate-arrow, which reads as "undo" rather than "save" —
+            for the one action on this dock that overwrites something. It says
+            what it does now, and it only appears when there is a difference to
+            save, so the board being unchanged is legible by this not being
+            there. Appear unmounts it, so the row closes up rather than leaving
+            a gap. */}
+        <Appear open={hasSaved && changed} style={{ display: "flex" }}>
+          <span ref={saveTip.anchorRef} style={{ display: "inline-flex" }} {...saveTip.anchorProps}>
             <Button
               onClick={onSaveCurrent}
-              aria-label="Reset your saved layout to the current board"
+              aria-label="Save the board as it is now, replacing what Yours holds"
               styleFor={softButton}
               style={{
-                padding: 0,
-                width: 28,
-                height: 28,
-                borderRadius: 999,
-                display: "grid",
-                placeItems: "center",
+                padding: "8px 13px",
                 background: "transparent",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                whiteSpace: "nowrap",
               }}
               hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
             >
-              <LuRotateCcw size={13} />
+              <LuBookmarkCheck size={13} />
+              Save this view
             </Button>
           </span>
         </Appear>
-        <Tooltip {...resetTip} />
+        <Tooltip {...saveTip} />
       </div>
 
       <div style={{ width: 1, height: 22, background: "var(--line)", margin: "0 2px" }} />

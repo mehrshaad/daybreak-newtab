@@ -22,6 +22,7 @@ export function boardMenu({
   editing,
   theme,
   hasSaved,
+  savedState,
   onStore,
   onToggleEdit,
   onPreset,
@@ -42,7 +43,19 @@ export function boardMenu({
       ...(hasSaved
         ? [{ label: "Switch to your layout", run: onApplySaved }]
         : []),
-      { label: "Save this as your layout", run: onSaveCurrent },
+      // The label says which of the two things this does. Saving over an
+      // existing snapshot is not the same act as taking the first one, and one
+      // label for both read as the harmless one. Absent entirely when the board
+      // already matches, so the menu never offers a save that would change
+      // nothing.
+      ...(savedState === "saved"
+        ? []
+        : [
+            {
+              label: hasSaved ? "Save this view over yours" : "Save this as your layout",
+              run: onSaveCurrent,
+            },
+          ]),
       { label: "Reset to Balanced", run: () => onPreset("Balanced") },
       { label: "Change background", run: () => onSettings("background") },
       {

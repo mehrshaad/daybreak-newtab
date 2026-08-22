@@ -232,7 +232,11 @@ export async function gatherSuggestions({ query, links, enabled, limit = 8 }) {
   // to something, that is what the person wanted, and answerFor is deliberately
   // conservative about saying so (see core/answers.js) precisely because a false
   // positive here would hijack a real search.
-  const answer = answerFor(q);
+  // Explicitly false, not merely falsy. Answers shipped before there was a
+  // toggle for them, so a `suggest` object stored before this has no key at all
+  // — and treating that as off would silently take the feature away from
+  // everyone who already had it.
+  const answer = enabled?.answers === false ? null : answerFor(q);
   const fixed = [
     ...(answer
       ? [{ kind: "answer", id: `answer:${q}`, title: answer.display, subtitle: answer.detail }]

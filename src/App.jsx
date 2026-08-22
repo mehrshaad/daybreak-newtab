@@ -15,6 +15,7 @@ import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
 import { boardMenu, isEditableTarget, widgetMenu } from "./core/menus";
 import { DEFAULT_ZOOM_MODE, presetBoardPatch, SAVED_LAYOUT } from "./core/schema";
+import { savedViewState } from "./core/savedView";
 import { useNotices } from "./core/noticeContext";
 import { useConditions } from "./core/useConditions";
 import { useSettings } from "./core/settingsContext";
@@ -286,9 +287,19 @@ function App() {
 
   const applyPreset = useCallback(
     (name) => {
+      // The first preset switch quietly snapshots whatever was on the board, so
+      // the switch cannot destroy an arrangement with no way back. That was
+      // happening invisibly: the safety net existed and nobody was told it had
+      // been used, so "Yours" would later turn out to hold a board they did not
+      // remember saving. Now the one time it happens, it says so.
+      const snapshotTaken = !board.saved;
       update("board", presetBoardPatch(name, board));
       closeZoom();
-      toast(`${name} layout applied`);
+      toast(
+        snapshotTaken
+          ? `${name} layout applied — your previous board is kept as "${SAVED_LAYOUT}"`
+          : `${name} layout applied`
+      );
     },
     [board, update, closeZoom, toast]
   );
@@ -417,6 +428,11 @@ function App() {
 
   // --- context menu --------------------------------------------------------
 
+  // Whether the board still matches the "Yours" snapshot. Computed once here
+  // rather than at each of the three places that ask, so the dock, the context
+  // menu and the memo below can never disagree about it.
+  const savedState = savedViewState(board);
+
   const menuModel = useMemo(() => {
     if (!menu) return null;
     if (!menu.id) {
@@ -424,6 +440,7 @@ function App() {
         editing,
         theme,
         hasSaved: !!board.saved,
+        savedState,
         onStore: openStore,
         onToggleEdit: toggleEdit,
         onPreset: applyPreset,
@@ -461,6 +478,7 @@ function App() {
     zoomMode,
     widgets,
     board.saved,
+    savedState,
     openStore,
     toggleEdit,
     applyPreset,
@@ -683,6 +701,7 @@ function App() {
           closing={dockLeaving}
           layoutName={board.layoutName}
           hasSaved={!!board.saved}
+          savedState={savedState}
           onPreset={applyPreset}
           onApplySaved={applySavedLayout}
           onSaveCurrent={saveCurrentLayout}
