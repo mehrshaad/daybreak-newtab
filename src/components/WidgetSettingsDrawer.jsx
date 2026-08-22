@@ -45,14 +45,20 @@ function WidgetSettingsDrawer({
   const Panel = panelFor(manifest);
 
   return (
-    <Drawer open={open} onClose={onClose} width={340} label={`${manifest.name} settings`}>
-      <DrawerHeader
-        eyebrow="Widget settings"
-        title={manifest.name}
-        subtitle={manifest.tagline}
-        onClose={onClose}
-      />
-
+    <Drawer
+      open={open}
+      onClose={onClose}
+      width={340}
+      label={`${manifest.name} settings`}
+      header={
+        <DrawerHeader
+          eyebrow="Widget settings"
+          title={manifest.name}
+          subtitle={manifest.tagline}
+          onClose={onClose}
+        />
+      }
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {manifest.sizes.length > 1 ? (
           <Section title="Size">

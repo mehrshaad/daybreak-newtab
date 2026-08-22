@@ -152,7 +152,7 @@ export function Slider({ label, value, min, max, step, suffix = "", onChange }) 
 // for it to finish.
 const EXIT_MS = 220;
 
-export function Drawer({ open, onClose, width = 340, label, children }) {
+export function Drawer({ open, onClose, width = 340, label, header, children }) {
   const panelRef = useRef(null);
   const restoreRef = useRef(null);
   const [present, closing] = usePresence(open, EXIT_MS);
@@ -199,26 +199,45 @@ export function Drawer({ open, onClose, width = 340, label, children }) {
           borderLeft: "1px solid var(--line)",
           backdropFilter: "var(--blur-sheet)",
           boxShadow: "-18px 0 50px rgba(0,0,0,.22)",
-          padding: "24px",
-          // Vertical only. A drawer is a fixed-width column of settings; if
-          // something inside it ever fails to fit, the answer is to wrap or
-          // truncate it, never to make the whole panel slide sideways.
-          overflowY: "auto",
-          overflowX: "hidden",
-          // The board behind is taller than the viewport, so it has a scrollbar
-          // of its own. Without this, a wheel that reaches the end of the
-          // drawer keeps going into the page underneath: the board slides away
-          // behind the panel while the user is only trying to reach the last
-          // setting, and closing the drawer leaves them somewhere they never
-          // meant to scroll to.
-          overscrollBehavior: "contain",
+          // The panel itself no longer scrolls: it is a column with a fixed
+          // header and a scrolling body below it, so the title and the close
+          // button stay put while the settings move. A sticky header inside one
+          // scroller would have worked too, but the padding then has to scroll
+          // out from under it and the shadow it needs to cast over departing
+          // content is guesswork.
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
           animation: closing
             ? `db-slide-out ${EXIT_MS}ms ease both`
             : "db-slide-in .3s cubic-bezier(.2,.8,.2,1) both",
           outline: "none",
         }}
       >
-        {children}
+        {header ? (
+          <div style={{ flex: "none", padding: "24px 24px 10px" }}>{header}</div>
+        ) : null}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            // Vertical only. A drawer is a fixed-width column of settings; if
+            // something inside it ever fails to fit, the answer is to wrap or
+            // truncate it, never to make the whole panel slide sideways.
+            overflowY: "auto",
+            overflowX: "hidden",
+            // The board behind is taller than the viewport, so it has a
+            // scrollbar of its own. Without this, a wheel that reaches the end
+            // of the drawer keeps going into the page underneath: the board
+            // slides away behind the panel while the user is only trying to
+            // reach the last setting, and closing the drawer leaves them
+            // somewhere they never meant to scroll to.
+            overscrollBehavior: "contain",
+            padding: header ? "0 24px 24px" : "24px",
+          }}
+        >
+          {children}
+        </div>
       </div>
     </>
   );
@@ -232,7 +251,9 @@ export function DrawerHeader({ eyebrow, title, subtitle, onClose }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: eyebrow ? "6px" : "24px",
+          // No trailing margin: the drawer's fixed header region owns the gap
+          // to the body now, so a margin here would double it.
+          marginBottom: eyebrow ? "6px" : 0,
         }}
       >
         {eyebrow ? (

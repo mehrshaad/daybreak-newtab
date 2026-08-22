@@ -101,8 +101,13 @@ function SettingsDrawer({
   };
 
   return (
-    <Drawer open={open} onClose={onClose} width={400} label="Settings">
-      <DrawerHeader title="Settings" onClose={onClose} />
+    <Drawer
+      open={open}
+      onClose={onClose}
+      width={400}
+      label="Settings"
+      header={<DrawerHeader title="Settings" onClose={onClose} />}
+    >
 
       <Section title="Appearance" style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", gap: 6 }}>
