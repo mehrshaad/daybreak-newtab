@@ -4,7 +4,7 @@ export default {
   glyph: "currency",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "Exchange rates, no key required.",
   description:
     "Rates from Frankfurter, built on European Central Bank data — no API " +
@@ -16,7 +16,19 @@ export default {
     "official rate everyone else quotes when that isn't available.",
   sizes: [[2, 2], [3, 2]],
   defaultSize: [3, 2],
-  options: [],
+  options: [
+    {
+      key: "decimals",
+      label: "Decimals",
+      type: "enum",
+      of: ["auto", "2", "4"],
+      labels: ["Auto", "2", "4"],
+      // Auto picks by magnitude, which is right for a mixed list and wrong for
+      // anyone watching one pair move in the fourth place.
+      default: "auto",
+    },
+    { key: "showSymbols", label: "Show currency symbols", type: "boolean", default: true },
+  ],
   refresh: null,
   permissions: { chrome: [], hosts: ["api.frankfurter.dev"] },
   load: () => import("./Widget.jsx"),

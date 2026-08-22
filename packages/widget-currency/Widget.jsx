@@ -33,7 +33,8 @@ async function fetchIrrPerUsd() {
 
 // No refresh control in the manifest (rates barely move within a day), so
 // this fetches once per mount rather than keying off refreshKey.
-function Currency({ id, config }) {
+function Currency({ id, options, config }) {
+  const { decimals, showSymbols } = options;
   const base = config.base || "USD";
   const targets =
     Array.isArray(config.targets) && config.targets.length ? config.targets : DEFAULT_TARGETS;
@@ -146,10 +147,11 @@ function Currency({ id, config }) {
         <div key={p.code} style={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <span style={{ fontSize: 13, color: "var(--dim)" }}>
-              {symbolFor(p.code)} {p.code}
+              {showSymbols ? `${symbolFor(p.code)} ` : ""}
+              {p.code}
             </span>
             <span style={{ fontSize: 16, color: "var(--fg)", fontWeight: 500 }}>
-              {formatRate(p.rate)}
+              {formatRate(p.rate, decimals)}
             </span>
           </div>
           {p.irrSource === "erapi" ? (

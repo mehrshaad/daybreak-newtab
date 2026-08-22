@@ -4,7 +4,7 @@ export default {
   glyph: "news",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.1.0",
   tagline: "Hacker News by default, or your own feed.",
   description:
     "Hacker News' top stories, keyless and no account. Swap in your own " +
@@ -17,7 +17,21 @@ export default {
     [4, 3],
   ],
   defaultSize: [3, 3],
-  options: [],
+  options: [
+    {
+      key: "count",
+      label: "Headlines",
+      type: "number",
+      min: 3,
+      // Ten is the ceiling because that is how many the fetch asks for; a
+      // higher number here would silently show fewer than it promised.
+      max: 10,
+      step: 1,
+      default: 8,
+    },
+    { key: "showMeta", label: "Show points and comments", type: "boolean", default: true },
+    { key: "newTab", label: "Open in a new tab", type: "boolean", default: true },
+  ],
   // Listed low to high for display; defaultRate (not list order) is what
   // actually picks "1 hr" as the default — Hacker News' front page does not
   // move fast enough to justify 5 min out of the box.

@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { CitySearch, MONO, useWidgetLocal } from "@daybreak/sdk";
-import { aqiBand, aqiUrl, parseAirQuality } from "./aqi";
+import { aqiBand, aqiUrl, parseAirQuality, readingFor, SCALES } from "./aqi";
 
-function Air({ id, config, setConfig, refreshKey, size }) {
+function Air({ id, options, config, setConfig, refreshKey, size }) {
+  const { scale, showPollutants } = options;
   const city = config.city;
   // Cache the last good reading so a refresh (or being offline) shows the
   // previous numbers instead of a spinner.
   const [cached, setCached] = useWidgetLocal(id, "last", null);
   const [status, setStatus] = useState(city ? "loading" : "nocity");
   const [live, setLive] = useState(null);
+  // The pollutant row needs a wide tile to sit beside the reading without
+  // crowding it, so the option turns it off and the width still decides
+  // whether there is room for it on.
   const wide = (size?.[0] ?? 3) >= 4;
 
   useEffect(() => {
@@ -73,7 +77,10 @@ function Air({ id, config, setConfig, refreshKey, size }) {
     );
   }
 
-  const band = aqiBand(data.aqi);
+  // Falls back to whichever index the provider did return, and says so, rather
+  // than blanking a perfectly good reading.
+  const reading = readingFor(data, scale);
+  const band = aqiBand(reading?.value, reading?.scale);
 
   return (
     <div
@@ -96,7 +103,7 @@ function Air({ id, config, setConfig, refreshKey, size }) {
               lineHeight: 1,
             }}
           >
-            {data.aqi}
+            {reading?.value ?? "—"}
           </div>
           {band ? (
             <span
@@ -120,6 +127,21 @@ function Air({ id, config, setConfig, refreshKey, size }) {
             </span>
           ) : null}
         </div>
+        {/* Which index this is on. Without it the number is not information:
+            the two scales disagree by roughly a factor of two, so a reading of
+            55 is either fine or not depending on which one you are reading. */}
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 9,
+            letterSpacing: ".1em",
+            textTransform: "uppercase",
+            color: "var(--faint)",
+            marginTop: 6,
+          }}
+        >
+          {SCALES[reading?.scale || "us"].label}
+        </div>
         <div
           style={{
             fontSize: 13,
@@ -139,7 +161,7 @@ function Air({ id, config, setConfig, refreshKey, size }) {
         ) : null}
       </div>
 
-      {wide && (data.pm25 != null || data.pm10 != null) ? (
+      {showPollutants && wide && (data.pm25 != null || data.pm10 != null) ? (
         <div
           style={{
             display: "flex",

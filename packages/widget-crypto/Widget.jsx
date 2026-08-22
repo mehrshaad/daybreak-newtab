@@ -66,7 +66,7 @@ function Sparkline({ points, up }) {
   );
 }
 
-function CoinRow({ coin, fiat }) {
+function CoinRow({ coin, fiat, showSparkline, showChange, showLogos }) {
   const change = formatChange(coin.change);
   const sparkUp = coin.sparkline
     ? coin.sparkline[coin.sparkline.length - 1] >= coin.sparkline[0]
@@ -74,7 +74,7 @@ function CoinRow({ coin, fiat }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-      <CoinLogo src={coin.image} symbol={symbolFor(coin.id)} />
+      {showLogos ? <CoinLogo src={coin.image} symbol={symbolFor(coin.id)} /> : null}
       <span
         style={{
           fontFamily: MONO,
@@ -89,7 +89,7 @@ function CoinRow({ coin, fiat }) {
       >
         {symbolFor(coin.id)}
       </span>
-      <Sparkline points={coin.sparkline} up={sparkUp} />
+      {showSparkline ? <Sparkline points={coin.sparkline} up={sparkUp} /> : null}
       <div
         style={{
           display: "flex",
@@ -111,7 +111,7 @@ function CoinRow({ coin, fiat }) {
         >
           {formatPrice(coin.price, fiat)}
         </span>
-        {change ? (
+        {showChange && change ? (
           <span
             style={{
               fontFamily: MONO,
@@ -127,7 +127,8 @@ function CoinRow({ coin, fiat }) {
   );
 }
 
-function Crypto({ id, config, refreshKey }) {
+function Crypto({ id, options, config, refreshKey }) {
+  const { showSparkline, showChange, showLogos } = options;
   const fiat = config.fiat || "usd";
   const coins = Array.isArray(config.coins) && config.coins.length ? config.coins : DEFAULT_COINS;
   const coinsKey = coins.join(",");
@@ -196,7 +197,14 @@ function Crypto({ id, config, refreshKey }) {
       }}
     >
       {data.coins.map((c) => (
-        <CoinRow key={c.id} coin={c} fiat={data.fiat} />
+        <CoinRow
+          key={c.id}
+          coin={c}
+          fiat={data.fiat}
+          showSparkline={showSparkline}
+          showChange={showChange}
+          showLogos={showLogos}
+        />
       ))}
       {status === "error" ? (
         <div style={{ fontSize: 11, color: "var(--faint)" }}>

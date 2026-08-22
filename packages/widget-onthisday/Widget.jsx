@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 import { MONO, useWidgetLocal } from "@daybreak/sdk";
 import { onThisDayUrl, parseEvents, todayKey } from "./onthisday";
 
-function OnThisDay({ id, size }) {
+function OnThisDay({ id, options, size }) {
+  const { count, showYear, newTab } = options;
   const key = todayKey();
   // One payload cached per day, so re-opening a tab later the same day never
   // fetches again.
   const [cache, setCache] = useWidgetLocal(id, "day", null);
   const [status, setStatus] = useState(cache?.key === key ? "ok" : "loading");
+  // The list scrolls, so the count is the user's rather than the tile
+  // height's. A short tile showing four events is a scroll; guessing from
+  // height meant it showed one and threw the rest away silently.
   const tall = (size?.[1] ?? 2) >= 3;
-  const limit = tall ? 4 : 1;
+  const limit = Math.max(1, count ?? (tall ? 4 : 1));
 
   useEffect(() => {
     if (cache?.key === key) {
@@ -74,9 +78,11 @@ function OnThisDay({ id, size }) {
     >
       {events.slice(0, limit).map((e, i) => (
         <div key={i} style={{ display: "flex", gap: 8, minWidth: 0 }}>
-          <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--faint)", flex: "none" }}>
-            {e.year}
-          </span>
+          {showYear ? (
+            <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--faint)", flex: "none" }}>
+              {e.year}
+            </span>
+          ) : null}
           <span
             style={{
               fontSize: 13,
@@ -88,7 +94,7 @@ function OnThisDay({ id, size }) {
             {e.url ? (
               <a
                 href={e.url}
-                target="_blank"
+                target={newTab ? "_blank" : undefined}
                 rel="noopener noreferrer"
                 onClick={(ev) => ev.stopPropagation()}
                 style={{ color: "inherit", textDecoration: "none" }}
