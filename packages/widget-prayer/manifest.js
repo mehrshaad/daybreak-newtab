@@ -1,7 +1,7 @@
 export default {
   id: "prayer",
   name: "Prayer times",
-  glyph: "moon",
+  glyph: "prayer",
   category: "Lifestyle",
   author: "Daybreak",
   version: "2.2.0",

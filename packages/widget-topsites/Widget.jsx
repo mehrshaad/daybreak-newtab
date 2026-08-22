@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   hasPermission,
   IconGrid,
+  iconGridSize,
   requestPermission,
 } from "@daybreak/sdk";
 
@@ -145,7 +146,8 @@ function TopSites({ config, setConfig, options, refreshKey, size, columns, editi
   }
 
   const cols = Math.max(3, Math.min(size?.[0] ?? 4, columns ?? 12));
-  const iconSize = Math.max(24, Math.min(42, Math.round(150 / cols)));
+  // Height, not width: see iconGridSize.
+  const iconSize = iconGridSize(size, { hideLabels });
 
   return (
     <IconGrid
@@ -159,7 +161,7 @@ function TopSites({ config, setConfig, options, refreshKey, size, columns, editi
         iconName: shortName(site),
       }))}
       cols={cols}
-      iconSize={hideLabels ? Math.round(iconSize * 1.3) : iconSize}
+      iconSize={iconSize}
       gap={Math.max(4, Math.round(iconSize * 0.16))}
       showLabels={!hideLabels}
       onOpen={(item) => {

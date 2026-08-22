@@ -103,7 +103,7 @@ export { useHover } from "./useHover";
 export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
-export { iconCellSize } from "./iconCellSize";
+export { iconCellSize, iconGridSize } from "./iconCellSize";
 export { addMonths, monthGrid, WEEKDAY_LABELS } from "./monthGrid";
 
 // Small utilities.

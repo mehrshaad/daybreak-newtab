@@ -1,6 +1,16 @@
 import { useMemo, useRef, useState } from "react";
 import { LuPlus } from "react-icons/lu";
-import { Appear, Favicon, IconGrid, IconTile, MONO, moveItem, Popover, uid } from "@daybreak/sdk";
+import {
+  Appear,
+  Favicon,
+  IconGrid,
+  iconGridSize,
+  IconTile,
+  MONO,
+  moveItem,
+  Popover,
+  uid,
+} from "@daybreak/sdk";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.
@@ -71,12 +81,11 @@ function Links({ options, config, setConfig, size, editing, columns }) {
     setDraftName("");
   };
 
-  // Columns follow the tile width so icons fill the space at every size.
+  // Width decides how many icons fit per row; height decides how big they are.
+  // See iconGridSize — deriving the size from the column span made a wider tile
+  // draw smaller icons.
   const cols = Math.max(3, Math.min(size[0], columns));
-  const baseIconSize = Math.max(24, Math.min(42, Math.round(150 / cols)));
-  // Without a label underneath, that row of vertical space is otherwise just
-  // left empty rather than going back into the icon itself.
-  const iconSize = hideLabels ? Math.round(baseIconSize * 1.3) : baseIconSize;
+  const iconSize = iconGridSize(size, { hideLabels });
 
   const gridItems = useMemo(
     () =>

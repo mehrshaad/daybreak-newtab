@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IconGrid, iconCellSize, MONO, moveItem } from "@daybreak/sdk";
+import { IconGrid, iconCellSize, iconGridSize, MONO, moveItem } from "@daybreak/sdk";
 import { gridFor, orderedApps } from "./apps";
 
 function GoogleApps({ options, config, setConfig, size, editing, columns }) {
@@ -34,7 +34,9 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
   const { cols, rows } = gridFor(size, columns);
 
   // Icon size follows how much room each cell actually gets.
-  const baseIconSize = Math.max(22, Math.min(44, Math.round(150 / cols) + (rows > 3 ? 4 : 0)));
+  // Height, not width: see iconGridSize. The old form divided 150 by the
+  // column span, so a 5-wide launcher drew smaller icons than a 4-wide one.
+  const baseIconSize = iconGridSize(size);
   // Without a label underneath, that row of vertical space is otherwise just
   // left empty rather than going back into the icon itself.
   const iconSize = hideLabels ? Math.round(baseIconSize * 1.3) : baseIconSize;
