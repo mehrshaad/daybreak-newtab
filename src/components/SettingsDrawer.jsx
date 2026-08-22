@@ -8,6 +8,7 @@ import {
 } from "../core/backup";
 import { dropPermission, MONO, requestAllPermissions } from "@daybreak/sdk";
 import {
+  ACCENT_NAMES,
   ACCENTS,
   PAGE_ZOOM_MAX,
   PAGE_ZOOM_MIN,
@@ -134,17 +135,25 @@ function SettingsDrawer({
       </Section>
 
       <Section title="Accent" style={{ marginBottom: 22 }}>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        {/* Eight to a row, as a grid rather than a wrapping flex row. Sixteen
+            30px swatches wrapped to seven, seven and a ragged two; two rows of
+            eight read as a palette. The swatches size themselves from the
+            column so the row stays whole if the drawer width ever changes. */}
+        <div
+          role="group"
+          aria-label="Accent colour"
+          style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 8 }}
+        >
           {ACCENTS.map((c) => (
             <button
               key={c}
               type="button"
-              aria-label={`Accent ${c}`}
+              aria-label={`Accent: ${ACCENT_NAMES[c] || c}`}
               aria-pressed={appearance.accent === c}
               onClick={() => update("appearance", { accent: c })}
               style={{
-                width: 30,
-                height: 30,
+                width: "100%",
+                aspectRatio: "1",
                 borderRadius: 999,
                 cursor: "pointer",
                 background: c,
@@ -154,6 +163,16 @@ function SettingsDrawer({
                   appearance.accent === c
                     ? `0 0 0 2px var(--sheet), 0 0 0 4px ${c}`
                     : "none",
+                // The ring lands on the chosen one rather than snapping, and
+                // an unchosen swatch lifts a little under the pointer so a
+                // grid of sixteen still feels like sixteen controls.
+                transition: "box-shadow .18s ease, transform .15s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (appearance.accent !== c) e.currentTarget.style.transform = "scale(1.12)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
               }}
             />
           ))}

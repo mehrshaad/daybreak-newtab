@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  ACCENT_NAMES,
   ACCENTS,
+  hslOf,
+  wallTint,
   DEFAULTS,
   background,
   backgroundSwatch,
@@ -42,7 +45,7 @@ describe("luminance", () => {
 describe("onAccentFor", () => {
   // The design hardcoded #ffffff for light theme, which is unreadable on the
   // pale swatches. Contrast-picking must beat that for every shipped accent.
-  it("returns the dark ink for all six accents", () => {
+  it("returns the dark ink for every shipped accent", () => {
     for (const a of ACCENTS) expect(onAccentFor(a)).toBe("#0a0b0e");
   });
 
@@ -240,5 +243,123 @@ describe("baseColor", () => {
   it("matches the design's page base per theme", () => {
     expect(baseColor("dark")).toBe("#0a0b0e");
     expect(baseColor("light")).toBe("#f3f3f1");
+  });
+});
+
+describe("every accent, in both themes", () => {
+  // The whole point of deriving the ramp instead of hardcoding it: a swatch is
+  // only safe to ship if it reads in both themes, and that has to be checked
+  // per swatch rather than assumed from how it looks in the picker. This is
+  // what makes adding a seventeenth accent a two-line change.
+  const contrast = (a, b) =>
+    (Math.max(luminance(a), luminance(b)) + 0.05) /
+    (Math.min(luminance(a), luminance(b)) + 0.05);
+
+  it("names every one of them, and names nothing that is not one", () => {
+    // The picker reads these out. A swatch with no name would announce itself
+    // as a hex string, which is what having names is meant to fix.
+    for (const a of ACCENTS) expect(ACCENT_NAMES[a], a).toBeTruthy();
+    expect(Object.keys(ACCENT_NAMES).sort()).toEqual([...ACCENTS].sort());
+    expect(new Set(Object.values(ACCENT_NAMES)).size).toBe(ACCENTS.length);
+  });
+
+  it("has sixteen of them, all distinct, all valid hex", () => {
+    expect(ACCENTS).toHaveLength(16);
+    expect(new Set(ACCENTS).size).toBe(16);
+    for (const a of ACCENTS) expect(a).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("keeps the original six first and unmoved, so no stored accent shifts", () => {
+    expect(ACCENTS.slice(0, 6)).toEqual([
+      "#6f9bff",
+      "#7de2b8",
+      "#ffb26f",
+      "#ff8fb1",
+      "#c79bff",
+      "#e8e6df",
+    ]);
+  });
+
+  it("reads as text on the dark theme, where the raw swatch is used", () => {
+    // Nothing darkens the accent on dark theme — --accentText is the swatch
+    // itself — so each one has to clear the bar against near-black unaided.
+    for (const a of ACCENTS) {
+      const text = tokens("dark", a)["--accentText"];
+      expect(text).toBe(a);
+      expect(contrast(text, baseColor("dark")), a).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("reads as text on the light theme, after being stepped down", () => {
+    for (const a of ACCENTS) {
+      const text = tokens("light", a)["--accentText"];
+      expect(contrast(text, baseColor("light")), a).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("carries readable ink when used as a fill", () => {
+    // Buttons and pills paint --onAccent on --accent. 4.5 rather than 3:1
+    // because that pairing carries button labels, which are body-sized text.
+    for (const a of ACCENTS) {
+      expect(contrast(onAccentFor(a), a), a).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("stays in the pale register the whole ramp is built for", () => {
+    // --accentSoft and --accentLine are the accent at 13% and 33% alpha. A
+    // fully saturated swatch turns every panel edge on the board into a shout,
+    // so the set is deliberately held to light, unsaturated colours.
+    for (const a of ACCENTS) {
+      expect(luminance(a), a).toBeGreaterThan(0.25);
+    }
+  });
+});
+
+describe("wallpapers on every accent", () => {
+  // A wallpaper is the accent laid over the base, so an accent near the base
+  // has nothing to show — on the light theme every option built from the pale
+  // neutral came out as the same plain page. wallTint exists to fix that, and
+  // with sixteen accents including three near-neutral ones, it has to hold for
+  // all of them rather than for the one that was reported.
+  const contrast = (a, b) =>
+    (Math.max(luminance(a), luminance(b)) + 0.05) /
+    (Math.min(luminance(a), luminance(b)) + 0.05);
+
+  it("is visible against the light base whichever accent is chosen", () => {
+    for (const a of ACCENTS) {
+      const tint = wallTint(a, false);
+      expect(contrast(tint, baseColor("light")), `${ACCENT_NAMES[a]} (${a})`).toBeGreaterThan(1.35);
+    }
+  });
+
+  it("leaves the dark theme alone, where every accent already reads", () => {
+    for (const a of ACCENTS) expect(wallTint(a, true)).toBe(a);
+  });
+
+  it("keeps a neutral accent neutral instead of inventing a colour", () => {
+    // Only lightness moves, so hue and saturation come out where they went in.
+    // Saturation is the right invariant and absolute channel spread is not: at
+    // a fixed HSL saturation the spread widens as lightness falls, so a grey
+    // stepped down is a darker grey with a wider raw spread and the same
+    // saturation. Asserting the spread instead is how I first got this wrong.
+    for (const a of ["#e8e6df", "#adb8c6", "#8fb0c9", "#dcc9a4"]) {
+      const tint = wallTint(a, false);
+      const [hue, s] = hslOf(a);
+      const [tintHue, tintS] = hslOf(tint);
+      expect(tintS, a).toBeCloseTo(s, 1);
+      // A degree of slack, not none: the round trip out to an 8-bit hex and
+      // back cannot land exactly, and #e8e6df comes back 0.6 degrees along.
+      // That is rounding, not the function moving the hue.
+      expect(Math.abs(tintHue - hue), a).toBeLessThan(1.5);
+    }
+  });
+
+  it("gives every accent a full set of distinct wallpapers in both themes", () => {
+    for (const theme of ["dark", "light"]) {
+      for (const a of ACCENTS) {
+        const made = WALLPAPERS.map((w) => background(theme, a, w));
+        expect(new Set(made).size, `${theme}/${ACCENT_NAMES[a]}`).toBe(WALLPAPERS.length);
+      }
+    }
   });
 });

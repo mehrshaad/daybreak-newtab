@@ -5,15 +5,69 @@
 
 export const THEMES = ["dark", "light"];
 
-// The six accent swatches offered in the settings drawer.
+// The accent swatches offered in the settings drawer.
+//
+// Sixteen, from the six the design shipped with. The six were a good set and
+// too small a one: four of them sat between hue 160 and 345, so there was no
+// red, no yellow, no green, no cyan and no magenta to pick, and anyone who
+// wanted one of those had no way to get it.
+//
+// Every one of them stays in the same register as the original six — light,
+// unsaturated, closer to a pastel than to a primary. That is not decoration:
+// the whole token ramp is derived from this one value, and a fully saturated
+// accent makes --accentSoft and --accentLine shout at every panel edge on the
+// board. The first six are unchanged and in their original order, so nobody's
+// stored accent moves.
+//
+// Readability is derived rather than assumed. On the light theme darkenFor
+// steps the swatch down until it clears 4.5:1 as text; on dark the raw swatch
+// is used, which is why every one of these has to be light enough to read on
+// near-black in the first place. Both directions are asserted for all sixteen
+// in tokens.test.js, which is what makes adding a seventeenth safe.
 export const ACCENTS = [
-  "#6f9bff",
-  "#7de2b8",
-  "#ffb26f",
-  "#ff8fb1",
-  "#c79bff",
-  "#e8e6df",
+  // The original six.
+  "#6f9bff", // blue
+  "#7de2b8", // mint
+  "#ffb26f", // orange
+  "#ff8fb1", // pink
+  "#c79bff", // violet
+  "#e8e6df", // paper
+  // Filling the wheel: the hues that had no swatch at all.
+  "#ff8f8f", // red
+  "#f5d979", // yellow
+  "#b6dd7f", // lime
+  "#86d99a", // green
+  "#6fd6e5", // cyan
+  "#8fb0c9", // steel
+  "#9b96ff", // indigo
+  "#ef92dc", // magenta
+  "#adb8c6", // slate
+  "#dcc9a4", // sand
 ];
+
+// What each swatch is called, for the picker's accessible names. A screen
+// reader saying "Accent #6f9bff" is reading out a number nobody can picture;
+// with six swatches that was merely unhelpful and with sixteen it is useless.
+// Kept beside the list rather than folded into it so ACCENTS stays a plain
+// array of the values actually stored.
+export const ACCENT_NAMES = {
+  "#6f9bff": "blue",
+  "#7de2b8": "mint",
+  "#ffb26f": "orange",
+  "#ff8fb1": "pink",
+  "#c79bff": "violet",
+  "#e8e6df": "paper",
+  "#ff8f8f": "red",
+  "#f5d979": "yellow",
+  "#b6dd7f": "lime",
+  "#86d99a": "green",
+  "#6fd6e5": "cyan",
+  "#8fb0c9": "steel",
+  "#9b96ff": "indigo",
+  "#ef92dc": "magenta",
+  "#adb8c6": "slate",
+  "#dcc9a4": "sand",
+};
 
 // Procedural backgrounds. v2 has no photo wallpapers, so these are generated
 // from the accent + theme and cost nothing to ship.
@@ -214,7 +268,7 @@ export const baseColor = (theme) => (theme !== "light" ? "#0a0b0e" : "#f3f3f1");
 // Shift a hex colour around the hue wheel, keeping its saturation and
 // lightness. Used by the multi-hue backgrounds so they stay tied to the chosen
 // accent instead of introducing arbitrary colours.
-function hslOf(hex) {
+export function hslOf(hex) {
   const h = normalizeAccent(hex).slice(1);
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
   const max = Math.max(r, g, b);
@@ -259,17 +313,46 @@ export function rotateHue(hex, degrees) {
 //
 // Only the lightness moves, and only downward — hue and saturation are left
 // alone, so a neutral accent stays neutral and simply becomes visible instead
-// of turning into a colour the user did not pick. The ceiling scales with
-// saturation because a saturated colour still reads at a lightness where a
-// grey has already disappeared: at full saturation it sits above every accent
-// in the palette and nothing changes at all.
+// of turning into a colour the user did not pick.
+//
+// How far down is measured rather than estimated. The first version capped
+// lightness at a ceiling that scaled with saturation, on the reasoning that a
+// saturated colour still reads where a grey has vanished. True for most hues
+// and not for yellow: yellow is intrinsically bright — green alone carries 71%
+// of the luminance sum — so a saturated yellow sits near white at a lightness
+// where a saturated blue is plainly visible. That ceiling let the yellow swatch
+// through at 1.28:1 against the page, which is the exact "plain white page"
+// this function exists to prevent.
+//
+// So the ceiling is kept and a floor is added under it. The ceiling is what
+// makes a light-theme wallpaper read as a backdrop rather than as a wash, and
+// it was reviewed on screen; replacing it outright would have made the pink,
+// violet and paper wallpapers paler than the ones already signed off, which is
+// the complaint that prompted it. The floor then catches what the ceiling
+// cannot see — a colour that is still too close to the page after being
+// capped — and steps it down until the contrast is actually there.
+//
+// Monotone by construction: nothing the ceiling darkened comes back lighter,
+// and only the swatches that need more get more.
+const WALL_MIN_CONTRAST = 1.45;
+
 export function wallTint(accent, dark) {
   const hex = normalizeAccent(accent);
   // The dark base is far from every accent offered, so there is nothing to fix.
   if (dark) return hex;
+  const base = baseColor("light");
+  const against = (candidate) => contrast(luminance(candidate), luminance(base));
+
   const [hue, s, l] = hslOf(hex);
   const ceiling = 0.58 + 0.14 * Math.min(1, s);
-  return l <= ceiling ? hex : hexOfHsl(hue, s, ceiling);
+  let lightness = Math.min(l, ceiling);
+  let candidate = lightness === l ? hex : hexOfHsl(hue, s, lightness);
+
+  while (lightness > 0 && against(candidate) < WALL_MIN_CONTRAST) {
+    lightness = Math.max(0, lightness - 0.02);
+    candidate = hexOfHsl(hue, s, lightness);
+  }
+  return candidate;
 }
 
 // The design's own values were far too weak to read as different backgrounds:
