@@ -52,15 +52,15 @@ describe("ProfileSwitcher", () => {
     expect(switchProfile).toHaveBeenCalledWith("2");
   });
 
-  it("does not switch to the one it is already on", () => {
-    const { switchProfile } = mount({ profiles: two() });
+  it("marks exactly one row as the one it is on", () => {
+    // The provider refuses a switch to the current profile itself, so what is
+    // worth checking here is that the menu agrees with the chip about which
+    // one that is.
+    mount({ profiles: two() });
     fireEvent.click(screen.getByRole("button", { name: /^Profile: Main/ }));
     const items = within(screen.getByRole("menu")).getAllByRole("menuitemradio");
-    fireEvent.click(items[0]);
-    // switchProfile is called and refuses the no-op itself; what matters here
-    // is that the menu treats it as the current one.
+    expect(items.filter((i) => i.getAttribute("aria-checked") === "true")).toHaveLength(1);
     expect(items[0].getAttribute("aria-checked")).toBe("true");
-    expect(items[1].getAttribute("aria-checked")).toBe("false");
   });
 
   it("sends managing to settings rather than doing it in the menu", () => {
