@@ -1,4 +1,4 @@
-import { MONO, useMinutes, useSeconds } from "@daybreak/sdk";
+import { MONO, useMeasuredWidth, useMinutes, useSeconds } from "@daybreak/sdk";
 import RoundFace from "./faces/RoundFace";
 import SquaredFace from "./faces/SquaredFace";
 
@@ -25,9 +25,12 @@ function Clock({ options, size }) {
 
   // The taller size exists to be bigger, so it drives the type and the face.
   const tall = (size?.[1] ?? 2) >= 3;
-  // A two-column tile is a third the width of a three-column one, so the
-  // digits have to come down or they simply do not fit.
-  const narrow = (size?.[0] ?? 3) <= 2;
+  // Measured width, not the grid span: a two-column tile is 203px on the
+  // default board and 370px on a full-width one, and the digits fit perfectly
+  // well at 370. The span rule shrank them either way. 240px is where they stop
+  // fitting, and is the same answer as the old rule on the default board.
+  const [boxRef, measured] = useMeasuredWidth();
+  const narrow = measured == null ? (size?.[0] ?? 3) <= 2 : measured < 240;
 
   // Transitioned rather than swapped: alignment is a thing the user changes
   // while looking at it, and the digits sliding across reads as the setting
@@ -154,6 +157,7 @@ function Clock({ options, size }) {
   // own margins, and a remount would throw that away and snap instead.
   return (
     <div
+      ref={boxRef}
       key={[
         analog ? `analog-${face || "round"}` : "digital",
         seconds ? "s" : "",

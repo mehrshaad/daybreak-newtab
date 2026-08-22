@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CitySearch, MONO, useWidgetLocal } from "@daybreak/sdk";
+import { CitySearch, MONO, useMeasuredWidth, useWidgetLocal } from "@daybreak/sdk";
 import { aqiBand, aqiUrl, parseAirQuality, readingFor, SCALES } from "./aqi";
 
 function Air({ id, options, config, setConfig, refreshKey, size }) {
@@ -10,10 +10,16 @@ function Air({ id, options, config, setConfig, refreshKey, size }) {
   const [cached, setCached] = useWidgetLocal(id, "last", null);
   const [status, setStatus] = useState(city ? "loading" : "nocity");
   const [live, setLive] = useState(null);
-  // The pollutant row needs a wide tile to sit beside the reading without
-  // crowding it, so the option turns it off and the width still decides
-  // whether there is room for it on.
-  const wide = (size?.[0] ?? 3) >= 4;
+  // The pollutant row needs real room to sit under the reading without
+  // crowding it, so the option turns it off and the width still decides whether
+  // there is space for it when it is on.
+  //
+  // Measured width rather than the grid span: a four-column tile is 456px on the
+  // default board and 336px on a 1200px window, and the span rule called both of
+  // them wide. 420px is what the row actually needs, and is the same answer as
+  // the old rule on the board it was written for. See useMeasuredWidth.
+  const [boxRef, measured] = useMeasuredWidth();
+  const wide = measured == null ? (size?.[0] ?? 3) >= 4 : measured >= 420;
 
   useEffect(() => {
     if (!city?.latitude) {
@@ -84,6 +90,7 @@ function Air({ id, options, config, setConfig, refreshKey, size }) {
 
   return (
     <div
+      ref={boxRef}
       style={{
         display: "flex",
         flexDirection: "column",

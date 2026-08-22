@@ -4,7 +4,7 @@ export default {
   glyph: "clock",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "The time and today's date, digital or analog.",
   description:
     "A large, quiet clock with the full date underneath, or an analog face " +

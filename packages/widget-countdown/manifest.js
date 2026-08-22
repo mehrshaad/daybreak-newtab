@@ -4,7 +4,7 @@ export default {
   glyph: "calendarDays",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "The dates you are counting toward.",
   description:
     "Deadlines, trips, birthdays, a launch. Counts down in days, and in hours " +

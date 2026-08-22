@@ -10,6 +10,7 @@ import {
   useTooltip,
   useWidgetSynced,
   weekdayShort,
+  useMeasuredWidth,
 } from "@daybreak/sdk";
 import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
@@ -365,7 +366,11 @@ function Habits({ id, options, config, setConfig, size, editing }) {
     Array.isArray(config.habits) && config.habits.length ? config.habits : DEFAULTS;
   // Only the week boundary is shared; target and goal belong to each habit.
   const startIndex = weekStartIndex(options.weekStart);
-  const wide = (size?.[0] ?? 4) >= 4;
+  // Measured, not the span: the dot row is seven dots plus a name, and whether
+  // 15px dots fit depends on the pixels available rather than on how many grid
+  // tracks they came from. See useMeasuredWidth.
+  const [boxRef, measured] = useMeasuredWidth();
+  const wide = measured == null ? (size?.[0] ?? 4) >= 4 : measured >= 420;
   const dot = wide ? 15 : 13;
 
   const toggle = (habitId, date) =>
@@ -398,6 +403,7 @@ function Habits({ id, options, config, setConfig, size, editing }) {
 
   return (
     <div
+      ref={boxRef}
       style={{
         display: "flex",
         flexDirection: "column",

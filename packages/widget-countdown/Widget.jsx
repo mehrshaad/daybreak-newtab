@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { formatJalali, LIST_BLEED, listRow, MONO } from "@daybreak/sdk";
+import { formatJalali, LIST_BLEED, listRow, MONO, useMeasuredWidth } from "@daybreak/sdk";
 import { formatRemaining, visibleEntries, yearsAt } from "./countdown";
 
 // Once a minute. A countdown inside the last hour shows minutes, and a tab left
@@ -28,11 +28,16 @@ function Countdown({ config, options, size }) {
   }, []);
 
   const rows = visibleEntries(entries, now, { keepPast, sort });
-  const narrow = (size?.[0] ?? 3) <= 2;
+  // Measured, not the span. See useMeasuredWidth: the same two-column tile is
+  // 203px on the default board and 370px on a wide one, and only one of those
+  // is actually narrow.
+  const [boxRef, measured] = useMeasuredWidth();
+  const narrow = measured == null ? (size?.[0] ?? 3) <= 2 : measured < 240;
 
   if (!rows.length) {
     return (
       <div
+        ref={boxRef}
         style={{
           flex: 1,
           display: "grid",
@@ -53,6 +58,7 @@ function Countdown({ config, options, size }) {
 
   return (
     <div
+      ref={boxRef}
       style={{
         display: "flex",
         flexDirection: "column",
