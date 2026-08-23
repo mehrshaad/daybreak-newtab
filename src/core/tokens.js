@@ -208,6 +208,32 @@ export function tileSurfaces(theme, tint) {
 
 export const GRID_GAP = 14;
 
+// The rest of the board's geometry, in one place because more than the board
+// depends on it. A widget that has to know how much room a tile really gives it
+// — the icon grids, deciding how big an icon can be — was otherwise reading
+// these numbers off Board.jsx and tileStyle.js by eye, and a test of the fit
+// would have been checking a copy against a copy.
+export const ROW_HEIGHT = 96;
+export const TILE_PAD = { x: 18, y: 16 };
+// The label row above a widget. `max` is the cap the row animates against when
+// labels are switched off; `line` is what it actually occupies, which is set by
+// the label's own line box and is nothing like the cap. Taking the cap for the
+// real height is a mistake worth naming: it understated a two-row tile's body
+// by 26px, which is a whole row of anything.
+export const TILE_HEADER = { max: 40, gap: 12, line: 14 };
+
+// A couple of pixels held back, because this is a model of a layout rather than
+// the layout. Measured against a real tile it lands within 2px, and erring
+// small means anything that passes a fit check here fits on screen too.
+const SLACK = 2;
+
+// The height a widget actually gets inside a tile of `rows` rows.
+export function tileBodyHeight(rows, { header = true } = {}) {
+  const outer = ROW_HEIGHT * rows + GRID_GAP * (rows - 1);
+  const chrome = 2 * TILE_PAD.y + (header ? TILE_HEADER.line + TILE_HEADER.gap : 0);
+  return outer - chrome - SLACK;
+}
+
 // Page zoom, as a percentage, applied with the CSS `zoom` property so the
 // layout genuinely reflows the way Ctrl+ does rather than being scaled.
 export const PAGE_ZOOM_MIN = 70;

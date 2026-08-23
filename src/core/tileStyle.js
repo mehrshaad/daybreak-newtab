@@ -2,7 +2,7 @@
 // function of (appearance, tile state) so the zoom behaviour is testable
 // without mounting the board.
 
-import { tileFill, tileSurfaces } from "./tokens";
+import { TILE_PAD, tileFill, tileSurfaces } from "./tokens";
 
 export function tileStyle({
   theme = "dark",
@@ -45,7 +45,7 @@ export function tileStyle({
     gridRow: `span ${h}`,
     display: "flex",
     flexDirection: "column",
-    padding: "16px 18px",
+    padding: `${TILE_PAD.y}px ${TILE_PAD.x}px`,
     borderRadius: `${radius}px`,
     background: fill,
     // Frosted glass when blur is on, plain translucency when it is off.

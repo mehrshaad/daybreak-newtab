@@ -7,6 +7,7 @@ import {
   zoneOffsetLabel,
   zoneParts,
 } from "./zones";
+import manifest from "./manifest";
 
 describe("isValidZone", () => {
   it("accepts real IANA ids", () => {
@@ -163,4 +164,20 @@ describe("zoneOffsetLabel", () => {
     expect(zoneOffsetLabel(winter, "Not/AZone")).toBe("");
     expect(zoneOffsetLabel(winter, "")).toBe("");
   });
+});
+
+describe("the two text sizes", () => {
+  it("offers exactly two, with regular the default", () => {
+    const o = manifest.options.find((x) => x.key === "textSize");
+    expect(o.of).toEqual(["regular", "large"]);
+    expect(o.default).toBe("regular");
+    for (const v of o.of) expect(o.labels[v], v).toBeTruthy();
+  });
+
+  // Whether the rows fit the tile is checked in src/core/worldClockFit.test.js,
+  // which can import the board's real geometry. Doing it here meant keeping a
+  // copy of that geometry next to the widget, and the copy was wrong: it took
+  // the label row's 40px maxHeight for its height, when the row actually
+  // occupies 14. It had this widget overflowing at the regular size, which it
+  // does not.
 });

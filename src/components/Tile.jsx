@@ -11,6 +11,7 @@ import {
   useRefresh,
   useTooltip,
 } from "@daybreak/sdk";
+import { TILE_HEADER } from "../core/tokens";
 import { tileStyle } from "../core/tileStyle";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
@@ -376,8 +377,8 @@ function Tile({
           // back to the widget rather than sitting there empty — hiding a label
           // should buy space, not just blank it. Transitioned so the content
           // rises into the gap instead of jumping.
-          maxHeight: headerHidden ? 0 : 40,
-          marginBottom: headerHidden ? 0 : "12px",
+          maxHeight: headerHidden ? 0 : TILE_HEADER.max,
+          marginBottom: headerHidden ? 0 : `${TILE_HEADER.gap}px`,
           opacity: headerHidden ? 0 : 1,
           overflow: "hidden",
           transition:

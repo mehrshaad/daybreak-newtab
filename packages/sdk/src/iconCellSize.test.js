@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { iconCellSize, iconGridSize } from "./iconCellSize";
+import { ICON_STEPS, iconCellSize, iconGridSize } from "./iconCellSize";
 
 describe("iconGridSize", () => {
   it("does not shrink when the tile gets wider", () => {
@@ -31,14 +31,46 @@ describe("iconGridSize", () => {
     expect(cell.width * 3).toBeLessThan(230);
   });
 
-  it("fits two rows of labelled cells in a two-row tile", () => {
-    // Roughly 132px of content height once padding and the label row are gone.
-    const cell = iconCellSize(iconGridSize([4, 2]), true);
-    expect(cell.height * 2).toBeLessThan(140);
+  // Whether a cell fits a real tile is checked against the board's actual
+  // geometry in src/core/iconGridFit.test.js, which can import both. The two
+  // tests that used to live here guessed at it — "roughly 132px of content
+  // height" against a real 122 — and asserted two labelled rows fit a two-row
+  // tile, which was never true at any icon size.
+
+  it("grows with every step, and M is the size that was there before", () => {
+    for (const size of [[4, 2], [4, 3], [5, 4]]) {
+      const [s, m, l] = ICON_STEPS.map((step) => iconGridSize(size, { step }));
+      expect(s, JSON.stringify(size)).toBeLessThan(m);
+      expect(m, JSON.stringify(size)).toBeLessThan(l);
+      // No step and the middle step are the same thing.
+      expect(iconGridSize(size)).toBe(m);
+      expect(iconGridSize(size, { step: "nonsense" })).toBe(m);
+    }
   });
 
-  it("fits three rows in a four-row tile", () => {
-    const cell = iconCellSize(iconGridSize([5, 4]), true);
-    expect(cell.height * 3).toBeLessThan(400);
+  it("keeps the caption a caption, however big the icon gets", () => {
+    // Requested directly: the icons grow, the labels under them do not.
+    const sizes = [30, 42, 62, 99, 140].map((n) => iconCellSize(n, true).fontSize);
+    expect(Math.max(...sizes)).toBeLessThanOrEqual(11);
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(9);
+  });
+
+  it("spends the caption's row on the icon when there is no caption", () => {
+    for (const size of [[4, 2], [5, 4]]) {
+      expect(iconGridSize(size, { hideLabels: true })).toBeGreaterThan(iconGridSize(size));
+    }
+  });
+
+  it("hands out one set of measurements rather than four copies of the sums", () => {
+    // IconGrid, the Add cell in Quick Links and the "+N more" count in Google
+    // Apps all used to recompute these by hand, and the comment here promised
+    // they "mirror IconGridItem exactly" — a promise kept in four places.
+    const cell = iconCellSize(42, true);
+    for (const key of ["width", "height", "pad", "labelGap", "fontSize", "gap"]) {
+      expect(cell[key], key).toBeGreaterThan(0);
+    }
+    expect(cell.height).toBe(
+      2 * cell.pad + 42 + cell.labelGap + Math.ceil(cell.fontSize * 1.3)
+    );
   });
 });

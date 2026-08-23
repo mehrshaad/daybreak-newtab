@@ -3,7 +3,7 @@ import { Button, IconGrid, MONO, iconCellSize, iconGridSize, moveItem } from "@d
 import { gridFor, orderedApps } from "./apps";
 
 function GoogleApps({ options, config, setConfig, size, editing, columns }) {
-  const { hideLabels, newTab } = options;
+  const { hideLabels, newTab, iconScale } = options;
   const [showAll, setShowAll] = useState(false);
   const wrapRef = useRef(null);
   // Real pixel box of the tile, not the board-grid-unit estimate gridFor
@@ -36,12 +36,12 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
   // Icon size follows how much room each cell actually gets.
   // Height, not width: see iconGridSize. The old form divided 150 by the
   // column span, so a 5-wide launcher drew smaller icons than a 4-wide one.
-  const baseIconSize = iconGridSize(size);
-  // Without a label underneath, that row of vertical space is otherwise just
-  // left empty rather than going back into the icon itself.
-  const iconSize = hideLabels ? Math.round(baseIconSize * 1.3) : baseIconSize;
-  const gap = Math.max(4, Math.round(iconSize * 0.16));
+  // hideLabels goes in rather than being applied after: giving the icon back
+  // the caption's row is part of choosing the size, and doing it here kept the
+  // rounding in two places.
+  const iconSize = iconGridSize(size, { hideLabels, step: iconScale });
   const cell = iconCellSize(iconSize, !hideLabels);
+  const gap = cell.gap;
 
   // The "+N more" row shares this same flex column with the grid, so once it
   // appears the grid actually has less height than the tile's full box.

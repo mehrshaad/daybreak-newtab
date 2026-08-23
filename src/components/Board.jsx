@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { usedColumns } from "../core/autoArrange";
 import { cameraStyle } from "../core/tileStyle";
 import { boardMaxWidth } from "../core/useColumns";
-import { GRID_GAP } from "../core/tokens";
+import { GRID_GAP, ROW_HEIGHT } from "../core/tokens";
 import { useFlip, useLongPress, usePointerReorder } from "@daybreak/sdk";
 import { resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
 import Tile from "./Tile";
@@ -95,7 +95,7 @@ function Board({
       // below split the leftover space between both margins instead of piling
       // it all on the right.
       gridTemplateColumns: `repeat(${used}, 1fr)`,
-      gridAutoRows: "96px",
+      gridAutoRows: `${ROW_HEIGHT}px`,
       gridAutoFlow: "row dense",
       gap: `${GRID_GAP}px`,
       // The width those tracks would have had inside the full grid, so tiles

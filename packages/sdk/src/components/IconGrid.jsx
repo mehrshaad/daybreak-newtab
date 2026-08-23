@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { LuX } from "react-icons/lu";
-import { iconCellSize } from "../iconCellSize";
+import { ICON_GRID_PAD, iconCellSize } from "../iconCellSize";
 import { useFlip } from "../useFlip";
 import { usePointerReorder } from "../usePointerReorder";
 import { useHover } from "../useHover";
@@ -28,6 +28,9 @@ function IconGridItem({
 }) {
   const ref = useRef(null);
   const wrapRef = useRef(null);
+  // Every measurement of the cell from one place, so this button and the
+  // callers that predict its size cannot drift apart.
+  const { pad, labelGap, fontSize } = iconCellSize(iconSize, showLabels);
   // Hover as state rather than a background written straight onto the node.
   // The imperative form could not be undone once its mouseleave went missing,
   // and in a grid that reorders under the pointer it went missing often: an
@@ -81,8 +84,8 @@ function IconGridItem({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: Math.max(4, Math.round(iconSize * 0.16)),
-          padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
+          gap: labelGap,
+          padding: `${pad}px 2px`,
           borderRadius: 12,
           border: 0,
           cursor: held ? "grabbing" : "pointer",
@@ -113,7 +116,7 @@ function IconGridItem({
         {showLabels ? (
           <span
             style={{
-              fontSize: Math.max(9, Math.round(iconSize * 0.3)),
+              fontSize,
               color: "var(--dim)",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -204,7 +207,7 @@ function IconGrid({
   cols,
   iconSize,
   showLabels = true,
-  gap = 6,
+  gap,
   onOpen,
   onReorder,
   reorderable = true,
@@ -212,6 +215,7 @@ function IconGrid({
   onRemove,
   onRemoveByDrag,
   hoverCard,
+  scroll = false,
   trailing = null,
 }) {
   const gridRef = useRef(null);
@@ -222,7 +226,10 @@ function IconGrid({
   // Wide enough for a typical short label; a `max-content` column would
   // instead size itself per row from whatever occupied it, drifting wider or
   // narrower depending on which label landed in which column.
-  const { width: cellWidth } = iconCellSize(iconSize, showLabels);
+  const { width: cellWidth, gap: cellGap } = iconCellSize(iconSize, showLabels);
+  // A caller may still pin it, but none needs to: the default now scales with
+  // the icon the same way the cell does.
+  const gridGap = gap ?? cellGap;
 
   // Reordering is always available — an icon can be rearranged without first
   // entering edit mode. Dropping one *outside* the grid deletes it, though,
@@ -264,10 +271,28 @@ function IconGrid({
         // within a row's worth of empty columns.
         gridTemplateColumns: `repeat(auto-fit, ${cellWidth}px)`,
         justifyContent: "center",
-        gap,
+        gap: gridGap,
         flex: 1,
-        alignContent: "center",
+        // `safe center` rather than plain `center` once this can scroll: a
+        // centred grid that overflows spills equally in both directions, and
+        // the part above the top edge cannot be scrolled back to. `safe` falls
+        // back to start exactly when centring would do that.
+        alignContent: scroll ? "safe center" : "center",
         minWidth: 0,
+        ...(scroll
+          ? {
+              // A widget whose items the user chose — Quick Links — cannot hide
+              // the overflow behind a "+N more" the way Google Apps does, so at
+              // a large icon size a second row that did not fit was simply cut
+              // off. minHeight is what lets a flex item shrink under its own
+              // content, which is what makes this scroll rather than push the
+              // tile open.
+              minHeight: 0,
+              overflowY: "auto",
+              overscrollBehavior: "contain",
+              padding: ICON_GRID_PAD,
+            }
+          : null),
         ...(draggingId ? { position: "relative", zIndex: 6, overflow: "visible" } : null),
       }}
     >

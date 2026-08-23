@@ -129,7 +129,7 @@ export { useRovingMenu } from "./useRovingMenu";
 export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
-export { iconCellSize, iconGridSize } from "./iconCellSize";
+export { ICON_GRID_PAD, ICON_STEPS, iconCellSize, iconGridSize } from "./iconCellSize";
 export { addMonths, monthGrid, weekdayLabels, WEEKDAY_LABELS } from "./monthGrid";
 
 // Small utilities.

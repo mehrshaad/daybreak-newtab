@@ -4,6 +4,7 @@ import {
   Appear,
   Favicon,
   IconGrid,
+  iconCellSize,
   iconGridSize,
   IconTile,
   MONO,
@@ -68,7 +69,7 @@ function nameFromUrl(href) {
 }
 
 function Links({ options, config, setConfig, size, editing, columns }) {
-  const { hideLabels, newTab } = options;
+  const { hideLabels, newTab, iconScale } = options;
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
   const [draftUrl, setDraftUrl] = useState("");
@@ -85,7 +86,10 @@ function Links({ options, config, setConfig, size, editing, columns }) {
   // See iconGridSize — deriving the size from the column span made a wider tile
   // draw smaller icons.
   const cols = Math.max(3, Math.min(size[0], columns));
-  const iconSize = iconGridSize(size, { hideLabels });
+  const iconSize = iconGridSize(size, { hideLabels, step: iconScale });
+  // Padding, the icon-to-caption gap and the grid gap all come from here, so
+  // the Add cell below matches the real icons exactly.
+  const cell = iconCellSize(iconSize, !hideLabels);
 
   const gridItems = useMemo(
     () =>
@@ -131,8 +135,10 @@ function Links({ options, config, setConfig, size, editing, columns }) {
         iconSize={iconSize}
         // Matches the icon-to-label gap inside each item, so horizontal and
         // vertical rhythm read as the same spacing scaled by icon size.
-        gap={Math.max(4, Math.round(iconSize * 0.16))}
         showLabels={!hideLabels}
+        // The links are the user's own, so none of them may be hidden the way
+        // Google Apps hides its long tail. If they do not fit, they scroll.
+        scroll
         onOpen={open}
         onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
         editing={editing}
@@ -195,8 +201,8 @@ function Links({ options, config, setConfig, size, editing, columns }) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: Math.max(4, Math.round(iconSize * 0.16)),
-              padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
+              gap: cell.labelGap,
+              padding: `${cell.pad}px 2px`,
               borderRadius: 12,
               cursor: "pointer",
               border: 0,
@@ -228,7 +234,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
               <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
             </span>
             {hideLabels ? null : (
-              <span style={{ fontSize: Math.max(9, Math.round(iconSize * 0.3)) }}>Add</span>
+              <span style={{ fontSize: cell.fontSize }}>Add</span>
             )}
           </button>
           </Appear>
