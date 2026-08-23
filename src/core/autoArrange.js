@@ -67,3 +67,59 @@ export function packingWaste(ids, sizes, columns = 12) {
   const capacity = rows * columns;
   return capacity ? Math.max(0, 1 - used / capacity) : 0;
 }
+
+// How many columns the arrangement actually occupies at its widest.
+//
+// The board is twelve tracks, and a board whose widest row reaches eleven of
+// them has a dead strip a full column wide down its right-hand side, on every
+// row. Nothing is wrong with the tiles; the grid is simply wider than anything
+// in it. Board.jsx narrows the grid to this many tracks and lets it centre, so
+// the slack is split between both margins instead of all landing on the right.
+//
+// This has to model what the browser actually does, and the browser does
+// `grid-auto-flow: row dense` — a two-dimensional placement that backfills
+// holes left by earlier tiles. A first-fit walk over the widths is not the same
+// thing and gets a different answer: on the board that prompted this, the walk
+// said twelve while the rendered layout only ever reached eleven, so the fix
+// did nothing. Tile heights matter, which is why this tracks occupancy rather
+// than a running total.
+//
+// The occupancy map is bounded by the tallest sensible board, and a tile that
+// cannot be placed within it is simply skipped rather than looping forever.
+const MAX_ROWS = 400;
+
+export function usedColumns(ids, sizes, columns = 12) {
+  const taken = new Set();
+  const free = (row, col, w, h) => {
+    for (let r = row; r < row + h; r += 1) {
+      for (let c = col; c < col + w; c += 1) {
+        if (taken.has(`${r},${c}`)) return false;
+      }
+    }
+    return true;
+  };
+
+  let widest = 0;
+  for (const id of ids) {
+    // Skipped for the same reason the board skips it: an unknown id renders
+    // nothing, and an invisible tile must not reserve grid space.
+    if (!getWidget(id)) continue;
+    const [rawW, rawH] = resolveSize(id, sizes);
+    const w = Math.max(1, Math.min(rawW, columns));
+    const h = Math.max(1, rawH);
+
+    let placed = false;
+    for (let row = 0; row < MAX_ROWS && !placed; row += 1) {
+      for (let col = 0; col + w <= columns; col += 1) {
+        if (!free(row, col, w, h)) continue;
+        for (let r = row; r < row + h; r += 1) {
+          for (let c = col; c < col + w; c += 1) taken.add(`${r},${c}`);
+        }
+        if (col + w > widest) widest = col + w;
+        placed = true;
+        break;
+      }
+    }
+  }
+  return Math.max(1, Math.min(columns, widest));
+}

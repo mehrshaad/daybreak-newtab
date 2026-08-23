@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { usedColumns } from "../core/autoArrange";
 import { cameraStyle } from "../core/tileStyle";
 import { boardMaxWidth } from "../core/useColumns";
 import { GRID_GAP } from "../core/tokens";
@@ -80,20 +81,49 @@ function Board({
     skipId: draggingId,
   });
 
+  // How many of the grid's columns the arrangement actually reaches. A board
+  // whose widest row comes to eleven of twelve leaves a dead strip a full
+  // column wide down its right-hand side, on every row.
+  const used = usedColumns(ids, board.sizes, columns);
+
   const gridStyle = useMemo(
     () => ({
       display: "grid",
-      gridTemplateColumns: `repeat(${columns}, 1fr)`,
+      // The tracks that are actually occupied, not all twelve. Narrowing the
+      // grid rather than keeping empty tracks is what lets `margin: 0 auto`
+      // below split the leftover space between both margins instead of piling
+      // it all on the right.
+      gridTemplateColumns: `repeat(${used}, 1fr)`,
       gridAutoRows: "96px",
       gridAutoFlow: "row dense",
       gap: `${GRID_GAP}px`,
-      maxWidth: boardMaxWidth(appearance.boardWidth),
+      // The width those tracks would have had inside the full grid, so tiles
+      // stay exactly the size they were and only the empty column goes. Worked
+      // out from the wrapper's own width in CSS rather than in pixels here, so
+      // it keeps following the window and the board-width setting. With
+      // `used === columns` it reduces to 100% and nothing moves.
+      width: `calc((100% - ${GRID_GAP * (columns - 1)}px) / ${columns} * ${used} + ${
+        GRID_GAP * (used - 1)
+      }px)`,
       margin: "0 auto",
       // Transitioned so changing the setting slides the board out rather than
       // snapping. The grid tracks are 1fr, so they follow the cap continuously.
+      transition: "width .34s cubic-bezier(.22,1,.36,1)",
+    }),
+    [columns, used]
+  );
+
+  // The capped, centred area the grid centres itself within. It used to be the
+  // grid itself, but the grid is now narrower than the cap whenever the board
+  // does not fill it, and the percentage above has to resolve against the full
+  // board width rather than against the shortened one.
+  const boardArea = useMemo(
+    () => ({
+      maxWidth: boardMaxWidth(appearance.boardWidth),
+      margin: "0 auto",
       transition: "max-width .34s cubic-bezier(.22,1,.36,1)",
     }),
-    [columns, appearance.boardWidth]
+    [appearance.boardWidth]
   );
 
   return (
@@ -141,6 +171,7 @@ function Board({
             nothing, and calling that "slow" would flag every machine there is.
             A tile drag is the heaviest thing the board does, so it is exactly
             the moment worth measuring. */}
+        <div style={boardArea}>
         <div ref={gridRef} style={gridStyle} data-dragging={draggingId ? "true" : undefined}>
           {ids.map((instanceId, index) => (
             <Tile
@@ -212,6 +243,7 @@ function Board({
               + Add widget
             </button>
           ) : null}
+        </div>
         </div>
       </div>
 
