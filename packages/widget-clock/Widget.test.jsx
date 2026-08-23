@@ -38,7 +38,7 @@ class FakeResizeObserver {
 const OPTIONS = {
   analog: false,
   seconds: false,
-  hideDate: false,
+  dateForm: "full",
   hour24: false,
   align: "left",
   face: "round",

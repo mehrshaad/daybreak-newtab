@@ -8,8 +8,12 @@ import SquaredFace from "./faces/SquaredFace";
 // like a page zoom, so a tile that rearranged itself on the way in would look
 // out of place. Sizing keys off the tile's own span instead.
 function Clock({ options, size, bare }) {
-  const { hour24, seconds, hideDate, analog, align, accentFace, face, dialDate, textSize } =
-    options;
+  const { hour24, seconds, analog, align, accentFace, face, dateForm, textSize } = options;
+
+  // "full" | "day" | null. Coerced rather than trusted: this replaced both an
+  // enum under a different key and a separate hide switch, and a board
+  // restored from an old backup can still carry either.
+  const dateMode = dateForm === "none" ? null : dateForm === "day" ? "day" : "full";
   const bySecond = useSeconds(!!seconds);
   const byMinute = useMinutes();
   const now = seconds ? bySecond : byMinute;
@@ -44,7 +48,7 @@ function Clock({ options, size, bare }) {
     ? null
     : digitFontSize(box, digits, {
         meridiem: !!meridiem,
-        date: !hideDate,
+        date: !!dateMode,
         size: textSize,
       });
   const meridiemPx = digitPx
@@ -69,18 +73,19 @@ function Clock({ options, size, bare }) {
   const centred = align === "center";
   const right = align === "right";
 
-  // The date has one home at a time. With it inside the dial, the line below
-  // the face has to go, or the day is printed twice on the same tile — and the
-  // in-dial numeral then carries it for screen readers too rather than being
-  // decorative.
   // With the tile's chrome gone the dial becomes the tile itself: no drawn
   // outline, and markers on the tile's real edges rather than on a square
   // inscribed inside it. Only for the analog faces — a bare digital clock is
   // just the digits, which already fill what they are given.
   const Face = bare && analog ? BareFace : face === "squared" ? SquaredFace : RoundFace;
-  const inDial = !!(analog && dialDate && !hideDate);
 
-  const date = hideDate ? null : (
+  // On a dial the date is always on the dial. It used to be a choice between
+  // there and a line underneath, and the line was the default — which spent
+  // the bottom of the tile on text and left the face smaller than the mode is
+  // for.
+  const inDial = analog ? dateMode : null;
+
+  const date = !dateMode ? null : (
     <div
       style={{
         fontSize: datePx,
@@ -94,13 +99,15 @@ function Clock({ options, size, bare }) {
         whiteSpace: "nowrap",
       }}
     >
-      {now.toLocaleDateString(undefined, {
-        // A long weekday and month will not fit two columns; the short forms
-        // still say everything the line is for.
-        weekday: narrow ? "short" : "long",
-        month: narrow ? "short" : "long",
-        day: "numeric",
-      })}
+      {dateMode === "day"
+        ? now.getDate()
+        : now.toLocaleDateString(undefined, {
+            // A long weekday and month will not fit two columns; the short
+            // forms still say everything the line is for.
+            weekday: narrow ? "short" : "long",
+            month: narrow ? "short" : "long",
+            day: "numeric",
+          })}
     </div>
   );
 
@@ -129,7 +136,6 @@ function Clock({ options, size, bare }) {
           accentFace={!!accentFace}
           label={time}
         />
-        {inDial ? null : date}
       </div>
   ) : (
     <div
@@ -204,8 +210,8 @@ function Clock({ options, size, bare }) {
       key={[
         analog ? `analog-${face || "round"}` : "digital",
         seconds ? "s" : "",
-        hideDate ? "" : "d",
-        inDial ? "in" : "",
+        dateMode || "",
+        inDial || "",
         accentFace ? "a" : "",
       ].join("-")}
       style={{ display: "flex", flex: 1, minWidth: 0, animation: "db-fade .28s ease both" }}

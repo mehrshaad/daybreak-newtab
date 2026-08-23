@@ -15,7 +15,7 @@ import { formatClock, IDLE, nextPhase, phaseLength, remainingOf, resumeFrom } fr
 // something the laptop in the other room should join halfway through.
 function Timer({ id, options, toast }) {
   const { longFocus, autoStart } = options;
-  const resetTip = useTooltip("Reset round");
+  const resetTip = useTooltip("Start over");
   const [saved, setSaved] = useWidgetLocal(id, "run", IDLE);
 
   // Resolved from storage on every render, so a tab that was in the background
@@ -79,9 +79,21 @@ function Timer({ id, options, toast }) {
     setSaved({ phase, round, endsAt: Date.now() + seconds * 1000, left: seconds });
   };
 
+  // Back to the beginning of the cycle, not just the top of the current phase.
+  //
+  // It used to refill whatever phase you were in, which left no way out of a
+  // break at all: a focus round ends, the widget moves to Break, and the only
+  // control that looked like an escape put five fresh minutes of break on the
+  // clock. The only route back to focus was to sit through it. A timer you
+  // cannot return to a known state is a timer people stop trusting, and this
+  // one was reported simply as broken.
+  //
+  // Restarting the current phase is the thing given up, and it is the smaller
+  // loss: on a focus round — where anyone would actually want it — the two are
+  // the same act, and it only differs by forgetting a round count.
   const reset = () => {
-    const full = phaseLength({ phase, longFocus });
-    setSaved({ phase, round, endsAt: null, left: full });
+    const full = phaseLength({ phase: IDLE.phase, longFocus });
+    setSaved({ ...IDLE, left: full });
     setLeft(full);
   };
 
@@ -194,7 +206,7 @@ function Timer({ id, options, toast }) {
           <button
             ref={resetTip.anchorRef}
             type="button"
-            aria-label="Reset round"
+            aria-label="Start over"
             onClick={(e) => {
               e.stopPropagation();
               reset();

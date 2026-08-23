@@ -13,7 +13,7 @@ const DEFAULT_ZONES = [
 const keyFor = (zone) => `${zone.tz}|${zone.city}`;
 
 function WorldClocks({ options, config, setConfig, size, editing }) {
-  const { hour24, hideZone } = options;
+  const { hour24, showZone } = options;
   const now = useMinutes();
   const [adding, setAdding] = useState(false);
   const listRef = useRef(null);
@@ -24,8 +24,14 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
       : DEFAULT_ZONES;
 
   const ids = zones.map(keyFor);
-  // A three-row tile has room for the timezone under each city and a larger
-  // readout; a two-row one does not.
+  // A three-row tile has room for a larger readout; a two-row one does not.
+  //
+  // This used to gate the UTC offset as well, on the grounds that there was
+  // "room for the timezone under each city" only on a tall tile. There is no
+  // under: the offset sits beside the name in the same flex row and costs no
+  // height at all, and the name truncates before either of them is squeezed.
+  // So the offset was hidden on every two-row tile whatever the setting said,
+  // which made the setting look broken.
   const tall = (size?.[1] ?? 2) >= 3;
 
   const reorder = (from, to) => setConfig({ zones: moveItem(zones, from, to) });
@@ -161,7 +167,7 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                   }}
                   inputStyle={{ fontSize: 13, minWidth: 60 }}
                 />
-                {!hideZone && tall && p.zoneLabel ? (
+                {showZone && p.zoneLabel ? (
                   <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--faint)" }}>
                     {p.zoneLabel}
                   </span>

@@ -1,6 +1,7 @@
 import { handAngles } from "../angles";
 import { useContinuousAngle } from "../continuous";
 import { edgeRadius, squirclePath } from "./squircle";
+import { dialDatePlacement, dialDateText } from "./dialDate";
 
 // The squared face, in the same language as the round one: no dial fill, no
 // gradient, no tick track. The tile is the dial here too.
@@ -65,7 +66,7 @@ function markEnds(degrees) {
 
 function SquaredFace({ date, showSeconds, showDate, label, accentFace }) {
   const { hour, minute, second } = handAngles(date);
-  const day = date.getDate();
+  const datePlace = dialDatePlacement(showDate, { x: 74, y: 78 });
 
   return (
     // The svg is taken out of flow inside a box that flex has already sized.
@@ -140,13 +141,17 @@ function SquaredFace({ date, showSeconds, showDate, label, accentFace }) {
           reach it: the corner is 35 away and the hand is 25.5 long. */}
       {showDate ? (
         <text
-          x="74"
-          y="78"
+          x={datePlace.x}
+          y={datePlace.y}
           textAnchor="middle"
           fill="var(--faint)"
-          style={{ fontSize: 9, fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
+          style={{
+            fontSize: datePlace.fontSize,
+            fontFamily: "inherit",
+            fontVariantNumeric: "tabular-nums",
+          }}
         >
-          {day}
+          {dialDateText(date, showDate)}
         </text>
       ) : null}
 

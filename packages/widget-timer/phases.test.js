@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, nextPhase, phaseLength } from "./phases";
+import { formatClock, IDLE, nextPhase, phaseLength } from "./phases";
 
 describe("phaseLength", () => {
   it("uses 25 or 50 minutes for focus", () => {
@@ -63,5 +63,40 @@ describe("formatClock", () => {
 
   it("handles times over an hour without breaking format", () => {
     expect(formatClock(3600)).toBe("60:00");
+  });
+});
+
+describe("getting back to a known state", () => {
+  // The bug behind this: reset refilled whatever phase you were in, so a break
+  // reset to a full break and there was no way back to focus short of sitting
+  // through it. The widget reads as stuck, and was reported as broken.
+  it("has a starting point that is a focus round", () => {
+    expect(IDLE.phase).toBe("Focus");
+    expect(IDLE.round).toBe(1);
+    expect(IDLE.endsAt).toBeNull();
+  });
+
+  it("is reachable from every phase the cycle can reach", () => {
+    // Walk the whole cycle and check IDLE is a valid destination from each of
+    // them: nothing here depends on where you were, which is the point.
+    let phase = IDLE.phase;
+    let round = IDLE.round;
+    const seen = new Set();
+    for (let i = 0; i < 12; i += 1) {
+      seen.add(phase);
+      expect({ ...IDLE, left: phaseLength({ phase: IDLE.phase, longFocus: false }) }).toMatchObject({
+        phase: "Focus",
+        round: 1,
+      });
+      ({ phase, round } = nextPhase(phase, round));
+    }
+    // The walk has to actually visit the interesting states, or this proves
+    // nothing about long breaks.
+    expect([...seen].sort()).toEqual(["Break", "Focus", "Long break"]);
+  });
+
+  it("starts over with a full focus round on the clock, at either length", () => {
+    expect(phaseLength({ phase: IDLE.phase, longFocus: false })).toBe(25 * 60);
+    expect(phaseLength({ phase: IDLE.phase, longFocus: true })).toBe(50 * 60);
   });
 });

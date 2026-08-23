@@ -1,5 +1,6 @@
 import { handAngles, handPoint } from "../angles";
 import { useContinuousAngle } from "../continuous";
+import { dialDatePlacement, dialDateText } from "./dialDate";
 
 // The round face.
 //
@@ -54,7 +55,7 @@ function Hand({ degrees, length, width, colour, transition }) {
 
 function RoundFace({ date, showSeconds, showDate, label, accentFace }) {
   const { hour, minute, second } = handAngles(date);
-  const day = date.getDate();
+  const datePlace = dialDatePlacement(showDate, { x: 70, y: 74 });
 
   return (
     // The svg is taken out of flow inside a box that flex has already sized.
@@ -131,13 +132,17 @@ function RoundFace({ date, showSeconds, showDate, label, accentFace }) {
           briefly. Same placement as the squared face, so the two agree. */}
       {showDate ? (
         <text
-          x="70"
-          y="74"
+          x={datePlace.x}
+          y={datePlace.y}
           textAnchor="middle"
           fill="var(--faint)"
-          style={{ fontSize: 9, fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
+          style={{
+            fontSize: datePlace.fontSize,
+            fontFamily: "inherit",
+            fontVariantNumeric: "tabular-nums",
+          }}
         >
-          {day}
+          {dialDateText(date, showDate)}
         </text>
       ) : null}
 

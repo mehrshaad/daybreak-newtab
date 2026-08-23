@@ -72,6 +72,7 @@ function WidgetSettingsDrawer({
   onTint,
   onRemove,
   theme,
+  appearance,
   toast,
 }) {
   const manifest = getWidget(instanceId);
@@ -82,6 +83,16 @@ function WidgetSettingsDrawer({
   );
 
   if (!manifest) return null;
+
+  // What a manifest may ask about the board, as opposed to about its own
+  // options. Deliberately a short, fixed list: an option should almost always
+  // depend on the widget's own state, and anything here is a coupling between
+  // a widget and the app's settings that has to be worth its keep.
+  const environment = {
+    // Whether tiles show a header at all. A widget that bleeds into the header
+    // row when it is gone can render quite differently without it.
+    tileHeader: (appearance.tileLabels || "both") !== "none",
+  };
 
   const currentSize = resolveSize(instanceId, board.sizes);
   const rate = resolveRate(instanceId, record.rate);
@@ -175,10 +186,20 @@ function WidgetSettingsDrawer({
                 // whatever mode you were in. `showIf` is a plain map of
                 // option key to accepted values, so it stays declarative and a
                 // widget cannot smuggle a function into its manifest.
+                //
+                // A key can also name something about the board rather than
+                // one of the widget's own options — see ENVIRONMENT. Same
+                // reason, one step out: with tile labels off the clock's dial
+                // is drawn to the tile's own rectangle, so Squared and Round
+                // produce identical output and the choice between them is a
+                // control that does nothing.
                 .filter((o) => {
                   if (!o.showIf) return true;
                   return Object.entries(o.showIf).every(([key, accepted]) => {
-                    const current = options[key] ?? manifest.options.find((x) => x.key === key)?.default;
+                    const current =
+                      key in environment
+                        ? environment[key]
+                        : options[key] ?? manifest.options.find((x) => x.key === key)?.default;
                     return Array.isArray(accepted)
                       ? accepted.includes(current)
                       : accepted === current;

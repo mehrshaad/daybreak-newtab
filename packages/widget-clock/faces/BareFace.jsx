@@ -1,6 +1,7 @@
 import { useMeasuredBox } from "@daybreak/sdk";
 import { handAngles } from "../angles";
 import { useContinuousAngle } from "../continuous";
+import { dialDateText } from "./dialDate";
 import { edgeMarker, edgePoint } from "./edge";
 
 // The clock when the tile has no chrome of its own: the widget *is* the clock.
@@ -48,7 +49,6 @@ function Hand({ degrees, length, width, colour, transition, cx, cy }) {
 
 function BareFace({ date, showSeconds, showDate, label, accentFace }) {
   const { hour, minute, second } = handAngles(date);
-  const day = date.getDate();
   const [boxRef, box] = useMeasuredBox();
 
   const width = box?.width || 0;
@@ -130,21 +130,27 @@ function BareFace({ date, showSeconds, showDate, label, accentFace }) {
             );
           })}
 
-          {/* Between the centre and the four-o'clock edge, scaled to the dial
-              so it keeps its place on any tile. */}
+          {/* The numeral goes between the centre and the four-o'clock edge,
+              scaled to the dial so it keeps its place on any tile. The full
+              date is too wide for that corner, so it is centred and dropped
+              below the hub instead — the same arrangement the other two faces
+              use, in pixels rather than viewBox units. */}
           {showDate ? (
             <text
-              x={cx + reach * 0.46}
-              y={cy + reach * 0.5}
+              x={showDate === "day" ? cx + reach * 0.46 : cx}
+              y={cy + reach * (showDate === "day" ? 0.5 : 0.56)}
               textAnchor="middle"
               fill="var(--faint)"
               style={{
-                fontSize: Math.max(10, reach * 0.17),
+                fontSize:
+                  showDate === "day"
+                    ? Math.max(10, reach * 0.17)
+                    : Math.max(9, reach * 0.115),
                 fontFamily: "inherit",
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {day}
+              {dialDateText(date, showDate)}
             </text>
           ) : null}
 

@@ -803,6 +803,7 @@ function App() {
           onRate={(rate) => updateWidget(panelId, { rate })}
           onTint={(tint) => updateWidget(panelId, { tint })}
           theme={theme}
+          appearance={appearance}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />
