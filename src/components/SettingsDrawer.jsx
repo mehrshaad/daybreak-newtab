@@ -223,9 +223,15 @@ function SettingsDrawer({
                 }`,
               }}
               // The swatch is the picture, so the hover lifts the frame rather
-              // than tinting anything over the top of it.
+              // than tinting anything over the top of it. `border`, not
+              // `borderColor`: the base sets the shorthand, and React clobbers
+              // a shorthand when it removes a longhand that overlapped it — so
+              // mixing the two left every swatch you had hovered with no border
+              // at all and Chrome's black default showing through.
               hover={{
-                borderColor: "var(--accentLine)",
+                border: `1px solid ${
+                  appearance.wall === w ? "var(--accent)" : "var(--accentLine)"
+                }`,
                 transform: "translateY(-1px)",
                 boxShadow: "0 4px 14px rgba(0,0,0,.18)",
               }}

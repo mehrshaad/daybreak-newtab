@@ -19,7 +19,10 @@ const navBtn = {
   padding: 0,
 };
 
-const NAV_HOVER = { background: "var(--sheetHover)", borderColor: "var(--accentLine)" };
+// `border`, not `borderColor`: these bases set the shorthand, and React
+// clobbers a shorthand when it removes a longhand that overlapped it, leaving
+// the control with no border once the pointer has been and gone.
+const NAV_HOVER = { background: "var(--sheetHover)", border: "1px solid var(--accentLine)" };
 
 const linkBtn = {
   border: 0,
@@ -94,7 +97,7 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
           color: value ? "var(--fg)" : "var(--faint)",
           cursor: "pointer",
         }}
-        hover={{ background: "var(--sheetHover)", borderColor: "var(--accentLine)" }}
+        hover={{ background: "var(--sheetHover)", border: "1px solid var(--accentLine)" }}
       >
         {value || placeholder}
       </Button>

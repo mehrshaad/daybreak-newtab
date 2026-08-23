@@ -14,6 +14,14 @@ import { CONTROL_TRANSITION } from "../styles";
 // `styleFor` is one of the style factories (softButton, roundControl,
 // primaryButton), `style` its overrides, and `hover` what changes while the
 // pointer is on it.
+//
+// One rule for `hover`: give it the same form of each property the base uses,
+// shorthand for shorthand. React sets and clears these one property at a time,
+// and clearing a longhand it added (borderColor) takes the overlapping
+// shorthand (border) with it — so the control ends up with no border at all
+// once the pointer has been and gone, showing the browser's default instead.
+// It only bites after the first hover, which is why it reads as some controls
+// being wrong and others fine.
 // Forwards its ref, because several of these are also a tooltip's anchor or a
 // popover's, and those need the element. Safe to hand out: useHover takes its
 // node from the mouseenter event rather than from a ref of its own, so nothing

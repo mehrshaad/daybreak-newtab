@@ -327,7 +327,7 @@ function WidgetSettingsDrawer({
               textAlign: "center",
               width: "100%",
             })}
-            hover={{ background: "var(--panel2)", borderColor: "var(--danger)" }}
+            hover={{ background: "var(--panel2)", border: "1px solid var(--danger)" }}
           >
             Remove from home
           </Button>

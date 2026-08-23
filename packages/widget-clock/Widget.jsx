@@ -89,7 +89,8 @@ function Clock({ options, size, bare }) {
         // Same auto-margin trick as the digits, so the two move together.
         marginInlineStart: centred || right ? "auto" : 0,
         marginInlineEnd: centred ? "auto" : 0,
-        transition: "margin .32s cubic-bezier(.22,1,.36,1)",
+        transition:
+          "margin .32s cubic-bezier(.22,1,.36,1), font-size .22s cubic-bezier(.2,.8,.2,1)",
         whiteSpace: "nowrap",
       }}
     >
@@ -166,6 +167,9 @@ function Clock({ options, size, bare }) {
             letterSpacing: "-.035em",
             lineHeight: 1,
             fontVariantNumeric: "tabular-nums",
+            // Grows into the new size rather than snapping, both when the size
+            // setting changes and when the tile is dragged to a new one.
+            transition: "font-size .22s cubic-bezier(.2,.8,.2,1)",
           }}
         >
           {digits}
@@ -176,6 +180,7 @@ function Clock({ options, size, bare }) {
               fontFamily: MONO,
               fontSize: meridiemPx,
               color: "var(--faint)",
+              transition: "font-size .22s cubic-bezier(.2,.8,.2,1)",
             }}
           >
             {meridiem}
@@ -197,7 +202,7 @@ function Clock({ options, size, bare }) {
     <div
       ref={boxRef}
       key={[
-        analog ? `analog-${face || "round"}` : `digital-${textSize || "m"}`,
+        analog ? `analog-${face || "round"}` : "digital",
         seconds ? "s" : "",
         hideDate ? "" : "d",
         inDial ? "in" : "",

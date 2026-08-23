@@ -116,6 +116,6 @@ const STEP = {
   lineHeight: 1,
 };
 
-const STEP_HOVER = { background: "var(--panel2)", borderColor: "var(--accentLine)" };
+const STEP_HOVER = { background: "var(--panel2)", border: "1px solid var(--accentLine)" };
 
 export default PrayerSettings;

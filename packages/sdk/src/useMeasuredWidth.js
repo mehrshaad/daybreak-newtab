@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // A widget's real content width, for the decisions that depend on it.
 //
@@ -22,13 +22,33 @@ import { useEffect, useRef, useState } from "react";
 //
 // Returns null until the first measurement, so a caller can fall back to its
 // span for the first frame rather than flickering through a wrong layout.
+//
+// A callback ref, and that part is load-bearing. This used to be a plain ref
+// observed from a mount effect with no dependencies, which quietly assumed the
+// element it measured would live as long as the component. Several widgets put
+// a `key` on the very element they measure, to crossfade when a mode changes —
+// the clock does it for analog, seconds and the date line. Changing that key
+// replaces the element, and the mount effect never runs again, so the observer
+// was left watching a node that had been detached from the document. A detached
+// node reports nothing, so the measurement froze at whatever it was before the
+// toggle and every later change of size did nothing at all.
+//
+// A callback ref is told about both ends of that swap, so the observer follows
+// the element that is actually on screen.
 export function useMeasuredBox() {
-  const ref = useRef(null);
   const [box, setBox] = useState(null);
+  const observerRef = useRef(null);
+  const nodeRef = useRef(null);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === "undefined") return undefined;
+  const ref = useCallback((node) => {
+    // React calls a callback ref with null before the new node on a swap, and
+    // can call it again with the same node on an unrelated re-render.
+    if (nodeRef.current === node) return;
+    nodeRef.current = node;
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    if (!node || typeof ResizeObserver === "undefined") return;
+
     const ro = new ResizeObserver(([entry]) => {
       // contentRect, not the border box: what a widget is deciding about is the
       // room it has to lay things out in, which is inside its own padding.
@@ -37,9 +57,14 @@ export function useMeasuredBox() {
         prev && prev.width === width && prev.height === height ? prev : { width, height }
       );
     });
-    ro.observe(el);
-    return () => ro.disconnect();
+    ro.observe(node);
+    observerRef.current = ro;
   }, []);
+
+  // Deliberately not clearing `box` when the node goes: on a keyed swap the
+  // replacement is the same size, and blanking the measurement in between would
+  // flash one frame of the caller's fallback layout on every toggle.
+  useEffect(() => () => observerRef.current?.disconnect(), []);
 
   return [ref, box];
 }

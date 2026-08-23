@@ -47,7 +47,7 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
           e.stopPropagation();
           onToggle();
         }}
-        hover={task.done ? { opacity: 0.85 } : { borderColor: "var(--accent)" }}
+        hover={task.done ? { opacity: 0.85 } : { border: "1px solid var(--accent)" }}
         style={{
           width: 15,
           height: 15,
