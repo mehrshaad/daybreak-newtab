@@ -152,6 +152,7 @@ function Board({
               size={resolveSize(instanceId, board.sizes)}
               options={resolveOptions(instanceId, widgets[instanceId]?.options)}
               config={widgets[instanceId]?.config || {}}
+              tint={widgets[instanceId]?.tint}
               editing={editing}
               dragging={draggingId === instanceId}
               zoomed={!!zoom}

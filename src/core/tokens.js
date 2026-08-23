@@ -116,6 +116,53 @@ export const BLUR = {
 // Grid gap is fixed rather than configurable: it is the one grid dial that
 // never improved a layout, and every value but the default made the board look
 // either cramped or unmoored.
+// A tile's own background colour.
+//
+// The accent already tints the whole board; this is the other half of the
+// request — the tiles themselves. Same sixteen colours, because they are already
+// named and already checked for readability in both themes, and because a board
+// whose tiles and accent come from one palette looks deliberate where two
+// palettes look like two features.
+//
+// A tint is a *wash*, not a fill: the theme's own panel colour moved a fraction
+// of the way toward the chosen hue. That is what makes it safe. Text on a tile
+// is --fg, and the surface never travels toward --fg, so a tinted tile cannot
+// become unreadable however saturated the swatch — it only ever becomes a
+// slightly green dark card or a slightly green white one. Painting the swatch on
+// directly would have needed a contrast check per colour per theme and would
+// still have looked like a sticker sheet.
+//
+// Light theme takes a little less of it. The panel is near-white and the eye
+// reads a small shift from white as colour more readily than the same shift
+// from near-black.
+//
+// The first values here were half these, and on screen the tiles were barely
+// distinguishable — the default tile opacity is 50%, so whatever is mixed in
+// gets washed out again over the wallpaper before anybody sees it. These are
+// what actually reads as a coloured tile, with the contrast test below holding
+// the ceiling.
+const TINT_MIX = { dark: 0.34, light: 0.28 };
+
+// The theme's untinted panel surface, which is also what a tint moves away from.
+const PANEL_RGB = { dark: [28, 30, 38], light: [255, 255, 255] };
+
+function mixToward(base, hex, amount) {
+  const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  if (rgb.some((v) => Number.isNaN(v))) return base;
+  return base.map((v, i) => Math.round(v * (1 - amount) + rgb[i] * amount));
+}
+
+// The tile's background, as a single rgba(). `alpha` is the opacity slider and
+// passes straight through whether or not there is a tint, so tinting a tile
+// never quietly changes how much of the wallpaper shows through it.
+export function tileFill(theme, alpha = 100, tint = null) {
+  const dark = theme !== "light";
+  const key = dark ? "dark" : "light";
+  const base = PANEL_RGB[key];
+  const rgb = tint ? mixToward(base, tint, TINT_MIX[key]) : base;
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha / 100})`;
+}
+
 export const GRID_GAP = 14;
 
 // Page zoom, as a percentage, applied with the CSS `zoom` property so the

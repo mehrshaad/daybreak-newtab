@@ -173,6 +173,7 @@ function Tile({
   columns,
   size,
   options,
+  tint,
   config,
   editing,
   zoomed,
@@ -241,6 +242,10 @@ function Tile({
     () =>
       tileStyle({
         theme: appearance.theme,
+        // Per widget, deliberately. A board-wide setting would just be the
+        // theme again; the point of colouring a tile is telling it apart from
+        // the one next to it.
+        tint: tint ?? null,
         blur: appearance.blur !== false,
         radius: appearance.radius,
         alpha: appearance.alpha,
@@ -253,7 +258,7 @@ function Tile({
         zoomMode,
         panelOpen,
       }),
-    [appearance, size, columns, editing, menuTarget, zoomed, focused, zoomMode, panelOpen]
+    [appearance, tint, size, columns, editing, menuTarget, zoomed, focused, zoomMode, panelOpen]
   );
 
   if (!manifest) return null;

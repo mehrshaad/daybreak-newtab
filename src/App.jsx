@@ -727,6 +727,8 @@ function App() {
           onOptions={(patch) => setWidgetOptions(panelId, patch)}
           onConfig={(patch) => setWidgetConfig(panelId, patch)}
           onRate={(rate) => updateWidget(panelId, { rate })}
+          onTint={(tint) => updateWidget(panelId, { tint })}
+          theme={theme}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />

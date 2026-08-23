@@ -1,5 +1,7 @@
 import { Suspense, lazy, useMemo } from "react";
+import { LuBan } from "react-icons/lu";
 import { MONO, pill } from "@daybreak/sdk";
+import { ACCENT_NAMES, ACCENTS, tileFill } from "../core/tokens";
 import { getWidget, resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
 import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
@@ -18,6 +20,45 @@ function panelFor(manifest) {
   return panelCache.get(manifest.id);
 }
 
+// Painted as the tile it produces rather than as the raw colour, so the row
+// shows what the board will look like instead of a line of pastels.
+function TintSwatch({ theme, tint, selected, onPick, plain = false }) {
+  const label = plain ? "No colour" : `Colour: ${ACCENT_NAMES[tint] || tint}`;
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={selected}
+      onClick={onPick}
+      style={{
+        width: "100%",
+        aspectRatio: "1",
+        borderRadius: 8,
+        cursor: "pointer",
+        background: tileFill(theme, 100, tint),
+        border: "1px solid var(--line)",
+        padding: 0,
+        display: "grid",
+        placeItems: "center",
+        color: "var(--faint)",
+        fontFamily: MONO,
+        fontSize: 9,
+        lineHeight: 1,
+        boxShadow: selected ? "0 0 0 2px var(--sheet), 0 0 0 4px var(--accent)" : "none",
+        transition: "box-shadow .18s ease, transform .15s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (!selected) e.currentTarget.style.transform = "scale(1.1)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+      }}
+    >
+      {plain ? <LuBan size={11} aria-hidden="true" /> : null}
+    </button>
+  );
+}
+
 function WidgetSettingsDrawer({
   open,
   instanceId,
@@ -28,7 +69,9 @@ function WidgetSettingsDrawer({
   onOptions,
   onConfig,
   onRate,
+  onTint,
   onRemove,
+  theme,
   toast,
 }) {
   const manifest = getWidget(instanceId);
@@ -76,6 +119,37 @@ function WidgetSettingsDrawer({
             </div>
           </Section>
         ) : null}
+
+        <Section title="Colour">
+          <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5, marginBottom: 8 }}>
+            The colour of this tile. Set per widget, so a board can tell one from
+            another at a glance.
+          </div>
+          <div
+            role="group"
+            aria-label="Widget colour"
+            style={{ display: "grid", gridTemplateColumns: "repeat(9, 1fr)", gap: 8 }}
+          >
+            {/* "None" first and the same shape as the rest, so going back to a
+                plain tile is the same gesture as picking a colour. */}
+            <TintSwatch
+              theme={theme}
+              tint={null}
+              plain
+              selected={!record.tint}
+              onPick={() => onTint(null)}
+            />
+            {ACCENTS.map((c) => (
+              <TintSwatch
+                key={c}
+                theme={theme}
+                tint={c}
+                selected={record.tint === c}
+                onPick={() => onTint(c)}
+              />
+            ))}
+          </div>
+        </Section>
 
         {Panel ? (
           <Section title={manifest.settingsPanel.title || "Configure"}>

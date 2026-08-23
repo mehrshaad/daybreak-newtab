@@ -3,6 +3,7 @@ import {
   ACCENT_NAMES,
   ACCENTS,
   hslOf,
+  tileFill,
   wallTint,
   DEFAULTS,
   background,
@@ -361,5 +362,72 @@ describe("wallpapers on every accent", () => {
         expect(new Set(made).size, `${theme}/${ACCENT_NAMES[a]}`).toBe(WALLPAPERS.length);
       }
     }
+  });
+});
+
+describe("tileFill", () => {
+  const rgb = (css) => css.match(/[\d.]+/g).map(Number);
+
+  it("is the plain panel when there is no tint", () => {
+    expect(tileFill("dark", 100, null)).toBe("rgba(28,30,38,1)");
+    expect(tileFill("light", 100, null)).toBe("rgba(255,255,255,1)");
+  });
+
+  it("passes the opacity slider straight through, tinted or not", () => {
+    // Tinting a tile must not quietly change how much wallpaper shows through
+    // it — the two settings are independent and have to stay that way.
+    for (const tint of [null, "#86d99a", "#f5d979"]) {
+      for (const alpha of [0, 35, 50, 100]) {
+        expect(rgb(tileFill("dark", alpha, tint))[3], `${tint}@${alpha}`).toBeCloseTo(alpha / 100, 5);
+      }
+    }
+  });
+
+  it("moves the panel toward the colour without becoming it", () => {
+    // The safety argument for the whole feature: a tint is a wash over the
+    // theme's own panel, so a dark tile stays dark and a light one stays light
+    // however saturated the swatch. If this ever became a fill, text on the
+    // tile would have to be re-checked per colour.
+    for (const tint of ACCENTS) {
+      const [r, g, b] = rgb(tileFill("dark", 100, tint));
+      const [lr, lg, lb] = rgb(tileFill("light", 100, tint));
+      // Dark stays nearer the dark panel than the swatch.
+      expect(Math.max(r, g, b), tint).toBeLessThan(140);
+      // Light stays near white.
+      expect(Math.min(lr, lg, lb), tint).toBeGreaterThan(200);
+    }
+  });
+
+  it("keeps body text readable on every tinted tile, in both themes", () => {
+    // --fg is near-white on dark and near-black on light. 4.5:1 on the opaque
+    // tile, which is the worst case for the darker theme and the realistic one
+    // for a solid tile.
+    const contrast = (a, b) =>
+      (Math.max(luminance(a), luminance(b)) + 0.05) /
+      (Math.min(luminance(a), luminance(b)) + 0.05);
+    const hex = (css) =>
+      `#${rgb(css).slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+
+    for (const tint of [null, ...ACCENTS]) {
+      const onDark = contrast("#f4f4f6", hex(tileFill("dark", 100, tint)));
+      const onLight = contrast("#2a2c33", hex(tileFill("light", 100, tint)));
+      expect(onDark, `dark ${tint}`).toBeGreaterThanOrEqual(4.5);
+      expect(onLight, `light ${tint}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("gives every swatch a visibly different tile from the plain one", () => {
+    // A tint nobody can see is a setting that does nothing.
+    const plain = tileFill("dark", 100, null);
+    const tinted = ACCENTS.map((c) => tileFill("dark", 100, c));
+    for (const [i, css] of tinted.entries()) {
+      expect(css, ACCENTS[i]).not.toBe(plain);
+    }
+    // And from each other, so sixteen swatches are sixteen choices.
+    expect(new Set(tinted).size).toBe(ACCENTS.length);
+  });
+
+  it("ignores a malformed tint rather than emitting a broken colour", () => {
+    expect(tileFill("dark", 100, "not-a-colour")).toBe("rgba(28,30,38,1)");
   });
 });

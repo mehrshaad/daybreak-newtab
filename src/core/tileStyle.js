@@ -2,8 +2,11 @@
 // function of (appearance, tile state) so the zoom behaviour is testable
 // without mounting the board.
 
+import { tileFill } from "./tokens";
+
 export function tileStyle({
   theme = "dark",
+  tint = null,
   radius = 18,
   alpha = 100,
   blur = true,
@@ -21,13 +24,12 @@ export function tileStyle({
   // page on a narrow window.
   const w = Math.min(size[0], columns);
   const h = size[1];
-  const al = alpha / 100;
-
   // The opacity slider maps straight through: 100% is a fully opaque tile, 0%
   // leaves only the content floating on the page. The surface colour is the
   // theme's own panel colour, so a solid tile is a dark card in dark mode
-  // rather than a white one.
-  const fill = dark ? `rgba(28,30,38,${al})` : `rgba(255,255,255,${al})`;
+  // rather than a white one — moved a fraction toward the tile's own colour
+  // when it has been given one. See tileFill.
+  const fill = tileFill(theme, alpha, tint);
 
   const base = {
     // Positioned so edit-mode chrome can float over the tile instead of taking
