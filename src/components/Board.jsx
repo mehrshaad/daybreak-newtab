@@ -24,7 +24,7 @@ function Board({
   zoom,
   cam,
   zoomMode,
-  panelOpen,
+  panelId,
   menu,
   manualRefresh,
   boardRef,
@@ -192,7 +192,8 @@ function Board({
               zoomed={!!zoom}
               focused={zoom === instanceId}
               zoomMode={zoomMode}
-              panelOpen={panelOpen}
+              panelOpen={!!panelId}
+              panelTarget={panelId === instanceId}
               menuTarget={menu?.id === instanceId}
               rate={resolveRate(instanceId, widgets[instanceId]?.rate)}
               manualRefresh={manualRefresh[instanceId] || 0}

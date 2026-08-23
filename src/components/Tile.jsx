@@ -182,6 +182,7 @@ function Tile({
   focused,
   zoomMode,
   panelOpen,
+  panelTarget,
   menuTarget,
   dragging = false,
   rate,
@@ -259,8 +260,21 @@ function Tile({
         focused,
         zoomMode,
         panelOpen,
+        panelTarget,
       }),
-    [appearance, tint, size, columns, editing, menuTarget, zoomed, focused, zoomMode, panelOpen]
+    [
+      appearance,
+      tint,
+      size,
+      columns,
+      editing,
+      menuTarget,
+      panelTarget,
+      zoomed,
+      focused,
+      zoomMode,
+      panelOpen,
+    ]
   );
 
   if (!manifest) return null;
@@ -495,7 +509,11 @@ function Tile({
             options={options}
             config={config}
             focused={focused}
-            editing={editing}
+            // A widget's own add and edit controls belong on screen whenever
+            // its settings are open: the drawer is where you go to change the
+            // thing, and having to also put the board into edit mode to reach
+            // "Add a location" is a second gesture for one intention.
+            editing={editing || panelTarget}
             // Whether the tile is showing any chrome of its own. A widget that
             // is essentially one large drawing uses this to become the tile
             // rather than sitting inside it.

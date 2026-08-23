@@ -700,7 +700,7 @@ function App() {
         zoom={zoom}
         cam={cam}
         zoomMode={zoomMode}
-        panelOpen={!!panel}
+        panelId={panel}
         menu={menu}
         manualRefresh={manualRefresh}
         boardRef={boardRef}

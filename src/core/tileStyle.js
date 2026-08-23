@@ -14,6 +14,7 @@ export function tileStyle({
   columns = 12,
   editing = false,
   menuTarget = false,
+  panelTarget = false,
   zoomed = false,
   focused = false,
   zoomMode = "Camera",
@@ -75,7 +76,11 @@ export function tileStyle({
   };
 
   if (editing) base.boxShadow = "0 0 0 1px var(--accentLine) inset";
-  if (menuTarget) base.boxShadow = "0 0 0 1.5px var(--accent) inset";
+  // The same outline for "the menu is on this tile" and "this tile's settings
+  // are open", because they answer the same question: which one am I working
+  // on. The drawer names the widget but not which copy of it, and a board with
+  // two clocks on it gave no way to tell.
+  if (menuTarget || panelTarget) base.boxShadow = "0 0 0 1.5px var(--accent) inset";
 
   if (!zoomed) return base;
 

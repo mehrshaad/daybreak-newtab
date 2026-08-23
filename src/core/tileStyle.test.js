@@ -84,6 +84,23 @@ describe("tileStyle states", () => {
     expect(s.boxShadow).toBe("0 0 0 1.5px var(--accent) inset");
   });
 
+  it("outlines the tile whose settings are open, the same way", () => {
+    // Which tile am I working on is one question, whether it was asked by
+    // right-clicking or by opening the drawer. The drawer names the widget but
+    // not which copy of it, so on a board with two clocks the outline is the
+    // only thing that answers it.
+    const ring = "0 0 0 1.5px var(--accent) inset";
+    expect(tileStyle({ panelTarget: true }).boxShadow).toBe(ring);
+    expect(tileStyle({ editing: true, panelTarget: true }).boxShadow).toBe(ring);
+    expect(tileStyle({ menuTarget: true, panelTarget: true }).boxShadow).toBe(ring);
+  });
+
+  it("leaves every other tile alone while one is being configured", () => {
+    // panelTarget is per tile, not "a panel is open somewhere".
+    expect(tileStyle({ panelTarget: false }).boxShadow).not.toContain("var(--accent)");
+    expect(tileStyle({}).boxShadow).not.toContain("var(--accent)");
+  });
+
   it("is inert with no zoom applied", () => {
     const s = tileStyle({});
     // Relative only so edit-mode chrome can be positioned over the tile; it
