@@ -2,7 +2,7 @@
 // function of (appearance, tile state) so the zoom behaviour is testable
 // without mounting the board.
 
-import { tileFill } from "./tokens";
+import { tileFill, tileSurfaces } from "./tokens";
 
 export function tileStyle({
   theme = "dark",
@@ -32,6 +32,11 @@ export function tileStyle({
   const fill = tileFill(theme, alpha, tint);
 
   const base = {
+    // Inputs, buttons and rows inside a coloured tile follow its colour. The
+    // widgets need no changes for this: they already paint with var(--panel),
+    // and these override what that resolves to within this tile. See
+    // tileSurfaces.
+    ...tileSurfaces(theme, tint),
     // Positioned so edit-mode chrome can float over the tile instead of taking
     // part in its layout.
     position: "relative",

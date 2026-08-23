@@ -18,9 +18,12 @@ import {
 import { CATEGORIES, CATEGORY_LABELS } from "../core/notices";
 import { versionLabel } from "../core/version";
 import { SOURCES } from "../core/suggest";
+import { boardWidthChoices, useViewportWidth } from "../core/useColumns";
 import { systemTheme } from "../core/useSystemTheme";
 import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 import ProfilesSection from "./ProfilesSection";
+
+const BOARD_WIDTH_LABELS = { comfortable: "Comfortable", wide: "Wide", full: "Full" };
 
 
 const SWATCH_FADE = 320;
@@ -83,6 +86,8 @@ function SettingsDrawer({
   toast,
 }) {
   const { appearance, behavior, profile } = settings;
+  const viewport = useViewportWidth();
+  const widthChoices = boardWidthChoices(viewport, appearance.boardWidth || "comfortable");
   const suggest = behavior.suggest || { links: true };
   const notices = behavior.notifications || { enabled: true, categories: {} };
   const fileRef = useRef(null);
@@ -250,28 +255,31 @@ function SettingsDrawer({
             value={appearance.alpha}
             onChange={(alpha) => update("appearance", { alpha })}
           />
-          <div>
-            <div style={{ fontSize: 13, marginBottom: 7 }}>Board width</div>
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-              {[
-                ["comfortable", "Comfortable"],
-                ["wide", "Wide"],
-                ["full", "Full"],
-              ].map(([value, label]) => (
-                <Pill
-                  key={value}
-                  active={(appearance.boardWidth || "comfortable") === value}
-                  onClick={() => update("appearance", { boardWidth: value })}
-                  style={{ fontSize: 11, padding: "5px 10px" }}
-                >
-                  {label}
-                </Pill>
-              ))}
+          {/* Only where the choices actually produce different boards. The
+              board is min(cap, window - padding), so on a window narrower than
+              the smallest cap all three give the identical result — three pills
+              that do nothing read as a broken setting rather than one that does
+              not apply here. */}
+          {widthChoices.length > 1 ? (
+            <div>
+              <div style={{ fontSize: 13, marginBottom: 7 }}>Board width</div>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                {widthChoices.map((value) => (
+                  <Pill
+                    key={value}
+                    active={(appearance.boardWidth || "comfortable") === value}
+                    onClick={() => update("appearance", { boardWidth: value })}
+                    style={{ fontSize: 11, padding: "5px 10px" }}
+                  >
+                    {BOARD_WIDTH_LABELS[value]}
+                  </Pill>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 6 }}>
+                How far the board spreads on a wide screen.
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 6 }}>
-              How far the board spreads on a wide screen.
-            </div>
-          </div>
+          ) : null}
           <div>
             <div style={{ fontSize: 13, marginBottom: 7 }}>Widget labels</div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>

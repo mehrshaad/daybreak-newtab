@@ -4,6 +4,7 @@ import {
   ACCENTS,
   hslOf,
   tileFill,
+  tileSurfaces,
   wallTint,
   DEFAULTS,
   background,
@@ -429,5 +430,48 @@ describe("tileFill", () => {
 
   it("ignores a malformed tint rather than emitting a broken colour", () => {
     expect(tileFill("dark", 100, "not-a-colour")).toBe("rgba(28,30,38,1)");
+  });
+});
+
+describe("tileSurfaces", () => {
+  it("leaves an untinted tile entirely alone", () => {
+    // No overrides at all, so an uncoloured tile resolves the theme's own
+    // panels exactly as it always did.
+    expect(tileSurfaces("dark", null)).toBeNull();
+    expect(tileSurfaces("light", null)).toBeNull();
+  });
+
+  it("keeps the alphas, so only the hue follows the tile", () => {
+    // The depth and layering of a widget's inputs are the theme's business.
+    // What was wrong was the colour: 92% white over a lilac tile is a stark
+    // white box sitting on lilac.
+    const light = tileSurfaces("light", "#c79bff");
+    expect(light["--panel"]).toMatch(/,0\.62\)$/);
+    expect(light["--panel2"]).toMatch(/,0\.92\)$/);
+    const dark = tileSurfaces("dark", "#c79bff");
+    expect(dark["--panel"]).toMatch(/,0\.05\)$/);
+    expect(dark["--panel2"]).toMatch(/,0\.1\)$/);
+  });
+
+  it("moves the white toward the tile's colour", () => {
+    const channels = (css) => css.match(/[\d.]+/g).slice(0, 3).map(Number);
+    // A violet tint has more blue than green, so the wash must too — plain
+    // white would come back equal on all three.
+    const [r, g, b] = channels(tileSurfaces("light", "#c79bff")["--panel"]);
+    expect(b).toBeGreaterThan(g);
+    expect(r).toBeGreaterThan(g);
+    expect(new Set([r, g, b]).size).toBeGreaterThan(1);
+  });
+
+  it("gives every swatch its own set of surfaces", () => {
+    const seen = new Set(ACCENTS.map((c) => tileSurfaces("light", c)["--panel2"]));
+    expect(seen.size).toBe(ACCENTS.length);
+  });
+
+  it("does not touch the light theme's row highlight", () => {
+    // It is a dark wash over a light surface, and tinting it would lighten the
+    // one thing whose job is to be darker than what it sits on.
+    expect(tileSurfaces("light", "#c79bff")["--sheetHover"]).toBeUndefined();
+    expect(tileSurfaces("dark", "#c79bff")["--sheetHover"]).toBeTruthy();
   });
 });

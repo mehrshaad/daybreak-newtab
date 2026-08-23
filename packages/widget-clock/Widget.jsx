@@ -1,11 +1,12 @@
 import { MONO, useMeasuredWidth, useMinutes, useSeconds } from "@daybreak/sdk";
 import RoundFace from "./faces/RoundFace";
+import BareFace from "./faces/BareFace";
 import SquaredFace from "./faces/SquaredFace";
 
 // Layout does not change when the tile is zoomed: zooming magnifies the board
 // like a page zoom, so a tile that rearranged itself on the way in would look
 // out of place. Sizing keys off the tile's own span instead.
-function Clock({ options, size }) {
+function Clock({ options, size, bare }) {
   const { hour24, seconds, hideDate, analog, align, accentFace, face, dialDate } = options;
   const bySecond = useSeconds(!!seconds);
   const byMinute = useMinutes();
@@ -43,7 +44,11 @@ function Clock({ options, size }) {
   // the face has to go, or the day is printed twice on the same tile — and the
   // in-dial numeral then carries it for screen readers too rather than being
   // decorative.
-  const Face = face === "squared" ? SquaredFace : RoundFace;
+  // With the tile's chrome gone the dial becomes the tile itself: no drawn
+  // outline, and markers on the tile's real edges rather than on a square
+  // inscribed inside it. Only for the analog faces — a bare digital clock is
+  // just the digits, which already fill what they are given.
+  const Face = bare && analog ? BareFace : face === "squared" ? SquaredFace : RoundFace;
   const inDial = !!(analog && dialDate && !hideDate);
 
   const date = hideDate ? null : (

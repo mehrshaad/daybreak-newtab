@@ -277,6 +277,14 @@ function Tile({
   // with labels hidden, right-clicking a widget pushed its content down by the
   // height of a row that then showed nothing.
   const headerHidden = !showIcon && !showName && !focused;
+  // How far a widget may bleed past the tile's own padding, which is nothing
+  // while the header row is there and the full padding once it has gone. A
+  // widget that is essentially one large drawing — the analog clock — can then
+  // use the whole tile rather than sitting in a frame of empty padding. Passed
+  // as CSS custom properties rather than a prop because it is a layout detail
+  // of the tile, not information a widget needs to reason about: the ones that
+  // want it opt in with a negative margin and the rest never see it.
+  const bleed = headerHidden ? { x: 18, y: 16 } : { x: 0, y: 0 };
 
   return (
     <div
@@ -287,6 +295,8 @@ function Tile({
       // FLIP identifies tiles by this across reorders and resizes.
       data-flip-id={instanceId}
       style={{
+        "--tile-bleed-x": `${bleed.x}px`,
+        "--tile-bleed-y": `${bleed.y}px`,
         ...style,
         // Baked in once at mount and never touched again — a static value
         // never replays a CSS animation on re-render, which is what keeps
@@ -482,6 +492,10 @@ function Tile({
             config={config}
             focused={focused}
             editing={editing}
+            // Whether the tile is showing any chrome of its own. A widget that
+            // is essentially one large drawing uses this to become the tile
+            // rather than sitting inside it.
+            bare={headerHidden}
             refreshKey={refreshKey}
             setConfig={setConfig}
             setOptions={setOptions}

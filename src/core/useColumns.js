@@ -43,6 +43,34 @@ export const BOARD_WIDTHS = {
   full: Infinity,
 };
 
+// Which board-width options are worth offering on this window.
+//
+// The board is min(cap, window - padding), so on anything narrower than the
+// smallest cap every option produces the identical board. Offering three pills
+// that all do nothing is worse than offering none: it invites a click and
+// answers with no change, which reads as a broken setting rather than as a
+// setting that does not apply here.
+//
+// An option earns its place by producing a wider board than the one before it.
+// The current choice is always kept, whatever the window: dropping it would
+// show a row with nothing selected, and the stored setting still matters the
+// moment the window grows.
+export function boardWidthChoices(viewportWidth, current) {
+  const available = viewportWidth - BOARD_PAD * 2;
+  const names = Object.keys(BOARD_WIDTHS);
+  const out = [];
+  let reached = 0;
+  for (const name of names) {
+    const cap = BOARD_WIDTHS[name];
+    const width = Math.min(cap, available);
+    if (!out.length || width > reached || name === current) {
+      out.push(name);
+      reached = Math.max(reached, width);
+    }
+  }
+  return out;
+}
+
 export function boardMaxWidth(width) {
   const value = BOARD_WIDTHS[width] ?? BOARD_MAX;
   return Number.isFinite(value) ? `${value}px` : "none";

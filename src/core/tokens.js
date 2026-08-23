@@ -163,6 +163,43 @@ export function tileFill(theme, alpha = 100, tint = null) {
   return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha / 100})`;
 }
 
+// The surfaces *inside* a tinted tile.
+//
+// --panel and --panel2 are what every widget paints its inputs, buttons and
+// rows with, and they are translucent whites layered over the tile. On the dark
+// theme that is fine: white at 5% over a green-dark tile gives a slightly
+// lighter green-dark. On the light theme they are 62% and 92% white, which
+// swamps the tint completely — a stark white input box sitting on a lilac tile,
+// which is what the tiles looked like as soon as they could be coloured.
+//
+// So the white gets the same treatment the tile did: mixed toward the tint
+// before being laid on. The alphas are untouched, so the depth and the layering
+// are exactly as they were and only the hue follows the tile.
+//
+// Returned as CSS custom properties for the tile element, which means widgets
+// need no changes at all: they already say var(--panel), and inside a tinted
+// tile that now resolves to a tinted panel.
+export function tileSurfaces(theme, tint) {
+  if (!tint) return null;
+  const dark = theme !== "light";
+  const key = dark ? "dark" : "light";
+  const [r, g, b] = mixToward([255, 255, 255], tint, TINT_MIX[key]);
+  const wash = (alpha) => `rgba(${r},${g},${b},${alpha})`;
+  return dark
+    ? {
+        "--panel": wash(0.05),
+        "--panel2": wash(0.1),
+        "--sheetHover": wash(0.1),
+      }
+    : {
+        "--panel": wash(0.62),
+        "--panel2": wash(0.92),
+        // The light theme's row highlight is a dark wash rather than a white
+        // one, so it is left alone: tinting it would lighten the one surface
+        // whose whole job is to be darker than what it sits on.
+      };
+}
+
 export const GRID_GAP = 14;
 
 // Page zoom, as a percentage, applied with the CSS `zoom` property so the

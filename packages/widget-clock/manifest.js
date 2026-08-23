@@ -29,9 +29,13 @@ export default {
       key: "face",
       label: "Face",
       type: "enum",
-      of: ["round", "squared"],
-      labels: { round: "Round", squared: "Squared" },
-      default: "round",
+      // Squared first, and the default. It is the face that fills a tile —
+      // a circle in a rounded rectangle leaves four corners of dead space —
+      // and it is the one that makes the widget read as a clock rather than as
+      // a clock drawn inside a card.
+      of: ["squared", "round"],
+      labels: { squared: "Squared", round: "Round" },
+      default: "squared",
       showIf: { analog: true },
     },
     {

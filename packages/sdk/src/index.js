@@ -121,7 +121,7 @@ export {
   usePointerReorder,
 } from "./usePointerReorder";
 export { useHover } from "./useHover";
-export { useMeasuredWidth } from "./useMeasuredWidth";
+export { useMeasuredBox, useMeasuredWidth } from "./useMeasuredWidth";
 export { usePointerExit } from "./usePointerExit";
 export { useRovingMenu } from "./useRovingMenu";
 export { useLongPress } from "./useLongPress";

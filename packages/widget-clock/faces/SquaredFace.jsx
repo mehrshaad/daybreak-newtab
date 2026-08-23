@@ -74,7 +74,27 @@ function SquaredFace({ date, showSeconds, showDate, label, accentFace }) {
     // tile makes it as tall as it is wide — which the tile then clips.
     // Absolute inside a relative box gives it both dimensions outright, and
     // preserveAspectRatio (xMidYMid meet, the default) centres the square in it.
-    <div style={{ position: "relative", flex: 1, minHeight: 0, width: "100%" }}>
+    <div
+      style={{
+        position: "relative",
+        flex: 1,
+        minHeight: 0,
+        // Out past the tile's own padding once its header row is gone, so a
+        // dial that is the whole point of the widget uses the whole widget
+        // rather than sitting in a frame of empty padding. The tile publishes
+        // how much it may bleed (see Tile.jsx); with the header showing, both
+        // are zero and this is a no-op. Width is grown to match, or the dial
+        // would keep its old size and simply sit off-centre.
+        margin: "calc(var(--tile-bleed-y, 0px) * -1) calc(var(--tile-bleed-x, 0px) * -1)",
+        width: "calc(100% + var(--tile-bleed-x, 0px) * 2)",
+        // Nothing in a clock face is interactive, and once it bleeds it covers
+        // the whole tile — including the strip at the bottom where the drag
+        // handle lives, and every pixel a right-click might land on. Setting
+        // this on the svg alone was not enough: this wrapper is a plain div and
+        // was swallowing both.
+        pointerEvents: "none",
+      }}
+    >
       <svg
         viewBox="0 0 100 100"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { MONO, Tooltip, useTooltip, useWidgetLocal } from "@daybreak/sdk";
+import { LuPause, LuPlay, LuRotateCcw } from "react-icons/lu";
+import { MONO, Tooltip, useMeasuredWidth, useTooltip, useWidgetLocal } from "@daybreak/sdk";
 import { formatClock, IDLE, nextPhase, phaseLength, remainingOf, resumeFrom } from "./phases";
 
 // The run lives in storage, not in this component.
@@ -84,11 +85,24 @@ function Timer({ id, options, toast }) {
     setLeft(full);
   };
 
+  // The word goes only where it genuinely will not fit. The row needs about
+  // 197px — roughly 90 for the clock, 10 of gap, 62 for the button, 6 more and
+  // 29 for the reset — so the threshold sits just under that rather than at a
+  // round number that would drop the label on tiles with room to spare. My
+  // first pass used 220 and hid it on a two-column tile that fits it fine.
+  //
+  // Measured, not the grid span: the same two-column tile is 203px on the
+  // default board and 370px on a full-width one, and only one of those is
+  // cramped. See useMeasuredWidth.
+  const [boxRef, measured] = useMeasuredWidth();
+  const tight = measured != null && measured < 195;
+
   const total = phaseLength({ phase, longFocus });
   const progress = Math.min(100, Math.max(0, ((total - left) / total) * 100));
 
   return (
     <div
+      ref={boxRef}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -130,23 +144,51 @@ function Timer({ id, options, toast }) {
               e.stopPropagation();
               start();
             }}
+            aria-label={running ? "Pause" : "Start"}
             style={{
+              display: "grid",
+              placeItems: "center",
               // Fixed so the crossfade between "Start" and "Pause" — different
-              // widths — never nudges the reset button beside it.
-              minWidth: 62,
-              padding: "6px 14px",
+              // widths — never nudges the reset button beside it. Collapsing to
+              // the reset button's own width when there is no room for a word
+              // is transitioned rather than swapped, so the row narrows rather
+              // than jumping.
+              minWidth: tight ? 29 : 62,
+              width: tight ? 29 : undefined,
+              // Explicit, so it and the round reset button beside it are the
+              // same height whatever the font metrics do.
+              height: 29,
+              padding: tight ? 0 : "0 14px",
               borderRadius: 999,
               fontSize: 12,
               cursor: "pointer",
               background: running ? "var(--accent)" : "var(--panel2)",
               color: running ? "var(--onAccent)" : "var(--fg)",
               border: `1px solid ${running ? "transparent" : "var(--line)"}`,
-              transition: "background .18s ease, border-color .18s ease, color .18s ease",
+              transition:
+                "background .18s ease, border-color .18s ease, color .18s ease, " +
+                "min-width .22s cubic-bezier(.2,.8,.2,1), width .22s cubic-bezier(.2,.8,.2,1), padding .22s ease",
             }}
           >
-            {/* Keyed so the label crossfades on toggle instead of snapping. */}
-            <span key={running ? "on" : "off"} style={{ display: "inline-block", animation: "db-fade .2s ease both" }}>
-              {running ? "Pause" : "Start"}
+            {/* Keyed on both, so the word crossfades when the timer toggles and
+                again when the tile gets too narrow to hold one. */}
+            <span
+              key={`${running ? "on" : "off"}-${tight ? "icon" : "text"}`}
+              style={{ display: "grid", placeItems: "center", animation: "db-fade .2s ease both" }}
+            >
+              {tight ? (
+                running ? (
+                  // Filled, and bigger than the 12px first tried: two thin
+                  // outlined bars at that size read as almost nothing.
+                  <LuPause size={13} fill="currentColor" aria-hidden="true" />
+                ) : (
+                  <LuPlay size={13} fill="currentColor" aria-hidden="true" />
+                )
+              ) : running ? (
+                "Pause"
+              ) : (
+                "Start"
+              )}
             </span>
           </button>
           <button
@@ -157,30 +199,40 @@ function Timer({ id, options, toast }) {
               e.stopPropagation();
               reset();
             }}
+            // Matched to the button beside it. It used to be transparent with
+            // a border while Start was filled, which read as two different
+            // kinds of control rather than a pair — and the raw ↺ character
+            // sat on the text baseline, so it was a couple of pixels off centre
+            // and a different weight from everything else in the widget.
             style={{
-              padding: "6px 10px",
+              display: "grid",
+              placeItems: "center",
+              // The same box as Start: same vertical padding, and a width that
+              // makes it a circle at that height rather than a squashed pill.
+              width: 29,
+              height: 29,
+              padding: 0,
               borderRadius: 999,
-              fontSize: 12,
               cursor: "pointer",
-              background: "transparent",
+              background: "var(--panel2)",
               color: "var(--dim)",
               border: "1px solid var(--line)",
-              transition: "background .15s ease, border-color .15s ease",
+              transition: "background .15s ease, border-color .15s ease, color .15s ease",
             }}
             onMouseEnter={(e) => {
               resetTip.anchorProps.onMouseEnter?.();
-              e.currentTarget.style.background = "var(--panel2)";
               e.currentTarget.style.borderColor = "var(--accentLine)";
+              e.currentTarget.style.color = "var(--fg)";
             }}
             onMouseLeave={(e) => {
               resetTip.anchorProps.onMouseLeave?.();
-              e.currentTarget.style.background = "transparent";
               e.currentTarget.style.borderColor = "var(--line)";
+              e.currentTarget.style.color = "var(--dim)";
             }}
             onFocus={resetTip.anchorProps.onFocus}
             onBlur={resetTip.anchorProps.onBlur}
           >
-            ↺
+            <LuRotateCcw size={13} aria-hidden="true" />
           </button>
           <Tooltip {...resetTip} />
         </div>

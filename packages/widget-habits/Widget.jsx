@@ -420,6 +420,13 @@ function Habits({ id, options, config, setConfig, size, editing }) {
         minHeight: 0,
         overflowY: "auto",
         overflowX: "hidden",
+        // Room between the week's dots and the scrollbar. The dots sit hard
+        // against the right edge of the row, so with a scrollbar present the
+        // last one in every row was touching it. Only applied when the list
+        // actually scrolls, via scrollbar-gutter, so a short list is not
+        // indented for a scrollbar that is not there.
+        scrollbarGutter: "stable",
+        paddingRight: 6,
       }}
     >
       {habits.map((habit) => {

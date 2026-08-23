@@ -4,7 +4,7 @@ export default {
   glyph: "timer",
   category: "Productivity",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "Pomodoro rounds, quietly.",
   description:
     "Twenty-five minutes of focus, five off, a longer break every fourth " +

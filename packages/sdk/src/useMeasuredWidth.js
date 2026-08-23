@@ -22,9 +22,9 @@ import { useEffect, useRef, useState } from "react";
 //
 // Returns null until the first measurement, so a caller can fall back to its
 // span for the first frame rather than flickering through a wrong layout.
-export function useMeasuredWidth() {
+export function useMeasuredBox() {
   const ref = useRef(null);
-  const [width, setWidth] = useState(null);
+  const [box, setBox] = useState(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -32,11 +32,21 @@ export function useMeasuredWidth() {
     const ro = new ResizeObserver(([entry]) => {
       // contentRect, not the border box: what a widget is deciding about is the
       // room it has to lay things out in, which is inside its own padding.
-      setWidth(entry.contentRect.width);
+      const { width, height } = entry.contentRect;
+      setBox((prev) =>
+        prev && prev.width === width && prev.height === height ? prev : { width, height }
+      );
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  return [ref, width];
+  return [ref, box];
+}
+
+// Most callers only branch on width, so they get it directly rather than
+// unpacking a box and remembering that it can be null.
+export function useMeasuredWidth() {
+  const [ref, box] = useMeasuredBox();
+  return [ref, box ? box.width : null];
 }
