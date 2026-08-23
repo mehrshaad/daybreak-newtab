@@ -226,15 +226,18 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
     return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [present, steps, finish]);
 
-  // Focus starts and stays on the card, so Tab cycles its three buttons rather
-  // than wandering into a board nobody can click anyway. Re-run per step
-  // because the button set changes: there is no Back on the first.
+  // Focus starts and stays on the card, so Tab cycles its buttons rather than
+  // wandering into a board nobody can click anyway, and Enter advances.
+  //
+  // The Next button by name, not "the last button in the card": that selector
+  // found the last progress dot instead — :last-of-type matches per parent and
+  // querySelector takes the first such match in the document — so the ring sat
+  // on the fifteenth dot and Enter jumped to the end of the tour.
   useEffect(() => {
     if (!present) return;
     const card = cardRef.current;
     if (!card || card.contains(document.activeElement)) return;
-    const next = card.querySelector("button:last-of-type");
-    next?.focus?.();
+    card.querySelector("[data-tour-primary]")?.focus?.();
   }, [present, index]);
 
   if (!present || !step) return null;
@@ -352,7 +355,20 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
             weight alone: on a translucent card at 13px, weight on its own is
             almost invisible, and colour is what actually makes a phrase catch
             the eye when somebody is scanning rather than reading. */}
-        <div style={{ fontSize: 13, lineHeight: 1.6, color: "var(--dim)" }}>
+        <div
+          style={{
+            fontSize: 13,
+            lineHeight: 1.6,
+            color: "var(--dim)",
+            // Justified, with hyphenation to go with it. A 340px column at
+            // 13px is narrow enough that justification alone opens rivers of
+            // white space between words; letting the browser break the long
+            // ones closes them up. The last line stays ragged, which is the
+            // default and the right behaviour.
+            textAlign: "justify",
+            hyphens: "auto",
+          }}
+        >
           {emphasise(step.body).map((run, i) =>
             run.strong ? (
               <strong key={i} style={{ fontWeight: 500, color: "var(--fg)" }}>
@@ -368,7 +384,15 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
             show, and seeing how many are left is what stops a tour feeling
             endless. On their own row, because thirteen of them beside three
             buttons wrapped onto two lines and looked like a mistake. */}
-        <div style={{ display: "flex", gap: 4, marginTop: 16, alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            marginTop: 16,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
             {steps.map((s, i) => (
               <button
                 key={s.id}
@@ -428,6 +452,7 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
           ) : null}
           <button
             type="button"
+            data-tour-primary=""
             onClick={() => (last ? finish() : setIndex((i) => nextIndex(steps, i)))}
             style={{
               padding: "7px 15px",
