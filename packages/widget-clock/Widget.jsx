@@ -8,7 +8,8 @@ import SquaredFace from "./faces/SquaredFace";
 // like a page zoom, so a tile that rearranged itself on the way in would look
 // out of place. Sizing keys off the tile's own span instead.
 function Clock({ options, size, bare }) {
-  const { hour24, seconds, hideDate, analog, align, accentFace, face, dialDate } = options;
+  const { hour24, seconds, hideDate, analog, align, accentFace, face, dialDate, textSize } =
+    options;
   const bySecond = useSeconds(!!seconds);
   const byMinute = useMinutes();
   const now = seconds ? bySecond : byMinute;
@@ -41,7 +42,11 @@ function Clock({ options, size, bare }) {
   // big digits with somebody else's caption under it.
   const digitPx = analog
     ? null
-    : digitFontSize(box, digits, { meridiem: !!meridiem, date: !hideDate });
+    : digitFontSize(box, digits, {
+        meridiem: !!meridiem,
+        date: !hideDate,
+        size: textSize,
+      });
   const meridiemPx = digitPx
     ? Math.max(10, Math.round(digitPx * 0.26))
     : tall
@@ -192,7 +197,7 @@ function Clock({ options, size, bare }) {
     <div
       ref={boxRef}
       key={[
-        analog ? `analog-${face || "round"}` : "digital",
+        analog ? `analog-${face || "round"}` : `digital-${textSize || "m"}`,
         seconds ? "s" : "",
         hideDate ? "" : "d",
         inDial ? "in" : "",

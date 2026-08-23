@@ -4,7 +4,7 @@ export default {
   glyph: "clock",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.4.0",
   tagline: "The time and today's date, digital or analog.",
   description:
     "A large, quiet clock with the full date underneath, or an analog face " +
@@ -51,6 +51,20 @@ export default {
       type: "boolean",
       default: false,
       showIf: { analog: true },
+    },
+    // Digital only: the dial already fills whatever tile it is given, so it
+    // has nothing to scale.
+    {
+      key: "textSize",
+      label: "Size",
+      type: "enum",
+      of: ["s", "m", "l", "xl", "xxl"],
+      labels: { s: "S", m: "M", l: "L", xl: "XL", xxl: "XXL" },
+      // A share of the space the tile actually has, not a fixed point size, so
+      // every step still adapts when the tile is resized. M is where the
+      // measured fit already sat, so nobody's clock changes size by upgrading.
+      default: "m",
+      showIf: { analog: false },
     },
     // Digital only: there is nothing to align on a dial.
     {
