@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 // A widget's real content width, for the decisions that depend on it.
 //
@@ -64,7 +64,20 @@ export function useMeasuredBox() {
   // Deliberately not clearing `box` when the node goes: on a keyed swap the
   // replacement is the same size, and blanking the measurement in between would
   // flash one frame of the caller's fallback layout on every toggle.
-  useEffect(() => () => observerRef.current?.disconnect(), []);
+  //
+  // And deliberately no unmount effect to disconnect. There was one, and it
+  // broke the analog clock faces: under StrictMode React runs every effect
+  // setup, cleanup, setup again, while a callback ref is attached, detached and
+  // re-attached in a separate pass. Whichever order those two interleave in
+  // decides whether the disconnect lands on an observer that has already been
+  // replaced (harmless) or on the live one the ref just created (fatal, and
+  // nothing re-creates it). It came out differently for a component and one
+  // nested inside it, which is why the digital clock measured fine while
+  // BareFace never did and drew nothing at all.
+  //
+  // The callback ref already covers the whole lifecycle: React calls it with
+  // null when the element goes away, including on unmount, and that branch
+  // disconnects. One owner of the observer, no ordering to get wrong.
 
   return [ref, box];
 }
