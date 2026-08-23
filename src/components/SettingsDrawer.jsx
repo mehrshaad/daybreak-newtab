@@ -83,6 +83,7 @@ function SettingsDrawer({
   onClose,
   onReset,
   onRestore,
+  onTour,
   toast,
 }) {
   const { appearance, behavior, profile } = settings;
@@ -116,7 +117,7 @@ function SettingsDrawer({
       header={<DrawerHeader title="Settings" onClose={onClose} />}
     >
 
-      <Section title="Appearance" style={{ marginBottom: 20 }}>
+      <Section title="Appearance" data-tour="settings-appearance" style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", gap: 6 }}>
           {[
             ["system", "System"],
@@ -365,6 +366,14 @@ function SettingsDrawer({
         >
           Show the welcome card again
         </Pill>
+        {/* Beside it rather than buried: the tour is the more useful of the two
+            and the welcome card is mostly a name field. */}
+        <Pill
+          onClick={onTour}
+          style={{ marginTop: 10, marginLeft: 6, padding: "8px 14px", fontSize: 13 }}
+        >
+          Take the tour
+        </Pill>
       </Section>
 
       <Section title="Notifications" style={{ marginBottom: 22 }}>
@@ -417,7 +426,7 @@ function SettingsDrawer({
 
       {/* Above search and below the board's own look: a profile owns both, so
           it reads as the thing the sections beneath it belong to. */}
-      <Section title="Profiles" style={{ marginBottom: 22 }}>
+      <Section title="Profiles" data-tour="settings-profiles" style={{ marginBottom: 22 }}>
         <ProfilesSection />
       </Section>
 
@@ -494,7 +503,7 @@ function SettingsDrawer({
         </div>
       </Section>
 
-      <Section title="Backup">
+      <Section title="Backup" data-tour="settings-backup">
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5 }}>
             Exports your layout, settings and widget content as a file on this

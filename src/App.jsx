@@ -10,6 +10,7 @@ import { Collapse } from "./components/primitives";
 import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
 import Notifications from "./components/Notifications";
+import Tour from "./components/Tour";
 import WelcomeCard from "./components/WelcomeCard";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
@@ -209,6 +210,32 @@ function App() {
     setSettingsOpen(true);
     setEditing(false);
     setMenu(null);
+  }, []);
+
+  // --- the tour ------------------------------------------------------------
+  //
+  // One function that puts the whole app into a named state, rather than the
+  // tour opening and closing things itself. Every scene says what *all* of the
+  // chrome should be, so moving between them cannot leave a drawer open behind
+  // the next step, and skipping out halfway cannot strand somebody in a mode
+  // they did not choose.
+  const [tourOpen, setTourOpen] = useState(false);
+
+  const showScene = useCallback(
+    (scene) => {
+      setMenu(null);
+      setStoreOpen(scene === "store");
+      setSettingsOpen(scene === "settings");
+      setEditing(scene === "edit");
+      // The widget scene needs a widget. Whichever is first on the board is the
+      // one the tour has been pointing at all along.
+      setPanel(scene === "widget" ? ids[0] || null : null);
+    },
+    [ids]
+  );
+
+  const startTour = useCallback(() => {
+    setTourOpen(true);
   }, []);
 
   const focusSearch = useCallback(() => {
@@ -735,6 +762,10 @@ function App() {
       ) : null}
 
       <SettingsDrawer
+        onTour={() => {
+          setSettingsOpen(false);
+          startTour();
+        }}
         open={settingsOpen}
         settings={settings}
         theme={theme}
@@ -762,14 +793,28 @@ function App() {
         open={!behavior.tourDone}
         name={profile.name}
         theme={appearance.theme || "system"}
+        blur={appearance.blur !== false}
         onNameChange={(name) => update("profile", { name })}
         onThemeChange={(t) => update("appearance", { theme: t })}
+        onBlurChange={(blur) => update("appearance", { blur })}
         onEnableSearch={() =>
           update("behavior", {
             suggest: { ...(behavior.suggest || {}), tabs: true, bookmarks: true, history: true },
           })
         }
-        onDismiss={() => update("behavior", { tourDone: true })}
+        onDismiss={({ tour } = {}) => {
+          update("behavior", { tourDone: true });
+          // Straight into the tour when they asked for it, rather than leaving
+          // a button somewhere they have not been told about yet.
+          if (tour) startTour();
+        }}
+      />
+
+      <Tour
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onScene={showScene}
+        hasWidgets={ids.length > 0}
       />
 
       {/* The menu keeps its last position and contents while it fades out. */}

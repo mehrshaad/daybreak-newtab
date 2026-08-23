@@ -177,6 +177,8 @@ function Board({
             <Tile
               key={instanceId}
               instanceId={instanceId}
+              // The tour points at the first tile, whichever it happens to be.
+              tourFirst={index === 0}
               initialStagger={isInitialRef.current ? index : null}
               appearance={appearance}
               columns={columns}

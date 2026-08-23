@@ -98,7 +98,13 @@ export const DEFAULTS = {
   // where the tile still reads as glass and the blur behind it is visible.
   alpha: 50,
   pageZoom: 100,
-  blur: true,
+  // Off by default. backdrop-filter is the single most expensive thing on the
+  // page — every tile, panel, sheet and menu is a separate blurred surface, and
+  // on a modest machine that is the difference between a new tab that appears
+  // and one that fades in. It is the better-looking setting and not the better
+  // default, so the welcome card offers it as a choice and this is where the
+  // choice starts.
+  blur: false,
   tileLabels: "both",
   boardWidth: "comfortable",
 };

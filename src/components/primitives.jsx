@@ -300,9 +300,11 @@ export function DrawerHeader({ eyebrow, title, subtitle, onClose }) {
   );
 }
 
-export function Section({ title, children, style }) {
+export function Section({ title, children, style, ...rest }) {
   return (
-    <div style={style}>
+    // ...rest so a caller can hang a data-* handle on a section — the tour uses
+    // them to point at one, and threading a prop per section would be worse.
+    <div style={style} {...rest}>
       <div className="db-label" style={{ marginBottom: "10px" }}>
         {title}
       </div>

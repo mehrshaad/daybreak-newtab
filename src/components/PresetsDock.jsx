@@ -32,6 +32,7 @@ function PresetsDock({
   const autoArrangeTip = useTooltip("Tidy the current widgets into neat rows");
   return (
     <div
+      data-tour="dock"
       onContextMenu={onContextMenu}
       style={{
         position: "fixed",

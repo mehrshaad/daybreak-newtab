@@ -102,7 +102,7 @@ function WidgetSettingsDrawer({
         />
       }
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div data-tour="panel" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {manifest.sizes.length > 1 ? (
           <Section title="Size">
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -120,7 +120,7 @@ function WidgetSettingsDrawer({
           </Section>
         ) : null}
 
-        <Section title="Colour">
+        <Section title="Colour" data-tour="panel-colour">
           <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5, marginBottom: 8 }}>
             The colour of this tile. Set per widget, so a board can tell one from
             another at a glance.

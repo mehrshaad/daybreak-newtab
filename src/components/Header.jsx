@@ -353,6 +353,7 @@ function Header({
       <div style={{ display: "flex", justifyContent: "center", minWidth: 0 }}>
         <form
           ref={formRef}
+          data-tour="search"
           onSubmit={submit}
           role="search"
           onFocusCapture={() => setSearchActive(true)}
@@ -487,7 +488,12 @@ function Header({
             place, which is the trade the search field needs: about 150px back,
             for two buttons a person learns once and then finds by position.
             The tooltip carries the name that the label used to. */}
-        <span ref={editTip.anchorRef} style={{ display: "inline-flex" }} {...editTip.anchorProps}>
+        <span
+          data-tour="edit-button"
+          ref={editTip.anchorRef}
+          style={{ display: "inline-flex" }}
+          {...editTip.anchorProps}
+        >
           <Button
             onClick={onToggleEdit}
             aria-pressed={editing}

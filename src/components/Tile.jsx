@@ -28,7 +28,7 @@ import ErrorBoundary from "./ErrorBoundary";
 // escalating: quiet line colour → an accent tint on hover or throughout edit
 // mode → full accent only while actually held, which is also the only time it
 // widens past the hover width.
-function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
+function DragHandle({ tileHovered, editing, dragging, onPointerDown, tourFirst }) {
   const [handleHovered, setHandleHovered] = useState(false);
   // No label while the drag is under way: the pointer necessarily sits on the
   // handle for the whole gesture, so the hint would pop up over the board a
@@ -51,6 +51,7 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
           tile's own padding rather than needing to reach past its
           `overflow: hidden` clip. */}
       <div
+        data-tour={tourFirst ? "handle" : undefined}
         ref={tip.anchorRef}
         // Dragging does not require edit mode: the handle only appears on
         // hover, so grabbing it is already deliberate, and rearranging the
@@ -174,6 +175,7 @@ function Tile({
   size,
   options,
   tint,
+  tourFirst = false,
   config,
   editing,
   zoomed,
@@ -294,6 +296,7 @@ function Tile({
       }}
       // FLIP identifies tiles by this across reorders and resizes.
       data-flip-id={instanceId}
+      data-tour={tourFirst ? "tile" : undefined}
       style={{
         "--tile-bleed-x": `${bleed.x}px`,
         "--tile-bleed-y": `${bleed.y}px`,
@@ -474,6 +477,7 @@ function Tile({
       </Appear>
 
       <DragHandle
+        tourFirst={tourFirst}
         tileHovered={tileHovered}
         editing={!!editing}
         dragging={dragging}
