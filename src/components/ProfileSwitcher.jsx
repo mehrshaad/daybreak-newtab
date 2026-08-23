@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LuCheck, LuSettings2 } from "react-icons/lu";
-import { MONO, Tooltip, useRovingMenu, useTooltip } from "@daybreak/sdk";
+import { MenuRow, MONO, Tooltip, useRovingMenu, useTooltip } from "@daybreak/sdk";
 import { useSettings } from "../core/settingsContext";
 import { MAX_PROFILES } from "../core/profiles";
 
@@ -19,6 +19,7 @@ import { MAX_PROFILES } from "../core/profiles";
 function ProfileSwitcher({ compact, onManage }) {
   const { profiles, activeProfileId, switchProfile } = useSettings();
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const wrapRef = useRef(null);
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
@@ -78,6 +79,8 @@ function ProfileSwitcher({ compact, onManage }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Profile: ${active.name}. Switch profile`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           display: "flex",
           alignItems: "center",
@@ -86,7 +89,7 @@ function ProfileSwitcher({ compact, onManage }) {
           padding: compact ? "5px 7px" : "5px 11px 5px 8px",
           borderRadius: 999,
           cursor: "pointer",
-          background: open ? "var(--panel2)" : "var(--panel)",
+          background: open || hovered ? "var(--panel2)" : "var(--panel)",
           border: "1px solid var(--line)",
           color: "var(--fg)",
           transition: "background .18s ease, border-color .18s ease",
@@ -142,28 +145,15 @@ function ProfileSwitcher({ compact, onManage }) {
           {list.map((profile) => {
             const current = profile.id === activeProfileId;
             return (
-              <button
+              <MenuRow
                 key={profile.id}
-                type="button"
                 role="menuitemradio"
                 aria-checked={current}
+                selected={current}
                 tabIndex={-1}
                 onClick={() => {
                   close(false);
                   switchProfile(profile.id);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: 0,
-                  background: current ? "var(--accentSoft)" : "transparent",
-                  color: current ? "var(--accent)" : "var(--fg)",
-                  fontSize: 13,
-                  cursor: "pointer",
-                  textAlign: "left",
                 }}
               >
                 <span aria-hidden="true" style={{ fontSize: 14, lineHeight: 1, flex: "none" }}>
@@ -184,7 +174,7 @@ function ProfileSwitcher({ compact, onManage }) {
                     tint alone is a colour difference, and the accent can be
                     any of sixteen. */}
                 {current ? <LuCheck size={13} aria-hidden="true" /> : null}
-              </button>
+              </MenuRow>
             );
           })}
 
@@ -194,31 +184,18 @@ function ProfileSwitcher({ compact, onManage }) {
               for the switch, which is the frequent act; a menu that also
               created things would put a permanent, rarely-wanted button next to
               the one people actually came for. */}
-          <button
-            type="button"
+          <MenuRow
             role="menuitem"
             tabIndex={-1}
             onClick={() => {
               close(false);
               onManage?.();
             }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              width: "100%",
-              padding: "8px 12px",
-              border: 0,
-              background: "transparent",
-              color: "var(--dim)",
-              fontSize: 12,
-              cursor: "pointer",
-              textAlign: "left",
-            }}
+            style={{ color: "var(--dim)", fontSize: "12px" }}
           >
             <LuSettings2 size={13} aria-hidden="true" />
             {list.length >= MAX_PROFILES ? "Manage profiles" : "Add or manage profiles"}
-          </button>
+          </MenuRow>
         </div>
       ) : null}
     </div>

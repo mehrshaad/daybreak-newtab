@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LuLayoutGrid, LuMousePointerClick, LuStore } from "react-icons/lu";
 import { hasPermissionsApi, requestAllPermissions, usePresence } from "@daybreak/sdk";
-import { Pill } from "./primitives";
+import { Button, Pill } from "./primitives";
 
 // Requested together so the results (open tabs, bookmarks, history) come with
 // real site icons rather than a generic placeholder.
@@ -220,8 +220,7 @@ function WelcomeCard({
             above are a summary of a page nobody has seen yet, and reading about
             a right-click menu is not the same as being shown where it is. */}
         <div style={{ display: "flex", gap: 8 }}>
-          <button
-            type="button"
+          <Button
             onClick={() => onDismiss({ tour: true })}
             style={{
               flex: 1,
@@ -234,11 +233,11 @@ function WelcomeCard({
               fontWeight: 500,
               cursor: "pointer",
             }}
+            hover={{ opacity: 0.9, transform: "translateY(-1px)" }}
           >
             Show me around
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={() => onDismiss({ tour: false })}
             style={{
               padding: "11px 16px",
@@ -250,9 +249,10 @@ function WelcomeCard({
               cursor: "pointer",
               flex: "none",
             }}
+            hover={{ background: "var(--panel2)", color: "var(--fg)" }}
           >
             Skip
-          </button>
+          </Button>
         </div>
       </div>
     </div>

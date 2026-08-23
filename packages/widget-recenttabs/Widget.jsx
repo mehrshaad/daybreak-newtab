@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { LuExternalLink, LuLayers } from "react-icons/lu";
-import { hasPermission, LIST_BLEED, requestPermission, Tooltip, useTooltip } from "@daybreak/sdk";
+import { Button, LIST_BLEED, Tooltip, hasPermission, requestPermission, useTooltip } from "@daybreak/sdk";
 
 const hasSessions = () => typeof chrome !== "undefined" && !!chrome.sessions;
 
@@ -172,8 +172,7 @@ function RecentTabs({ options, refreshKey, size, toast }) {
           Daybreak needs Chrome&apos;s <strong>sessions</strong> permission to
           list recently closed tabs. It stays on this device.
         </div>
-        <button
-          type="button"
+        <Button
           onClick={grant}
           style={{
             alignSelf: "flex-start",
@@ -186,9 +185,10 @@ function RecentTabs({ options, refreshKey, size, toast }) {
             background: "var(--accent)",
             color: "var(--onAccent)",
           }}
+          hover={{ opacity: 0.9 }}
         >
           Grant access
-        </button>
+        </Button>
       </div>
     );
   }

@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  hasPermission,
-  IconGrid,
-  iconGridSize,
-  requestPermission,
-} from "@daybreak/sdk";
+import { Button, IconGrid, hasPermission, iconGridSize, requestPermission } from "@daybreak/sdk";
 
 // Chrome's own most-visited list — the tiles its default new tab page shows,
 // which replacing that page otherwise silently takes away. Every Daybreak user
@@ -103,8 +98,7 @@ function TopSites({ config, setConfig, options, refreshKey, size, columns, editi
           Daybreak needs Chrome&apos;s <strong>topSites</strong> permission to
           show the places you visit most. The list stays on this device.
         </div>
-        <button
-          type="button"
+        <Button
           onClick={grant}
           style={{
             alignSelf: "flex-start",
@@ -116,9 +110,10 @@ function TopSites({ config, setConfig, options, refreshKey, size, columns, editi
             fontSize: 12,
             cursor: "pointer",
           }}
+          hover={{ background: "var(--accentLine)" }}
         >
           Allow
-        </button>
+        </Button>
       </div>
     );
   }

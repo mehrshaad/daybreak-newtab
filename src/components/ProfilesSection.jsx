@@ -23,12 +23,14 @@ function EmojiPicker({ value, onPick, taken }) {
         // as profiles come and go.
         const used = !chosen && taken.has(emoji);
         return (
-          <button
+          <Button
             key={emoji}
-            type="button"
             aria-label={emoji}
             aria-pressed={chosen}
             onClick={() => onPick(emoji)}
+            // Dimmed when it is not the one in use, so lifting it back to full
+            // on hover is the whole feedback this needs.
+            hover={chosen ? null : { opacity: used ? 0.7 : 1 }}
             style={{
               width: 26,
               height: 26,
@@ -48,7 +50,7 @@ function EmojiPicker({ value, onPick, taken }) {
             }}
           >
             {emoji}
-          </button>
+          </Button>
         );
       })}
     </div>
@@ -110,8 +112,7 @@ function ProfileRow({ profile, active, taken, onEdit, onRemove, onSwitch }) {
         )}
         {onRemove ? (
           <span ref={removeTip.anchorRef} style={{ display: "inline-flex", flex: "none" }} {...removeTip.anchorProps}>
-            <button
-              type="button"
+            <Button
               onClick={() => setConfirming(true)}
               aria-label={`Delete ${profile.name}`}
               style={{
@@ -126,9 +127,10 @@ function ProfileRow({ profile, active, taken, onEdit, onRemove, onSwitch }) {
                 color: "var(--faint)",
                 cursor: "pointer",
               }}
+              hover={{ background: "var(--sheetHover)", color: "var(--danger)" }}
             >
               <LuTrash2 size={13} />
-            </button>
+            </Button>
           </span>
         ) : null}
         <Tooltip {...removeTip} />

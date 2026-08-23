@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CONTROL_TRANSITION, pill, toggleStyles, useHover, usePresence } from "@daybreak/sdk";
 
 // Height-animated show/hide for content in normal flow.
@@ -52,21 +52,9 @@ export function Pill({ active, children, style, hoverStyle, ...rest }) {
   );
 }
 
-export function Button({ children, styleFor, hover, style, ...rest }) {
-  const [hovered, bind] = useHover();
-  const base = styleFor ? styleFor(style) : style;
-  return (
-    <button
-      type="button"
-      // First so a caller's own transition still wins.
-      style={{ transition: CONTROL_TRANSITION, ...base, ...(hovered ? hover : null) }}
-      {...bind}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-}
+// Lives in the SDK now, so the widget packages can use the same one. Still
+// exported from here because half the app imports it from this file.
+export { Button } from "@daybreak/sdk";
 
 export function Toggle({ on, label, onChange }) {
   const t = toggleStyles(on);
@@ -156,6 +144,8 @@ export function Drawer({ open, onClose, width = 340, label, header, children }) 
   const panelRef = useRef(null);
   const restoreRef = useRef(null);
   const [present, closing] = usePresence(open, EXIT_MS);
+  // Whether the body has been scrolled at all, for the fade under the header.
+  const [bodyScrolled, setBodyScrolled] = useState(false);
 
   useEffect(() => {
     if (!present || closing) return undefined;
@@ -217,7 +207,10 @@ export function Drawer({ open, onClose, width = 340, label, header, children }) 
         {header ? (
           <div style={{ flex: "none", padding: "24px 24px 10px" }}>{header}</div>
         ) : null}
+        {/* Relative so the fade below can sit over the top of the scroller. */}
+        <div style={{ position: "relative", flex: 1, minHeight: 0, display: "flex" }}>
         <div
+          onScroll={(e) => setBodyScrolled(e.currentTarget.scrollTop > 1)}
           style={{
             flex: 1,
             minHeight: 0,
@@ -238,8 +231,55 @@ export function Drawer({ open, onClose, width = 340, label, header, children }) 
         >
           {children}
         </div>
+        {/* A row of settings cut off flat against the title reads as a broken
+            layout rather than as something scrolled — there is nothing to say
+            the content continues upward. This fades it out instead, and only
+            once there is something above to fade. */}
+        {header ? (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 26,
+              pointerEvents: "none",
+              background: "linear-gradient(var(--sheet), transparent)",
+              opacity: bodyScrolled ? 1 : 0,
+              transition: "opacity .18s ease",
+            }}
+          />
+        ) : null}
+        </div>
       </div>
     </>
+  );
+}
+
+function CloseButton({ onClose }) {
+  const [hovered, bind] = useHover();
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close"
+      style={{
+        width: "28px",
+        height: "28px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        background: hovered ? "var(--sheetHover)" : "var(--panel2)",
+        border: "1px solid var(--line)",
+        lineHeight: 1,
+        color: hovered ? "var(--fg)" : "var(--dim)",
+        flex: "none",
+        transition: CONTROL_TRANSITION,
+      }}
+      {...bind}
+    >
+      ×
+    </button>
   );
 }
 
@@ -263,24 +303,7 @@ export function DrawerHeader({ eyebrow, title, subtitle, onClose }) {
             {title}
           </span>
         )}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            background: "var(--panel2)",
-            border: "1px solid var(--line)",
-            lineHeight: 1,
-            color: "var(--fg)",
-            flex: "none",
-          }}
-        >
-          ×
-        </button>
+        <CloseButton onClose={onClose} />
       </div>
       {eyebrow ? (
         <>

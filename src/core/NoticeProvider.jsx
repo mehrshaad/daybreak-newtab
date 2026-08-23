@@ -58,6 +58,19 @@ export function NoticeProvider({ children }) {
     // every tick would reset the countdown forever.
   }, [notices.length]);
 
+  // A way to raise a notice from the console while the dev server is running.
+  // Half these categories only fire when something has actually gone wrong —
+  // sync failing, an update landing — which makes "does the stack look right"
+  // an awkward thing to check by hand. Stripped from the built extension:
+  // import.meta.env.DEV is false there and the whole effect is dropped.
+  useEffect(() => {
+    if (!import.meta.env?.DEV) return undefined;
+    window.notify = notify;
+    return () => {
+      delete window.notify;
+    };
+  }, [notify]);
+
   const value = useMemo(
     () => ({ notices, notify, dismiss, freeze }),
     [notices, notify, dismiss, freeze]

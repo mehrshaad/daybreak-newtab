@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { LuPause, LuPlay, LuRotateCcw } from "react-icons/lu";
-import { MONO, Tooltip, useMeasuredWidth, useTooltip, useWidgetLocal } from "@daybreak/sdk";
+import { Button, MONO, Tooltip, useMeasuredWidth, useTooltip, useWidgetLocal } from "@daybreak/sdk";
 import { formatClock, IDLE, nextPhase, phaseLength, remainingOf, resumeFrom } from "./phases";
 
 // The run lives in storage, not in this component.
@@ -138,13 +138,13 @@ function Timer({ id, options, toast }) {
             flex: "none",
           }}
         >
-          <button
-            type="button"
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               start();
             }}
             aria-label={running ? "Pause" : "Start"}
+            hover={running ? { opacity: 0.9 } : { background: "var(--sheetHover)" }}
             style={{
               display: "grid",
               placeItems: "center",
@@ -190,7 +190,7 @@ function Timer({ id, options, toast }) {
                 "Start"
               )}
             </span>
-          </button>
+          </Button>
           <button
             ref={resetTip.anchorRef}
             type="button"

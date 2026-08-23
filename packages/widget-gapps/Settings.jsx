@@ -1,4 +1,5 @@
 import { APPS } from "./apps";
+import { Button, HOVER_SOFT } from "@daybreak/sdk";
 
 const byKey = new Map(APPS.map((a) => [a.key, a]));
 
@@ -22,8 +23,7 @@ function GappsSettings({ config, setConfig }) {
       <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5 }}>
         {hiddenApps.length} hidden: {hiddenApps.map((a) => a.name).join(", ")}
       </div>
-      <button
-        type="button"
+      <Button
         onClick={() => setConfig({ hidden: [] })}
         style={{
           alignSelf: "flex-start",
@@ -35,9 +35,10 @@ function GappsSettings({ config, setConfig }) {
           border: "1px solid var(--line)",
           color: "var(--fg)",
         }}
+        hover={HOVER_SOFT}
       >
         Restore hidden apps
-      </button>
+      </Button>
     </div>
   );
 }

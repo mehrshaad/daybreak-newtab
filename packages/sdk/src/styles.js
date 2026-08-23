@@ -83,6 +83,12 @@ export const CONTROL_TRANSITION =
   "background .18s ease, color .18s ease, border-color .18s ease, " +
   "box-shadow .18s ease, transform .18s ease, opacity .18s ease";
 
+// The hover face of a small control sitting on a panel — a button inside a
+// settings drawer, a chip in a widget's options. No lift and no shadow: those
+// are for the chrome that floats above the board, and inside a panel they read
+// as the control coming loose. Just the surface warming under the pointer.
+export const HOVER_SOFT = { background: "var(--sheetHover)" };
+
 // Lift applied on hover: enough to be unmistakable, short of bouncy.
 export const HOVER_LIFT = {
   background: "var(--panel2)",
@@ -182,3 +188,40 @@ export const labelStyle = {
   textTransform: "uppercase",
   color: "var(--faint)",
 };
+
+// One row in a dropdown menu.
+//
+// Shared because the app has three of these — the engine picker, the profile
+// switcher and the right-click menu — and they had drifted apart in the way
+// that matters most: the right-click menu lit its rows on hover and the two
+// toolbar menus did not light at all, so the same gesture got feedback in one
+// place and silence in the others. None of the three transitioned, so even the
+// one that responded snapped rather than faded.
+//
+// `selected` is the row you are on (the current engine, the current profile);
+// `lit` is the pointer being over it, or the tour pointing at it. Both can be
+// true at once, and hovering the selected row still deepens it — a row that
+// stopped responding once it was chosen reads as disabled.
+export function menuRow({ lit = false, selected = false } = {}, extra) {
+  return {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    padding: "8px 13px",
+    border: 0,
+    fontSize: "13px",
+    cursor: "pointer",
+    textAlign: "left",
+    background: selected
+      ? lit
+        ? "var(--accentLine)"
+        : "var(--accentSoft)"
+      : lit
+      ? "var(--sheetHover)"
+      : "transparent",
+    color: selected ? "var(--accentText)" : "var(--fg)",
+    transition: "background .15s ease, color .15s ease",
+    ...extra,
+  };
+}

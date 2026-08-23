@@ -146,3 +146,15 @@ export const uid = () =>
 
 // Clamp helper used by the grid sliders and size pickers.
 export const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+// Whether this is a Mac, for the two places the answer changes what is shown or
+// chosen: the search field's ⌘K hint, and whether a fresh install opts into the
+// heavier look. userAgentData is the supported way to ask and is present from
+// Chrome 90; navigator.platform is deprecated but is the only fallback there
+// is, and returning false is the safe answer either way.
+export function isMac() {
+  if (typeof navigator === "undefined") return false;
+  const modern = navigator.userAgentData?.platform;
+  if (modern) return modern === "macOS";
+  return /Mac|iPhone|iPad/.test(navigator.platform || "");
+}

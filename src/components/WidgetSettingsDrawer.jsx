@@ -3,7 +3,7 @@ import { LuBan } from "react-icons/lu";
 import { MONO, pill } from "@daybreak/sdk";
 import { ACCENT_NAMES, ACCENTS, tileFill } from "../core/tokens";
 import { getWidget, resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
-import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
+import { Button, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 const panelCache = new Map();
 function panelFor(manifest) {
@@ -316,8 +316,7 @@ function WidgetSettingsDrawer({
               <span style={{ color: "var(--dim)" }}>{v}</span>
             </div>
           ))}
-          <button
-            type="button"
+          <Button
             onClick={onRemove}
             style={pill(false, {
               marginTop: 8,
@@ -328,9 +327,10 @@ function WidgetSettingsDrawer({
               textAlign: "center",
               width: "100%",
             })}
+            hover={{ background: "var(--panel2)", borderColor: "var(--danger)" }}
           >
             Remove from home
-          </button>
+          </Button>
         </div>
       </div>
     </Drawer>

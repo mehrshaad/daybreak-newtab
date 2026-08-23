@@ -1,4 +1,4 @@
-import { Tooltip, useTooltip } from "@daybreak/sdk";
+import { Button, Tooltip, useTooltip } from "@daybreak/sdk";
 import { COINS, FIATS } from "./coins";
 
 const MAX_COINS = 5;
@@ -7,11 +7,15 @@ function Pill({ active, disabled, children, title, ...props }) {
   const tip = useTooltip(title);
   return (
     <>
-      <button
+      <Button
         ref={tip.anchorRef}
-        type="button"
         disabled={disabled}
         aria-pressed={active}
+        // Nothing but the tick told you a chip was pressable; the row of them
+        // read as labels. Not while it is off-limits, though: a chip that
+        // lights under the pointer and then refuses the click is worse than
+        // one that never lit.
+        hover={disabled ? null : active ? { opacity: 0.9 } : { background: "var(--sheetHover)" }}
         style={{
           padding: "5px 10px",
           borderRadius: 999,
@@ -27,7 +31,7 @@ function Pill({ active, disabled, children, title, ...props }) {
         {...props}
       >
         {children}
-      </button>
+      </Button>
       <Tooltip {...tip} />
     </>
   );

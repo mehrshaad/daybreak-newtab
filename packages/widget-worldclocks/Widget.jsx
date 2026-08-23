@@ -1,17 +1,6 @@
 import { useRef, useState } from "react";
 import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
-import {
-  Appear,
-  CitySearch,
-  EditableText,
-  LIST_ROW_HIGHLIGHT,
-  listRow,
-  MONO,
-  moveItem,
-  useFlip,
-  useMinutes,
-  usePointerReorder,
-} from "@daybreak/sdk";
+import { Appear, Button, CitySearch, EditableText, LIST_ROW_HIGHLIGHT, MONO, listRow, moveItem, useFlip, useMinutes, usePointerReorder } from "@daybreak/sdk";
 import { MAX_ZONES, zoneParts } from "./zones";
 
 const DEFAULT_ZONES = [
@@ -68,8 +57,7 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
         <CitySearch autoFocus onPick={addZone} placeholder="Add a city…" />
-        <button
-          type="button"
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             setAdding(false);
@@ -84,9 +72,10 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
             border: "1px solid var(--line)",
             color: "var(--dim)",
           }}
+          hover={{ background: "var(--panel2)", color: "var(--fg)" }}
         >
           Cancel
-        </button>
+        </Button>
       </div>
     );
   }

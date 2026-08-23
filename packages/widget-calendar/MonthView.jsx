@@ -1,13 +1,5 @@
 import { useMemo } from "react";
-import {
-  formatDate,
-  JALALI_MONTHS,
-  monthGrid,
-  MONO,
-  toHijri,
-  toJalali,
-  weekdayLabels,
-} from "@daybreak/sdk";
+import { Button, JALALI_MONTHS, MONO, formatDate, monthGrid, toHijri, toJalali, weekdayLabels } from "@daybreak/sdk";
 import { holidaysOn } from "./holidays";
 
 // The month grid.
@@ -65,12 +57,12 @@ function Cell({
   const strength = inMonth ? 1 : 0.32;
 
   return (
-    <button
-      type="button"
+    <Button
       onClick={(e) => {
         e.stopPropagation();
         onPick(iso);
       }}
+      hover={isToday ? { opacity: 0.9 } : { background: "var(--sheetHover)" }}
       aria-label={`${date.toDateString()}${
         holidays.length ? `, ${holidays.map((h) => h.name).join(", ")}` : ""
       }${eventCount ? `, ${eventCount} event${eventCount === 1 ? "" : "s"}` : ""}`}
@@ -145,7 +137,7 @@ function Cell({
           }}
         />
       ) : null}
-    </button>
+    </Button>
   );
 }
 
@@ -214,14 +206,14 @@ function MonthView({
             ["·", 0, "Back to today"],
             ["›", 1, "Next month"],
           ].map(([glyph, delta, label]) => (
-            <button
+            <Button
               key={label}
-              type="button"
               aria-label={label}
               onClick={(e) => {
                 e.stopPropagation();
                 onMove(delta);
               }}
+              hover={{ background: "var(--sheetHover)", color: "var(--fg)" }}
               style={{
                 width: 20,
                 height: 20,
@@ -238,7 +230,7 @@ function MonthView({
               }}
             >
               {glyph}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { LuX } from "react-icons/lu";
-import {
-  dropOrigin,
-  hasPermissionsApi,
-  IconTile,
-  originOf,
-  requestOrigin,
-  Tooltip,
-  uid,
-  useTooltip,
-} from "@daybreak/sdk";
+import { Button, HOVER_SOFT, IconTile, Tooltip, dropOrigin, hasPermissionsApi, originOf, requestOrigin, uid, useTooltip } from "@daybreak/sdk";
 import { PROVIDER_ICON_NAME, PROVIDER_LABEL, providerFor, resolveCalendars } from "./calendars";
 
 // Its own component so each row's remove-button tooltip gets its own hover
@@ -160,7 +151,7 @@ function CalendarSettings({ config, setConfig, toast }) {
             color: "var(--fg)",
           }}
         />
-        <button
+        <Button
           type="submit"
           disabled={saving}
           style={{
@@ -175,9 +166,10 @@ function CalendarSettings({ config, setConfig, toast }) {
             opacity: saving ? 0.7 : 1,
             transition: "background .15s ease, border-color .15s ease",
           }}
+          hover={saving ? null : HOVER_SOFT}
         >
           {saving ? "…" : "Add calendar"}
-        </button>
+        </Button>
       </form>
     </div>
   );

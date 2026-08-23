@@ -1,3 +1,4 @@
+import { isMac } from "@daybreak/sdk";
 import { essentialsFirst } from "./essentials";
 import { DEFAULTS as VISUAL_DEFAULTS } from "./tokens";
 import { knownIds } from "../widgets/registry";
@@ -94,7 +95,15 @@ export function defaultSettings() {
       radius: VISUAL_DEFAULTS.radius,
       alpha: VISUAL_DEFAULTS.alpha,
       pageZoom: VISUAL_DEFAULTS.pageZoom,
-      blur: VISUAL_DEFAULTS.blur,
+      // Platform-dependent, and the only default that is. backdrop-filter is
+      // the most expensive thing the page draws, so everywhere else it starts
+      // off — but macOS composites it on the GPU as a matter of course and it
+      // costs close to nothing there, while frosted glass is what the rest of
+      // the system looks like, so a Mac starts on the better-looking setting.
+      // Only what a fresh install gets: VISUAL_DEFAULTS.blur is still the
+      // fallback everywhere a stored value is missing, and nobody's existing
+      // choice is touched. The welcome card asks either way.
+      blur: isMac() ? true : VISUAL_DEFAULTS.blur,
       // What sits above a widget's content: its dot, its name, both, or
       // nothing. "none" gives that row's height back to the widget rather than
       // leaving it blank.

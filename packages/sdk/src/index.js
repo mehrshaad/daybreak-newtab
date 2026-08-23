@@ -67,6 +67,7 @@ export { faviconUrl } from "./favicon";
 export {
   CONTROL_TRANSITION,
   HOVER_LIFT,
+  HOVER_SOFT,
   LIST_BLEED,
   LIST_ROW_HEIGHT,
   LIST_ROW_HIGHLIGHT,
@@ -74,6 +75,7 @@ export {
   labelStyle,
   listRow,
   mark,
+  menuRow,
   pill,
   primaryButton,
   roundControl,
@@ -169,6 +171,7 @@ export {
   parseDateKey,
   geocodeCity,
   greeting,
+  isMac,
   searchCities,
   todayKey,
   weekdayShort,
@@ -178,12 +181,14 @@ export {
 
 // Shared components.
 export { APPEAR_MS, default as Appear } from "./components/Appear";
+export { default as Button } from "./components/Button";
 export { default as CitySearch } from "./components/CitySearch";
 export { default as DatePicker } from "./components/DatePicker";
 export { default as EditableText } from "./components/EditableText";
 export { default as Favicon } from "./components/Favicon";
 export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";
+export { default as MenuRow } from "./components/MenuRow";
 export { default as Popover } from "./components/Popover";
 export { default as Tooltip } from "./components/Tooltip";
 export { default as WidgetMark } from "./components/WidgetMark";

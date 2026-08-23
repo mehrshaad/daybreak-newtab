@@ -1,4 +1,5 @@
-import { MONO, useMeasuredWidth, useMinutes, useSeconds } from "@daybreak/sdk";
+import { MONO, useMeasuredBox, useMinutes, useSeconds } from "@daybreak/sdk";
+import { digitFontSize } from "./digitSize";
 import RoundFace from "./faces/RoundFace";
 import BareFace from "./faces/BareFace";
 import SquaredFace from "./faces/SquaredFace";
@@ -30,8 +31,31 @@ function Clock({ options, size, bare }) {
   // default board and 370px on a full-width one, and the digits fit perfectly
   // well at 370. The span rule shrank them either way. 240px is where they stop
   // fitting, and is the same answer as the old rule on the default board.
-  const [boxRef, measured] = useMeasuredWidth();
+  const [boxRef, box] = useMeasuredBox();
+  const measured = box?.width ?? null;
   const narrow = measured == null ? (size?.[0] ?? 3) <= 2 : measured < 240;
+
+  // The digits are sized from the tile rather than the window (see digitSize),
+  // and the meridiem and the date line follow them: they are part of the same
+  // piece of type, and leaving them at fixed sizes made a large clock look like
+  // big digits with somebody else's caption under it.
+  const digitPx = analog
+    ? null
+    : digitFontSize(box, digits, { meridiem: !!meridiem, date: !hideDate });
+  const meridiemPx = digitPx
+    ? Math.max(10, Math.round(digitPx * 0.26))
+    : tall
+    ? 16
+    : narrow
+    ? 11
+    : 13;
+  const datePx = digitPx
+    ? Math.max(11, Math.min(22, Math.round(digitPx * 0.24)))
+    : tall
+    ? 14
+    : narrow
+    ? 11
+    : 13;
 
   // Transitioned rather than swapped: alignment is a thing the user changes
   // while looking at it, and the digits sliding across reads as the setting
@@ -54,7 +78,7 @@ function Clock({ options, size, bare }) {
   const date = hideDate ? null : (
     <div
       style={{
-        fontSize: tall ? 14 : narrow ? 11 : 13,
+        fontSize: datePx,
         color: "var(--dim)",
         marginTop: narrow ? 6 : 10,
         // Same auto-margin trick as the digits, so the two move together.
@@ -124,11 +148,15 @@ function Clock({ options, size, bare }) {
       >
         <span
           style={{
-            fontSize: tall
-              ? "clamp(44px, 6.4vw, 84px)"
-              : narrow
-              ? "clamp(22px, 2.4vw, 32px)"
-              : "clamp(28px, 3.6vw, 44px)",
+            // Measured from the tile; the clamps are only what the first paint
+            // shows for the frame before the box is known.
+            fontSize:
+              digitPx ??
+              (tall
+                ? "clamp(44px, 6.4vw, 84px)"
+                : narrow
+                ? "clamp(22px, 2.4vw, 32px)"
+                : "clamp(28px, 3.6vw, 44px)"),
             fontWeight: 500,
             letterSpacing: "-.035em",
             lineHeight: 1,
@@ -141,7 +169,7 @@ function Clock({ options, size, bare }) {
           <span
             style={{
               fontFamily: MONO,
-              fontSize: tall ? 16 : narrow ? 11 : 13,
+              fontSize: meridiemPx,
               color: "var(--faint)",
             }}
           >

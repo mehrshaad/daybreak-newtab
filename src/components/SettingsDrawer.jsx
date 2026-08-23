@@ -20,7 +20,16 @@ import { versionLabel } from "../core/version";
 import { SOURCES } from "../core/suggest";
 import { boardWidthChoices, useViewportWidth } from "../core/useColumns";
 import { systemTheme } from "../core/useSystemTheme";
-import { Collapse, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
+import {
+  Button,
+  Collapse,
+  Drawer,
+  DrawerHeader,
+  Pill,
+  Section,
+  Slider,
+  Toggle,
+} from "./primitives";
 import ProfilesSection from "./ProfilesSection";
 
 const BOARD_WIDTH_LABELS = { comfortable: "Comfortable", wide: "Wide", full: "Full" };
@@ -195,9 +204,8 @@ function SettingsDrawer({
           }}
         >
           {WALLPAPERS.map((w) => (
-            <button
+            <Button
               key={w}
-              type="button"
               aria-pressed={appearance.wall === w}
               onClick={() => update("appearance", { wall: w })}
               style={{
@@ -214,6 +222,13 @@ function SettingsDrawer({
                   appearance.wall === w ? "var(--accent)" : "var(--line)"
                 }`,
               }}
+              // The swatch is the picture, so the hover lifts the frame rather
+              // than tinting anything over the top of it.
+              hover={{
+                borderColor: "var(--accentLine)",
+                transform: "translateY(-1px)",
+                boxShadow: "0 4px 14px rgba(0,0,0,.18)",
+              }}
             >
               <SwatchFill css={backgroundSwatch(theme, appearance.accent, w)} />
               <span
@@ -228,7 +243,7 @@ function SettingsDrawer({
               >
                 {w}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
       </Section>

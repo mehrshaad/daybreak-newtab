@@ -1,17 +1,6 @@
 import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
-import {
-  Appear,
-  EditableText,
-  MONO,
-  Popover,
-  Tooltip,
-  uid,
-  useTooltip,
-  useWidgetSynced,
-  weekdayShort,
-  useMeasuredWidth,
-} from "@daybreak/sdk";
+import { Appear, Button, EditableText, MONO, Popover, Tooltip, uid, useMeasuredWidth, useTooltip, useWidgetSynced, weekdayShort } from "@daybreak/sdk";
 import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
 
@@ -97,9 +86,8 @@ function DayDot({ date, habitName, isToday, ticked, dot, onToggle }) {
   const tip = useTooltip(isToday ? `Today · ${label}` : label);
   return (
     <>
-      <button
+      <Button
         ref={tip.anchorRef}
-        type="button"
         aria-label={`${habitName} on ${date}`}
         aria-pressed={ticked}
         onClick={(e) => {
@@ -107,6 +95,7 @@ function DayDot({ date, habitName, isToday, ticked, dot, onToggle }) {
           onToggle();
         }}
         {...tip.anchorProps}
+        hover={ticked ? { opacity: 0.85 } : { background: "var(--dim)" }}
         style={{
           width: dot,
           height: dot,
@@ -186,12 +175,11 @@ function HabitRow({
               }}
               inputStyle={{ display: "block", width: "100%", fontSize: 14 }}
             />
-            <button
+            <Button
               ref={(el) => {
                 anchorRef.current = el;
                 goalTip.anchorRef.current = el;
               }}
-              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleOpen();
@@ -211,9 +199,10 @@ function HabitRow({
                 cursor: "pointer",
                 color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
               }}
+              hover={{ color: "var(--fg)" }}
             >
               <LuSettings2 size={11} style={{ opacity: open ? 1 : 0.4 }} />
-            </button>
+            </Button>
             <Tooltip {...goalTip} />
           </div>
 

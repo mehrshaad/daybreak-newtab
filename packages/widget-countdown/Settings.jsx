@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LuCalendarDays, LuMinus, LuX } from "react-icons/lu";
-import { DatePicker, EditableText, MONO, Tooltip, toggleStyles, uid, useTooltip } from "@daybreak/sdk";
+import { Button, DatePicker, EditableText, HOVER_SOFT, MONO, Tooltip, toggleStyles, uid, useTooltip } from "@daybreak/sdk";
 import { formatRemaining, nextOccurrence } from "./countdown";
 
 // Six and a blank, down from twelve. A swatch row is something you take in at a
@@ -320,7 +320,7 @@ function CountdownSettings({ config, setConfig }) {
           aria-label="New countdown name"
           style={FIELD}
         />
-        <button
+        <Button
           type="submit"
           style={{
             alignSelf: "flex-start",
@@ -333,9 +333,10 @@ function CountdownSettings({ config, setConfig }) {
             color: "var(--fg)",
             transition: "background .15s ease, border-color .15s ease",
           }}
+          hover={HOVER_SOFT}
         >
           Add date
-        </button>
+        </Button>
       </form>
     </div>
   );

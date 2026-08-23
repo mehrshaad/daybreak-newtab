@@ -86,6 +86,48 @@ select {
 
 button {
   margin: 0;
+
+  // A floor, not a policy. Almost everything in this app is styled inline, and
+  // an inline `transition` beats a stylesheet — so every control that already
+  // declares its own keeps it exactly as it was, and this only reaches the ones
+  // that declared none. Those were the buttons that snapped between states
+  // while their neighbours faded, which is the part that reads as unfinished.
+  // Adding it here rather than at forty call sites also means the next button
+  // starts out consistent instead of starting out forgotten.
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+// Nothing should animate for somebody who asked the system for stillness.
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}
+
+// The retry/report pair on a crashed tile. It is a button beside a link, inside
+// a class component, so the hover can come from neither useHover nor a prop and
+// belongs here — where both halves of the pair get the same one, which is the
+// point of the pair.
+.db-action:hover {
+  background: var(--sheetHover, rgba(255, 255, 255, 0.09));
+  border-color: var(--accentLine, rgba(255, 255, 255, 0.28));
+}
+
+// The whole-page crash screen paints from fixed colours rather than the theme,
+// on the grounds that the theme may be what crashed. Its two buttons follow.
+.db-action-solid:hover {
+  opacity: 0.9;
+}
+
+.db-action-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 
 // Only show a ring for keyboard users; pointer users get the hover styles.

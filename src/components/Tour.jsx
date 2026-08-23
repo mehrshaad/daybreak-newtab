@@ -12,6 +12,7 @@ import {
   usableSteps,
 } from "../core/tour";
 import Celebration from "./Celebration";
+import { Button } from "./primitives";
 
 // The guided tour.
 //
@@ -409,12 +410,14 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
           }}
         >
             {steps.map((s, i) => (
-              <button
+              <Button
                 key={s.id}
-                type="button"
                 aria-label={`Step ${i + 1}: ${s.title}`}
                 aria-current={i === index}
                 onClick={() => setIndex(i)}
+                // They are a way back to any step, not just a read-out of where
+                // you are, so they have to look like something you can press.
+                hover={i === index ? { opacity: 0.85 } : { background: "var(--dim)" }}
                 style={{
                   width: i === index ? 16 : 6,
                   height: 6,
@@ -431,8 +434,7 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
           <div style={{ flex: 1 }} />
-          <button
-            type="button"
+          <Button
             onClick={finish}
             style={{
               padding: "7px 12px",
@@ -444,12 +446,12 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
               color: "var(--faint)",
               flex: "none",
             }}
+            hover={{ background: "var(--panel2)", color: "var(--fg)" }}
           >
             {last ? "" : "Skip"}
-          </button>
+          </Button>
           {index > 0 ? (
-            <button
-              type="button"
+            <Button
               onClick={() => setIndex((i) => prevIndex(i))}
               style={{
                 padding: "7px 13px",
@@ -461,12 +463,12 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
                 color: "var(--fg)",
                 flex: "none",
               }}
+              hover={{ background: "var(--sheetHover)" }}
             >
               Back
-            </button>
+            </Button>
           ) : null}
-          <button
-            type="button"
+          <Button
             data-tour-primary=""
             onClick={() => (last ? finish() : setIndex((i) => nextIndex(steps, i)))}
             style={{
@@ -480,9 +482,10 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
               color: "var(--onAccent)",
               flex: "none",
             }}
+            hover={{ opacity: 0.9, transform: "translateY(-1px)" }}
           >
             {last ? "Done" : "Next"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

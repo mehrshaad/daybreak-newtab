@@ -1,14 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  hasOrigin,
-  hasPermissionsApi,
-  MONO,
-  originOf,
-  requestOrigin,
-  requestOrigins,
-  uid,
-  useWidgetLocal,
-} from "@daybreak/sdk";
+import { Button, MONO, hasOrigin, hasPermissionsApi, originOf, requestOrigin, requestOrigins, uid, useWidgetLocal } from "@daybreak/sdk";
 import { addMonths, formatDate, formatHijri, formatJalali } from "@daybreak/sdk";
 import { groupEvents, isToday, relativeLabel } from "./agenda";
 import { holidaysOn, HOLIDAY_SOURCE_YEAR } from "./holidays";
@@ -509,8 +500,7 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
       >
         <div>{message}</div>
         {blockedOnPermission ? (
-          <button
-            type="button"
+          <Button
             onClick={async () => {
               // First await in the handler, and one call for every missing
               // origin at once: Chrome wants a user gesture, and awaiting
@@ -532,9 +522,10 @@ function Calendar({ id, config, setConfig, refreshKey, size, options, toast }) {
               fontSize: 12,
               cursor: "pointer",
             }}
+            hover={{ background: "var(--accentLine)" }}
           >
             Grant access
-          </button>
+          </Button>
         ) : null}
       </div>
     );

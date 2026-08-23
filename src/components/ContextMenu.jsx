@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MONO, clampToViewport, pill } from "@daybreak/sdk";
+import { MenuRow, MONO, clampToViewport } from "@daybreak/sdk";
+import { Pill } from "./primitives";
 
 const MENU_WIDTH = 236;
 
@@ -21,34 +22,22 @@ function useClampedPosition(x, y, deps) {
 }
 
 function MenuItem({ item, onClose, hint = false }) {
-  const [hovered, setHovered] = useState(false);
-  // `hint` is the tour pointing at a row without a pointer being anywhere near
-  // it — the same highlight hovering would give, so what is being pointed at is
-  // the row you would actually hover rather than a decoration invented for it.
-  const lit = hovered || hint;
+  // The shared row (and with it the hover highlight and its fade) is the SDK's
+  // now, so this menu and the two in the toolbar cannot drift apart again.
+  // `hint` is the tour pointing at a row with no pointer near it.
   return (
-    <button
-      type="button"
+    <MenuRow
       role="menuitem"
+      hint={hint}
       onClick={(e) => {
         e.stopPropagation();
         onClose();
         item.run?.();
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
-        display: "flex",
-        alignItems: "center",
         justifyContent: "space-between",
         gap: "24px",
-        width: "100%",
         padding: "8px 14px",
-        fontSize: "13px",
-        cursor: "pointer",
-        textAlign: "left",
-        border: 0,
-        background: lit ? "var(--sheetHover)" : "transparent",
         color: item.danger ? "var(--danger)" : "var(--fg)",
       }}
     >
@@ -58,7 +47,7 @@ function MenuItem({ item, onClose, hint = false }) {
           {item.hint}
         </span>
       ) : null}
-    </button>
+    </MenuRow>
   );
 }
 
@@ -155,22 +144,22 @@ function ContextMenu({ menu, title, items, closing, onClose, hintLabel }) {
                 {item.sizes.map((s) => {
                   const active = item.current[0] === s[0] && item.current[1] === s[1];
                   return (
-                    <button
+                    <Pill
                       key={s.join("x")}
-                      type="button"
+                      active={active}
                       onClick={(e) => {
                         e.stopPropagation();
                         onClose();
                         item.onPick(s);
                       }}
-                      style={pill(active, {
+                      style={{
                         fontFamily: MONO,
                         fontSize: "10px",
                         padding: "5px 9px",
-                      })}
+                      }}
                     >
                       {s.join("×")}
-                    </button>
+                    </Pill>
                   );
                 })}
               </div>

@@ -1,4 +1,4 @@
-import { CitySearch, MONO } from "@daybreak/sdk";
+import { Button, CitySearch, MONO } from "@daybreak/sdk";
 import { METHODS, PRAYER_LABELS, PRAYERS } from "./prayers";
 
 // Place and per-prayer adjustments. The method and Asr reckoning are plain
@@ -63,14 +63,14 @@ function PrayerSettings({ config, setConfig, options }) {
               >
                 <span style={{ fontSize: 12, color: "var(--dim)" }}>{PRAYER_LABELS[name]}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "none" }}>
-                  <button
-                    type="button"
+                  <Button
                     aria-label={`${PRAYER_LABELS[name]} one minute earlier`}
                     onClick={() => setAdjustment(name, value - 1)}
                     style={STEP}
+                    hover={STEP_HOVER}
                   >
                     −
-                  </button>
+                  </Button>
                   <span
                     style={{
                       fontFamily: MONO,
@@ -83,14 +83,14 @@ function PrayerSettings({ config, setConfig, options }) {
                   >
                     {value > 0 ? `+${value}` : value}
                   </span>
-                  <button
-                    type="button"
+                  <Button
                     aria-label={`${PRAYER_LABELS[name]} one minute later`}
                     onClick={() => setAdjustment(name, value + 1)}
                     style={STEP}
+                    hover={STEP_HOVER}
                   >
                     +
-                  </button>
+                  </Button>
                 </div>
               </div>
             );
@@ -115,5 +115,7 @@ const STEP = {
   fontSize: 13,
   lineHeight: 1,
 };
+
+const STEP_HOVER = { background: "var(--panel2)", borderColor: "var(--accentLine)" };
 
 export default PrayerSettings;

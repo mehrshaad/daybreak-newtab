@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IconGrid, iconCellSize, iconGridSize, MONO, moveItem } from "@daybreak/sdk";
+import { Button, IconGrid, MONO, iconCellSize, iconGridSize, moveItem } from "@daybreak/sdk";
 import { gridFor, orderedApps } from "./apps";
 
 function GoogleApps({ options, config, setConfig, size, editing, columns }) {
@@ -114,12 +114,12 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
       />
 
       {hidden > 0 || showAll ? (
-        <button
-          type="button"
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             setShowAll((v) => !v);
           }}
+          hover={{ color: "var(--fg)" }}
           style={{
             marginTop: 2,
             alignSelf: "center",
@@ -146,7 +146,7 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
           }}
         >
           {showAll ? "show less" : `+${hidden} more`}
-        </button>
+        </Button>
       ) : null}
     </div>
   );

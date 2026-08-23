@@ -102,6 +102,7 @@ class ErrorBoundary extends Component {
               <button
                 type="button"
                 onClick={() => this.setState({ error: null })}
+                className="db-action"
                 style={{ ...COMPACT_ACTION, fontFamily: "inherit" }}
               >
                 Retry
@@ -115,6 +116,7 @@ class ErrorBoundary extends Component {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
+                className="db-action"
                 style={{ ...COMPACT_ACTION, textDecoration: "none" }}
               >
                 Report
@@ -228,6 +230,7 @@ class ErrorBoundary extends Component {
           <div style={{ marginTop: 16, display: "flex", gap: 10, justifyContent: "center" }}>
             <button
               type="button"
+              className="db-action-solid"
               onClick={() => window.location.reload()}
               style={{
                 padding: "10px 18px",
@@ -252,6 +255,7 @@ class ErrorBoundary extends Component {
               })}
               target="_blank"
               rel="noopener noreferrer"
+              className="db-action-ghost"
               style={{
                 padding: "10px 18px",
                 borderRadius: 999,

@@ -6,6 +6,8 @@ import {
   Appear,
   EngineMark,
   HOVER_LIFT,
+  isMac,
+  MenuRow,
   MONO,
   roundControl,
   SEARCH_ENGINES,
@@ -22,11 +24,9 @@ import ProfileSwitcher from "./ProfileSwitcher";
 import SearchSuggestions from "./SearchSuggestions";
 import { Button } from "./primitives";
 
-const isMac = () =>
-  typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || "");
-
 function EnginePicker({ engine, onPick }) {
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const wrapRef = useRef(null);
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
@@ -70,14 +70,20 @@ function EnginePicker({ engine, onPick }) {
         aria-haspopup="menu"
         aria-label={`Search engine: ${SEARCH_ENGINES[engine].label}`}
         aria-expanded={open}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           display: "grid",
           placeItems: "center",
-          width: 20,
-          height: 20,
+          width: 22,
+          height: 22,
           padding: 0,
           border: 0,
-          background: "transparent",
+          borderRadius: 999,
+          // Nothing said this mark was a button you could press. It is the only
+          // way to change engine and it looked like decoration inside the
+          // field, so it now takes a highlight like everything else does.
+          background: hovered || open ? "var(--sheetHover)" : "transparent",
           cursor: "pointer",
           flex: "none",
         }}
@@ -108,33 +114,20 @@ function EnginePicker({ engine, onPick }) {
           }}
         >
           {Object.entries(SEARCH_ENGINES).map(([key, e]) => (
-            <button
+            <MenuRow
               key={key}
-              type="button"
               role="menuitemradio"
               aria-checked={key === engine}
+              selected={key === engine}
               tabIndex={-1}
               onClick={() => {
                 onPick(key);
                 close(true);
               }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                width: "100%",
-                padding: "8px 12px",
-                border: 0,
-                background: key === engine ? "var(--accentSoft)" : "transparent",
-                color: key === engine ? "var(--accent)" : "var(--fg)",
-                fontSize: 13,
-                cursor: "pointer",
-                textAlign: "left",
-              }}
             >
               <EngineMark engine={key} size={14} />
               {e.label}
-            </button>
+            </MenuRow>
           ))}
         </div>
       ) : null}
@@ -148,6 +141,7 @@ function Header({
   onToggleEdit,
   onOpenStore,
   onOpenSettings,
+  onManageProfiles,
   onContextMenu,
   searchRef,
 }) {
@@ -302,12 +296,21 @@ function Header({
         })}px) minmax(0, 1fr)`,
         alignItems: "center",
         gap: "20px",
-        padding: scrolled ? "10px 28px" : "20px 28px",
+        // Constant, and that is the fix for the jump. This used to shrink to
+        // 10px on scroll, which with the search field's own padding took the
+        // bar from 83px to 58px — measured, not estimated. A sticky header is
+        // still in flow, so losing 25px of it pulls the whole board up 25px
+        // while you are already scrolling, and the page appears to lurch. The
+        // 25px it bought back is worth very little on a board that is about one
+        // screen tall; not having the content jump under the pointer is worth a
+        // lot. The bar still says it has been scrolled, with its background,
+        // its border and a narrower search field — none of which move anything.
+        padding: "20px 28px",
         background: scrolled ? "var(--sheet)" : "transparent",
         borderBottom: `1px solid ${scrolled ? "var(--line)" : "transparent"}`,
         backdropFilter: scrolled ? "var(--blur-panel)" : "none",
         transition:
-          "grid-template-columns .28s cubic-bezier(.2,.8,.2,1), padding .25s ease, " +
+          "grid-template-columns .28s cubic-bezier(.2,.8,.2,1), " +
           "background .25s ease, border-color .25s ease",
       }}
     >
@@ -319,7 +322,7 @@ function Header({
             does appear it takes the wordmark's place rather than crowding it:
             which board you are looking at is worth a permanent spot in the bar
             and a wordmark on your own new tab is not. */}
-        <ProfileSwitcher compact={!tier.labels} onManage={onOpenSettings} />
+        <ProfileSwitcher compact={!tier.labels} onManage={onManageProfiles} />
         <Appear open={tier.wordmark && !hasProfiles} style={{ display: "flex" }}>
           <span
             style={{
@@ -327,8 +330,7 @@ function Header({
               letterSpacing: ".16em",
               textTransform: "uppercase",
               color: "var(--accentText)",
-              fontSize: scrolled ? "10px" : "12px",
-              transition: "font-size .25s ease",
+              fontSize: "12px",
               fontWeight: 500,
               whiteSpace: "nowrap",
             }}
@@ -370,7 +372,9 @@ function Header({
             // means the two sides give up the room rather than the field
             // stealing it and pushing a control off the edge.
             width: "100%",
-            padding: scrolled ? "7px 15px" : "10px 16px",
+            // Also constant, for the same reason: this field is the tallest
+            // thing in the bar, so its padding is the bar's height.
+            padding: "10px 16px",
             borderRadius: "999px",
             background:
               searchActive || searchHover || scrolled ? "var(--panel2)" : "var(--panel)",
@@ -385,8 +389,7 @@ function Header({
               : searchHover
               ? "0 3px 12px rgba(0,0,0,.10)"
               : "none",
-            transition:
-              "background .2s ease, border-color .2s ease, box-shadow .2s ease, padding .25s ease",
+            transition: "background .2s ease, border-color .2s ease, box-shadow .2s ease",
           }}
         >
           <EnginePicker
@@ -419,8 +422,7 @@ function Header({
           {query ? (
             // Replaces the browser's own search-cancel glyph (a fixed grey
             // circle that ignores the theme) with one that matches it.
-            <button
-              type="button"
+            <Button
               onClick={() => {
                 setQuery("");
                 searchRef.current?.focus();
@@ -439,9 +441,10 @@ function Header({
                 cursor: "pointer",
                 flex: "none",
               }}
+              hover={{ background: "var(--sheetHover)", color: "var(--fg)" }}
             >
               <LuX size={13} />
-            </button>
+            </Button>
           ) : (
             <span
               aria-hidden="true"
@@ -553,9 +556,9 @@ function Header({
         </span>
         <Tooltip {...storeTip} />
 
-        {/* Button doesn't forward a ref (and can't take onMouseEnter as a
-            prop without clobbering its own internal hover tracking), so the
-            tooltip anchors to a plain wrapper instead. */}
+        {/* Anchored to a wrapper rather than to the Button: it forwards a ref
+            now, but it still cannot take onMouseEnter as a prop without
+            clobbering its own hover tracking, and the tooltip needs both. */}
         <span ref={themeTip.anchorRef} style={{ display: "inline-flex" }} {...themeTip.anchorProps}>
           <Button
             onClick={() => update("appearance", { theme: nextThemeValue })}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MONO, pill, primaryButton, WidgetMark } from "@daybreak/sdk";
+import { MenuRow, MONO, pill, primaryButton, WidgetMark } from "@daybreak/sdk";
 import { WIDGETS, categories, getWidget, typeOf } from "../widgets/registry";
-import { Pill } from "./primitives";
+import { Button, Pill } from "./primitives";
 
 const TABS = ["Discover", "Installed"];
 
@@ -68,8 +68,7 @@ function Card({ widget, installed, onOpen, onToggle }) {
         <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--faint)" }}>
           {widget.category}
         </span>
-        <button
-          type="button"
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
@@ -81,9 +80,14 @@ function Card({ widget, installed, onOpen, onToggle }) {
             color: installed ? "var(--faint)" : "var(--onAccent)",
             border: installed ? "1px solid var(--line)" : "0",
           })}
+          hover={
+            installed
+              ? { background: "var(--panel2)", color: "var(--fg)" }
+              : { opacity: 0.9 }
+          }
         >
           {installed ? "On board" : "Add"}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -184,8 +188,7 @@ function Detail({ widget, installed, onBack, onToggle }) {
             top: 0,
           }}
         >
-          <button
-            type="button"
+          <Button
             onClick={onToggle}
             style={
               installed
@@ -198,9 +201,10 @@ function Detail({ widget, installed, onBack, onToggle }) {
                   })
                 : primaryButton({ width: "100%", padding: 12, fontSize: 14 })
             }
+            hover={installed ? { background: "var(--panel2)" } : { opacity: 0.9 }}
           >
             {installed ? "Remove from home" : "Add to home"}
-          </button>
+          </Button>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 11, marginTop: 18 }}>
             {[
@@ -405,8 +409,7 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
             }}
           />
         </div>
-        <button
-          type="button"
+        <Button
           onClick={onClose}
           aria-label="Close"
           style={{
@@ -420,9 +423,10 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
             lineHeight: 1,
             flex: "none",
           }}
+          hover={{ background: "var(--sheetHover)" }}
         >
           ×
-        </button>
+        </Button>
       </div>
 
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
@@ -445,33 +449,26 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
           {[{ name: "All", count: WIDGETS.length }, ...cats].map((c) => {
             const on = category === c.name;
             return (
-              <button
+              <MenuRow
                 key={c.name}
-                type="button"
+                selected={on}
                 onClick={() => {
                   setCategory(c.name);
                   swap();
                 }}
                 style={{
-                  display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center",
                   gap: 8,
                   padding: "9px 12px",
                   borderRadius: 10,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  border: 0,
-                  textAlign: "left",
-                  background: on ? "var(--accentSoft)" : "transparent",
-                  color: on ? "var(--accent)" : "var(--dim)",
+                  color: on ? "var(--accentText)" : "var(--dim)",
                 }}
               >
                 <span>{c.name}</span>
                 <span style={{ fontFamily: MONO, fontSize: 11, opacity: 0.55 }}>
                   {c.count}
                 </span>
-              </button>
+              </MenuRow>
             );
           })}
         </div>

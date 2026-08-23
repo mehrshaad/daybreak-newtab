@@ -6,6 +6,7 @@ import { GRID_GAP } from "../core/tokens";
 import { useFlip, useLongPress, usePointerReorder } from "@daybreak/sdk";
 import { resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
 import Tile from "./Tile";
+import { Button } from "./primitives";
 
 // Presses that should never turn into "enter edit mode": any interactive
 // control, and any tile — a tile's own long-press (attached to its root)
@@ -261,8 +262,7 @@ function Board({
           }}
         >
           <p style={{ margin: "0 0 16px" }}>Your board is empty.</p>
-          <button
-            type="button"
+          <Button
             onClick={onOpenStore}
             style={{
               padding: "10px 18px",
@@ -274,9 +274,10 @@ function Board({
               fontSize: 13,
               fontWeight: 500,
             }}
+            hover={{ opacity: 0.9, transform: "translateY(-1px)" }}
           >
             Add a widget
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

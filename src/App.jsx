@@ -6,7 +6,7 @@ import ContextMenu from "./components/ContextMenu";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import PresetsDock from "./components/PresetsDock";
-import { Collapse } from "./components/primitives";
+import { Button, Collapse } from "./components/primitives";
 import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
 import Notifications from "./components/Notifications";
@@ -211,6 +211,29 @@ function App() {
     setEditing(false);
     setMenu(null);
   }, []);
+
+  // Settings, already scrolled to the part that was asked for.
+  //
+  // "Add or manage profiles" in the switcher opened the drawer at the top and
+  // left you to find Profiles, which is most of the way down it. The section
+  // handles the tour points at are the same handles this needs, so it uses
+  // those rather than inventing a second set of anchors.
+  //
+  // A frame late, because the drawer is not in the DOM until the commit this
+  // triggers. Instant rather than smooth: the panel is sliding in at the same
+  // time, and it should arrive already in the right place instead of arriving
+  // and then setting off on a scroll of its own.
+  const revealInSettings = useCallback(
+    (tourName) => {
+      openSettings();
+      requestAnimationFrame(() => {
+        document
+          .querySelector(`[data-tour="${tourName}"]`)
+          ?.scrollIntoView({ block: "start", behavior: "instant" });
+      });
+    },
+    [openSettings]
+  );
 
   // --- the tour ------------------------------------------------------------
   //
@@ -650,6 +673,7 @@ function App() {
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
         onOpenSettings={openSettings}
+        onManageProfiles={() => revealInSettings("settings-profiles")}
         onContextMenu={openBoardMenu}
         searchRef={searchRef}
       />
@@ -715,8 +739,7 @@ function App() {
       ) : null}
 
       {zoomChrome ? (
-        <button
-          type="button"
+        <Button
           onClick={closeZoom}
           style={{
             position: "fixed",
@@ -739,9 +762,10 @@ function App() {
               ? "db-out .2s ease both"
               : "db-in .3s ease both",
           }}
+          hover={{ background: "var(--sheetHover)" }}
         >
           <LuArrowLeft size={14} /> Back
-        </button>
+        </Button>
       ) : null}
 
       <Notifications hidden={editing} />

@@ -3,6 +3,7 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { formatDate } from "../utils";
 import { MONO } from "../styles";
 import { addMonths, monthGrid, WEEKDAY_LABELS } from "../monthGrid";
+import Button from "./Button";
 import Popover from "./Popover";
 
 const navBtn = {
@@ -18,6 +19,8 @@ const navBtn = {
   padding: 0,
 };
 
+const NAV_HOVER = { background: "var(--sheetHover)", borderColor: "var(--accentLine)" };
+
 const linkBtn = {
   border: 0,
   background: "transparent",
@@ -26,6 +29,8 @@ const linkBtn = {
   cursor: "pointer",
   padding: 0,
 };
+
+const LINK_HOVER = { color: "var(--fg)" };
 
 // Parses the widget's own "" | "YYYY-MM-DD" convention. Local midnight, not
 // UTC — a UTC parse of a bare date string would land on the wrong day for
@@ -70,9 +75,8 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
 
   return (
     <>
-      <button
+      <Button
         ref={anchorRef}
-        type="button"
         onClick={(e) => {
           e.stopPropagation();
           if (open) setOpen(false);
@@ -90,9 +94,10 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
           color: value ? "var(--fg)" : "var(--faint)",
           cursor: "pointer",
         }}
+        hover={{ background: "var(--sheetHover)", borderColor: "var(--accentLine)" }}
       >
         {value || placeholder}
-      </button>
+      </Button>
 
       <Popover
         open={open}
@@ -110,23 +115,23 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
               marginBottom: 8,
             }}
           >
-            <button
-              type="button"
+            <Button
               aria-label="Previous month"
               onClick={() => setView((v) => addMonths(v.year, v.month, -1))}
               style={navBtn}
+              hover={NAV_HOVER}
             >
               <LuChevronLeft size={13} />
-            </button>
+            </Button>
             <span style={{ fontSize: 12, fontWeight: 500 }}>{monthLabel}</span>
-            <button
-              type="button"
+            <Button
               aria-label="Next month"
               onClick={() => setView((v) => addMonths(v.year, v.month, 1))}
               style={navBtn}
+              hover={NAV_HOVER}
             >
               <LuChevronRight size={13} />
-            </button>
+            </Button>
           </div>
 
           <div
@@ -152,12 +157,12 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
               const isToday = d.iso === todayIso;
               const isSelected = d.iso === value;
               return (
-                <button
+                <Button
                   key={d.iso}
-                  type="button"
                   onClick={() => pick(d.iso)}
                   aria-label={d.iso}
                   aria-current={isToday ? "date" : undefined}
+                  hover={isSelected ? { opacity: 0.9 } : { background: "var(--sheetHover)" }}
                   style={{
                     width: 26,
                     height: 26,
@@ -176,7 +181,7 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
                   }}
                 >
                   {d.date.getDate()}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -190,13 +195,13 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
               borderTop: "1px solid var(--line)",
             }}
           >
-            <button type="button" onClick={() => pick(todayIso)} style={linkBtn}>
+            <Button onClick={() => pick(todayIso)} style={linkBtn} hover={LINK_HOVER}>
               Today
-            </button>
+            </Button>
             {value ? (
-              <button type="button" onClick={() => pick("")} style={linkBtn}>
+              <Button onClick={() => pick("")} style={linkBtn} hover={LINK_HOVER}>
                 Clear
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
