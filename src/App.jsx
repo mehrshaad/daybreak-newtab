@@ -221,8 +221,14 @@ function App() {
   // they did not choose.
   const [tourOpen, setTourOpen] = useState(false);
 
+  // Which row the tour wants shown as if hovered. Only the menu step uses it:
+  // an open menu of six rows says "there is a menu" and not "and this is the
+  // row you want", so the tour lights the one it is talking about.
+  const [menuHint, setMenuHint] = useState(null);
+
   const showScene = useCallback(
-    (scene) => {
+    (scene, stepId) => {
+      setMenuHint(stepId === "tile" ? "Widget settings" : null);
       setStoreOpen(scene === "store");
       setSettingsOpen(scene === "settings");
       setEditing(scene === "edit");
@@ -845,6 +851,7 @@ function App() {
           title={lastModel.current.title}
           items={lastModel.current.items}
           closing={menuLeaving}
+          hintLabel={menuHint}
           onClose={() => setMenu(null)}
         />
       ) : null}

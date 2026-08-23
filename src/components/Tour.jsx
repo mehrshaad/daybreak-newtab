@@ -18,12 +18,18 @@ import Celebration from "./Celebration";
 // A spotlight rather than a slideshow: the point of the tour is "here is where
 // that lives", and a picture of the settings drawer cannot say where the
 // settings drawer is. So it dims the page around the real element and leaves
-// the element itself lit and clickable.
+// the element itself lit.
 //
-// The hole is four panels rather than one scrim with a clip-path. Both draw the
-// same picture, but four panels leave a genuine gap — the element underneath
-// keeps receiving clicks, so somebody can try the thing being described without
-// leaving the tour, which is most of the value of pointing at it.
+// Lit, but not live. The first version left the hole genuinely open so somebody
+// could try the thing being described — which sounds generous and is not: every
+// step puts the app into a particular state, so a click on the lit element
+// changes that state out from under the next step, and the spotlight then
+// points confidently at the wrong thing. A tour you can break by using it is
+// worse than one you sit through. So a transparent sheet covers everything,
+// including the hole, and the only live thing on screen is the card.
+//
+// The dimming is four panels around the hole rather than one scrim with a
+// clip-path: same picture, and no clip-path support to worry about.
 
 const EXIT_MS = 180;
 const PAD = 8;
@@ -126,7 +132,9 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
   // the spotlight goes looking for something inside it.
   useLayoutEffect(() => {
     if (!present || !step) return;
-    onScene?.(step.scene);
+    // The step id goes with the scene: a couple of steps want more than a mode,
+    // and the alternative is a second callback for every one of them.
+    onScene?.(step.scene, step.id);
   }, [present, step, onScene]);
 
   const measure = useCallback(() => {
@@ -191,18 +199,43 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
         e.preventDefault();
         e.stopPropagation();
         finish();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        setIndex((i) => nextIndex(steps, i));
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        setIndex((i) => prevIndex(i));
+        return;
       }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        setIndex((i) => nextIndex(steps, i));
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        setIndex((i) => prevIndex(i));
+        return;
+      }
+      // Tab, Enter and Space belong to whichever tour button has focus.
+      if (["Tab", "Enter", " "].includes(e.key)) return;
+      // Everything else is swallowed. Ctrl K, Alt E and Alt A all change the
+      // state the current step was written for, and the sealed sheet above
+      // stops the mouse doing that but not the keyboard.
+      e.preventDefault();
+      e.stopPropagation();
     };
-    // Capture, so Escape closes the tour rather than the drawer it opened.
+    // Capture, so this runs before the app's own shortcuts rather than after.
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [present, steps, finish]);
+
+  // Focus starts and stays on the card, so Tab cycles its three buttons rather
+  // than wandering into a board nobody can click anyway. Re-run per step
+  // because the button set changes: there is no Back on the first.
+  useEffect(() => {
+    if (!present) return;
+    const card = cardRef.current;
+    if (!card || card.contains(document.activeElement)) return;
+    const next = card.querySelector("button:last-of-type");
+    next?.focus?.();
+  }, [present, index]);
 
   if (!present || !step) return null;
 
@@ -217,17 +250,11 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
     : null;
 
   const scrim = "rgba(6,7,10,.58)";
+  // Purely visual now — the blocker below is what actually catches the pointer,
+  // so these do not need to and must not, or the hole would be a live gap in an
+  // otherwise sealed sheet.
   const panel = (style) => (
-    <div
-      style={{
-        position: "fixed",
-        background: scrim,
-        // The dimmed area is not a click target: clicking it should not close
-        // the tour by accident halfway through, and there is a Skip for that.
-        pointerEvents: "auto",
-        ...style,
-      }}
-    />
+    <div style={{ position: "fixed", background: scrim, pointerEvents: "none", ...style }} />
   );
 
   return createPortal(
@@ -245,6 +272,12 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
         animation: closing ? `db-out ${EXIT_MS}ms ease both` : "db-fade .22s ease both",
       }}
     >
+      {/* One transparent sheet over the whole window, the hole included. This
+          is what makes the tour modal: clicking the lit element would change
+          the state the next step is written for, and clicking the dim area
+          should not dismiss anything — there is a Skip for that. */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "auto" }} />
+
       {hole ? (
         <>
           {panel({ top: 0, left: 0, right: 0, height: hole.top })}

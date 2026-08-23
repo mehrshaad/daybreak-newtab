@@ -584,7 +584,12 @@ function Header({
           </Button>
         </span>
         <Tooltip {...themeTip} />
-        <span ref={settingsTip.anchorRef} style={{ display: "inline-flex" }} {...settingsTip.anchorProps}>
+        <span
+          data-tour="settings-button"
+          ref={settingsTip.anchorRef}
+          style={{ display: "inline-flex" }}
+          {...settingsTip.anchorProps}
+        >
           <Button
             onClick={onOpenSettings}
             aria-label="Settings"

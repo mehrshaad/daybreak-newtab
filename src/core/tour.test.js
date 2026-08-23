@@ -56,11 +56,26 @@ describe("the step list", () => {
   });
 
   it("points at a control before opening what it opens", () => {
-    // Being dropped inside the Store having never seen the button that opens
-    // it teaches nothing about how to get back.
+    // Being dropped inside the Store or Settings having never seen the button
+    // that opens it teaches nothing about how to get back there.
     const ids = TOUR_STEPS.map((s) => s.id);
-    expect(ids.indexOf("store-button")).toBeLessThan(ids.indexOf("store"));
-    expect(ids.indexOf("store-button")).toBeGreaterThanOrEqual(0);
+    for (const [button, opened] of [
+      ["store-button", "store"],
+      ["settings-button", "appearance"],
+      ["edit-button", "drag"],
+    ]) {
+      expect(ids.indexOf(button), button).toBeGreaterThanOrEqual(0);
+      expect(ids.indexOf(button), button).toBeLessThan(ids.indexOf(opened));
+    }
+  });
+
+  it("shows a button while it is still just a button", () => {
+    // The step that points at a control has to be on the board, not inside the
+    // thing the control opens — otherwise it is describing something that has
+    // already happened.
+    for (const id of ["store-button", "settings-button", "edit-button"]) {
+      expect(TOUR_STEPS.find((s) => s.id === id).scene, id).toBe("board");
+    }
   });
 
   it("finishes the settings drawer before leaving it", () => {

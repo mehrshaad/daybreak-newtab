@@ -20,8 +20,12 @@ function useClampedPosition(x, y, deps) {
   return [ref, pos];
 }
 
-function MenuItem({ item, onClose }) {
+function MenuItem({ item, onClose, hint = false }) {
   const [hovered, setHovered] = useState(false);
+  // `hint` is the tour pointing at a row without a pointer being anywhere near
+  // it — the same highlight hovering would give, so what is being pointed at is
+  // the row you would actually hover rather than a decoration invented for it.
+  const lit = hovered || hint;
   return (
     <button
       type="button"
@@ -44,7 +48,7 @@ function MenuItem({ item, onClose }) {
         cursor: "pointer",
         textAlign: "left",
         border: 0,
-        background: hovered ? "var(--sheetHover)" : "transparent",
+        background: lit ? "var(--sheetHover)" : "transparent",
         color: item.danger ? "var(--danger)" : "var(--fg)",
       }}
     >
@@ -58,7 +62,7 @@ function MenuItem({ item, onClose }) {
   );
 }
 
-function ContextMenu({ menu, title, items, closing, onClose }) {
+function ContextMenu({ menu, title, items, closing, onClose, hintLabel }) {
   const [ref, pos] = useClampedPosition(menu.x, menu.y, [items.length]);
 
   useEffect(() => {
@@ -172,7 +176,14 @@ function ContextMenu({ menu, title, items, closing, onClose }) {
               </div>
             );
           }
-          return <MenuItem key={item.label} item={item} onClose={onClose} />;
+          return (
+            <MenuItem
+              key={item.label}
+              item={item}
+              onClose={onClose}
+              hint={!!hintLabel && item.label === hintLabel}
+            />
+          );
         })}
       </div>
     </>

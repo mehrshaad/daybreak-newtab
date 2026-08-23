@@ -29,7 +29,7 @@ export const TOUR_STEPS = [
     id: "welcome",
     scene: "board",
     target: null,
-    title: "Hello",
+    title: "Hello!",
     body:
       "This is your new tab now. Everything on it is **yours to move, resize, " +
       "recolour or throw away**. Here is the quick version — about a minute, and " +
@@ -88,14 +88,16 @@ export const TOUR_STEPS = [
       "down to its buttons.",
   },
   {
-    id: "edit",
-    scene: "edit",
+    // Shown before anything is pressed, so the button is still a button rather
+    // than something that already happened. The next step is what goes in.
+    id: "edit-button",
+    scene: "board",
     target: "edit-button",
     placement: "bottom",
-    title: "Rearranging things",
+    title: "Moving things around",
     body:
-      "This button, or **Alt E**. You are in it now — have a look at the board " +
-      "behind this card, **every tile has its handles out**.",
+      "**Edit layout**, or **Alt E**. It puts the whole board into a state where " +
+      "every tile can be picked up and shifted. Here is what that looks like.",
   },
   {
     needs: "widget",
@@ -105,9 +107,9 @@ export const TOUR_STEPS = [
     placement: "top",
     title: "Grab the little bar",
     body:
-      "That is **the handle**. Pick a tile up by it and the others shuffle out of " +
-      "the way as you move. **You do not need edit mode for this** — hover any " +
-      "tile and its handle appears.",
+      "And there it is. That short bar under a tile is **the handle** — pick a " +
+      "tile up by it and the others shuffle out of the way as you go. **You do " +
+      "not need edit mode for this**; hover any tile and its handle appears.",
   },
   {
     id: "dock",
@@ -137,6 +139,18 @@ export const TOUR_STEPS = [
       "Clocks, weather, tasks, habits, a calendar, prayer times, crypto, and a " +
       "good few more. Take **as many as you like** — including **two of the same " +
       "one**, if you want two clocks in different cities.",
+  },
+  {
+    // The same shape as the Store pair: the button first, then what it opens.
+    id: "settings-button",
+    scene: "board",
+    target: "settings-button",
+    placement: "bottom",
+    title: "And everything else",
+    body:
+      "**Settings** lives here — how the whole board looks, what the search box " +
+      "may look through, and a few things worth knowing about. Two minutes " +
+      "in here is what turns this into your page rather than mine.",
   },
   {
     id: "appearance",
@@ -176,7 +190,7 @@ export const TOUR_STEPS = [
     scene: "board",
     target: null,
     celebrate: true,
-    title: "That is everything",
+    title: "That is everything!",
     body:
       "Go and make a mess of it — **nothing here is permanent**, and there is an " +
       "undo for most of it. If you ever want this again, it is at **the bottom " +
