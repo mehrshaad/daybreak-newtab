@@ -313,10 +313,7 @@ function Header({
     >
       {/* Both end groups are their own column now, so neither needs a width:
           they take what they take and the field stays put regardless. */}
-      <div
-        data-tour="profile-slot"
-        style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}
-      >
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
         {/* Renders nothing at all on a single-profile install, which is most of
             them, so the bar is unchanged for anyone not using profiles. When it
             does appear it takes the wordmark's place rather than crowding it:

@@ -29,9 +29,9 @@ export const TOUR_STEPS = [
     id: "welcome",
     scene: "board",
     target: null,
-    title: "Hello!",
+    title: "Hello! 👋🏻",
     body:
-      "This is your new tab now. Everything on it is **yours to move, resize, " +
+      "Daybreak is your new tab now. Everything on it is **yours to move, resize, " +
       "recolour or throw away**. Here is the quick version — about a minute, and " +
       "**Escape** gets you out whenever you have had enough.",
   },
@@ -190,7 +190,7 @@ export const TOUR_STEPS = [
     scene: "board",
     target: null,
     celebrate: true,
-    title: "That is everything!",
+    title: "That is everything! 🎉",
     body:
       "Go and make a mess of it — **nothing here is permanent**, and there is an " +
       "undo for most of it. If you ever want this again, it is at **the bottom " +

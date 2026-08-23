@@ -52,7 +52,16 @@ function ProfileSwitcher({ compact, onManage }) {
   if (list.length < 2 || !active) return null;
 
   return (
-    <div ref={wrapRef} style={{ position: "relative", display: "flex", minWidth: 0 }}>
+    <div
+      ref={wrapRef}
+      // On the chip itself, not on the header group that holds it: that group
+      // also carries the wordmark and the clock, so the tour was lighting all
+      // three to talk about one. With a single profile there is no chip and no
+      // handle, and that step falls back to a centred card with nothing lit —
+      // which is right, because the thing it describes is not there yet.
+      data-tour="profile-slot"
+      style={{ position: "relative", display: "flex", minWidth: 0 }}
+    >
       <button
         ref={(el) => {
           buttonRef.current = el;

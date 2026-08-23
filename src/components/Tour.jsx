@@ -213,8 +213,23 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
         setIndex((i) => prevIndex(i));
         return;
       }
-      // Tab, Enter and Space belong to whichever tour button has focus.
-      if (["Tab", "Enter", " "].includes(e.key)) return;
+      // Enter means "carry on", wherever focus happens to be — a card you read
+      // and dismiss with one key is the whole point of it being a card. On the
+      // last step it finishes.
+      //
+      // Which leaves Space as "press the button I am on", so Back and Skip are
+      // still reachable from the keyboard. That is the ordinary split in a
+      // wizard, and taking Enter for the primary action is why the primary
+      // button is the one that gets focus.
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isLast(steps, index)) finish();
+        else setIndex((i) => nextIndex(steps, i));
+        return;
+      }
+      // Tab moves between the card's own buttons; Space presses one.
+      if (["Tab", " "].includes(e.key)) return;
       // Everything else is swallowed. Ctrl K, Alt E and Alt A all change the
       // state the current step was written for, and the sealed sheet above
       // stops the mouse doing that but not the keyboard.
@@ -224,7 +239,7 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
     // Capture, so this runs before the app's own shortcuts rather than after.
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [present, steps, finish]);
+  }, [present, steps, index, finish]);
 
   // Focus starts and stays on the card, so Tab cycles its buttons rather than
   // wandering into a board nobody can click anyway, and Enter advances.
