@@ -91,6 +91,7 @@ function ContextMenu({ menu, title, items, closing, onClose }) {
       <div
         ref={ref}
         role="menu"
+        data-tour="tile-menu"
         aria-label={title}
         style={{
           position: "fixed",

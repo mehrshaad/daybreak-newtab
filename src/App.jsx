@@ -223,20 +223,37 @@ function App() {
 
   const showScene = useCallback(
     (scene) => {
-      setMenu(null);
       setStoreOpen(scene === "store");
       setSettingsOpen(scene === "settings");
       setEditing(scene === "edit");
       // The widget scene needs a widget. Whichever is first on the board is the
       // one the tour has been pointing at all along.
       setPanel(scene === "widget" ? ids[0] || null : null);
+      // Telling somebody a right-click menu exists is not the same as showing
+      // them one, so the tour opens it for real. Positioned over the tile it
+      // belongs to rather than at a pointer that was never there — the menu
+      // clamps itself to the viewport from wherever it is put.
+      if (scene === "menu" && ids[0]) {
+        const tile = document.querySelector('[data-tour="tile"]');
+        const at = tile?.getBoundingClientRect();
+        setMenu({
+          id: ids[0],
+          x: at ? at.left + at.width * 0.55 : 200,
+          y: at ? at.top + at.height * 0.55 : 200,
+        });
+      } else {
+        setMenu(null);
+      }
     },
     [ids]
   );
 
   const startTour = useCallback(() => {
+    // Taking the tour is being shown around, so the welcome card has done its
+    // job whether or not it was ever dismissed.
+    update("behavior", { tourDone: true });
     setTourOpen(true);
-  }, []);
+  }, [update]);
 
   const focusSearch = useCallback(() => {
     searchRef.current?.focus();
@@ -790,7 +807,11 @@ function App() {
       />
 
       <WelcomeCard
-        open={!behavior.tourDone}
+        // Never behind the tour. Starting the tour from Settings on an install
+        // that had not dismissed the welcome card left both up at once: the
+        // card still modal underneath, its scrim dimming the board a second
+        // time, and the spotlight landing on a tile nobody could see past it.
+        open={!behavior.tourDone && !tourOpen}
         name={profile.name}
         theme={appearance.theme || "system"}
         blur={appearance.blur !== false}

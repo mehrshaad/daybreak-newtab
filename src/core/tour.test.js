@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  emphasise,
   isLast,
   nextIndex,
   prevIndex,
@@ -36,16 +37,44 @@ describe("the step list", () => {
     expect(TOUR_STEPS[TOUR_STEPS.length - 1].scene).toBe("board");
   });
 
-  it("groups its scenes rather than flitting between them", () => {
-    // Every scene change is a drawer opening or the board changing mode, and
-    // doing that twice for the same scene means the tour bounced out of it and
-    // back. The board is the exception: it is where the tour starts and ends.
+  it("opens each drawer once and never comes back to it", () => {
+    // Every scene change but one is a drawer opening or the board changing
+    // mode, and returning to a drawer already visited means the tour bounced
+    // out of it and back — which on screen is a panel sliding shut and open
+    // again for no reason the reader can see.
+    //
+    // The board is the exception and is allowed several: it is the resting
+    // state between drawers, so pointing at the Store button before opening
+    // the Store necessarily passes back through it.
     const changes = TOUR_STEPS.filter((s, i) => i === 0 || s.scene !== TOUR_STEPS[i - 1].scene);
     const visits = {};
     for (const step of changes) visits[step.scene] = (visits[step.scene] || 0) + 1;
     for (const [scene, count] of Object.entries(visits)) {
-      expect(count, scene).toBeLessThanOrEqual(scene === "board" ? 2 : 1);
+      if (scene === "board") continue;
+      expect(count, scene).toBe(1);
     }
+  });
+
+  it("points at a control before opening what it opens", () => {
+    // Being dropped inside the Store having never seen the button that opens
+    // it teaches nothing about how to get back.
+    const ids = TOUR_STEPS.map((s) => s.id);
+    expect(ids.indexOf("store-button")).toBeLessThan(ids.indexOf("store"));
+    expect(ids.indexOf("store-button")).toBeGreaterThanOrEqual(0);
+  });
+
+  it("finishes the settings drawer before leaving it", () => {
+    // Profiles are introduced by the switcher in the toolbar, which means
+    // stepping back out to the board — so everything inside Settings has to be
+    // done by then, or the drawer would reopen after being closed.
+    const scenes = TOUR_STEPS.map((s) => s.scene);
+    const lastSettings = scenes.lastIndexOf("settings");
+    const profiles = TOUR_STEPS.findIndex((s) => s.id === "profiles");
+    expect(profiles).toBeGreaterThan(lastSettings);
+  });
+
+  it("ends on something worth ending on", () => {
+    expect(TOUR_STEPS[TOUR_STEPS.length - 1].celebrate).toBe(true);
   });
 
   it("covers the things somebody has to be told", () => {
@@ -60,7 +89,7 @@ describe("the step list", () => {
       "handle",
       "preset",
       "profile",
-      "export",
+      "file",
       "escape",
     ]) {
       expect(all, idea).toContain(idea);
@@ -120,5 +149,54 @@ describe("moving through it", () => {
       expect(stepAt(steps, index), String(index)).toBeTruthy();
     }
     expect(stepAt([], 0)).toBeNull();
+  });
+});
+
+describe("emphasise", () => {
+  it("splits a body into plain and emphasised runs", () => {
+    expect(emphasise("press **Ctrl K** to search")).toEqual([
+      { text: "press ", strong: false },
+      { text: "Ctrl K", strong: true },
+      { text: " to search", strong: false },
+    ]);
+  });
+
+  it("handles emphasis at either end", () => {
+    expect(emphasise("**Alt E** opens it")[0]).toEqual({ text: "Alt E", strong: true });
+    expect(emphasise("it opens with **Alt E**").pop()).toEqual({ text: "Alt E", strong: true });
+  });
+
+  it("leaves an unclosed marker alone rather than bolding the rest", () => {
+    // A typo in the copy should cost one pair of asterisks on screen, not the
+    // remainder of the sentence in bold.
+    const runs = emphasise("this **never closes");
+    expect(runs.every((r) => !r.strong)).toBe(true);
+  });
+
+  it("drops the empty runs splitting produces", () => {
+    for (const run of emphasise("**a**b**c**")) expect(run.text.length).toBeGreaterThan(0);
+  });
+
+  it("copes with nothing", () => {
+    expect(emphasise("")).toEqual([]);
+    expect(emphasise(undefined)).toEqual([]);
+  });
+
+  it("keeps every body in the tour balanced", () => {
+    // An unbalanced body silently loses all its emphasis, which is the kind of
+    // thing nobody notices until the card is on screen.
+    for (const step of TOUR_STEPS) {
+      const count = (step.body.match(/\*\*/g) || []).length;
+      expect(count % 2, step.id).toBe(0);
+      if (count > 0) {
+        expect(emphasise(step.body).some((r) => r.strong), step.id).toBe(true);
+      }
+    }
+  });
+
+  it("emphasises something in every step, since that is what gets scanned", () => {
+    for (const step of TOUR_STEPS) {
+      expect(emphasise(step.body).some((r) => r.strong), step.id).toBe(true);
+    }
   });
 });

@@ -300,6 +300,36 @@ button {
 }
 
 // Right-hand sheets slide in and out.
+// One keyframe for every piece of confetti; each differs only in the custom
+// properties it sets. Up and out first, then gravity takes over — a single
+// ease would arc unconvincingly, so the drop is folded into the second half.
+@keyframes db-confetti {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--fly-x), calc(var(--fly-y) + var(--fly-drop)), 0)
+      rotate(var(--fly-spin));
+  }
+}
+
+// Nobody who has asked for less movement wants confetti.
+@media (prefers-reduced-motion: reduce) {
+  @keyframes db-confetti {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+}
+
 @keyframes db-slide-in {
   from {
     opacity: 0;

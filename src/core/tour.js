@@ -15,42 +15,52 @@
 // `target` is a data-tour attribute rather than a CSS selector into the markup.
 // A selector like ".db-dock button:nth-child(3)" is a tour that breaks silently
 // the next time the dock is edited; a named handle breaks loudly, in a test.
-export const SCENES = ["board", "widget", "edit", "store", "settings"];
+// A step can name several, and the spotlight covers all of them at once — some
+// ideas are one idea across three controls.
+//
+// Bodies mark their key phrases with **double asterisks**. Nobody reads a
+// paragraph on a card they did not ask for; they scan it, and the bold is what
+// they scan. Kept as a marker in the copy rather than as structured segments so
+// the sentences stay readable in this file, which is where they get edited.
+export const SCENES = ["board", "menu", "widget", "edit", "store", "settings"];
 
 export const TOUR_STEPS = [
   {
     id: "welcome",
     scene: "board",
     target: null,
-    title: "This is your board",
+    title: "Hello",
     body:
-      "Everything on this page is a widget you chose, at a size and place you " +
-      "chose. Nothing here is fixed. This takes about a minute, and you can " +
-      "leave at any point with Escape.",
+      "This is your new tab now. Everything on it is **yours to move, resize, " +
+      "recolour or throw away**. Here is the quick version — about a minute, and " +
+      "**Escape** gets you out whenever you have had enough.",
   },
   {
     id: "search",
     scene: "board",
     target: "search",
     placement: "bottom",
-    title: "Search from here",
+    title: "Start typing",
     body:
-      "Ctrl K from anywhere on the page. The icon on the left switches engine. " +
-      "As you type it offers your quick links, and your open tabs, bookmarks " +
-      "and history if you turn those on. It also answers sums and conversions " +
-      "outright, so “15% of 82” or “40 km in miles” needs no search at all.",
+      "**Ctrl K** puts you here from anywhere on the page. The icon on the left " +
+      "**switches engine**. It will suggest your quick links as you go, plus your " +
+      "tabs, bookmarks and history once you say yes to those. And it **does " +
+      "sums**: type “15% of 82” and the answer is just there.",
   },
   {
     needs: "widget",
     id: "tile",
-    scene: "board",
-    target: "tile",
-    placement: "bottom",
-    title: "Every tile is a widget",
+    scene: "menu",
+    // The tile and the menu it opened, lit as one. Lighting only the tile left
+    // the menu itself sitting in the dimmed half of the screen, which is an odd
+    // thing to do to the subject of the step.
+    targets: ["tile", "tile-menu"],
+    placement: "right",
+    title: "Right-click does most of it",
     body:
-      "Right-click any tile for its own menu: resize it, refresh it, duplicate " +
-      "it, send it to the top, or remove it. That menu is the quickest way to " +
-      "everything a single widget can do.",
+      "This is the menu you get on **any tile** — resize, refresh, duplicate, send " +
+      "to the top, remove. Right-clicking **the board itself** has its own menu " +
+      "too. When you are not sure how to do something, **try right-clicking it**.",
   },
   {
     needs: "widget",
@@ -58,12 +68,12 @@ export const TOUR_STEPS = [
     scene: "widget",
     target: "panel",
     placement: "left",
-    title: "Each widget has its own settings",
+    title: "Every widget has a panel of its own",
     body:
-      "This panel is the widget you clicked, not the app. Its size, its own " +
-      "options, how often it refreshes, and anything it needs from you — a " +
-      "city, a calendar address, a list of coins. Different widgets offer " +
-      "different things here.",
+      "This one belongs to **the widget, not the app**. Its size, its own options, " +
+      "how often it refreshes, and whatever it needs from you — a city, a " +
+      "calendar link, which coins to watch. **No two widgets offer quite the same " +
+      "things here**, so it is worth a look at the ones you use.",
   },
   {
     needs: "widget",
@@ -71,21 +81,21 @@ export const TOUR_STEPS = [
     scene: "widget",
     target: "panel-colour",
     placement: "left",
-    title: "Colour one widget at a time",
+    title: "Give it a colour",
     body:
-      "Set per widget rather than for the whole board, so you can tell one from " +
-      "another at a glance. Everything inside the tile follows the colour you " +
-      "pick, including its inputs and buttons.",
+      "**One widget at a time**, so you can pick your tasks out of a full board " +
+      "without reading a word. Everything inside the tile follows along, right " +
+      "down to its buttons.",
   },
   {
     id: "edit",
     scene: "edit",
     target: "edit-button",
     placement: "bottom",
-    title: "Edit layout",
+    title: "Rearranging things",
     body:
-      "Alt E, or this button. In edit mode every tile shows its handles, and " +
-      "you are in it now — the board behind this looks different already.",
+      "This button, or **Alt E**. You are in it now — have a look at the board " +
+      "behind this card, **every tile has its handles out**.",
   },
   {
     needs: "widget",
@@ -93,74 +103,84 @@ export const TOUR_STEPS = [
     scene: "edit",
     target: "handle",
     placement: "top",
-    title: "Drag a widget by its bar",
+    title: "Grab the little bar",
     body:
-      "The short bar under a tile is its handle. Pick it up and the other tiles " +
-      "move out of the way as you go. You do not need edit mode for this — the " +
-      "handle appears whenever you hover a tile.",
+      "That is **the handle**. Pick a tile up by it and the others shuffle out of " +
+      "the way as you move. **You do not need edit mode for this** — hover any " +
+      "tile and its handle appears.",
   },
   {
     id: "dock",
     scene: "edit",
     target: "dock",
     placement: "top",
-    title: "Presets, and your own layout",
+    title: "Presets, and your own",
     body:
-      "Start from a preset, or keep your own arrangement as “Yours” and come " +
-      "back to it whenever you like. Auto arrange tidies what is already there " +
-      "without adding or removing anything.",
+      "Try a **preset** if you would rather not start from nothing. Once the board " +
+      "is how you like it, keep it as **“Yours”** and you can always come back " +
+      "to it. **Auto arrange** just tidies up what is already there.",
+  },
+  {
+    id: "store-button",
+    scene: "board",
+    target: "store-button",
+    placement: "bottom",
+    title: "Want more widgets?",
+    body: "They live behind **this button**. **Alt A** gets you there too.",
   },
   {
     id: "store",
     scene: "store",
     target: null,
-    title: "Add more widgets",
+    title: "Have a browse",
     body:
-      "Alt A, or the Store button. Everything is here — clocks, weather, tasks, " +
-      "habits, a calendar, prayer times, crypto, and more. Add as many as you " +
-      "like, including two of the same one.",
+      "Clocks, weather, tasks, habits, a calendar, prayer times, crypto, and a " +
+      "good few more. Take **as many as you like** — including **two of the same " +
+      "one**, if you want two clocks in different cities.",
   },
   {
     id: "appearance",
     scene: "settings",
-    target: "settings-appearance",
+    targets: ["settings-appearance", "settings-accent", "settings-background"],
     placement: "left",
-    title: "Make it yours",
+    title: "Make it look like yours",
     body:
-      "Theme, accent colour, wallpaper, how round and how solid the tiles are, " +
-      "and whether they show their names at all. Turning the labels off gives " +
-      "that row of space back to the widget.",
-  },
-  {
-    id: "profiles",
-    scene: "settings",
-    target: "settings-profiles",
-    placement: "left",
-    title: "More than one board",
-    body:
-      "Up to three separate boards on one install — work and home, say. Each " +
-      "keeps its own layout, appearance and widget settings. Switching is one " +
-      "click from the top left once you have a second one.",
+      "**Theme, accent, and the background** behind it all. Further down there is " +
+      "how round and how solid the tiles are, and whether they show their names " +
+      "at all — **turning those off gives the space back to the widget**.",
   },
   {
     id: "backup",
     scene: "settings",
     target: "settings-backup",
     placement: "left",
-    title: "It is all yours to keep",
+    title: "It is yours to keep",
     body:
-      "Export everything to a file and bring it back on another machine. Your " +
-      "board syncs with your Chrome profile on its own, and nothing here is " +
-      "sent anywhere else.",
+      "Your board **follows your Chrome profile on its own**. This is for the " +
+      "other cases: **save the lot to a file** and bring it back on a different " +
+      "machine. **Nothing is sent anywhere else**, ever.",
+  },
+  {
+    id: "profiles",
+    scene: "board",
+    target: "profile-slot",
+    placement: "bottom",
+    title: "Room for a second board",
+    body:
+      "Work and home, say — **up to three**, each with its own layout, look and " +
+      "widget settings. Add one in Settings and **a switcher appears right here**, " +
+      "so you are one click from the other.",
   },
   {
     id: "done",
     scene: "board",
     target: null,
-    title: "That is the tour",
+    celebrate: true,
+    title: "That is everything",
     body:
-      "Right-click anything you are unsure about — tiles, and the board itself, " +
-      "both have menus. You can run this again any time from Settings.",
+      "Go and make a mess of it — **nothing here is permanent**, and there is an " +
+      "undo for most of it. If you ever want this again, it is at **the bottom " +
+      "of Settings**.",
   },
 ];
 
@@ -178,6 +198,29 @@ export const TOUR_STEPS = [
 // sit in a corner describing something the reader cannot see.
 export function usableSteps(steps, { hasWidgets = true } = {}) {
   return steps.filter((step) => step.needs !== "widget" || hasWidgets);
+}
+
+// Splits a body into runs of plain and emphasised text. A three-line parser
+// rather than a markdown dependency: the only syntax here is **, the copy is
+// written in this file by the people who read this file, and a renderer that
+// accepted more would only invite more.
+//
+// Odd-numbered runs are the emphasised ones, which falls out of splitting on
+// the delimiter. An unclosed ** leaves its tail plain rather than swallowing
+// the rest of the sentence.
+export function emphasise(body) {
+  const parts = String(body || "").split("**");
+  const balanced = parts.length % 2 === 1;
+  return parts
+    .map((text, i) => ({ text, strong: balanced && i % 2 === 1 }))
+    .filter((run) => run.text.length > 0);
+}
+
+// Every handle a step wants lit, whether it named one or several.
+export function targetsOf(step) {
+  if (!step) return [];
+  if (step.targets) return step.targets;
+  return step.target ? [step.target] : [];
 }
 
 // Clamped rather than wrapped. A tour is a line with two ends, and arrowing

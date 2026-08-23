@@ -2,13 +2,16 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from "react-dom";
 import { clampToViewport, MONO, usePresence } from "@daybreak/sdk";
 import {
+  emphasise,
   isLast,
   nextIndex,
   prevIndex,
   stepAt,
+  targetsOf,
   TOUR_STEPS,
   usableSteps,
 } from "../core/tour";
+import Celebration from "./Celebration";
 
 // The guided tour.
 //
@@ -27,13 +30,50 @@ const PAD = 8;
 const CARD_WIDTH = 340;
 const GAP = 14;
 
-function targetRect(name) {
-  if (!name) return null;
-  const el = document.querySelector(`[data-tour="${name}"]`);
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  if (r.width === 0 && r.height === 0) return null;
-  return r;
+function elementFor(name) {
+  return name ? document.querySelector(`[data-tour="${name}"]`) : null;
+}
+
+// The box around everything a step wants lit. Several handles collapse into one
+// hole rather than several, because some ideas are one idea spread across three
+// controls — "how it looks" is the theme, the accent and the background, and
+// three separate spotlights would read as three separate points.
+function spotlightRect(names) {
+  let box = null;
+  for (const name of names) {
+    const el = elementFor(name);
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) continue;
+    box = box
+      ? {
+          top: Math.min(box.top, r.top),
+          left: Math.min(box.left, r.left),
+          right: Math.max(box.right, r.right),
+          bottom: Math.max(box.bottom, r.bottom),
+        }
+      : { top: r.top, left: r.left, right: r.right, bottom: r.bottom };
+  }
+  if (!box) return null;
+  return { ...box, width: box.right - box.left, height: box.bottom - box.top };
+}
+
+// Bring the target into view before measuring it. Half the steps point at
+// something inside the settings drawer, which scrolls — and a spotlight on a
+// section three screens down is a dimmed page with a hole in it nobody can see.
+// Instant rather than smooth: a smooth scroll is still moving when the card is
+// positioned, and the card would land where the target used to be.
+function revealTargets(names) {
+  for (const name of names) {
+    const el = elementFor(name);
+    if (el?.scrollIntoView) {
+      el.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+      // The first one is enough: multi-target steps name neighbours, and
+      // scrolling to each in turn would leave the last one centred and the
+      // first one off the top.
+      return;
+    }
+  }
 }
 
 // Where the card goes relative to the hole, given which way the step asked for
@@ -91,7 +131,9 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
 
   const measure = useCallback(() => {
     if (!step) return;
-    const found = targetRect(step.target);
+    const names = targetsOf(step);
+    revealTargets(names);
+    const found = spotlightRect(names);
     setRect(found);
     const height = cardRef.current?.offsetHeight || 200;
     if (!found) {
@@ -234,6 +276,12 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
         panel({ inset: 0 })
       )}
 
+      {/* Fired from behind the card on the last step, which is where the eye
+          already is. */}
+      {step.celebrate && cardPos ? (
+        <Celebration x={cardPos.x + CARD_WIDTH / 2} y={cardPos.y + 60} />
+      ) : null}
+
       <div
         ref={cardRef}
         style={{
@@ -267,7 +315,21 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
         <div style={{ fontSize: 16, fontWeight: 500, color: "var(--fg)", marginBottom: 6 }}>
           {step.title}
         </div>
-        <div style={{ fontSize: 13, lineHeight: 1.6, color: "var(--dim)" }}>{step.body}</div>
+        {/* Emphasised runs in the app's own text colour rather than a heavier
+            weight alone: on a translucent card at 13px, weight on its own is
+            almost invisible, and colour is what actually makes a phrase catch
+            the eye when somebody is scanning rather than reading. */}
+        <div style={{ fontSize: 13, lineHeight: 1.6, color: "var(--dim)" }}>
+          {emphasise(step.body).map((run, i) =>
+            run.strong ? (
+              <strong key={i} style={{ fontWeight: 500, color: "var(--fg)" }}>
+                {run.text}
+              </strong>
+            ) : (
+              <span key={i}>{run.text}</span>
+            )
+          )}
+        </div>
 
         {/* Progress as dots rather than a bar: thirteen steps is few enough to
             show, and seeing how many are left is what stops a tour feeling

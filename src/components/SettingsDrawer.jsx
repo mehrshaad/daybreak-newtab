@@ -141,7 +141,7 @@ function SettingsDrawer({
         </Collapse>
       </Section>
 
-      <Section title="Accent" style={{ marginBottom: 22 }}>
+      <Section title="Accent" data-tour="settings-accent" style={{ marginBottom: 22 }}>
         {/* Eight to a row, as a grid rather than a wrapping flex row. Sixteen
             30px swatches wrapped to seven, seven and a ragged two; two rows of
             eight read as a palette. The swatches size themselves from the
@@ -186,7 +186,7 @@ function SettingsDrawer({
         </div>
       </Section>
 
-      <Section title="Background" style={{ marginBottom: 22 }}>
+      <Section title="Background" data-tour="settings-background" style={{ marginBottom: 22 }}>
         <div
           style={{
             display: "grid",

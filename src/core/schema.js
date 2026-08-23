@@ -130,7 +130,9 @@ export function defaultSettings() {
         },
       },
     },
-    profile: { name: "" },
+    // Not empty. "Good morning" on its own is a page talking to nobody, and
+    // the first thing anyone does is change it anyway.
+    profile: { name: "Handsome" },
     widgets: {},
   };
 }
