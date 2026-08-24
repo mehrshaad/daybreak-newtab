@@ -14,9 +14,14 @@ Vite.
 - 🔍 **Click to focus** — click a tile to zoom into it. Four behaviours to
   choose from, including a camera zoom that scales the whole board toward the
   tile you picked.
-- 🎨 **Themed end to end** — dark and light (or follow your system), six accent
-  colours, twelve generated backgrounds, and sliders for corner radius, tile
-  opacity and page zoom. Frosted glass on, or solid surfaces off.
+- 🎨 **Themed end to end** — dark and light (or follow your system), fifteen
+  accent colours, twelve generated backgrounds, a colour per widget, and sliders
+  for corner radius, tile opacity and page zoom. Frosted glass on, or solid
+  surfaces off.
+- 👥 **Up to three boards** — keep work and home apart. Each profile has its own
+  layout, its own look and its own widget settings, and each syncs on its own.
+- 🧭 **A tour on the first run** — fifteen steps that open each drawer for real
+  as they explain it, and never appear again once you have had it.
 - 🛍️ **A widget browser** — search the catalog by name or category, read what
   each widget does and what it can access, and add or remove it in a click.
 - ⌨️ **Right-click anything** — per-widget menus with sizes and actions, a board
@@ -26,25 +31,33 @@ Vite.
 
 ### The widgets
 
+Twenty-two of them. Counted from `packages/widget-*`, which is the only place
+the number is actually true.
+
 | Widget | What it does |
 | --- | --- |
-| Clock | Time and today's date, digital or as an analog face |
-| World Clocks | Up to four cities at once, reorderable, with a day-offset badge |
-| Weather | Conditions and the hours ahead; bigger sizes show more, not just larger |
+| Clock | Time and today's date, digital or as an analog face, in five sizes |
+| World Clocks | Two to four cities side by side, reorderable, with UTC offsets and a day marker |
+| Weather | Current conditions and the hours ahead; bigger sizes show more, not just larger |
 | Air quality | US AQI and PM2.5/PM10 for a city you pick |
-| Tasks | A to-do list with optional due dates |
-| Quick Links | Pinned shortcuts with generated app-style icons, your own names, and a hover card with the site's real favicon |
-| Google Apps | The launcher grid, without the extra click |
-| Scratchpad | One text field that saves as you type, syncing up to 6KB |
+| Sun & daylight | Sunrise, sunset, and how the day's length is changing |
+| Moon phase | Tonight's moon, drawn as it actually looks |
+| Prayer times | Today's five times, worked out on the device from your coordinates |
+| Tasks | A short list with optional due dates and its own date picker |
+| Habits | A seven-day dot grid per habit, each with its own weekly target |
 | Focus Timer | Pomodoro rounds with a long break every fourth |
-| Habits | A seven-day dot grid per habit, each with its own weekly target and goal |
-| Currency | Exchange rates for a base currency and up to five others |
-| Crypto | A short price watchlist with 24-hour change |
-| On this day | One historical event, changed daily, more on a taller tile |
-| News | Hacker News' top stories by default, or your own RSS/Atom feed |
-| Calendar | Your next two weeks of events from a pasted private iCal link |
-| Quote of the day | One line, changed daily |
+| Countdown | The dates you are counting toward, in days |
+| Scratchpad | One text field that saves as you type, syncing up to 6KB |
+| Quick Links | The places you actually go, wearing their own brand marks — 233 built in, and the site's own favicon for the rest |
+| Google Apps | The launcher grid, without the extra click |
+| Most visited | The sites you open most, from Chrome's own list (optional permission) |
 | Recent Tabs | Reopen what you closed by accident (optional permission) |
+| Calendar | A real month grid — your events, holidays, and the Jalali and Hijri dates |
+| Currency | Exchange rates for a base currency and up to five others, no key required |
+| Crypto | A short price watchlist with 24-hour change, no key required |
+| News | Hacker News' top stories by default, or your own RSS/Atom feed |
+| On this day | A moment from history, changed daily, more on a taller tile |
+| Quote of the day | One line, changed daily |
 
 New widgets arrive with extension updates — see
 [Writing a widget](#writing-a-widget) for why.
