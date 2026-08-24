@@ -71,7 +71,13 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
           width: size,
           height: size,
           borderRadius: radius ?? size * 0.28,
-          background: "var(--panel2)",
+          // A gradient, not the flat panel colour, and at the same 160deg the
+          // brand tiles use. A favicon tile sits in a row of brand tiles, and a
+          // flat white or flat black square among sixteen gradients reads as the
+          // one that failed to load. Built from the theme's own panel tokens, so
+          // it is a white gradient on light and a black one on dark without
+          // either being written down twice.
+          background: "linear-gradient(160deg, var(--panel2), var(--panel))",
           display: "grid",
           placeItems: "center",
           flex: "none",

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ACCENT_NAMES,
   ACCENTS,
+  TINTS,
+  TINT_NAMES,
   hslOf,
   tileFill,
   tileSurfaces,
@@ -266,6 +268,9 @@ describe("every accent, in both themes", () => {
   });
 
   it("has sixteen of them, all distinct, all valid hex", () => {
+    // Sixteen exactly, because the accent picker is eight to a row and two
+    // clean rows is what sixteen buys. The tint picker needs seventeen for the
+    // same reason at nine to a row; that extra one lives in TINTS, not here.
     expect(ACCENTS).toHaveLength(16);
     expect(new Set(ACCENTS).size).toBe(16);
     for (const a of ACCENTS) expect(a).toMatch(/^#[0-9a-f]{6}$/);
@@ -366,6 +371,33 @@ describe("wallpapers on every accent", () => {
   });
 });
 
+describe("the tint palette", () => {
+  it("is the accents plus one, so its picker fills two whole rows", () => {
+    // Nine to a row with "none" in the first cell: sixteen colours left the
+    // second row a cell short and the grid read as unfinished.
+    expect(TINTS).toHaveLength(17);
+    expect(TINTS.slice(0, 16)).toEqual(ACCENTS);
+    expect(1 + TINTS.length).toBe(18);
+    expect((1 + TINTS.length) % 9).toBe(0);
+  });
+
+  it("keeps the accent picker's own two rows of eight intact", () => {
+    // The reason the extra one is not an accent: seventeen accents would fix
+    // one grid by breaking the other.
+    expect(ACCENTS.length % 8).toBe(0);
+  });
+
+  it("names every tint, including the extra", () => {
+    for (const t of TINTS) expect(TINT_NAMES[t], t).toBeTruthy();
+    expect(new Set(Object.values(TINT_NAMES)).size).toBe(TINTS.length);
+  });
+
+  it("has no duplicates and all valid hex", () => {
+    expect(new Set(TINTS).size).toBe(TINTS.length);
+    for (const t of TINTS) expect(t).toMatch(/^#[0-9a-f]{6}$/);
+  });
+});
+
 describe("tileFill", () => {
   const rgb = (css) => css.match(/[\d.]+/g).map(Number);
 
@@ -389,7 +421,7 @@ describe("tileFill", () => {
     // theme's own panel, so a dark tile stays dark and a light one stays light
     // however saturated the swatch. If this ever became a fill, text on the
     // tile would have to be re-checked per colour.
-    for (const tint of ACCENTS) {
+    for (const tint of TINTS) {
       const [r, g, b] = rgb(tileFill("dark", 100, tint));
       const [lr, lg, lb] = rgb(tileFill("light", 100, tint));
       // Dark stays nearer the dark panel than the swatch.
@@ -409,7 +441,7 @@ describe("tileFill", () => {
     const hex = (css) =>
       `#${rgb(css).slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
 
-    for (const tint of [null, ...ACCENTS]) {
+    for (const tint of [null, ...TINTS]) {
       const onDark = contrast("#f4f4f6", hex(tileFill("dark", 100, tint)));
       const onLight = contrast("#2a2c33", hex(tileFill("light", 100, tint)));
       expect(onDark, `dark ${tint}`).toBeGreaterThanOrEqual(4.5);

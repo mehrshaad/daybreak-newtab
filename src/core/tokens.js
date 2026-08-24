@@ -149,6 +149,24 @@ export const BLUR = {
 // the ceiling.
 const TINT_MIX = { dark: 0.34, light: 0.28 };
 
+// The tint palette: the accents, plus one that is a tint and not an accent.
+//
+// Seventeen rather than sixteen because the picker lays out nine to a row with
+// "none" taking the first cell, so sixteen colours left the second row one
+// short and the grid looked unfinished. Eighteen cells is two full rows.
+//
+// Added here rather than to ACCENTS because the accent picker is eight to a row
+// and two clean rows of eight is exactly what sixteen gives it: a seventeenth
+// accent would fix this grid by breaking that one. And teal earns a place among
+// tints more than among accents on its own merits — as a wash it reads clearly
+// apart from both mint and cyan, while as an accent, driving buttons and links
+// and the wallpaper, it would sit very close to what cyan already does.
+export const TINT_EXTRA = "#74d1c4";
+
+export const TINTS = [...ACCENTS, TINT_EXTRA];
+
+export const TINT_NAMES = { ...ACCENT_NAMES, [TINT_EXTRA]: "teal" };
+
 // The theme's untinted panel surface, which is also what a tint moves away from.
 const PANEL_RGB = { dark: [28, 30, 38], light: [255, 255, 255] };
 

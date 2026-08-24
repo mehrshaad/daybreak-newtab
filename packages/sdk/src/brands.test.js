@@ -120,3 +120,47 @@ describe("BRANDS", () => {
     }
   });
 });
+
+describe("the brands added for quick links", () => {
+  // Spot checks on the batch, in the two ways a link resolves: by its address,
+  // which is the signal that matters, and by a name typed into the widget.
+  it("knows each new site by its address", () => {
+    const cases = [
+      ["https://shopify.com", "shopify"],
+      ["https://www.etsy.com/shop/x", "etsy"],
+      ["https://python.org/downloads", "python"],
+      ["https://react.dev", "react"],
+      ["https://nodejs.org", "nodejs"],
+      ["https://go.dev/doc", "go"],
+      ["https://developer.mozilla.org/en-US/docs/Web", "mdn"],
+      ["https://cash.app/pay", "cashapp"],
+      ["https://chess.com/play", "chess"],
+      ["https://1password.com", "1password"],
+      ["https://theguardian.com/uk", "theguardian"],
+      ["https://elastic.co", "elastic"],
+      ["https://tradingview.com/chart", "tradingview"],
+      ["https://strava.com/athletes/1", "strava"],
+    ];
+    for (const [url, key] of cases) {
+      expect(brandForUrl(url), url).toBe(BRANDS[key]);
+    }
+  });
+
+  it("gives every new brand a glyph and a usable gradient", () => {
+    for (const [key, brand] of Object.entries(BRANDS)) {
+      expect(brand.Glyph, key).toBeTruthy();
+      expect(brand.from, key).toMatch(/^#[0-9a-f]{6}$/);
+      expect(brand.to, key).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+
+  it("keeps a white mark legible on every one of them", () => {
+    // The reason inkSafeGradient exists: a tile whose own colours are too pale
+    // for a white glyph is stepped down until it is not. Adding sixty-odd
+    // brands is exactly when that stops being checked by eye.
+    for (const [key, brand] of Object.entries(BRANDS)) {
+      const safe = inkSafeGradient(brand.from, brand.to);
+      expect(whiteContrast(safe.to), `${key} ${safe.to}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+});

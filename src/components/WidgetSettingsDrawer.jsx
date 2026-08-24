@@ -1,7 +1,7 @@
 import { Suspense, lazy, useMemo } from "react";
 import { LuBan } from "react-icons/lu";
 import { MONO, pill } from "@daybreak/sdk";
-import { ACCENT_NAMES, ACCENTS, tileFill } from "../core/tokens";
+import { TINT_NAMES, TINTS, tileFill } from "../core/tokens";
 import { getWidget, resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
 import { Button, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
@@ -23,7 +23,7 @@ function panelFor(manifest) {
 // Painted as the tile it produces rather than as the raw colour, so the row
 // shows what the board will look like instead of a line of pastels.
 function TintSwatch({ theme, tint, selected, onPick, plain = false }) {
-  const label = plain ? "No colour" : `Colour: ${ACCENT_NAMES[tint] || tint}`;
+  const label = plain ? "No colour" : `Colour: ${TINT_NAMES[tint] || tint}`;
   return (
     <button
       type="button"
@@ -156,7 +156,7 @@ function WidgetSettingsDrawer({
               selected={!record.tint}
               onPick={() => onTint(null)}
             />
-            {ACCENTS.map((c) => (
+            {TINTS.map((c) => (
               <TintSwatch
                 key={c}
                 theme={theme}
