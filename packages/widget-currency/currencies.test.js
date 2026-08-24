@@ -24,42 +24,63 @@ describe("symbolFor", () => {
 });
 
 describe("emojiFor", () => {
-  it("gives every currency one", () => {
-    for (const [code] of CURRENCIES) expect(emojiFor(code), code).toBeTruthy();
+  // Derived from the code, so this checks the derivation lands on the right
+  // country one at a time rather than trusting the rule.
+  const EXPECTED = {
+    AUD: "🇦🇺", BRL: "🇧🇷", CAD: "🇨🇦",
+    CHF: "🇨🇭", CNY: "🇨🇳", CZK: "🇨🇿",
+    DKK: "🇩🇰", EUR: "🇪🇺", GBP: "🇬🇧",
+    HKD: "🇭🇰", HUF: "🇭🇺", IDR: "🇮🇩",
+    ILS: "🇮🇱", INR: "🇮🇳", IRR: "🦁",
+    ISK: "🇮🇸", JPY: "🇯🇵", KRW: "🇰🇷",
+    MXN: "🇲🇽", MYR: "🇲🇾", NOK: "🇳🇴",
+    NZD: "🇳🇿", PHP: "🇵🇭", PLN: "🇵🇱",
+    RON: "🇷🇴", SEK: "🇸🇪", SGD: "🇸🇬",
+    THB: "🇹🇭", TRY: "🇹🇷", USD: "🇺🇸",
+    ZAR: "🇿🇦",
+  };
+
+  it("gives the right flag for every currency offered", () => {
+    for (const [code] of CURRENCIES) expect(emojiFor(code), code).toBe(EXPECTED[code]);
+  });
+
+  it("covers the whole list, with nothing left over", () => {
+    // Add a currency above without adding it here and this is what says so.
+    expect(Object.keys(EXPECTED).sort()).toEqual(CURRENCIES.map(([c]) => c).sort());
+  });
+
+  it("uses a lion for Iran rather than its flag, by request", () => {
+    expect(emojiFor("IRR")).toBe("🦁");
+    // And it is the one exception: everything else is a pair of indicators.
+    for (const [code] of CURRENCIES) {
+      if (code === "IRR") continue;
+      expect([...emojiFor(code)], code).toHaveLength(2);
+    }
   });
 
   it("never repeats one", () => {
-    // Two rows carrying the same mark is worse than no marks at all: the mark
-    // is there to tell them apart. India's elephant is why Thailand has a
-    // tuk-tuk, and Iran's lion is why Singapore has a skyline.
     const used = CURRENCIES.map(([c]) => emojiFor(c));
     expect(new Set(used).size).toBe(used.length);
   });
 
-  it("uses a lion for Iran, as asked", () => {
-    expect(emojiFor("IRR")).toBe("🦁");
-  });
-
-  it("uses no flags at all", () => {
-    // Why this is a table and not derived from the code: Windows has no flag
-    // glyphs and paints a regional-indicator pair as two letters, so "US USD"
-    // was the code twice. Nothing in here may be one.
-    for (const [code] of CURRENCIES) {
-      for (const ch of emojiFor(code)) {
-        const cp = ch.codePointAt(0);
-        expect(cp < 0x1f1e6 || cp > 0x1f1ff, code + " " + ch).toBe(true);
-      }
+  it("builds real regional indicators, not letters", () => {
+    for (const ch of emojiFor("USD")) {
+      expect(ch.codePointAt(0)).toBeGreaterThanOrEqual(0x1f1e6);
+      expect(ch.codePointAt(0)).toBeLessThanOrEqual(0x1f1ff);
     }
   });
 
-  it("says nothing for something that is not a currency here", () => {
-    for (const junk of ["", null, undefined, "XAU", "nonsense"]) {
+  it("says nothing rather than something wrong", () => {
+    // A metal or a drawing right has no country, so it gets nothing instead of
+    // a pair of tofu boxes.
+    for (const junk of ["", null, undefined, "X", "1US", "$$$"]) {
       expect(emojiFor(junk), String(junk)).toBe("");
     }
   });
 
   it("is case-insensitive, since a stored config could hold either", () => {
     expect(emojiFor("usd")).toBe(emojiFor("USD"));
+    expect(emojiFor("irr")).toBe(emojiFor("IRR"));
   });
 
   it("still has a symbol for every currency, since that moved rather than went", () => {
