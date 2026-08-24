@@ -91,13 +91,16 @@ describe("the screenshot captions", () => {
   it("do not carry a stale widget count", () => {
     // These are drawn onto the store cards, so a wrong number there is a wrong
     // number on the listing itself.
-    const src = readFileSync(CAPTIONS, "utf8");
-    expect(src).toContain("Twenty-two widgets");
-    expect(src).not.toContain("Seventeen widgets");
+    const src = readFileSync(CAPTIONS, "utf8").toLowerCase();
+    expect(src).toContain("twenty-two widgets");
+    expect(src).not.toContain("seventeen widgets");
   });
 
   it("do not carry a stale accent count", () => {
-    const src = readFileSync(CAPTIONS, "utf8");
+    // Case-insensitive: the number is the claim, and a caption may open a
+    // sentence with it. The point is that it matches ACCENTS, not how it is
+    // capitalised.
+    const src = readFileSync(CAPTIONS, "utf8").toLowerCase();
     expect(src).not.toContain("six accents");
     expect(src).toContain("fifteen accents");
   });

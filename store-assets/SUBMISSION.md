@@ -256,44 +256,80 @@ reaches the developer, who operates no server.
 
 ## Re-capturing the screenshots
 
-The five on file were captured on 2026-08-09 against 2.1.0. They are stale in
-ways a reviewer will not notice but a visitor will: no tour, no profile chip in
-the toolbar, the old agenda-style calendar, sixteen accent swatches in two rows
-of eight rather than fifteen in three rows of five, smaller icons in Quick Links
+The five on file were captured on 2026-08-09 against 2.1.0 and are stale in ways
+a reviewer will not notice but a visitor will: no tour, no profile chip in the
+toolbar, the old agenda-style calendar, sixteen accent swatches in two rows of
+eight rather than fifteen in three rows of five, smaller icons in Quick Links
 and Google Apps, and a grid glyph on Edit layout where there is now a pencil.
 
-This part cannot be automated from here — the captures have to come off a real
-window at a real size. The pipeline that turns them into store cards is already
-written and does the rest.
+They also all show the same board, in the same colour, five times — which
+quietly tells a visitor that is all it does. The five are a sequence now, not
+five goes at the same picture: want it, trust it can do the job, see it become
+yours, see it fit your life, see it will not fight your taste.
 
-1. Build and load `dist/` unpacked, or use the dev server. Set the window to
-   1280 wide or more; the cards inset the capture at its own resolution rather
-   than stretching it, so a bigger window means a sharper card.
-2. Take five captures as JPEGs into a scratch folder, named `1.jpg` .. `4.jpg`
-   plus `5-dark.jpg` and `5-light.jpg` — card five is built from the same board
-   under both themes, so those two want the same layout and the same moment,
-   with only the theme switched between them.
-3. What each card is for, from `scripts/store-assets.mjs`:
-   - `1.jpg` — a full board, arranged, showing the point of the thing
-   - `2.jpg` — a board with plenty of different widgets on it
-   - `3.jpg` — mid-drag, a tile lifted and the others moved aside
-   - `4.jpg` — the Store open, on a category
-   - `5-dark.jpg` / `5-light.jpg` — the same board, both themes
-4. Each capture should use a different accent and background, so the listing
-   shows what is adjustable without a caption having to say it.
-5. Then:
+### The boards are files
+
+```powershell
+node scripts/screenshot-boards.mjs
+```
+
+Writes five importable backups to `store-assets/boards/`. Each is a complete
+board — layout, sizes, theme, accent, background, per-widget colours, and the
+widget content — so capturing is import, wait, shoot. They are deliberately
+unalike:
+
+| Shot | Board | Theme | Accent | Background | Shows |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `shot-1-hero.json` | light | orange | Aurora | 10 widgets, arranged, analog clock |
+| 2 | `shot-2-store.json` | dark | indigo | Nebula | the Store open over a full board |
+| 3 | `shot-3-colours.json` | light | mint | Prism | 12 tiles, a different colour on each |
+| 4 | `shot-4-profiles.json` | light | blue | Halo | the work board, with the profile switcher open |
+| 5 | `shot-5-themes.json` | dark → light | magenta | Mesh | the same board under both themes |
+
+Each carries `tourDone: true`, or the welcome card sits over the middle of every
+shot.
+
+### Capturing
+
+1. Build and load `dist/` unpacked, or run the dev server. Set the window to
+   1280 wide or more — the cards inset the capture at its own resolution rather
+   than stretching it, so a bigger window is a sharper card.
+2. For each shot: Settings → Backup → Import, pick the board, then give the
+   live widgets a few seconds. Weather, air quality, currency, crypto and news
+   all fetch, and a half-loaded tile in a store screenshot looks like a broken
+   one.
+3. Capture as JPEG into a scratch folder, named `1.jpg` .. `4.jpg` plus
+   `5-dark.jpg` and `5-light.jpg`.
+   - Shot 2: open the Store and pick a category before capturing.
+   - Shot 4: add a second profile first — Settings → Profiles → Add, name them
+     Work and Home — then open the switcher in the toolbar and capture with the
+     menu showing. A backup cannot carry this: profiles live outside the
+     per-profile storage a backup covers.
+   - Shot 5: capture `5-dark.jpg`, switch the theme in the toolbar, capture
+     `5-light.jpg`. Same board, same arrangement, ideally the same minute.
+4. Then:
 
 ```powershell
 node scripts/store-assets.mjs <that-folder>
 ```
 
    Outputs land in `store-assets/`: `screenshot-1.png` .. `screenshot-5.png` at
-   1280x800, plus the promo tile and marquee.
+   1280x800, plus the promo tile and the marquee.
 
-The captions live in `CARDS` in that script and are already updated for this
-release — they had said "seventeen widgets" and "six accents" for two releases
-after both stopped being true, which is the kind of claim worth counting rather
-than remembering.
+### A few things that make the difference
+
+- **Let the data land.** The single most common bad store screenshot is a
+  spinner or an empty state. Weather with no city reads "Pick a city to start",
+  which is a photograph of the setup screen.
+- **Keep the greeting.** "Good morning, Sam" over an arranged board is the whole
+  pitch in one line. The boards set a name for this reason.
+- **Do not stage the impossible.** Everything in these boards is something a
+  user can have. A screenshot that cannot be reproduced is a promise that gets
+  reported as a bug.
+
+The captions live in `CARDS` in `scripts/store-assets.mjs`. The widget and
+accent counts in them are checked against the packages and the palette by
+`src/core/docsMatchWidgets.test.js` — they had both been wrong for two releases.
 
 ## Checking the migration by hand
 
