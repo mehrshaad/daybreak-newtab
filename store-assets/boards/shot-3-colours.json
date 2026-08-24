@@ -1,0 +1,373 @@
+{
+  "kind": "daybreak-backup",
+  "version": 2,
+  "exportedAt": "1970-01-01T00:00:00.000Z",
+  "settings": {
+    "v": 2,
+    "board": {
+      "ids": [
+        "clock",
+        "tasks",
+        "weather",
+        "countdown",
+        "habits",
+        "worldclocks",
+        "moon",
+        "currency",
+        "links",
+        "crypto",
+        "timer",
+        "quote"
+      ],
+      "sizes": {
+        "clock": [
+          3,
+          2
+        ],
+        "tasks": [
+          4,
+          2
+        ],
+        "weather": [
+          3,
+          2
+        ],
+        "countdown": [
+          2,
+          2
+        ],
+        "habits": [
+          4,
+          2
+        ],
+        "worldclocks": [
+          4,
+          2
+        ],
+        "moon": [
+          2,
+          2
+        ],
+        "currency": [
+          2,
+          2
+        ],
+        "links": [
+          4,
+          2
+        ],
+        "crypto": [
+          2,
+          2
+        ],
+        "timer": [
+          2,
+          2
+        ],
+        "quote": [
+          4,
+          2
+        ]
+      },
+      "layoutName": "Yours",
+      "installed": [
+        "clock",
+        "tasks",
+        "weather",
+        "countdown",
+        "habits",
+        "worldclocks",
+        "moon",
+        "currency",
+        "links",
+        "crypto",
+        "timer",
+        "quote"
+      ],
+      "saved": null
+    },
+    "appearance": {
+      "theme": "light",
+      "accent": "#7de2b8",
+      "wall": "Prism",
+      "radius": 18,
+      "alpha": 60,
+      "pageZoom": 100,
+      "blur": true,
+      "tileLabels": "both"
+    },
+    "behavior": {
+      "showGreeting": true,
+      "shortcuts": true,
+      "tourDone": true,
+      "searchEngine": "google",
+      "suggest": {
+        "links": true,
+        "tabs": false,
+        "bookmarks": false,
+        "history": false
+      }
+    },
+    "profile": {
+      "name": "Sam"
+    },
+    "widgets": {
+      "clock": {
+        "options": {
+          "analog": true,
+          "face": "round"
+        },
+        "rate": "Live",
+        "config": {},
+        "tint": "#6f9bff"
+      },
+      "tasks": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "items": [
+            {
+              "id": "t1",
+              "text": "Book the Lisbon flights",
+              "done": false,
+              "due": ""
+            },
+            {
+              "id": "t2",
+              "text": "Ring Dad about the weekend",
+              "done": false,
+              "due": ""
+            },
+            {
+              "id": "t3",
+              "text": "Finish chapter four",
+              "done": false,
+              "due": ""
+            },
+            {
+              "id": "t4",
+              "text": "Water the tomatoes",
+              "done": true,
+              "due": ""
+            },
+            {
+              "id": "t5",
+              "text": "Renew the library card",
+              "done": true,
+              "due": ""
+            }
+          ]
+        },
+        "tint": "#86d99a"
+      },
+      "weather": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "city": {
+            "name": "Vancouver",
+            "latitude": 49.24966,
+            "longitude": -123.11934,
+            "timezone": "America/Vancouver",
+            "country": "Canada",
+            "country_code": "CA",
+            "admin1": "British Columbia"
+          }
+        },
+        "tint": "#f5d979"
+      },
+      "countdown": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "entries": [
+            {
+              "id": "c1",
+              "title": "Lisbon",
+              "date": "2026-09-16",
+              "yearly": false,
+              "emoji": ""
+            },
+            {
+              "id": "c2",
+              "title": "Mum's birthday",
+              "date": "2026-10-24",
+              "yearly": true,
+              "emoji": ""
+            },
+            {
+              "id": "c3",
+              "title": "Marathon",
+              "date": "2026-12-20",
+              "yearly": false,
+              "emoji": ""
+            }
+          ]
+        },
+        "tint": "#ff8fb1"
+      },
+      "habits": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "habits": [
+            {
+              "id": "h1",
+              "name": "Read 20 pages",
+              "target": 5,
+              "targetWeeks": 0
+            },
+            {
+              "id": "h2",
+              "name": "Walk outside",
+              "target": 6,
+              "targetWeeks": 0
+            },
+            {
+              "id": "h3",
+              "name": "Practise piano",
+              "target": 4,
+              "targetWeeks": 0
+            }
+          ]
+        },
+        "tint": "#c79bff"
+      },
+      "worldclocks": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "zones": [
+            {
+              "city": "Lisbon",
+              "tz": "Europe/Lisbon"
+            },
+            {
+              "city": "New York",
+              "tz": "America/New_York"
+            },
+            {
+              "city": "Kyoto",
+              "tz": "Asia/Tokyo"
+            },
+            {
+              "city": "Sydney",
+              "tz": "Australia/Sydney"
+            }
+          ]
+        },
+        "tint": "#6fd6e5"
+      },
+      "moon": {
+        "options": {},
+        "rate": "Live",
+        "config": {},
+        "tint": "#9b96ff"
+      },
+      "currency": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "base": "EUR",
+          "targets": [
+            "USD",
+            "GBP",
+            "JPY"
+          ]
+        },
+        "tint": "#3f8f8f"
+      },
+      "links": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "items": [
+            {
+              "id": "l1",
+              "name": "GitHub",
+              "url": "https://github.com"
+            },
+            {
+              "id": "l2",
+              "name": "Figma",
+              "url": "https://figma.com"
+            },
+            {
+              "id": "l3",
+              "name": "Notion",
+              "url": "https://notion.so"
+            },
+            {
+              "id": "l4",
+              "name": "YouTube",
+              "url": "https://youtube.com"
+            },
+            {
+              "id": "l5",
+              "name": "Spotify",
+              "url": "https://spotify.com"
+            },
+            {
+              "id": "l6",
+              "name": "Duolingo",
+              "url": "https://duolingo.com"
+            }
+          ]
+        },
+        "tint": "#ffb26f"
+      },
+      "crypto": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "fiat": "usd",
+          "coins": [
+            "bitcoin",
+            "ethereum",
+            "solana"
+          ]
+        },
+        "tint": "#b6dd7f"
+      },
+      "timer": {
+        "options": {},
+        "rate": "Live",
+        "config": {},
+        "tint": "#ff8f8f"
+      },
+      "quote": {
+        "options": {},
+        "rate": "Live",
+        "config": {},
+        "tint": "#a34a7f"
+      }
+    }
+  },
+  "buckets": {
+    "habits:history": {
+      "h1": {
+        "2026-08-24": true,
+        "2026-08-23": true,
+        "2026-08-22": true,
+        "2026-08-20": true,
+        "2026-08-19": true,
+        "2026-08-17": true,
+        "2026-08-16": true
+      },
+      "h2": {
+        "2026-08-24": true,
+        "2026-08-23": true,
+        "2026-08-21": true,
+        "2026-08-20": true,
+        "2026-08-19": true,
+        "2026-08-18": true
+      },
+      "h3": {
+        "2026-08-23": true,
+        "2026-08-22": true,
+        "2026-08-19": true
+      }
+    },
+    "scratchpad:text": "Lisbon\n- Tuesday, early flight\n- the blue tile place by the station\n- pastries, obviously"
+  }
+}

@@ -36,35 +36,44 @@ const FONTS = "'Segoe UI', 'DM Sans', system-ui, -apple-system, sans-serif";
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
 const CARDS = [
+  // The five are a sequence, not five goes at the same picture. A visitor
+  // scrolls them in order and gives the first one about a second: it has to
+  // land the idea, and the rest earn the install. So the arc is want it,
+  // trust it can do the job, see it become yours, see it fit your life,
+  // and finally see it is not going to fight your taste.
+  //
+  // Each is shot from its own board in store-assets/boards, on a different
+  // theme, accent and background. The old set used one board five times in
+  // one colour, which quietly said "this is all it does".
   {
     file: "1.jpg",
-    title: "Every tab, arranged your way",
-    sub: "A widget board instead of a blank page — drag, resize, and keep only what you use.",
+    title: "A new tab worth opening",
+    sub: "Your day, laid out the moment you need it — the time, the weather, what's next, and the places you actually go.",
   },
   {
     file: "2.jpg",
-    // Counted, not remembered: 22 packages under packages/widget-*. It read
-    // "seventeen" for two releases after it stopped being seventeen.
+    // The count is checked against packages/widget-* by a test, because it
+    // said "seventeen" for two releases after it stopped being seventeen.
     title: "Twenty-two widgets, all offline-first",
-    sub: "Weather, world clocks, tasks, habits, links, a focus timer, a scratchpad and more.",
+    sub: "Weather, prayer times, the moon, habits, a focus timer, the news. Browse by category, see what each one can access, add it in a click.",
   },
   {
     file: "3.jpg",
-    title: "Rearrange it in seconds",
-    sub: "Pick a tile up and the rest move aside — drop it wherever it should live.",
+    title: "Give every widget its own colour",
+    sub: "Fifteen accents, twelve generated backgrounds, and a colour per tile — so a full board reads at a glance instead of being searched.",
   },
   {
     file: "4.jpg",
-    title: "Add and remove in a click",
-    sub: "Browse the widgets by category, see exactly what each one can access.",
+    title: "Work and home, kept apart",
+    sub: "Up to three boards on one install. Each keeps its own layout, its own look and its own settings, and each syncs on its own.",
   },
   {
     file: "5.jpg",
     // Built from the two halves rather than captured: the same board, same
     // arrangement, same moment, under both themes.
     split: ["5-dark.jpg", "5-light.jpg"],
-    title: "Customize your own way",
-    sub: "Dark or light, fifteen accents, twelve generated backgrounds, and dials for the rest.",
+    title: "Dark or light, and yours either way",
+    sub: "Follow your system or pick a side. Corners, opacity, zoom, frosted glass or flat — every dial is where you can find it.",
   },
 ];
 

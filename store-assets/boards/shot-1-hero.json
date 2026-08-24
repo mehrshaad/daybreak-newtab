@@ -1,0 +1,302 @@
+{
+  "kind": "daybreak-backup",
+  "version": 2,
+  "exportedAt": "1970-01-01T00:00:00.000Z",
+  "settings": {
+    "v": 2,
+    "board": {
+      "ids": [
+        "clock",
+        "weather",
+        "links",
+        "tasks",
+        "habits",
+        "scratchpad",
+        "worldclocks",
+        "timer",
+        "quote",
+        "moon"
+      ],
+      "sizes": {
+        "clock": [
+          3,
+          2
+        ],
+        "weather": [
+          4,
+          2
+        ],
+        "links": [
+          5,
+          2
+        ],
+        "tasks": [
+          4,
+          3
+        ],
+        "habits": [
+          4,
+          3
+        ],
+        "scratchpad": [
+          4,
+          3
+        ],
+        "worldclocks": [
+          3,
+          2
+        ],
+        "timer": [
+          3,
+          2
+        ],
+        "quote": [
+          3,
+          2
+        ],
+        "moon": [
+          3,
+          2
+        ]
+      },
+      "layoutName": "Yours",
+      "installed": [
+        "clock",
+        "weather",
+        "links",
+        "tasks",
+        "habits",
+        "scratchpad",
+        "worldclocks",
+        "timer",
+        "quote",
+        "moon"
+      ],
+      "saved": null
+    },
+    "appearance": {
+      "theme": "light",
+      "accent": "#ffb26f",
+      "wall": "Aurora",
+      "radius": 18,
+      "alpha": 55,
+      "pageZoom": 100,
+      "blur": true,
+      "tileLabels": "both"
+    },
+    "behavior": {
+      "showGreeting": true,
+      "shortcuts": true,
+      "tourDone": true,
+      "searchEngine": "google",
+      "suggest": {
+        "links": true,
+        "tabs": false,
+        "bookmarks": false,
+        "history": false
+      }
+    },
+    "profile": {
+      "name": "Sam"
+    },
+    "widgets": {
+      "clock": {
+        "options": {
+          "analog": true,
+          "face": "squared",
+          "dateForm": "full"
+        },
+        "rate": "Live",
+        "config": {}
+      },
+      "weather": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "city": {
+            "name": "Lisbon",
+            "latitude": 38.71667,
+            "longitude": -9.13333,
+            "timezone": "Europe/Lisbon",
+            "country": "Portugal",
+            "country_code": "PT",
+            "admin1": "Lisboa"
+          }
+        }
+      },
+      "links": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "items": [
+            {
+              "id": "l1",
+              "name": "GitHub",
+              "url": "https://github.com"
+            },
+            {
+              "id": "l2",
+              "name": "Figma",
+              "url": "https://figma.com"
+            },
+            {
+              "id": "l3",
+              "name": "Notion",
+              "url": "https://notion.so"
+            },
+            {
+              "id": "l4",
+              "name": "YouTube",
+              "url": "https://youtube.com"
+            },
+            {
+              "id": "l5",
+              "name": "Spotify",
+              "url": "https://spotify.com"
+            },
+            {
+              "id": "l6",
+              "name": "Duolingo",
+              "url": "https://duolingo.com"
+            }
+          ]
+        }
+      },
+      "tasks": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "items": [
+            {
+              "id": "t1",
+              "text": "Book the Lisbon flights",
+              "done": false,
+              "due": ""
+            },
+            {
+              "id": "t2",
+              "text": "Ring Dad about the weekend",
+              "done": false,
+              "due": ""
+            },
+            {
+              "id": "t3",
+              "text": "Finish chapter four",
+              "done": false,
+              "due": ""
+            },
+            {
+              "id": "t4",
+              "text": "Water the tomatoes",
+              "done": true,
+              "due": ""
+            },
+            {
+              "id": "t5",
+              "text": "Renew the library card",
+              "done": true,
+              "due": ""
+            }
+          ]
+        }
+      },
+      "habits": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "habits": [
+            {
+              "id": "h1",
+              "name": "Read 20 pages",
+              "target": 5,
+              "targetWeeks": 0
+            },
+            {
+              "id": "h2",
+              "name": "Walk outside",
+              "target": 6,
+              "targetWeeks": 0
+            },
+            {
+              "id": "h3",
+              "name": "Practise piano",
+              "target": 4,
+              "targetWeeks": 0
+            }
+          ]
+        }
+      },
+      "scratchpad": {
+        "options": {},
+        "rate": "Live",
+        "config": {}
+      },
+      "worldclocks": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "zones": [
+            {
+              "city": "Lisbon",
+              "tz": "Europe/Lisbon"
+            },
+            {
+              "city": "New York",
+              "tz": "America/New_York"
+            },
+            {
+              "city": "Kyoto",
+              "tz": "Asia/Tokyo"
+            },
+            {
+              "city": "Sydney",
+              "tz": "Australia/Sydney"
+            }
+          ]
+        }
+      },
+      "timer": {
+        "options": {},
+        "rate": "Live",
+        "config": {}
+      },
+      "quote": {
+        "options": {},
+        "rate": "Live",
+        "config": {}
+      },
+      "moon": {
+        "options": {},
+        "rate": "Live",
+        "config": {}
+      }
+    }
+  },
+  "buckets": {
+    "habits:history": {
+      "h1": {
+        "2026-08-24": true,
+        "2026-08-23": true,
+        "2026-08-22": true,
+        "2026-08-20": true,
+        "2026-08-19": true,
+        "2026-08-17": true,
+        "2026-08-16": true
+      },
+      "h2": {
+        "2026-08-24": true,
+        "2026-08-23": true,
+        "2026-08-21": true,
+        "2026-08-20": true,
+        "2026-08-19": true,
+        "2026-08-18": true
+      },
+      "h3": {
+        "2026-08-23": true,
+        "2026-08-22": true,
+        "2026-08-19": true
+      }
+    },
+    "scratchpad:text": "Lisbon\n- Tuesday, early flight\n- the blue tile place by the station\n- pastries, obviously"
+  }
+}

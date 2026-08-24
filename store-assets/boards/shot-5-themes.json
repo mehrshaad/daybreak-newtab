@@ -1,0 +1,298 @@
+{
+  "kind": "daybreak-backup",
+  "version": 2,
+  "exportedAt": "1970-01-01T00:00:00.000Z",
+  "settings": {
+    "v": 2,
+    "board": {
+      "ids": [
+        "clock",
+        "weather",
+        "prayer",
+        "moon",
+        "sun",
+        "air",
+        "links",
+        "onthisday",
+        "habits",
+        "worldclocks"
+      ],
+      "sizes": {
+        "clock": [
+          3,
+          2
+        ],
+        "weather": [
+          4,
+          2
+        ],
+        "prayer": [
+          3,
+          2
+        ],
+        "moon": [
+          2,
+          2
+        ],
+        "sun": [
+          4,
+          2
+        ],
+        "air": [
+          4,
+          2
+        ],
+        "links": [
+          4,
+          2
+        ],
+        "onthisday": [
+          4,
+          3
+        ],
+        "habits": [
+          4,
+          3
+        ],
+        "worldclocks": [
+          4,
+          3
+        ]
+      },
+      "layoutName": "Yours",
+      "installed": [
+        "clock",
+        "weather",
+        "prayer",
+        "moon",
+        "sun",
+        "air",
+        "links",
+        "onthisday",
+        "habits",
+        "worldclocks"
+      ],
+      "saved": null
+    },
+    "appearance": {
+      "theme": "dark",
+      "accent": "#ef92dc",
+      "wall": "Mesh",
+      "radius": 18,
+      "alpha": 55,
+      "pageZoom": 100,
+      "blur": true,
+      "tileLabels": "both"
+    },
+    "behavior": {
+      "showGreeting": true,
+      "shortcuts": true,
+      "tourDone": true,
+      "searchEngine": "google",
+      "suggest": {
+        "links": true,
+        "tabs": false,
+        "bookmarks": false,
+        "history": false
+      }
+    },
+    "profile": {
+      "name": "Sam"
+    },
+    "widgets": {
+      "clock": {
+        "options": {
+          "analog": true,
+          "face": "squared"
+        },
+        "rate": "Live",
+        "config": {}
+      },
+      "weather": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "city": {
+            "name": "Istanbul",
+            "latitude": 41.01384,
+            "longitude": 28.94966,
+            "timezone": "Europe/Istanbul",
+            "country": "Turkey",
+            "country_code": "TR",
+            "admin1": "Istanbul"
+          }
+        }
+      },
+      "prayer": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "city": {
+            "name": "Istanbul",
+            "latitude": 41.01384,
+            "longitude": 28.94966,
+            "timezone": "Europe/Istanbul",
+            "country": "Turkey",
+            "country_code": "TR",
+            "admin1": "Istanbul"
+          }
+        }
+      },
+      "moon": {
+        "options": {},
+        "rate": "Live",
+        "config": {}
+      },
+      "sun": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "city": {
+            "name": "Istanbul",
+            "latitude": 41.01384,
+            "longitude": 28.94966,
+            "timezone": "Europe/Istanbul",
+            "country": "Turkey",
+            "country_code": "TR",
+            "admin1": "Istanbul"
+          }
+        }
+      },
+      "air": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "city": {
+            "name": "Istanbul",
+            "latitude": 41.01384,
+            "longitude": 28.94966,
+            "timezone": "Europe/Istanbul",
+            "country": "Turkey",
+            "country_code": "TR",
+            "admin1": "Istanbul"
+          }
+        }
+      },
+      "links": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "items": [
+            {
+              "id": "l1",
+              "name": "GitHub",
+              "url": "https://github.com"
+            },
+            {
+              "id": "l2",
+              "name": "Figma",
+              "url": "https://figma.com"
+            },
+            {
+              "id": "l3",
+              "name": "Notion",
+              "url": "https://notion.so"
+            },
+            {
+              "id": "l4",
+              "name": "YouTube",
+              "url": "https://youtube.com"
+            },
+            {
+              "id": "l5",
+              "name": "Spotify",
+              "url": "https://spotify.com"
+            },
+            {
+              "id": "l6",
+              "name": "Duolingo",
+              "url": "https://duolingo.com"
+            }
+          ]
+        }
+      },
+      "onthisday": {
+        "options": {},
+        "rate": "Live",
+        "config": {}
+      },
+      "habits": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "habits": [
+            {
+              "id": "h1",
+              "name": "Read 20 pages",
+              "target": 5,
+              "targetWeeks": 0
+            },
+            {
+              "id": "h2",
+              "name": "Walk outside",
+              "target": 6,
+              "targetWeeks": 0
+            },
+            {
+              "id": "h3",
+              "name": "Practise piano",
+              "target": 4,
+              "targetWeeks": 0
+            }
+          ]
+        }
+      },
+      "worldclocks": {
+        "options": {},
+        "rate": "Live",
+        "config": {
+          "zones": [
+            {
+              "city": "Lisbon",
+              "tz": "Europe/Lisbon"
+            },
+            {
+              "city": "New York",
+              "tz": "America/New_York"
+            },
+            {
+              "city": "Kyoto",
+              "tz": "Asia/Tokyo"
+            },
+            {
+              "city": "Sydney",
+              "tz": "Australia/Sydney"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "buckets": {
+    "habits:history": {
+      "h1": {
+        "2026-08-24": true,
+        "2026-08-23": true,
+        "2026-08-22": true,
+        "2026-08-20": true,
+        "2026-08-19": true,
+        "2026-08-17": true,
+        "2026-08-16": true
+      },
+      "h2": {
+        "2026-08-24": true,
+        "2026-08-23": true,
+        "2026-08-21": true,
+        "2026-08-20": true,
+        "2026-08-19": true,
+        "2026-08-18": true
+      },
+      "h3": {
+        "2026-08-23": true,
+        "2026-08-22": true,
+        "2026-08-19": true
+      }
+    },
+    "scratchpad:text": "Lisbon\n- Tuesday, early flight\n- the blue tile place by the station\n- pastries, obviously"
+  }
+}
