@@ -76,59 +76,38 @@ const SYMBOLS = {
 
 export const symbolFor = (code) => SYMBOLS[code] || code;
 
-// An emoji for each currency, beside its code.
+// The flag for a currency, beside its code.
 //
-// Flags were the obvious choice and the wrong one. Windows ships no flag glyphs
-// at all, so Chrome there paints a pair of regional indicators as the two
-// letters instead: a US flag came out as the text "US" and the row read
-// "US USD" -- the code twice, looking like a bug. That is the majority platform.
+// Derived rather than tabled. ISO 4217 builds a currency code from the ISO 3166
+// country code plus a letter for the unit, so the first two letters already are
+// the country: USD is US, JPY is JP, SEK is SE. Every currency this widget
+// offers resolves correctly that way, which the tests check one at a time --
+// the day someone adds a code where it does not (XAU, XDR) a table would have
+// been the safer choice, and this comment is where they will look.
 //
-// Ordinary emoji render everywhere, so each currency gets one thing associated
-// with the place instead. Not a code, not a letterform and not a flag: a lion
-// for Iran, a maple leaf for Canada, Liberty for the dollar. It is more use
-// than a flag was, too, because it does not need reading -- the point of a mark
-// beside the code is that it is recognised before the code is.
-//
-// A table rather than anything derived. No rule produces a kangaroo from "AUD",
-// and each of these is a judgement about what a place is known for, which is
-// the kind of thing that should be written where it can be argued with.
-//
-// One rule inside it: nothing appears twice. India's elephant is why Thailand
-// gets a tuk-tuk, and Iran having the lion is why Singapore -- the Lion City --
-// gets its skyline instead. A repeated emoji is worse than none, since two rows
-// would carry the same mark.
-const EMOJI = {
-  AUD: "🦘", // kangaroo
-  BRL: "🦜", // macaw
-  CAD: "🍁", // maple leaf
-  CHF: "🏔️", // snow-capped mountain
-  CNY: "🐼", // panda
-  CZK: "🏰", // castle
-  DKK: "🧱", // brick
-  EUR: "🏛️", // classical building
-  GBP: "🫖", // teapot
-  HKD: "🏙️", // cityscape
-  HUF: "🌶️", // hot pepper
-  IDR: "🦎", // lizard
-  ILS: "🕎", // menorah
-  INR: "🐘", // elephant
-  IRR: "🦁", // lion
-  ISK: "🌋", // volcano
-  JPY: "🗻", // mount fuji
-  KRW: "🐯", // tiger face
-  MXN: "🌮", // taco
-  MYR: "🌺", // hibiscus
-  NOK: "⛷️", // skier
-  NZD: "🥝", // kiwi fruit
-  PHP: "🏝️", // desert island
-  PLN: "🥟", // dumpling
-  RON: "🧛", // vampire
-  SEK: "🦌", // deer
-  SGD: "🌇", // sunset over buildings
-  THB: "🛺", // auto rickshaw
-  TRY: "🧿", // nazar amulet
-  USD: "🗽", // statue of liberty
-  ZAR: "🦓", // zebra
-};
+// Known and accepted: Windows ships no flag glyphs, so Chrome there draws a
+// regional-indicator pair as its two letters -- "US USD" rather than a flag and
+// a code. This was tried the other way, with a chosen emoji per place, and a
+// kangaroo for Australia and a teapot for Britain are not what anyone means by
+// "the emoji for that currency". Flags are what the row is asking for, on the
+// platforms that can draw them.
+const FLAG_BASE = 0x1f1e6; // regional indicator A
+const LETTER_A = 65;
 
-export const emojiFor = (code) => EMOJI[String(code || "").toUpperCase()] || "";
+// Iran is the exception, by request: the lion rather than the flag.
+const OVERRIDES = { IRR: "🦁" };
+
+export function emojiFor(code) {
+  const key = String(code || "").toUpperCase();
+  if (OVERRIDES[key]) return OVERRIDES[key];
+  const country = key.slice(0, 2);
+  if (country.length < 2) return "";
+  const points = [];
+  for (const ch of country) {
+    const offset = ch.charCodeAt(0) - LETTER_A;
+    // Anything that is not a plain A-Z pair has no flag to make.
+    if (offset < 0 || offset > 25) return "";
+    points.push(FLAG_BASE + offset);
+  }
+  return String.fromCodePoint(...points);
+}
