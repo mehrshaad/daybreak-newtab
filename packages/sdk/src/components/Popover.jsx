@@ -108,7 +108,17 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
         // (0,0) — at the corner it would flash there for a frame.
         left: pos?.left ?? -9999,
         top: pos?.top ?? -9999,
-        zIndex: 48,
+        // Just above a drawer (50), and below everything that should cover a
+        // popover: the header's engine dropdown (60), the store (70), a context
+        // menu (80), notifications (90), a tooltip (100).
+        //
+        // It used to be 48, under the drawer, on the assumption that a popover
+        // always belonged to the board. Widget settings panels live inside a
+        // drawer and open popovers of their own — the shared date picker is
+        // one — and those disappeared behind the panel that opened them. A
+        // board popover cannot collide with an open drawer in any case, since
+        // the board is inset by the drawer's width while it is open.
+        zIndex: 52,
         width: pos?.width ?? width ?? "max-content",
         borderRadius: 14,
         background: "var(--sheet)",

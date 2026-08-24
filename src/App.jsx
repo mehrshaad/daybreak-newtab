@@ -6,15 +6,19 @@ import ContextMenu from "./components/ContextMenu";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import PresetsDock from "./components/PresetsDock";
-import { Collapse } from "./components/primitives";
+import { Button, Collapse } from "./components/primitives";
 import SettingsDrawer from "./components/SettingsDrawer";
 import Store from "./components/Store";
-import Toast from "./components/Toast";
+import Notifications from "./components/Notifications";
+import Tour from "./components/Tour";
 import WelcomeCard from "./components/WelcomeCard";
 import WidgetSettingsDrawer from "./components/WidgetSettingsDrawer";
 import { autoArrange } from "./core/autoArrange";
 import { boardMenu, isEditableTarget, widgetMenu } from "./core/menus";
 import { DEFAULT_ZOOM_MODE, presetBoardPatch, SAVED_LAYOUT } from "./core/schema";
+import { savedViewState } from "./core/savedView";
+import { useNotices } from "./core/noticeContext";
+import { useConditions } from "./core/useConditions";
 import { useSettings } from "./core/settingsContext";
 import { heroSummary } from "./core/summary";
 import { cameraFor } from "./core/tileStyle";
@@ -58,13 +62,11 @@ function App() {
   const [menu, setMenu] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
-  const [toastMsg, setToastMsg] = useState("");
   const [manualRefresh, setManualRefresh] = useState({});
 
   const searchRef = useRef(null);
   const boardRef = useRef(null);
   const tileEls = useRef({});
-  const toastTimer = useRef(null);
   const scrolled = useScrolled();
   const columns = useColumns();
   const viewportWidth = useViewportWidth();
@@ -89,20 +91,32 @@ function App() {
   // under it. Measured against the live width, so a resize while a drawer is
   // open is accounted for too.
   const openDrawerWidth = settingsOpen ? 400 : panel ? 340 : 0;
-  const shift = boardShift(viewportWidth, openDrawerWidth);
+  const shift = boardShift(viewportWidth, openDrawerWidth, appearance.boardWidth);
 
-  const toast = useCallback((message) => {
-    clearTimeout(toastTimer.current);
-    setToastMsg(message);
-    toastTimer.current = setTimeout(() => setToastMsg(""), 1900);
-  }, []);
+  // One shared queue for the whole app — see core/notify.jsx. `notify` takes a
+  // bare string as well as an object, so every existing toast("…") call reads
+  // the same and lands in the "confirmations" category.
+  const { notify } = useNotices();
+  const toast = notify;
 
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  // Sync failing, the extension having updated itself, and the page dropping
+  // frames — see core/useConditions.js. All three were previously either silent
+  // or impossible for a user to find out about.
+  useConditions({
+    notify,
+    blurOn: appearance.blur !== false,
+    onTurnOffBlur: () => update("appearance", { blur: false }),
+  });
 
   const registerTile = useCallback((id, el) => {
     if (el) tileEls.current[id] = el;
     else delete tileEls.current[id];
   }, []);
+
+  // The tile whose settings are open, for the drawer to leave interactive.
+  // A stable callback per panel rather than the node itself: tileEls is a ref,
+  // so the node is not there on the render that opens the drawer.
+  const panelTileEl = useCallback(() => (panel ? tileEls.current[panel] : null), [panel]);
 
   const closeZoom = useCallback(() => {
     setZoom(null);
@@ -203,6 +217,78 @@ function App() {
     setMenu(null);
   }, []);
 
+  // Settings, already scrolled to the part that was asked for.
+  //
+  // "Add or manage profiles" in the switcher opened the drawer at the top and
+  // left you to find Profiles, which is most of the way down it. The section
+  // handles the tour points at are the same handles this needs, so it uses
+  // those rather than inventing a second set of anchors.
+  //
+  // A frame late, because the drawer is not in the DOM until the commit this
+  // triggers. Instant rather than smooth: the panel is sliding in at the same
+  // time, and it should arrive already in the right place instead of arriving
+  // and then setting off on a scroll of its own.
+  const revealInSettings = useCallback(
+    (tourName) => {
+      openSettings();
+      requestAnimationFrame(() => {
+        document
+          .querySelector(`[data-tour="${tourName}"]`)
+          ?.scrollIntoView({ block: "start", behavior: "instant" });
+      });
+    },
+    [openSettings]
+  );
+
+  // --- the tour ------------------------------------------------------------
+  //
+  // One function that puts the whole app into a named state, rather than the
+  // tour opening and closing things itself. Every scene says what *all* of the
+  // chrome should be, so moving between them cannot leave a drawer open behind
+  // the next step, and skipping out halfway cannot strand somebody in a mode
+  // they did not choose.
+  const [tourOpen, setTourOpen] = useState(false);
+
+  // Which row the tour wants shown as if hovered. Only the menu step uses it:
+  // an open menu of six rows says "there is a menu" and not "and this is the
+  // row you want", so the tour lights the one it is talking about.
+  const [menuHint, setMenuHint] = useState(null);
+
+  const showScene = useCallback(
+    (scene, stepId) => {
+      setMenuHint(stepId === "tile" ? "Widget settings" : null);
+      setStoreOpen(scene === "store");
+      setSettingsOpen(scene === "settings");
+      setEditing(scene === "edit");
+      // The widget scene needs a widget. Whichever is first on the board is the
+      // one the tour has been pointing at all along.
+      setPanel(scene === "widget" ? ids[0] || null : null);
+      // Telling somebody a right-click menu exists is not the same as showing
+      // them one, so the tour opens it for real. Positioned over the tile it
+      // belongs to rather than at a pointer that was never there — the menu
+      // clamps itself to the viewport from wherever it is put.
+      if (scene === "menu" && ids[0]) {
+        const tile = document.querySelector('[data-tour="tile"]');
+        const at = tile?.getBoundingClientRect();
+        setMenu({
+          id: ids[0],
+          x: at ? at.left + at.width * 0.55 : 200,
+          y: at ? at.top + at.height * 0.55 : 200,
+        });
+      } else {
+        setMenu(null);
+      }
+    },
+    [ids]
+  );
+
+  const startTour = useCallback(() => {
+    // Taking the tour is being shown around, so the welcome card has done its
+    // job whether or not it was ever dismissed.
+    update("behavior", { tourDone: true });
+    setTourOpen(true);
+  }, [update]);
+
   const focusSearch = useCallback(() => {
     searchRef.current?.focus();
     searchRef.current?.select();
@@ -279,9 +365,19 @@ function App() {
 
   const applyPreset = useCallback(
     (name) => {
+      // The first preset switch quietly snapshots whatever was on the board, so
+      // the switch cannot destroy an arrangement with no way back. That was
+      // happening invisibly: the safety net existed and nobody was told it had
+      // been used, so "Yours" would later turn out to hold a board they did not
+      // remember saving. Now the one time it happens, it says so.
+      const snapshotTaken = !board.saved;
       update("board", presetBoardPatch(name, board));
       closeZoom();
-      toast(`${name} layout applied`);
+      toast(
+        snapshotTaken
+          ? `${name} layout applied — your previous board is kept as "${SAVED_LAYOUT}"`
+          : `${name} layout applied`
+      );
     },
     [board, update, closeZoom, toast]
   );
@@ -410,6 +506,11 @@ function App() {
 
   // --- context menu --------------------------------------------------------
 
+  // Whether the board still matches the "Yours" snapshot. Computed once here
+  // rather than at each of the three places that ask, so the dock, the context
+  // menu and the memo below can never disagree about it.
+  const savedState = savedViewState(board);
+
   const menuModel = useMemo(() => {
     if (!menu) return null;
     if (!menu.id) {
@@ -417,6 +518,7 @@ function App() {
         editing,
         theme,
         hasSaved: !!board.saved,
+        savedState,
         onStore: openStore,
         onToggleEdit: toggleEdit,
         onPreset: applyPreset,
@@ -454,6 +556,7 @@ function App() {
     zoomMode,
     widgets,
     board.saved,
+    savedState,
     openStore,
     toggleEdit,
     applyPreset,
@@ -571,11 +674,12 @@ function App() {
       <Backdrop background={background(theme, accent, wall)} />
       <Header
         scrolled={scrolled}
-        theme={theme}
         editing={editing}
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
         onOpenSettings={openSettings}
+        inset={openDrawerWidth}
+        onManageProfiles={() => revealInSettings("settings-profiles")}
         onContextMenu={openBoardMenu}
         searchRef={searchRef}
       />
@@ -589,6 +693,8 @@ function App() {
           layoutName={board.layoutName}
           tileCount={ids.length}
           onContextMenu={openBoardMenu}
+          // The room the hero actually has, which an open drawer reduces.
+          width={Math.max(0, viewportWidth - openDrawerWidth)}
         />
       </Collapse>
 
@@ -602,7 +708,7 @@ function App() {
         zoom={zoom}
         cam={cam}
         zoomMode={zoomMode}
-        panelOpen={!!panel}
+        panelId={panel}
         menu={menu}
         manualRefresh={manualRefresh}
         boardRef={boardRef}
@@ -641,8 +747,7 @@ function App() {
       ) : null}
 
       {zoomChrome ? (
-        <button
-          type="button"
+        <Button
           onClick={closeZoom}
           style={{
             position: "fixed",
@@ -665,18 +770,20 @@ function App() {
               ? "db-out .2s ease both"
               : "db-in .3s ease both",
           }}
+          hover={{ background: "var(--sheetHover)" }}
         >
           <LuArrowLeft size={14} /> Back
-        </button>
+        </Button>
       ) : null}
 
-      <Toast message={toastMsg} hidden={editing} />
+      <Notifications hidden={editing} />
 
       {dockPresent ? (
         <PresetsDock
           closing={dockLeaving}
           layoutName={board.layoutName}
           hasSaved={!!board.saved}
+          savedState={savedState}
           onPreset={applyPreset}
           onApplySaved={applySavedLayout}
           onSaveCurrent={saveCurrentLayout}
@@ -702,12 +809,20 @@ function App() {
           onOptions={(patch) => setWidgetOptions(panelId, patch)}
           onConfig={(patch) => setWidgetConfig(panelId, patch)}
           onRate={(rate) => updateWidget(panelId, { rate })}
+          onTint={(tint) => updateWidget(panelId, { tint })}
+          theme={theme}
+          appearance={appearance}
+          keepInteractive={panel ? panelTileEl : null}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />
       ) : null}
 
       <SettingsDrawer
+        onTour={() => {
+          setSettingsOpen(false);
+          startTour();
+        }}
         open={settingsOpen}
         settings={settings}
         theme={theme}
@@ -732,17 +847,35 @@ function App() {
       />
 
       <WelcomeCard
-        open={!behavior.tourDone}
+        // Never behind the tour. Starting the tour from Settings on an install
+        // that had not dismissed the welcome card left both up at once: the
+        // card still modal underneath, its scrim dimming the board a second
+        // time, and the spotlight landing on a tile nobody could see past it.
+        open={!behavior.tourDone && !tourOpen}
         name={profile.name}
         theme={appearance.theme || "system"}
+        blur={appearance.blur !== false}
         onNameChange={(name) => update("profile", { name })}
         onThemeChange={(t) => update("appearance", { theme: t })}
+        onBlurChange={(blur) => update("appearance", { blur })}
         onEnableSearch={() =>
           update("behavior", {
             suggest: { ...(behavior.suggest || {}), tabs: true, bookmarks: true, history: true },
           })
         }
-        onDismiss={() => update("behavior", { tourDone: true })}
+        onDismiss={({ tour } = {}) => {
+          update("behavior", { tourDone: true });
+          // Straight into the tour when they asked for it, rather than leaving
+          // a button somewhere they have not been told about yet.
+          if (tour) startTour();
+        }}
+      />
+
+      <Tour
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onScene={showScene}
+        hasWidgets={ids.length > 0}
       />
 
       {/* The menu keeps its last position and contents while it fades out. */}
@@ -752,6 +885,7 @@ function App() {
           title={lastModel.current.title}
           items={lastModel.current.items}
           closing={menuLeaving}
+          hintLabel={menuHint}
           onClose={() => setMenu(null)}
         />
       ) : null}

@@ -11,9 +11,15 @@ export function ratesUrl(base, targets) {
 
 // More decimal places for a rate under 1 ("0.0067") and fewer above it, so
 // every pair reads at a sensible precision without a per-currency table.
-export function formatRate(rate) {
+//
+// Right for a mixed list, wrong for one pair being watched closely: a rate of
+// 1.0834 shows as "1.08" and the fourth place is where the movement is. So the
+// automatic choice can be overridden with a fixed number of places, which then
+// applies to every row whatever its magnitude.
+export function formatRate(rate, decimals = "auto") {
   if (rate == null || Number.isNaN(rate)) return "—";
-  const digits = rate >= 100 ? 0 : rate >= 1 ? 2 : 4;
+  const fixed = Number(decimals);
+  const digits = Number.isFinite(fixed) ? fixed : rate >= 100 ? 0 : rate >= 1 ? 2 : 4;
   return rate.toLocaleString(undefined, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,

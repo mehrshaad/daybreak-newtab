@@ -33,6 +33,49 @@ export function useColumns() {
 export const BOARD_MAX = 1560;
 export const BOARD_PAD = 28;
 
+// How wide the board is allowed to get. The cap exists so a line of text never
+// runs the whole width of a very wide monitor, but on a 2560px screen it leaves
+// roughly 40% of the page unused, and some people would rather have the room.
+// "full" still keeps the side padding — edge-to-edge tiles read as broken.
+export const BOARD_WIDTHS = {
+  comfortable: BOARD_MAX,
+  wide: 2000,
+  full: Infinity,
+};
+
+// Which board-width options are worth offering on this window.
+//
+// The board is min(cap, window - padding), so on anything narrower than the
+// smallest cap every option produces the identical board. Offering three pills
+// that all do nothing is worse than offering none: it invites a click and
+// answers with no change, which reads as a broken setting rather than as a
+// setting that does not apply here.
+//
+// An option earns its place by producing a wider board than the one before it.
+// The current choice is always kept, whatever the window: dropping it would
+// show a row with nothing selected, and the stored setting still matters the
+// moment the window grows.
+export function boardWidthChoices(viewportWidth, current) {
+  const available = viewportWidth - BOARD_PAD * 2;
+  const names = Object.keys(BOARD_WIDTHS);
+  const out = [];
+  let reached = 0;
+  for (const name of names) {
+    const cap = BOARD_WIDTHS[name];
+    const width = Math.min(cap, available);
+    if (!out.length || width > reached || name === current) {
+      out.push(name);
+      reached = Math.max(reached, width);
+    }
+  }
+  return out;
+}
+
+export function boardMaxWidth(width) {
+  const value = BOARD_WIDTHS[width] ?? BOARD_MAX;
+  return Number.isFinite(value) ? `${value}px` : "none";
+}
+
 // The inset the app shell takes on its right while a drawer is open, so the
 // board reflows into what is left instead of sitting under the panel.
 //
@@ -46,9 +89,12 @@ export const BOARD_PAD = 28;
 // right edge again, and anything short of the full width does not converge —
 // at 1700px, insetting by the 330px overlap leaves the board's edge 42px
 // under the panel still. A full-width inset always clears it exactly.
-export function boardShift(viewportWidth, drawerWidth) {
+export function boardShift(viewportWidth, drawerWidth, boardWidth = "comfortable") {
   if (!drawerWidth || !viewportWidth) return 0;
-  const half = Math.min(BOARD_MAX, viewportWidth - BOARD_PAD * 2) / 2;
+  // The cap is a setting now, so the overlap test has to use whichever one is
+  // in force — a "full" board reaches the drawer at every window size.
+  const cap = BOARD_WIDTHS[boardWidth] ?? BOARD_MAX;
+  const half = Math.min(cap, viewportWidth - BOARD_PAD * 2) / 2;
   const covered = viewportWidth / 2 + half > viewportWidth - drawerWidth;
   return covered ? drawerWidth : 0;
 }

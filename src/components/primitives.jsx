@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CONTROL_TRANSITION, pill, toggleStyles, useHover, usePresence } from "@daybreak/sdk";
 
 // Height-animated show/hide for content in normal flow.
@@ -52,21 +52,9 @@ export function Pill({ active, children, style, hoverStyle, ...rest }) {
   );
 }
 
-export function Button({ children, styleFor, hover, style, ...rest }) {
-  const [hovered, bind] = useHover();
-  const base = styleFor ? styleFor(style) : style;
-  return (
-    <button
-      type="button"
-      // First so a caller's own transition still wins.
-      style={{ transition: CONTROL_TRANSITION, ...base, ...(hovered ? hover : null) }}
-      {...bind}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-}
+// Lives in the SDK now, so the widget packages can use the same one. Still
+// exported from here because half the app imports it from this file.
+export { Button } from "@daybreak/sdk";
 
 export function Toggle({ on, label, onChange }) {
   const t = toggleStyles(on);
@@ -152,10 +140,20 @@ export function Slider({ label, value, min, max, step, suffix = "", onChange }) 
 // for it to finish.
 const EXIT_MS = 220;
 
-export function Drawer({ open, onClose, width = 340, label, children }) {
+export function Drawer({
+  open,
+  onClose,
+  width = 340,
+  label,
+  header,
+  keepInteractive,
+  children,
+}) {
   const panelRef = useRef(null);
   const restoreRef = useRef(null);
   const [present, closing] = usePresence(open, EXIT_MS);
+  // Whether the body has been scrolled at all, for the fade under the header.
+  const [bodyScrolled, setBodyScrolled] = useState(false);
 
   useEffect(() => {
     if (!present || closing) return undefined;
@@ -172,16 +170,53 @@ export function Drawer({ open, onClose, width = 340, label, children }) {
     };
   }, [present, closing]);
 
+  // Closing on an outside click, with one element allowed to stay live.
+  //
+  // The catcher below is a single sheet over everything, which is the right
+  // answer when nothing underneath may be touched. It cannot have a hole in it
+  // though, and the widget being configured needs one: adding a city while its
+  // own settings are open should not mean closing them first. A capture-phase
+  // listener can make that distinction, and it swallows the event exactly the
+  // way the catcher did, so a click meant for another widget still only closes
+  // the drawer rather than also pressing something.
+  //
+  // Preferred over raising the tile above the catcher, which would also raise
+  // it above the sticky header and let a tile paint over the toolbar on scroll.
+  useEffect(() => {
+    if (!present || closing || !keepInteractive) return undefined;
+    const outside = (e) => {
+      if (panelRef.current?.contains(e.target)) return;
+      if (keepInteractive()?.contains(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // One close per gesture: mousedown is where the decision is made, and
+      // the click and contextmenu that follow are only being swallowed.
+      if (e.type === "mousedown") onClose();
+    };
+    for (const type of ["mousedown", "click", "contextmenu"]) {
+      document.addEventListener(type, outside, true);
+    }
+    return () => {
+      for (const type of ["mousedown", "click", "contextmenu"]) {
+        document.removeEventListener(type, outside, true);
+      }
+    };
+  }, [present, closing, keepInteractive, onClose]);
+
   if (!present) return null;
 
   return (
     <>
-      {/* Transparent: catches the outside click without hiding the board. */}
-      <div
-        onClick={onClose}
-        aria-hidden="true"
-        style={{ position: "fixed", inset: 0, zIndex: 49, background: "transparent" }}
-      />
+      {/* Transparent: catches the outside click without hiding the board. Not
+          rendered when one element has to stay reachable — the effect above
+          does that job, because a sheet cannot have a hole in it. */}
+      {keepInteractive ? null : (
+        <div
+          onClick={onClose}
+          aria-hidden="true"
+          style={{ position: "fixed", inset: 0, zIndex: 49, background: "transparent" }}
+        />
+      )}
       <div
         ref={panelRef}
         role="dialog"
@@ -199,28 +234,97 @@ export function Drawer({ open, onClose, width = 340, label, children }) {
           borderLeft: "1px solid var(--line)",
           backdropFilter: "var(--blur-sheet)",
           boxShadow: "-18px 0 50px rgba(0,0,0,.22)",
-          padding: "24px",
-          // Vertical only. A drawer is a fixed-width column of settings; if
-          // something inside it ever fails to fit, the answer is to wrap or
-          // truncate it, never to make the whole panel slide sideways.
-          overflowY: "auto",
-          overflowX: "hidden",
-          // The board behind is taller than the viewport, so it has a scrollbar
-          // of its own. Without this, a wheel that reaches the end of the
-          // drawer keeps going into the page underneath: the board slides away
-          // behind the panel while the user is only trying to reach the last
-          // setting, and closing the drawer leaves them somewhere they never
-          // meant to scroll to.
-          overscrollBehavior: "contain",
+          // The panel itself no longer scrolls: it is a column with a fixed
+          // header and a scrolling body below it, so the title and the close
+          // button stay put while the settings move. A sticky header inside one
+          // scroller would have worked too, but the padding then has to scroll
+          // out from under it and the shadow it needs to cast over departing
+          // content is guesswork.
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
           animation: closing
             ? `db-slide-out ${EXIT_MS}ms ease both`
             : "db-slide-in .3s cubic-bezier(.2,.8,.2,1) both",
           outline: "none",
         }}
       >
-        {children}
+        {header ? (
+          <div style={{ flex: "none", padding: "24px 24px 10px" }}>{header}</div>
+        ) : null}
+        {/* Relative so the fade below can sit over the top of the scroller. */}
+        <div style={{ position: "relative", flex: 1, minHeight: 0, display: "flex" }}>
+        <div
+          onScroll={(e) => setBodyScrolled(e.currentTarget.scrollTop > 1)}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            // Vertical only. A drawer is a fixed-width column of settings; if
+            // something inside it ever fails to fit, the answer is to wrap or
+            // truncate it, never to make the whole panel slide sideways.
+            overflowY: "auto",
+            overflowX: "hidden",
+            // The board behind is taller than the viewport, so it has a
+            // scrollbar of its own. Without this, a wheel that reaches the end
+            // of the drawer keeps going into the page underneath: the board
+            // slides away behind the panel while the user is only trying to
+            // reach the last setting, and closing the drawer leaves them
+            // somewhere they never meant to scroll to.
+            overscrollBehavior: "contain",
+            padding: header ? "0 24px 24px" : "24px",
+          }}
+        >
+          {children}
+        </div>
+        {/* A row of settings cut off flat against the title reads as a broken
+            layout rather than as something scrolled — there is nothing to say
+            the content continues upward. This fades it out instead, and only
+            once there is something above to fade. */}
+        {header ? (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 26,
+              pointerEvents: "none",
+              background: "linear-gradient(var(--sheet), transparent)",
+              opacity: bodyScrolled ? 1 : 0,
+              transition: "opacity .18s ease",
+            }}
+          />
+        ) : null}
+        </div>
       </div>
     </>
+  );
+}
+
+function CloseButton({ onClose }) {
+  const [hovered, bind] = useHover();
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close"
+      style={{
+        width: "28px",
+        height: "28px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        background: hovered ? "var(--sheetHover)" : "var(--panel2)",
+        border: "1px solid var(--line)",
+        lineHeight: 1,
+        color: hovered ? "var(--fg)" : "var(--dim)",
+        flex: "none",
+        transition: CONTROL_TRANSITION,
+      }}
+      {...bind}
+    >
+      ×
+    </button>
   );
 }
 
@@ -232,7 +336,9 @@ export function DrawerHeader({ eyebrow, title, subtitle, onClose }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: eyebrow ? "6px" : "24px",
+          // No trailing margin: the drawer's fixed header region owns the gap
+          // to the body now, so a margin here would double it.
+          marginBottom: eyebrow ? "6px" : 0,
         }}
       >
         {eyebrow ? (
@@ -242,24 +348,7 @@ export function DrawerHeader({ eyebrow, title, subtitle, onClose }) {
             {title}
           </span>
         )}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            background: "var(--panel2)",
-            border: "1px solid var(--line)",
-            lineHeight: 1,
-            color: "var(--fg)",
-            flex: "none",
-          }}
-        >
-          ×
-        </button>
+        <CloseButton onClose={onClose} />
       </div>
       {eyebrow ? (
         <>
@@ -279,9 +368,11 @@ export function DrawerHeader({ eyebrow, title, subtitle, onClose }) {
   );
 }
 
-export function Section({ title, children, style }) {
+export function Section({ title, children, style, ...rest }) {
   return (
-    <div style={style}>
+    // ...rest so a caller can hang a data-* handle on a section — the tour uses
+    // them to point at one, and threading a prop per section would be worse.
+    <div style={style} {...rest}>
       <div className="db-label" style={{ marginBottom: "10px" }}>
         {title}
       </div>

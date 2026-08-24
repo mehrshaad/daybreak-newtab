@@ -22,6 +22,14 @@ export default {
   ],
   defaultSize: [5, 2],
   options: [
+    {
+      key: "iconScale",
+      label: "Icon size",
+      type: "enum",
+      of: ["s", "m", "l"],
+      labels: { s: "S", m: "M", l: "L" },
+      default: "m",
+    },
     { key: "hideLabels", label: "Hide labels", type: "boolean", default: false },
     { key: "newTab", label: "Open in a new tab", type: "boolean", default: false },
   ],

@@ -69,3 +69,24 @@ describe("parseRates", () => {
     expect(parseRates(null, ["USD"])).toBeNull();
   });
 });
+
+describe("formatRate with a fixed number of places", () => {
+  it("overrides the automatic choice at every magnitude", () => {
+    // The point of the option: automatic gives 1.0834 two places and hides the
+    // fourth, which is where a pair being watched closely actually moves.
+    expect(formatRate(1.0834)).toBe("1.08");
+    expect(formatRate(1.0834, "4")).toBe("1.0834");
+    expect(formatRate(42000, "2")).toBe("42,000.00");
+    expect(formatRate(0.0067, "2")).toBe("0.01");
+  });
+
+  it("falls back to automatic for anything that is not a number", () => {
+    expect(formatRate(1.0834, "auto")).toBe("1.08");
+    expect(formatRate(1.0834, undefined)).toBe("1.08");
+    expect(formatRate(1.0834, "some nonsense")).toBe("1.08");
+  });
+
+  it("still has nothing to say about a missing rate", () => {
+    expect(formatRate(null, "4")).toBe("—");
+  });
+});

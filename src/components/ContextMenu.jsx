@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MONO, clampToViewport, pill } from "@daybreak/sdk";
+import { MenuRow, MONO, clampToViewport } from "@daybreak/sdk";
+import { Pill } from "./primitives";
 
 const MENU_WIDTH = 236;
 
@@ -20,31 +21,23 @@ function useClampedPosition(x, y, deps) {
   return [ref, pos];
 }
 
-function MenuItem({ item, onClose }) {
-  const [hovered, setHovered] = useState(false);
+function MenuItem({ item, onClose, hint = false }) {
+  // The shared row (and with it the hover highlight and its fade) is the SDK's
+  // now, so this menu and the two in the toolbar cannot drift apart again.
+  // `hint` is the tour pointing at a row with no pointer near it.
   return (
-    <button
-      type="button"
+    <MenuRow
       role="menuitem"
+      hint={hint}
       onClick={(e) => {
         e.stopPropagation();
         onClose();
         item.run?.();
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
-        display: "flex",
-        alignItems: "center",
         justifyContent: "space-between",
         gap: "24px",
-        width: "100%",
         padding: "8px 14px",
-        fontSize: "13px",
-        cursor: "pointer",
-        textAlign: "left",
-        border: 0,
-        background: hovered ? "var(--sheetHover)" : "transparent",
         color: item.danger ? "var(--danger)" : "var(--fg)",
       }}
     >
@@ -54,11 +47,11 @@ function MenuItem({ item, onClose }) {
           {item.hint}
         </span>
       ) : null}
-    </button>
+    </MenuRow>
   );
 }
 
-function ContextMenu({ menu, title, items, closing, onClose }) {
+function ContextMenu({ menu, title, items, closing, onClose, hintLabel }) {
   const [ref, pos] = useClampedPosition(menu.x, menu.y, [items.length]);
 
   useEffect(() => {
@@ -91,6 +84,7 @@ function ContextMenu({ menu, title, items, closing, onClose }) {
       <div
         ref={ref}
         role="menu"
+        data-tour="tile-menu"
         aria-label={title}
         style={{
           position: "fixed",
@@ -150,28 +144,35 @@ function ContextMenu({ menu, title, items, closing, onClose }) {
                 {item.sizes.map((s) => {
                   const active = item.current[0] === s[0] && item.current[1] === s[1];
                   return (
-                    <button
+                    <Pill
                       key={s.join("x")}
-                      type="button"
+                      active={active}
                       onClick={(e) => {
                         e.stopPropagation();
                         onClose();
                         item.onPick(s);
                       }}
-                      style={pill(active, {
+                      style={{
                         fontFamily: MONO,
                         fontSize: "10px",
                         padding: "5px 9px",
-                      })}
+                      }}
                     >
                       {s.join("×")}
-                    </button>
+                    </Pill>
                   );
                 })}
               </div>
             );
           }
-          return <MenuItem key={item.label} item={item} onClose={onClose} />;
+          return (
+            <MenuItem
+              key={item.label}
+              item={item}
+              onClose={onClose}
+              hint={!!hintLabel && item.label === hintLabel}
+            />
+          );
         })}
       </div>
     </>

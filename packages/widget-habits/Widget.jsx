@@ -1,14 +1,6 @@
 import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
-import {
-  EditableText,
-  MONO,
-  Popover,
-  Tooltip,
-  uid,
-  useTooltip,
-  useWidgetSynced,
-} from "@daybreak/sdk";
+import { Appear, Button, EditableText, MONO, Popover, Tooltip, uid, useMeasuredWidth, useTooltip, useWidgetSynced, weekdayShort } from "@daybreak/sdk";
 import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
 
@@ -88,12 +80,14 @@ function Stepper({ label, value, min, max, onChange, suffix = "" }) {
 
 // Its own component so each dot's tooltip gets its own hover state.
 function DayDot({ date, habitName, isToday, ticked, dot, onToggle }) {
-  const tip = useTooltip(isToday ? "Today" : date);
+  // Weekday as well as the date: "was that Tuesday or Wednesday" is the actual
+  // question when you are looking back along the row.
+  const label = `${weekdayShort(date)} ${date.slice(5)}`;
+  const tip = useTooltip(isToday ? `Today · ${label}` : label);
   return (
     <>
-      <button
+      <Button
         ref={tip.anchorRef}
-        type="button"
         aria-label={`${habitName} on ${date}`}
         aria-pressed={ticked}
         onClick={(e) => {
@@ -101,6 +95,7 @@ function DayDot({ date, habitName, isToday, ticked, dot, onToggle }) {
           onToggle();
         }}
         {...tip.anchorProps}
+        hover={ticked ? { opacity: 0.85 } : { background: "var(--dim)" }}
         style={{
           width: dot,
           height: dot,
@@ -180,12 +175,11 @@ function HabitRow({
               }}
               inputStyle={{ display: "block", width: "100%", fontSize: 14 }}
             />
-            <button
+            <Button
               ref={(el) => {
                 anchorRef.current = el;
                 goalTip.anchorRef.current = el;
               }}
-              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleOpen();
@@ -205,9 +199,10 @@ function HabitRow({
                 cursor: "pointer",
                 color: p.metThisWeek ? "var(--fg)" : "var(--dim)",
               }}
+              hover={{ color: "var(--fg)" }}
             >
               <LuSettings2 size={11} style={{ opacity: open ? 1 : 0.4 }} />
-            </button>
+            </Button>
             <Tooltip {...goalTip} />
           </div>
 
@@ -339,20 +334,32 @@ function HabitRow({
   );
 }
 
-function Habits({ id, options, config, setConfig, size }) {
+function Habits({ id, options, config, setConfig, size, editing }) {
   // Names and per-habit targets are settings (small, worth syncing); tick
   // history is content that grows, so it syncs separately with its own
   // budget, trimmed to ~370 days on every write.
   const [history, setHistory] = useWidgetSynced(id, "history", {}, { trim: trimHistory });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
-  const [editing, setEditing] = useState(null);
+  // Target and goal are set here rather than only in the row's own settings
+  // afterwards: "five times a week for eight weeks" is the whole shape of a
+  // habit, and having to create it and then go and configure it made the new
+  // habit briefly mean something the user never asked for.
+  const [draftTarget, setDraftTarget] = useState(5);
+  const [draftWeeks, setDraftWeeks] = useState(0);
+  // Which row has its settings popover open. Named apart from the board's own
+  // `editing` prop, which is a different idea entirely and now arrives here too.
+  const [settingsFor, setSettingsFor] = useState(null);
 
   const habits =
     Array.isArray(config.habits) && config.habits.length ? config.habits : DEFAULTS;
   // Only the week boundary is shared; target and goal belong to each habit.
   const startIndex = weekStartIndex(options.weekStart);
-  const wide = (size?.[0] ?? 4) >= 4;
+  // Measured, not the span: the dot row is seven dots plus a name, and whether
+  // 15px dots fit depends on the pixels available rather than on how many grid
+  // tracks they came from. See useMeasuredWidth.
+  const [boxRef, measured] = useMeasuredWidth();
+  const wide = measured == null ? (size?.[0] ?? 4) >= 4 : measured >= 420;
   const dot = wide ? 15 : 13;
 
   const toggle = (habitId, date) =>
@@ -371,23 +378,44 @@ function Habits({ id, options, config, setConfig, size }) {
     e.stopPropagation();
     const name = draft.trim();
     if (!name) return;
-    setConfig({ habits: [...habits, { id: uid(), name, target: 5, targetWeeks: 0 }] });
+    setConfig({
+      habits: [
+        ...habits,
+        { id: uid(), name, target: draftTarget, targetWeeks: draftWeeks },
+      ],
+    });
     setDraft("");
+    setDraftTarget(5);
+    setDraftWeeks(0);
     setAdding(false);
   };
 
   return (
     <div
+      ref={boxRef}
       style={{
         display: "flex",
         flexDirection: "column",
         gap: 12,
         flex: 1,
-        justifyContent: "center",
+        // `safe center` and not plain `center`: a centred flex column overflows
+        // *both* ends when it outgrows the tile, and the overflow above the
+        // start edge cannot be scrolled to — the first habit simply became
+        // unreachable. `safe` falls back to flex-start exactly when that would
+        // happen, and keeps centring the rest of the time. Chrome 115+, and the
+        // extension's floor is 117.
+        justifyContent: "safe center",
         minWidth: 0,
         minHeight: 0,
         overflowY: "auto",
         overflowX: "hidden",
+        // Room between the week's dots and the scrollbar. The dots sit hard
+        // against the right edge of the row, so with a scrollbar present the
+        // last one in every row was touching it. Only applied when the list
+        // actually scrolls, via scrollbar-gutter, so a short list is not
+        // indented for a scrollbar that is not there.
+        scrollbarGutter: "stable",
+        paddingRight: 6,
       }}
     >
       {habits.map((habit) => {
@@ -399,17 +427,17 @@ function Habits({ id, options, config, setConfig, size }) {
           <HabitRow
             key={habit.id}
             habit={habit}
-            open={editing === habit.id}
+            open={settingsFor === habit.id}
             dot={dot}
             p={p}
             done={done}
             showStreaks={options.showStreaks}
-            onToggleOpen={() => setEditing((cur) => (cur === habit.id ? null : habit.id))}
+            onToggleOpen={() => setSettingsFor((cur) => (cur === habit.id ? null : habit.id))}
             onToggleDay={(date) => toggle(habit.id, date)}
             onPatch={(changes) => patch(habit.id, changes)}
             onRename={(name) => patch(habit.id, { name })}
             onRemove={() => {
-              setEditing(null);
+              setSettingsFor(null);
               setConfig({ habits: habits.filter((h) => h.id !== habit.id) });
             }}
           />
@@ -426,7 +454,14 @@ function Habits({ id, options, config, setConfig, size }) {
             autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => !draft && setAdding(false)}
+            // Only closes if nothing has been typed *and* focus left the form
+            // altogether — reaching for a stepper used to dismiss the whole
+            // thing mid-edit.
+            onBlur={(e) => {
+              if (draft) return;
+              if (e.currentTarget.form?.contains(e.relatedTarget)) return;
+              setAdding(false);
+            }}
             placeholder="Habit name"
             aria-label="Habit name"
             style={{
@@ -440,8 +475,44 @@ function Habits({ id, options, config, setConfig, size }) {
               color: "var(--fg)",
             }}
           />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              marginTop: 8,
+            }}
+          >
+            <Stepper
+              label="per week"
+              value={draftTarget}
+              min={1}
+              max={7}
+              onChange={setDraftTarget}
+            />
+            <Stepper
+              label="goal"
+              value={draftWeeks}
+              min={0}
+              max={52}
+              suffix="w"
+              onChange={setDraftWeeks}
+            />
+            {/* A form whose only control is a text field does not submit on
+                Enter once other controls join it — this restores that without
+                a visible button, the same trick the quick-links form uses. */}
+            <button type="submit" style={{ display: "none" }} aria-hidden="true" />
+          </div>
         </form>
       ) : (
+        // Only while arranging the board. Adding a habit changes what the tile
+        // contains rather than being something done at a glance, and a resting
+        // tile reads better without a permanent invitation. Appear rather than a
+        // ternary so it leaves the way it arrived and hands its space back.
+        // Tasks deliberately keeps its own input: typing a task is that
+        // widget's whole purpose, not configuration.
+        <Appear open={!!editing} style={{ alignSelf: "flex-start" }}>
         <button
           type="button"
           onClick={(e) => {
@@ -470,6 +541,7 @@ function Habits({ id, options, config, setConfig, size }) {
         >
           <LuPlus size={13} /> Add habit
         </button>
+        </Appear>
       )}
     </div>
   );

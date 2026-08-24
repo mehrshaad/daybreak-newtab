@@ -23,11 +23,16 @@ async function loadCustomFeed(feedUrl) {
   return { status: "ok", items };
 }
 
-function News({ id, config, refreshKey, size }) {
+function News({ id, options, config, refreshKey, size }) {
+  const { count, showMeta, newTab } = options;
   const source = config.source || "hn";
   const feedUrl = config.feedUrl;
+  // The count is the user's, not the tile height's. The list already scrolls,
+  // so a short tile showing eight headlines is a scroll rather than a crop —
+  // where guessing from height meant a tall tile silently dropped four of them
+  // with nothing to say so. Height only lowers the ceiling on the default.
   const tall = (size?.[1] ?? 2) >= 3;
-  const limit = tall ? 8 : 4;
+  const limit = Math.max(1, count ?? (tall ? 8 : 4));
   // Cache the last good list so a refresh (or being offline) shows the
   // previous headlines instead of a spinner.
   const [cached, setCached] = useWidgetLocal(id, "last", null);
@@ -122,7 +127,7 @@ function News({ id, config, refreshKey, size }) {
         <a
           key={item.id ?? item.url ?? i}
           href={item.url}
-          target="_blank"
+          target={newTab ? "_blank" : undefined}
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           style={{
@@ -146,7 +151,7 @@ function News({ id, config, refreshKey, size }) {
           >
             {item.title}
           </span>
-          {item.points != null || item.comments != null ? (
+          {showMeta && (item.points != null || item.comments != null) ? (
             <span
               style={{
                 display: "flex",

@@ -4,7 +4,7 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.1.0",
+  version: "2.2.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
@@ -22,6 +22,14 @@ export default {
   ],
   defaultSize: [5, 2],
   options: [
+    {
+      key: "iconScale",
+      label: "Icon size",
+      type: "enum",
+      of: ["s", "m", "l"],
+      labels: { s: "S", m: "M", l: "L" },
+      default: "m",
+    },
     { key: "hideLabels", label: "Hide labels", type: "boolean", default: false },
     { key: "newTab", label: "Open in a new tab", type: "boolean", default: false },
   ],

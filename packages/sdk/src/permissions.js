@@ -80,6 +80,19 @@ export function requestOrigin(origin) {
   });
 }
 
+// Several origins behind one prompt and one gesture. Asking for them one at a
+// time only works for the first: `chrome.permissions.request` needs a user
+// gesture, and awaiting the first prompt spends it, so every later call is
+// rejected for want of one.
+export function requestOrigins(origins = []) {
+  const list = origins.filter(Boolean);
+  if (!list.length) return Promise.resolve(false);
+  if (!hasPermissionsApi()) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    chrome.permissions.request({ origins: list }, (granted) => resolve(!!granted));
+  });
+}
+
 export function dropOrigin(origin) {
   if (!origin || !hasPermissionsApi()) return Promise.resolve(false);
   return new Promise((resolve) => {

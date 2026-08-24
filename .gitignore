@@ -23,9 +23,22 @@ dist-ssr
 # stay ignored too.
 V*-PLAN.md
 TODO.md
+WIDGET-APIS.md
 
 # Store upload artifact: rebuilt from dist/ whenever it changes.
 /store-assets/*.zip
+
+# Raw screen captures for the listing video. Huge, and the published cuts live
+# elsewhere - GitHub rejects anything over 100MB anyway.
+*.mov
+*.mp4
+*.webm
+
+# Staged board used for recording the demo, restored via Settings > Import.
+daybreak-demo-board.json
+
+# Cut demo assets, rebuilt from the raw capture whenever it changes.
+/demo/
 
 # Editor / OS
 .vscode/*

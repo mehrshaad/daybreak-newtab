@@ -1,19 +1,6 @@
 import { useRef, useState } from "react";
 import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
-import {
-  Appear,
-  animateExit,
-  EditableText,
-  formatDate,
-  LIST_BLEED,
-  LIST_ROW_HIGHLIGHT,
-  listRow,
-  MONO,
-  uid,
-  useFlip,
-  usePointerReorder,
-} from "@daybreak/sdk";
-import DatePicker from "./DatePicker";
+import { Appear, Button, DatePicker, EditableText, LIST_BLEED, LIST_ROW_HIGHLIGHT, MONO, animateExit, formatDate, listRow, uid, useFlip, usePointerReorder } from "@daybreak/sdk";
 import { reorderVisible } from "./reorder";
 
 const isOverdue = (due) => !!due && due < formatDate(new Date());
@@ -52,8 +39,7 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
       <Appear open={editing} style={{ display: "flex", flex: "none" }}>
         <LuGripVertical size={12} style={{ color: "var(--faint)" }} aria-hidden="true" />
       </Appear>
-      <button
-        type="button"
+      <Button
         role="checkbox"
         aria-checked={task.done}
         aria-label={task.text}
@@ -61,6 +47,7 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
           e.stopPropagation();
           onToggle();
         }}
+        hover={task.done ? { opacity: 0.85 } : { border: "1px solid var(--accent)" }}
         style={{
           width: 15,
           height: 15,

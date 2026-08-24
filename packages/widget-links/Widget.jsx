@@ -1,6 +1,17 @@
 import { useMemo, useRef, useState } from "react";
 import { LuPlus } from "react-icons/lu";
-import { Favicon, IconGrid, IconTile, MONO, moveItem, Popover, uid } from "@daybreak/sdk";
+import {
+  Appear,
+  Favicon,
+  IconGrid,
+  iconCellSize,
+  iconGridSize,
+  IconTile,
+  MONO,
+  moveItem,
+  Popover,
+  uid,
+} from "@daybreak/sdk";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.
@@ -58,7 +69,7 @@ function nameFromUrl(href) {
 }
 
 function Links({ options, config, setConfig, size, editing, columns }) {
-  const { hideLabels, newTab } = options;
+  const { hideLabels, newTab, iconScale } = options;
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
   const [draftUrl, setDraftUrl] = useState("");
@@ -71,12 +82,14 @@ function Links({ options, config, setConfig, size, editing, columns }) {
     setDraftName("");
   };
 
-  // Columns follow the tile width so icons fill the space at every size.
+  // Width decides how many icons fit per row; height decides how big they are.
+  // See iconGridSize — deriving the size from the column span made a wider tile
+  // draw smaller icons.
   const cols = Math.max(3, Math.min(size[0], columns));
-  const baseIconSize = Math.max(24, Math.min(42, Math.round(150 / cols)));
-  // Without a label underneath, that row of vertical space is otherwise just
-  // left empty rather than going back into the icon itself.
-  const iconSize = hideLabels ? Math.round(baseIconSize * 1.3) : baseIconSize;
+  const iconSize = iconGridSize(size, { hideLabels, step: iconScale });
+  // Padding, the icon-to-caption gap and the grid gap all come from here, so
+  // the Add cell below matches the real icons exactly.
+  const cell = iconCellSize(iconSize, !hideLabels);
 
   const gridItems = useMemo(
     () =>
@@ -122,8 +135,10 @@ function Links({ options, config, setConfig, size, editing, columns }) {
         iconSize={iconSize}
         // Matches the icon-to-label gap inside each item, so horizontal and
         // vertical rhythm read as the same spacing scaled by icon size.
-        gap={Math.max(4, Math.round(iconSize * 0.16))}
         showLabels={!hideLabels}
+        // The links are the user's own, so none of them may be hidden the way
+        // Google Apps hides its long tail. If they do not fit, they scroll.
+        scroll
         onOpen={open}
         onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
         editing={editing}
@@ -167,7 +182,13 @@ function Links({ options, config, setConfig, size, editing, columns }) {
             </div>
           );
         }}
+        // Only while arranging the board: adding a link changes what the tile
+        // holds rather than being something done at a glance, and a resting grid
+        // of icons reads better without a permanent empty slot at the end.
+        // Appear rather than a ternary so it leaves the way it arrived and the
+        // grid closes up after it.
         trailing={
+          <Appear open={!!editing} style={{ minWidth: 0 }}>
           <button
             ref={addBtnRef}
             type="button"
@@ -180,15 +201,14 @@ function Links({ options, config, setConfig, size, editing, columns }) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: Math.max(4, Math.round(iconSize * 0.16)),
-              padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
+              gap: cell.labelGap,
+              padding: `${cell.pad}px 2px`,
               borderRadius: 12,
               cursor: "pointer",
               border: 0,
               background: "transparent",
               color: "var(--faint)",
               width: "100%",
-              animation: "db-menu .16s ease both",
               transition: "color .2s",
             }}
             onMouseEnter={(e) => {
@@ -214,9 +234,10 @@ function Links({ options, config, setConfig, size, editing, columns }) {
               <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
             </span>
             {hideLabels ? null : (
-              <span style={{ fontSize: Math.max(9, Math.round(iconSize * 0.3)) }}>Add</span>
+              <span style={{ fontSize: cell.fontSize }}>Add</span>
             )}
           </button>
+          </Appear>
         }
       />
 

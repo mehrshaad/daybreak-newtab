@@ -5,15 +5,82 @@
 
 export const THEMES = ["dark", "light"];
 
-// The six accent swatches offered in the settings drawer.
+// The accent swatches offered in the settings drawer.
+//
+// Sixteen, from the six the design shipped with. The six were a good set and
+// too small a one: four of them sat between hue 160 and 345, so there was no
+// red, no yellow, no green, no cyan and no magenta to pick, and anyone who
+// wanted one of those had no way to get it.
+//
+// Every one of them stays in the same register as the original six — light,
+// unsaturated, closer to a pastel than to a primary. That is not decoration:
+// the whole token ramp is derived from this one value, and a fully saturated
+// accent makes --accentSoft and --accentLine shout at every panel edge on the
+// board. The first six are unchanged and in their original order, so nobody's
+// stored accent moves.
+//
+// Readability is derived rather than assumed. On the light theme darkenFor
+// steps the swatch down until it clears 4.5:1 as text; on dark the raw swatch
+// is used, which is why every one of these has to be light enough to read on
+// near-black in the first place. Both directions are asserted for all sixteen
+// in tokens.test.js, which is what makes adding a seventeenth safe.
+// Fifteen, and the picker lays them out five to a row.
+//
+// Slate was the sixteenth and it is gone. Slate and steel were the closest pair
+// in the palette once rendered as tiles — two desaturated blue-greys about 12
+// units apart where everything else sits above 15 — so one of them was doing no
+// work. Steel is the more saturated of the two and stayed.
+//
+// Nothing pale replaced it, because there is nothing pale left to add. Measured
+// across the whole wheel, every gap between these fifteen washes out to
+// something very like both of its neighbours: an orchid dropped into the
+// 46-degree gap between violet and magenta came back 9.9 from violet, which is
+// closer than the pair that was removed. The room left here is in depth, and
+// depth is not available to an accent — it has to stay pale enough to carry
+// near-black ink and to leave a light tile near white, both tested below. So the
+// deep colours are tints only. See TINT_EXTRAS.
 export const ACCENTS = [
-  "#6f9bff",
-  "#7de2b8",
-  "#ffb26f",
-  "#ff8fb1",
-  "#c79bff",
-  "#e8e6df",
+  // The original six.
+  "#6f9bff", // blue
+  "#7de2b8", // mint
+  "#ffb26f", // orange
+  "#ff8fb1", // pink
+  "#c79bff", // violet
+  "#e8e6df", // paper
+  // Filling the wheel: the hues that had no swatch at all.
+  "#ff8f8f", // red
+  "#f5d979", // yellow
+  "#b6dd7f", // lime
+  "#86d99a", // green
+  "#6fd6e5", // cyan
+  "#8fb0c9", // steel
+  "#9b96ff", // indigo
+  "#ef92dc", // magenta
+  "#dcc9a4", // sand
 ];
+
+// What each swatch is called, for the picker's accessible names. A screen
+// reader saying "Accent #6f9bff" is reading out a number nobody can picture;
+// with six swatches that was merely unhelpful and with sixteen it is useless.
+// Kept beside the list rather than folded into it so ACCENTS stays a plain
+// array of the values actually stored.
+export const ACCENT_NAMES = {
+  "#6f9bff": "blue",
+  "#7de2b8": "mint",
+  "#ffb26f": "orange",
+  "#ff8fb1": "pink",
+  "#c79bff": "violet",
+  "#e8e6df": "paper",
+  "#ff8f8f": "red",
+  "#f5d979": "yellow",
+  "#b6dd7f": "lime",
+  "#86d99a": "green",
+  "#6fd6e5": "cyan",
+  "#8fb0c9": "steel",
+  "#9b96ff": "indigo",
+  "#ef92dc": "magenta",
+  "#dcc9a4": "sand",
+};
 
 // Procedural backgrounds. v2 has no photo wallpapers, so these are generated
 // from the accent + theme and cost nothing to ship.
@@ -44,7 +111,15 @@ export const DEFAULTS = {
   // where the tile still reads as glass and the blur behind it is visible.
   alpha: 50,
   pageZoom: 100,
-  blur: true,
+  // Off by default. backdrop-filter is the single most expensive thing on the
+  // page — every tile, panel, sheet and menu is a separate blurred surface, and
+  // on a modest machine that is the difference between a new tab that appears
+  // and one that fades in. It is the better-looking setting and not the better
+  // default, so the welcome card offers it as a choice and this is where the
+  // choice starts.
+  blur: false,
+  tileLabels: "both",
+  boardWidth: "comfortable",
 };
 
 // Surfaces read their blur from these rather than hardcoding backdrop-filter,
@@ -60,7 +135,152 @@ export const BLUR = {
 // Grid gap is fixed rather than configurable: it is the one grid dial that
 // never improved a layout, and every value but the default made the board look
 // either cramped or unmoored.
+// A tile's own background colour.
+//
+// The accent already tints the whole board; this is the other half of the
+// request — the tiles themselves. Same sixteen colours, because they are already
+// named and already checked for readability in both themes, and because a board
+// whose tiles and accent come from one palette looks deliberate where two
+// palettes look like two features.
+//
+// A tint is a *wash*, not a fill: the theme's own panel colour moved a fraction
+// of the way toward the chosen hue. That is what makes it safe. Text on a tile
+// is --fg, and the surface never travels toward --fg, so a tinted tile cannot
+// become unreadable however saturated the swatch — it only ever becomes a
+// slightly green dark card or a slightly green white one. Painting the swatch on
+// directly would have needed a contrast check per colour per theme and would
+// still have looked like a sticker sheet.
+//
+// Light theme takes a little less of it. The panel is near-white and the eye
+// reads a small shift from white as colour more readily than the same shift
+// from near-black.
+//
+// The first values here were half these, and on screen the tiles were barely
+// distinguishable — the default tile opacity is 50%, so whatever is mixed in
+// gets washed out again over the wallpaper before anybody sees it. These are
+// what actually reads as a coloured tile, with the contrast test below holding
+// the ceiling.
+const TINT_MIX = { dark: 0.34, light: 0.28 };
+
+// The tint palette: the accents, plus one that is a tint and not an accent.
+//
+// Seventeen rather than sixteen because the picker lays out nine to a row with
+// "none" taking the first cell, so sixteen colours left the second row one
+// short and the grid looked unfinished. Eighteen cells is two full rows.
+//
+// Two colours that are tints and not accents.
+//
+// Here rather than in ACCENTS because an accent has to stay pale: it carries
+// near-black ink on buttons and it has to leave a light tile near white. A tint
+// has neither duty — it is a wash over the theme's own panel, so however deep
+// the swatch, the tile only ever becomes a slightly darker card. That freedom is
+// what these two use, and depth is the one thing this palette had none of.
+//
+// The first attempt at this slot was a light teal, and it measured as the
+// closest pair in the whole palette once rendered — closer than the steel/slate
+// pair it was meant to sit beside. Hue was the wrong axis to look for room on;
+// fifteen accents already ring the wheel.
+//
+// Two rather than one because it also makes both pickers whole: fifteen accents
+// are three rows of five, and seventeen tints plus "none" are two rows of nine.
+// #3f8f8f and not the deeper #1f8a8a tried first: a tint may be deeper than an
+// accent but not without limit, and at 1f8a8a a light tile came out at 192
+// against the rule below that it stay above 200. Still 46 units from its
+// nearest neighbour, three times the closest pair left in the palette.
+export const TINT_EXTRAS = ["#3f8f8f", "#a34a7f"];
+
+export const TINTS = [...ACCENTS, ...TINT_EXTRAS];
+
+export const TINT_NAMES = {
+  ...ACCENT_NAMES,
+  "#3f8f8f": "teal",
+  "#a34a7f": "plum",
+};
+
+// The theme's untinted panel surface, which is also what a tint moves away from.
+const PANEL_RGB = { dark: [28, 30, 38], light: [255, 255, 255] };
+
+function mixToward(base, hex, amount) {
+  const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  if (rgb.some((v) => Number.isNaN(v))) return base;
+  return base.map((v, i) => Math.round(v * (1 - amount) + rgb[i] * amount));
+}
+
+// The tile's background, as a single rgba(). `alpha` is the opacity slider and
+// passes straight through whether or not there is a tint, so tinting a tile
+// never quietly changes how much of the wallpaper shows through it.
+export function tileFill(theme, alpha = 100, tint = null) {
+  const dark = theme !== "light";
+  const key = dark ? "dark" : "light";
+  const base = PANEL_RGB[key];
+  const rgb = tint ? mixToward(base, tint, TINT_MIX[key]) : base;
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha / 100})`;
+}
+
+// The surfaces *inside* a tinted tile.
+//
+// --panel and --panel2 are what every widget paints its inputs, buttons and
+// rows with, and they are translucent whites layered over the tile. On the dark
+// theme that is fine: white at 5% over a green-dark tile gives a slightly
+// lighter green-dark. On the light theme they are 62% and 92% white, which
+// swamps the tint completely — a stark white input box sitting on a lilac tile,
+// which is what the tiles looked like as soon as they could be coloured.
+//
+// So the white gets the same treatment the tile did: mixed toward the tint
+// before being laid on. The alphas are untouched, so the depth and the layering
+// are exactly as they were and only the hue follows the tile.
+//
+// Returned as CSS custom properties for the tile element, which means widgets
+// need no changes at all: they already say var(--panel), and inside a tinted
+// tile that now resolves to a tinted panel.
+export function tileSurfaces(theme, tint) {
+  if (!tint) return null;
+  const dark = theme !== "light";
+  const key = dark ? "dark" : "light";
+  const [r, g, b] = mixToward([255, 255, 255], tint, TINT_MIX[key]);
+  const wash = (alpha) => `rgba(${r},${g},${b},${alpha})`;
+  return dark
+    ? {
+        "--panel": wash(0.05),
+        "--panel2": wash(0.1),
+        "--sheetHover": wash(0.1),
+      }
+    : {
+        "--panel": wash(0.62),
+        "--panel2": wash(0.92),
+        // The light theme's row highlight is a dark wash rather than a white
+        // one, so it is left alone: tinting it would lighten the one surface
+        // whose whole job is to be darker than what it sits on.
+      };
+}
+
 export const GRID_GAP = 14;
+
+// The rest of the board's geometry, in one place because more than the board
+// depends on it. A widget that has to know how much room a tile really gives it
+// — the icon grids, deciding how big an icon can be — was otherwise reading
+// these numbers off Board.jsx and tileStyle.js by eye, and a test of the fit
+// would have been checking a copy against a copy.
+export const ROW_HEIGHT = 96;
+export const TILE_PAD = { x: 18, y: 16 };
+// The label row above a widget. `max` is the cap the row animates against when
+// labels are switched off; `line` is what it actually occupies, which is set by
+// the label's own line box and is nothing like the cap. Taking the cap for the
+// real height is a mistake worth naming: it understated a two-row tile's body
+// by 26px, which is a whole row of anything.
+export const TILE_HEADER = { max: 40, gap: 12, line: 14 };
+
+// A couple of pixels held back, because this is a model of a layout rather than
+// the layout. Measured against a real tile it lands within 2px, and erring
+// small means anything that passes a fit check here fits on screen too.
+const SLACK = 2;
+
+// The height a widget actually gets inside a tile of `rows` rows.
+export function tileBodyHeight(rows, { header = true } = {}) {
+  const outer = ROW_HEIGHT * rows + GRID_GAP * (rows - 1);
+  const chrome = 2 * TILE_PAD.y + (header ? TILE_HEADER.line + TILE_HEADER.gap : 0);
+  return outer - chrome - SLACK;
+}
 
 // Page zoom, as a percentage, applied with the CSS `zoom` property so the
 // layout genuinely reflows the way Ctrl+ does rather than being scaled.
@@ -212,7 +432,7 @@ export const baseColor = (theme) => (theme !== "light" ? "#0a0b0e" : "#f3f3f1");
 // Shift a hex colour around the hue wheel, keeping its saturation and
 // lightness. Used by the multi-hue backgrounds so they stay tied to the chosen
 // accent instead of introducing arbitrary colours.
-function hslOf(hex) {
+export function hslOf(hex) {
   const h = normalizeAccent(hex).slice(1);
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
   const max = Math.max(r, g, b);
@@ -257,17 +477,46 @@ export function rotateHue(hex, degrees) {
 //
 // Only the lightness moves, and only downward — hue and saturation are left
 // alone, so a neutral accent stays neutral and simply becomes visible instead
-// of turning into a colour the user did not pick. The ceiling scales with
-// saturation because a saturated colour still reads at a lightness where a
-// grey has already disappeared: at full saturation it sits above every accent
-// in the palette and nothing changes at all.
+// of turning into a colour the user did not pick.
+//
+// How far down is measured rather than estimated. The first version capped
+// lightness at a ceiling that scaled with saturation, on the reasoning that a
+// saturated colour still reads where a grey has vanished. True for most hues
+// and not for yellow: yellow is intrinsically bright — green alone carries 71%
+// of the luminance sum — so a saturated yellow sits near white at a lightness
+// where a saturated blue is plainly visible. That ceiling let the yellow swatch
+// through at 1.28:1 against the page, which is the exact "plain white page"
+// this function exists to prevent.
+//
+// So the ceiling is kept and a floor is added under it. The ceiling is what
+// makes a light-theme wallpaper read as a backdrop rather than as a wash, and
+// it was reviewed on screen; replacing it outright would have made the pink,
+// violet and paper wallpapers paler than the ones already signed off, which is
+// the complaint that prompted it. The floor then catches what the ceiling
+// cannot see — a colour that is still too close to the page after being
+// capped — and steps it down until the contrast is actually there.
+//
+// Monotone by construction: nothing the ceiling darkened comes back lighter,
+// and only the swatches that need more get more.
+const WALL_MIN_CONTRAST = 1.45;
+
 export function wallTint(accent, dark) {
   const hex = normalizeAccent(accent);
   // The dark base is far from every accent offered, so there is nothing to fix.
   if (dark) return hex;
+  const base = baseColor("light");
+  const against = (candidate) => contrast(luminance(candidate), luminance(base));
+
   const [hue, s, l] = hslOf(hex);
   const ceiling = 0.58 + 0.14 * Math.min(1, s);
-  return l <= ceiling ? hex : hexOfHsl(hue, s, ceiling);
+  let lightness = Math.min(l, ceiling);
+  let candidate = lightness === l ? hex : hexOfHsl(hue, s, lightness);
+
+  while (lightness > 0 && against(candidate) < WALL_MIN_CONTRAST) {
+    lightness = Math.max(0, lightness - 0.02);
+    candidate = hexOfHsl(hue, s, lightness);
+  }
+  return candidate;
 }
 
 // The design's own values were far too weak to read as different backgrounds:

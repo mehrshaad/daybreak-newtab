@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { LuX } from "react-icons/lu";
-import {
-  dropOrigin,
-  hasPermissionsApi,
-  IconTile,
-  originOf,
-  requestOrigin,
-  Tooltip,
-  uid,
-  useTooltip,
-} from "@daybreak/sdk";
+import { Button, HOVER_SOFT, IconTile, Tooltip, dropOrigin, hasPermissionsApi, originOf, requestOrigin, uid, useTooltip } from "@daybreak/sdk";
 import { PROVIDER_ICON_NAME, PROVIDER_LABEL, providerFor, resolveCalendars } from "./calendars";
 
 // Its own component so each row's remove-button tooltip gets its own hover
@@ -138,7 +129,8 @@ function CalendarSettings({ config, setConfig, toast }) {
         </div>
       ) : (
         <div style={{ fontSize: 12, color: "var(--faint)" }}>
-          No calendars connected yet — paste a link on the tile itself.
+          No calendars connected yet. Paste a link below and the month grid will
+          start showing your own events.
         </div>
       )}
 
@@ -147,7 +139,7 @@ function CalendarSettings({ config, setConfig, toast }) {
           type="url"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Add another calendar's iCal link"
+          placeholder="Paste an iCal link"
           aria-label="Calendar iCal address"
           style={{
             padding: "8px 12px",
@@ -159,7 +151,7 @@ function CalendarSettings({ config, setConfig, toast }) {
             color: "var(--fg)",
           }}
         />
-        <button
+        <Button
           type="submit"
           disabled={saving}
           style={{
@@ -174,9 +166,10 @@ function CalendarSettings({ config, setConfig, toast }) {
             opacity: saving ? 0.7 : 1,
             transition: "background .15s ease, border-color .15s ease",
           }}
+          hover={saving ? null : HOVER_SOFT}
         >
           {saving ? "…" : "Add calendar"}
-        </button>
+        </Button>
       </form>
     </div>
   );

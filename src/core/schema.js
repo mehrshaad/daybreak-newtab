@@ -1,3 +1,4 @@
+import { isMac } from "@daybreak/sdk";
 import { essentialsFirst } from "./essentials";
 import { DEFAULTS as VISUAL_DEFAULTS } from "./tokens";
 import { knownIds } from "../widgets/registry";
@@ -94,7 +95,20 @@ export function defaultSettings() {
       radius: VISUAL_DEFAULTS.radius,
       alpha: VISUAL_DEFAULTS.alpha,
       pageZoom: VISUAL_DEFAULTS.pageZoom,
-      blur: VISUAL_DEFAULTS.blur,
+      // Platform-dependent, and the only default that is. backdrop-filter is
+      // the most expensive thing the page draws, so everywhere else it starts
+      // off — but macOS composites it on the GPU as a matter of course and it
+      // costs close to nothing there, while frosted glass is what the rest of
+      // the system looks like, so a Mac starts on the better-looking setting.
+      // Only what a fresh install gets: VISUAL_DEFAULTS.blur is still the
+      // fallback everywhere a stored value is missing, and nobody's existing
+      // choice is touched. The welcome card asks either way.
+      blur: isMac() ? true : VISUAL_DEFAULTS.blur,
+      // What sits above a widget's content: its dot, its name, both, or
+      // nothing. "none" gives that row's height back to the widget rather than
+      // leaving it blank.
+      tileLabels: VISUAL_DEFAULTS.tileLabels,
+      boardWidth: VISUAL_DEFAULTS.boardWidth,
     },
     behavior: {
       showGreeting: true,
@@ -103,9 +117,31 @@ export function defaultSettings() {
       searchEngine: "google",
       // Only the permission-free source is on by default; the others are
       // opt-in and each asks for its Chrome permission when switched on.
-      suggest: { links: true, tabs: false, bookmarks: false, history: false },
+      // `answers` needs no permission and is on by default: it only ever fires
+      // on something that already evaluates to a number, so it costs a person
+      // who does not want it nothing until they type a sum.
+      suggest: { links: true, tabs: false, bookmarks: false, history: false, answers: true },
+      // All on by default, and switchable one kind at a time: "undo" and
+      // "a new version is available" are not the same sort of message, so one
+      // master switch would have made silencing update nags cost you the undo
+      // prompts too. `hydrate` merges one level deep, so a stored `behavior`
+      // without this key keeps these defaults — and isSilenced() treats a
+      // missing `categories` as "nothing silenced" rather than throwing.
+      notifications: {
+        enabled: true,
+        categories: {
+          info: true,
+          undo: true,
+          update: true,
+          performance: true,
+          sync: true,
+          error: true,
+        },
+      },
     },
-    profile: { name: "" },
+    // Not empty. "Good morning" on its own is a page talking to nobody, and
+    // the first thing anyone does is change it anyway.
+    profile: { name: "Handsome" },
     widgets: {},
   };
 }

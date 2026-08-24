@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { NoticeProvider } from "./core/NoticeProvider";
 import { SettingsProvider } from "./core/SettingsProvider";
 import { installFavicon } from "./core/favicon";
 import "./styles/base.scss";
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary>
       <SettingsProvider>
-        <App />
+        <NoticeProvider>
+          <App />
+        </NoticeProvider>
       </SettingsProvider>
     </ErrorBoundary>
   </StrictMode>

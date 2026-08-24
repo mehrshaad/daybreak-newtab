@@ -1,7 +1,10 @@
 import { useRef, useState } from "react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
-import { formatDate, MONO, Popover } from "@daybreak/sdk";
-import { WEEKDAY_LABELS, addMonths, monthGrid } from "./calendar";
+import { formatDate } from "../utils";
+import { MONO } from "../styles";
+import { addMonths, monthGrid, WEEKDAY_LABELS } from "../monthGrid";
+import Button from "./Button";
+import Popover from "./Popover";
 
 const navBtn = {
   width: 22,
@@ -16,6 +19,11 @@ const navBtn = {
   padding: 0,
 };
 
+// `border`, not `borderColor`: these bases set the shorthand, and React
+// clobbers a shorthand when it removes a longhand that overlapped it, leaving
+// the control with no border once the pointer has been and gone.
+const NAV_HOVER = { background: "var(--sheetHover)", border: "1px solid var(--accentLine)" };
+
 const linkBtn = {
   border: 0,
   background: "transparent",
@@ -25,14 +33,19 @@ const linkBtn = {
   padding: 0,
 };
 
+const LINK_HOVER = { color: "var(--fg)" };
+
 // Parses the widget's own "" | "YYYY-MM-DD" convention. Local midnight, not
 // UTC — a UTC parse of a bare date string would land on the wrong day for
 // half the world's timezones.
 const parse = (value) => (value ? new Date(`${value}T00:00:00`) : null);
 
-// A themed due-date picker, replacing the native <input type="date"> — the
-// browser's own control was the one piece of the widget that did not follow
-// the app's own dark/light styling.
+// A themed date picker, replacing the native <input type="date">.
+//
+// Shared rather than living inside the tasks widget, because the native control
+// is the one thing that cannot be made to follow the app's own theme: Chrome
+// draws its calendar button and popup inside its own shadow tree, out of reach
+// of any style here. Any widget that needs a date should import this one.
 function DatePicker({ value, onChange, placeholder = "Due date" }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(null);
@@ -65,9 +78,8 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
 
   return (
     <>
-      <button
+      <Button
         ref={anchorRef}
-        type="button"
         onClick={(e) => {
           e.stopPropagation();
           if (open) setOpen(false);
@@ -85,9 +97,10 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
           color: value ? "var(--fg)" : "var(--faint)",
           cursor: "pointer",
         }}
+        hover={{ background: "var(--sheetHover)", border: "1px solid var(--accentLine)" }}
       >
         {value || placeholder}
-      </button>
+      </Button>
 
       <Popover
         open={open}
@@ -105,23 +118,23 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
               marginBottom: 8,
             }}
           >
-            <button
-              type="button"
+            <Button
               aria-label="Previous month"
               onClick={() => setView((v) => addMonths(v.year, v.month, -1))}
               style={navBtn}
+              hover={NAV_HOVER}
             >
               <LuChevronLeft size={13} />
-            </button>
+            </Button>
             <span style={{ fontSize: 12, fontWeight: 500 }}>{monthLabel}</span>
-            <button
-              type="button"
+            <Button
               aria-label="Next month"
               onClick={() => setView((v) => addMonths(v.year, v.month, 1))}
               style={navBtn}
+              hover={NAV_HOVER}
             >
               <LuChevronRight size={13} />
-            </button>
+            </Button>
           </div>
 
           <div
@@ -147,12 +160,12 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
               const isToday = d.iso === todayIso;
               const isSelected = d.iso === value;
               return (
-                <button
+                <Button
                   key={d.iso}
-                  type="button"
                   onClick={() => pick(d.iso)}
                   aria-label={d.iso}
                   aria-current={isToday ? "date" : undefined}
+                  hover={isSelected ? { opacity: 0.9 } : { background: "var(--sheetHover)" }}
                   style={{
                     width: 26,
                     height: 26,
@@ -171,7 +184,7 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
                   }}
                 >
                   {d.date.getDate()}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -185,13 +198,13 @@ function DatePicker({ value, onChange, placeholder = "Due date" }) {
               borderTop: "1px solid var(--line)",
             }}
           >
-            <button type="button" onClick={() => pick(todayIso)} style={linkBtn}>
+            <Button onClick={() => pick(todayIso)} style={linkBtn} hover={LINK_HOVER}>
               Today
-            </button>
+            </Button>
             {value ? (
-              <button type="button" onClick={() => pick("")} style={linkBtn}>
+              <Button onClick={() => pick("")} style={linkBtn} hover={LINK_HOVER}>
                 Clear
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>

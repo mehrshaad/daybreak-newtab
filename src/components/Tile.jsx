@@ -11,6 +11,7 @@ import {
   useRefresh,
   useTooltip,
 } from "@daybreak/sdk";
+import { TILE_HEADER } from "../core/tokens";
 import { tileStyle } from "../core/tileStyle";
 import { getWidget, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
@@ -28,7 +29,7 @@ import ErrorBoundary from "./ErrorBoundary";
 // escalating: quiet line colour → an accent tint on hover or throughout edit
 // mode → full accent only while actually held, which is also the only time it
 // widens past the hover width.
-function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
+function DragHandle({ tileHovered, editing, dragging, onPointerDown, tourFirst }) {
   const [handleHovered, setHandleHovered] = useState(false);
   // No label while the drag is under way: the pointer necessarily sits on the
   // handle for the whole gesture, so the hint would pop up over the board a
@@ -51,6 +52,7 @@ function DragHandle({ tileHovered, editing, dragging, onPointerDown }) {
           tile's own padding rather than needing to reach past its
           `overflow: hidden` clip. */}
       <div
+        data-tour={tourFirst ? "handle" : undefined}
         ref={tip.anchorRef}
         // Dragging does not require edit mode: the handle only appears on
         // hover, so grabbing it is already deliberate, and rearranging the
@@ -173,12 +175,15 @@ function Tile({
   columns,
   size,
   options,
+  tint,
+  tourFirst = false,
   config,
   editing,
   zoomed,
   focused,
   zoomMode,
   panelOpen,
+  panelTarget,
   menuTarget,
   dragging = false,
   rate,
@@ -241,6 +246,10 @@ function Tile({
     () =>
       tileStyle({
         theme: appearance.theme,
+        // Per widget, deliberately. A board-wide setting would just be the
+        // theme again; the point of colouring a tile is telling it apart from
+        // the one next to it.
+        tint: tint ?? null,
         blur: appearance.blur !== false,
         radius: appearance.radius,
         alpha: appearance.alpha,
@@ -252,12 +261,47 @@ function Tile({
         focused,
         zoomMode,
         panelOpen,
+        panelTarget,
       }),
-    [appearance, size, columns, editing, menuTarget, zoomed, focused, zoomMode, panelOpen]
+    [
+      appearance,
+      tint,
+      size,
+      columns,
+      editing,
+      menuTarget,
+      panelTarget,
+      zoomed,
+      focused,
+      zoomMode,
+      panelOpen,
+    ]
   );
 
   if (!manifest) return null;
   const Widget = lazyFor(manifest);
+
+  // What the tile puts above its content. "none" frees the row entirely, but
+  // never while the edit chrome is out — the resize and remove buttons live in
+  // that row and cannot be collapsed out from under the user.
+  const labels = appearance.tileLabels || "both";
+  const showIcon = labels === "both" || labels === "icon";
+  const showName = labels === "both" || labels === "name";
+  // Only what actually occupies the header row may keep it open, and that is
+  // just the zoom chrome. Edit-mode controls are absolutely positioned above the
+  // tile on purpose (see the comment where they are rendered) and a right-click
+  // puts nothing in the row at all — so including either of those meant that
+  // with labels hidden, right-clicking a widget pushed its content down by the
+  // height of a row that then showed nothing.
+  const headerHidden = !showIcon && !showName && !focused;
+  // How far a widget may bleed past the tile's own padding, which is nothing
+  // while the header row is there and the full padding once it has gone. A
+  // widget that is essentially one large drawing — the analog clock — can then
+  // use the whole tile rather than sitting in a frame of empty padding. Passed
+  // as CSS custom properties rather than a prop because it is a layout detail
+  // of the tile, not information a widget needs to reason about: the ones that
+  // want it opt in with a negative margin and the rest never see it.
+  const bleed = headerHidden ? { x: 18, y: 16 } : { x: 0, y: 0 };
 
   return (
     <div
@@ -267,7 +311,10 @@ function Tile({
       }}
       // FLIP identifies tiles by this across reorders and resizes.
       data-flip-id={instanceId}
+      data-tour={tourFirst ? "tile" : undefined}
       style={{
+        "--tile-bleed-x": `${bleed.x}px`,
+        "--tile-bleed-y": `${bleed.y}px`,
         ...style,
         // Baked in once at mount and never touched again — a static value
         // never replays a CSS animation on re-render, which is what keeps
@@ -324,27 +371,43 @@ function Tile({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "12px",
           gap: "8px",
           flex: "none",
+          // With nothing to show and no chrome open, the row gives its height
+          // back to the widget rather than sitting there empty — hiding a label
+          // should buy space, not just blank it. Transitioned so the content
+          // rises into the gap instead of jumping.
+          maxHeight: headerHidden ? 0 : TILE_HEADER.max,
+          marginBottom: headerHidden ? 0 : `${TILE_HEADER.gap}px`,
+          opacity: headerHidden ? 0 : 1,
+          overflow: "hidden",
+          transition:
+            "max-height .3s cubic-bezier(.22,1,.36,1), margin-bottom .3s cubic-bezier(.22,1,.36,1), opacity .2s ease",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-          <div style={mark(seedFor(typeOf(instanceId)), 14)} />
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: "10px",
-              letterSpacing: ".14em",
-              textTransform: "uppercase",
-              color: "var(--faint)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {manifest.name}
-          </span>
+          {/* Appear rather than a ternary: it unmounts when closed, so the
+              space is genuinely returned, and it fades both ways. */}
+          <Appear open={showIcon} style={{ display: "flex", flex: "none" }}>
+            <div style={mark(seedFor(typeOf(instanceId)), 14)} />
+          </Appear>
+          <Appear open={showName} style={{ minWidth: 0 }}>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: "10px",
+                letterSpacing: ".14em",
+                textTransform: "uppercase",
+                color: "var(--faint)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                display: "block",
+              }}
+            >
+              {manifest.name}
+            </span>
+          </Appear>
         </div>
 
         <div style={{ display: "flex", gap: "6px", flex: "none" }}>
@@ -429,6 +492,7 @@ function Tile({
       </Appear>
 
       <DragHandle
+        tourFirst={tourFirst}
         tileHovered={tileHovered}
         editing={!!editing}
         dragging={dragging}
@@ -446,7 +510,15 @@ function Tile({
             options={options}
             config={config}
             focused={focused}
-            editing={editing}
+            // A widget's own add and edit controls belong on screen whenever
+            // its settings are open: the drawer is where you go to change the
+            // thing, and having to also put the board into edit mode to reach
+            // "Add a location" is a second gesture for one intention.
+            editing={editing || panelTarget}
+            // Whether the tile is showing any chrome of its own. A widget that
+            // is essentially one large drawing uses this to become the tile
+            // rather than sitting inside it.
+            bare={headerHidden}
             refreshKey={refreshKey}
             setConfig={setConfig}
             setOptions={setOptions}

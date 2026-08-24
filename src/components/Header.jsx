@@ -1,27 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuMoon, LuSettings, LuSun, LuX } from "react-icons/lu";
+import { LuMonitor, LuMoon, LuPencil, LuPlus, LuSettings, LuSun, LuX } from "react-icons/lu";
+import { useNotices } from "../core/noticeContext";
 import { useSettings } from "../core/settingsContext";
 import {
+  Appear,
+  EngineMark,
   HOVER_LIFT,
-  IconTile,
+  isMac,
+  MenuRow,
   MONO,
   roundControl,
   SEARCH_ENGINES,
   softButton,
   Tooltip,
+  useRovingMenu,
   useTooltip,
 } from "@daybreak/sdk";
+import { barTier, searchWidth } from "../core/barLayout";
 import { gatherSuggestions } from "../core/suggest";
+import { nextTheme, THEME_LABELS } from "../core/themeCycle";
+import { useViewportWidth } from "../core/useColumns";
+import ProfileSwitcher from "./ProfileSwitcher";
 import SearchSuggestions from "./SearchSuggestions";
 import { Button } from "./primitives";
 
-const isMac = () =>
-  typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || "");
-
 function EnginePicker({ engine, onPick }) {
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const wrapRef = useRef(null);
-  const tip = useTooltip(`Search with ${SEARCH_ENGINES[engine].label}`);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
+  const tip = useTooltip(open ? null : `Search with ${SEARCH_ENGINES[engine].label}`);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -32,33 +41,63 @@ function EnginePicker({ engine, onPick }) {
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
 
+  const close = useCallback((returnFocus) => {
+    setOpen(false);
+    if (returnFocus) buttonRef.current?.focus();
+  }, []);
+
+  // Arrows, Home/End, Escape and Tab, shared with every other menu in the app
+  // so the next one cannot ship without them (see useRovingMenu).
+  const onMenuKeyDown = useRovingMenu(menuRef, { open, onClose: close });
+
   return (
     <div ref={wrapRef} style={{ position: "relative", display: "flex", flex: "none" }}>
       <button
-        ref={tip.anchorRef}
+        ref={(el) => {
+          buttonRef.current = el;
+          tip.anchorRef.current = el;
+        }}
         type="button"
         onClick={() => setOpen((v) => !v)}
+        // Down-arrow opens a collapsed menu, which is what the pattern leads a
+        // keyboard user to try first.
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" && !open) {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+        aria-haspopup="menu"
         aria-label={`Search engine: ${SEARCH_ENGINES[engine].label}`}
         aria-expanded={open}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           display: "grid",
           placeItems: "center",
-          width: 20,
-          height: 20,
+          width: 22,
+          height: 22,
           padding: 0,
           border: 0,
-          background: "transparent",
+          borderRadius: 999,
+          // Nothing said this mark was a button you could press. It is the only
+          // way to change engine and it looked like decoration inside the
+          // field, so it now takes a highlight like everything else does.
+          background: hovered || open ? "var(--sheetHover)" : "transparent",
           cursor: "pointer",
           flex: "none",
         }}
         {...tip.anchorProps}
       >
-        <IconTile name={engine} size={15} bare />
+        <EngineMark engine={engine} size={15} />
       </button>
       <Tooltip {...tip} />
       {open ? (
         <div
           role="menu"
+          ref={menuRef}
+          onKeyDown={onMenuKeyDown}
+          aria-label="Search engine"
           style={{
             position: "absolute",
             top: "calc(100% + 10px)",
@@ -75,32 +114,20 @@ function EnginePicker({ engine, onPick }) {
           }}
         >
           {Object.entries(SEARCH_ENGINES).map(([key, e]) => (
-            <button
+            <MenuRow
               key={key}
-              type="button"
               role="menuitemradio"
               aria-checked={key === engine}
+              selected={key === engine}
+              tabIndex={-1}
               onClick={() => {
                 onPick(key);
-                setOpen(false);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                width: "100%",
-                padding: "8px 12px",
-                border: 0,
-                background: key === engine ? "var(--accentSoft)" : "transparent",
-                color: key === engine ? "var(--accent)" : "var(--fg)",
-                fontSize: 13,
-                cursor: "pointer",
-                textAlign: "left",
+                close(true);
               }}
             >
-              <IconTile name={key} size={14} bare />
+              <EngineMark engine={key} size={14} />
               {e.label}
-            </button>
+            </MenuRow>
           ))}
         </div>
       ) : null}
@@ -110,23 +137,44 @@ function EnginePicker({ engine, onPick }) {
 
 function Header({
   scrolled,
-  theme,
   editing,
   onToggleEdit,
   onOpenStore,
   onOpenSettings,
+  onManageProfiles,
   onContextMenu,
   searchRef,
+  // How much of the window an open drawer is covering on the right.
+  inset = 0,
 }) {
-  const { settings, update } = useSettings();
+  const { settings, update, profiles } = useSettings();
+  const { notify } = useNotices();
   const engine = SEARCH_ENGINES[settings.behavior.searchEngine]
     ? settings.behavior.searchEngine
     : "google";
-  // `theme` arrives already resolved, so "system" cannot be mistaken for dark.
-  const dark = theme !== "light";
+  // The theme *setting*, not the resolved theme the rest of the app renders
+  // with. The button used to take the resolved one, which cannot tell "dark"
+  // apart from "system, at night" — and that is exactly how it managed to write
+  // an explicit theme over a board that had been following the system.
+  const themeSetting = settings.appearance.theme || "system";
   const [now, setNow] = useState(() => new Date());
-  const themeTip = useTooltip(dark ? "Switch to light" : "Switch to dark");
+  // The bar's own width, not the window's. A drawer is fixed to the right edge
+  // and covers whatever is under it, so with one open the bar has several
+  // hundred pixels less to work with — and it did not know. The end groups are
+  // right-aligned inside columns that may shrink to nothing, so the controls
+  // did not clip, they overflowed leftwards and drew on top of the search
+  // field. Both of the numbers below come off this width, and the padding
+  // below keeps the whole bar out of the drawer's way.
+  const width = Math.max(320, useViewportWidth() - inset);
+  const tier = barTier(width);
+  const nextThemeValue = nextTheme(themeSetting);
+  const themeTip = useTooltip(`Switch to ${THEME_LABELS[nextThemeValue]}`);
   const settingsTip = useTooltip("Settings");
+  const editTip = useTooltip(tier.labels ? null : editing ? "Done editing" : "Edit layout");
+  // More than one board to be on. The wordmark stands down for the chip rather
+  // than sitting beside it.
+  const hasProfiles = (profiles?.list?.length || 1) > 1;
+  const storeTip = useTooltip(tier.labels ? null : "Add a widget");
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 20000);
@@ -181,6 +229,16 @@ function Header({
 
   const pick = useCallback(
     (item) => {
+      // An answer has nowhere to navigate to, so taking it copies it. That is
+      // the only thing anyone wants from a calculator result, and the click is
+      // the user gesture the clipboard API requires.
+      if (item.kind === "answer") {
+        navigator.clipboard?.writeText(item.title).then(
+          () => notify({ message: `Copied ${item.title}` }),
+          () => notify({ message: "Could not copy that", category: "error" })
+        );
+        return;
+      }
       if (item.kind === "tabs" && typeof chrome !== "undefined" && chrome.tabs) {
         // Switching to an existing tab, not navigating this one.
         chrome.tabs.update(item.tabId, { active: true });
@@ -191,7 +249,7 @@ function Header({
       }
       if (item.url) go(item.url);
     },
-    [go]
+    [go, notify]
   );
 
   const submit = (e) => {
@@ -229,45 +287,86 @@ function Header({
         position: "sticky",
         top: 0,
         zIndex: 40,
-        display: "flex",
+        // Three columns rather than a row with a spacer at each end. The search
+        // field was centred by giving both end groups the same hardcoded
+        // 190px, which meant every change to either end moved the field: the
+        // Edit button carried a minWidth purely so its label swapping between
+        // "Edit layout" and "Editing" would not slide the search sideways. A
+        // middle column that is its own width is centred because the two
+        // outside columns are equal by definition, whatever is in them.
+        //
+        // minmax(0, 1fr) and not 1fr: a plain fr floors at min-content, so a
+        // long enough label on either end would still shove the field off
+        // centre instead of being clipped.
+        display: "grid",
+        gridTemplateColumns: `minmax(0, 1fr) minmax(0, ${searchWidth(width, {
+          active: searchActive,
+          scrolled,
+        })}px) minmax(0, 1fr)`,
         alignItems: "center",
         gap: "20px",
-        padding: scrolled ? "10px 28px" : "20px 28px",
+        // Constant, and that is the fix for the jump. This used to shrink to
+        // 10px on scroll, which with the search field's own padding took the
+        // bar from 83px to 58px — measured, not estimated. A sticky header is
+        // still in flow, so losing 25px of it pulls the whole board up 25px
+        // while you are already scrolling, and the page appears to lurch. The
+        // 25px it bought back is worth very little on a board that is about one
+        // screen tall; not having the content jump under the pointer is worth a
+        // lot. The bar still says it has been scrolled, with its background,
+        // its border and a narrower search field — none of which move anything.
+        padding: "20px 28px",
+        paddingRight: 28 + inset,
         background: scrolled ? "var(--sheet)" : "transparent",
         borderBottom: `1px solid ${scrolled ? "var(--line)" : "transparent"}`,
         backdropFilter: scrolled ? "var(--blur-panel)" : "none",
-        transition: "padding .25s ease, background .25s ease, border-color .25s ease",
+        transition:
+          "grid-template-columns .28s cubic-bezier(.2,.8,.2,1), " +
+          "padding-right .3s cubic-bezier(.2,.8,.2,1), " +
+          "background .25s ease, border-color .25s ease",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: "10px",
-          minWidth: "190px",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: MONO,
-            letterSpacing: ".16em",
-            textTransform: "uppercase",
-            color: "var(--accentText)",
-            fontSize: scrolled ? "10px" : "12px",
-            transition: "font-size .25s ease",
-            fontWeight: 500,
-          }}
-        >
-          Daybreak
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: "11px", color: "var(--faint)" }}>
-          {now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
-        </span>
+      {/* Both end groups are their own column now, so neither needs a width:
+          they take what they take and the field stays put regardless. */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+        {/* Renders nothing at all on a single-profile install, which is most of
+            them, so the bar is unchanged for anyone not using profiles. When it
+            does appear it takes the wordmark's place rather than crowding it:
+            which board you are looking at is worth a permanent spot in the bar
+            and a wordmark on your own new tab is not. */}
+        <ProfileSwitcher compact={!tier.labels} onManage={onManageProfiles} />
+        <Appear open={tier.wordmark && !hasProfiles} style={{ display: "flex" }}>
+          <span
+            style={{
+              fontFamily: MONO,
+              letterSpacing: ".16em",
+              textTransform: "uppercase",
+              color: "var(--accentText)",
+              fontSize: "12px",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Daybreak
+          </span>
+        </Appear>
+        <Appear open={tier.clock} style={{ display: "flex" }}>
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: "11px",
+              color: "var(--faint)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+          </span>
+        </Appear>
       </div>
 
-      <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", minWidth: 0 }}>
         <form
           ref={formRef}
+          data-tour="search"
           onSubmit={submit}
           role="search"
           onFocusCapture={() => setSearchActive(true)}
@@ -279,10 +378,14 @@ function Header({
             display: "flex",
             alignItems: "center",
             gap: "10px",
+            // The column is the width now (see the grid above), so the field
+            // fills it. Widening on focus happens by the column widening, which
+            // means the two sides give up the room rather than the field
+            // stealing it and pushing a control off the edge.
             width: "100%",
-            // Widen a little on focus so typing feels like the field opened up.
-            maxWidth: searchActive ? "640px" : scrolled ? "440px" : "560px",
-            padding: scrolled ? "7px 15px" : "10px 16px",
+            // Also constant, for the same reason: this field is the tallest
+            // thing in the bar, so its padding is the bar's height.
+            padding: "10px 16px",
             borderRadius: "999px",
             background:
               searchActive || searchHover || scrolled ? "var(--panel2)" : "var(--panel)",
@@ -297,8 +400,7 @@ function Header({
               : searchHover
               ? "0 3px 12px rgba(0,0,0,.10)"
               : "none",
-            transition:
-              "max-width .28s cubic-bezier(.2,.8,.2,1), background .2s ease, border-color .2s ease, box-shadow .2s ease, padding .25s ease",
+            transition: "background .2s ease, border-color .2s ease, box-shadow .2s ease",
           }}
         >
           <EnginePicker
@@ -331,8 +433,7 @@ function Header({
           {query ? (
             // Replaces the browser's own search-cancel glyph (a fixed grey
             // circle that ignores the theme) with one that matches it.
-            <button
-              type="button"
+            <Button
               onClick={() => {
                 setQuery("");
                 searchRef.current?.focus();
@@ -351,9 +452,10 @@ function Header({
                 cursor: "pointer",
                 flex: "none",
               }}
+              hover={{ background: "var(--sheetHover)", color: "var(--fg)" }}
             >
               <LuX size={13} />
-            </button>
+            </Button>
           ) : (
             <span
               aria-hidden="true"
@@ -392,67 +494,123 @@ function Header({
           display: "flex",
           alignItems: "center",
           gap: "8px",
-          minWidth: "190px",
+          minWidth: 0,
           justifyContent: "flex-end",
         }}
       >
-        <Button
-          onClick={onToggleEdit}
-          aria-pressed={editing}
-          style={{
-            padding: "9px 14px",
-            borderRadius: "999px",
-            fontSize: "13px",
-            cursor: "pointer",
-            // Wide enough for the longer of the two labels. Without this the
-            // button shrinks on toggle, the header's right-hand group narrows
-            // and the whole search bar slides sideways.
-            minWidth: "104px",
-            border: editing ? "0" : "1px solid var(--line)",
-            background: editing ? "var(--accent)" : "var(--panel)",
-            color: editing ? "var(--onAccent)" : "var(--fg)",
-            fontWeight: editing ? 500 : 400,
-          }}
-          hover={editing ? { opacity: 0.9, transform: "translateY(-1px)" } : HOVER_LIFT}
+        {/* Below the widest tier these two lose their labels and keep their
+            place, which is the trade the search field needs: about 150px back,
+            for two buttons a person learns once and then finds by position.
+            The tooltip carries the name that the label used to. */}
+        <span
+          data-tour="edit-button"
+          ref={editTip.anchorRef}
+          style={{ display: "inline-flex" }}
+          {...editTip.anchorProps}
         >
-          {/* Keyed so the label crossfades on toggle instead of swapping
-              between frames. */}
-          <span
-            key={editing ? "on" : "off"}
-            style={{ animation: "db-fade .2s ease both" }}
-          >
-            {editing ? "Editing" : "Edit layout"}
-          </span>
-        </Button>
-        <Button
-          onClick={onOpenStore}
-          styleFor={softButton}
-          hover={HOVER_LIFT}
-        >
-          Store
-        </Button>
-        {/* Button doesn't forward a ref (and can't take onMouseEnter as a
-            prop without clobbering its own internal hover tracking), so the
-            tooltip anchors to a plain wrapper instead. */}
-        <span ref={themeTip.anchorRef} style={{ display: "inline-flex" }} {...themeTip.anchorProps}>
           <Button
-            onClick={() =>
-              update("appearance", { theme: dark ? "light" : "dark" })
-            }
-            aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
-            styleFor={roundControl}
+            onClick={onToggleEdit}
+            aria-pressed={editing}
+            aria-label={editing ? "Done editing" : "Edit layout"}
+            style={{
+              padding: tier.labels ? "9px 14px" : 0,
+              width: tier.labels ? undefined : 36,
+              height: tier.labels ? undefined : 36,
+              display: tier.labels ? undefined : "grid",
+              placeItems: tier.labels ? undefined : "center",
+              borderRadius: "999px",
+              fontSize: "13px",
+              cursor: "pointer",
+              border: editing ? "0" : "1px solid var(--line)",
+              background: editing ? "var(--accent)" : "var(--panel)",
+              color: editing ? "var(--onAccent)" : "var(--fg)",
+              fontWeight: editing ? 500 : 400,
+            }}
+            hover={editing ? { opacity: 0.9, transform: "translateY(-1px)" } : HOVER_LIFT}
+          >
+            {/* Keyed so the label crossfades on toggle instead of swapping
+                between frames. */}
+            <span
+              key={`${editing ? "on" : "off"}-${tier.labels ? "text" : "icon"}`}
+              style={{
+                animation: "db-fade .2s ease both",
+                display: tier.labels ? undefined : "grid",
+                placeItems: tier.labels ? undefined : "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {tier.labels ? (editing ? "Editing" : "Edit layout") : <LuPencil size={15} />}
+            </span>
+          </Button>
+        </span>
+        <Tooltip {...editTip} />
+
+        <span
+          data-tour="store-button"
+          ref={storeTip.anchorRef}
+          style={{ display: "inline-flex" }}
+          {...storeTip.anchorProps}
+        >
+          <Button
+            onClick={onOpenStore}
+            aria-label="Add a widget"
+            styleFor={tier.labels ? softButton : roundControl}
             hover={HOVER_LIFT}
           >
             <span
-              key={dark ? "dark" : "light"}
+              key={tier.labels ? "text" : "icon"}
+              style={{
+                animation: "db-fade .2s ease both",
+                whiteSpace: "nowrap",
+                // Without these the span is inline, so the glyph sits on a text
+                // baseline inside a button that centres its grid items — which
+                // put the plus a couple of pixels low and slightly left of the
+                // circle it lives in. The edit button beside it already did
+                // this; this one was the odd one out.
+                display: tier.labels ? undefined : "grid",
+                placeItems: tier.labels ? undefined : "center",
+              }}
+            >
+              {tier.labels ? "Store" : <LuPlus size={16} />}
+            </span>
+          </Button>
+        </span>
+        <Tooltip {...storeTip} />
+
+        {/* Anchored to a wrapper rather than to the Button: it forwards a ref
+            now, but it still cannot take onMouseEnter as a prop without
+            clobbering its own hover tracking, and the tooltip needs both. */}
+        <span ref={themeTip.anchorRef} style={{ display: "inline-flex" }} {...themeTip.anchorProps}>
+          <Button
+            onClick={() => update("appearance", { theme: nextThemeValue })}
+            aria-label={`Theme: ${THEME_LABELS[themeSetting]}. Switch to ${THEME_LABELS[nextThemeValue]}`}
+            styleFor={roundControl}
+            hover={HOVER_LIFT}
+          >
+            {/* Shows the setting, not what it resolved to, so a board following
+                the system says so instead of showing a moon that looks like a
+                choice somebody made. */}
+            <span
+              key={themeSetting}
               style={{ display: "grid", placeItems: "center", animation: "db-menu .22s ease both" }}
             >
-              {dark ? <LuMoon size={15} /> : <LuSun size={15} />}
+              {themeSetting === "system" ? (
+                <LuMonitor size={15} />
+              ) : themeSetting === "light" ? (
+                <LuSun size={15} />
+              ) : (
+                <LuMoon size={15} />
+              )}
             </span>
           </Button>
         </span>
         <Tooltip {...themeTip} />
-        <span ref={settingsTip.anchorRef} style={{ display: "inline-flex" }} {...settingsTip.anchorProps}>
+        <span
+          data-tour="settings-button"
+          ref={settingsTip.anchorRef}
+          style={{ display: "inline-flex" }}
+          {...settingsTip.anchorProps}
+        >
           <Button
             onClick={onOpenSettings}
             aria-label="Settings"

@@ -244,3 +244,36 @@ describe("gatherSuggestions", () => {
     expect(await gatherSuggestions({ query: "git", links, enabled: {} })).toEqual([]);
   });
 });
+
+describe("the answers toggle", () => {
+  const ask = (enabled) => gatherSuggestions({ query: "12 * 12", links: [], enabled });
+
+  it("answers by default", async () => {
+    const items = await ask({ links: true });
+    expect(items[0]).toMatchObject({ kind: "answer" });
+  });
+
+  it("keeps answering for anyone whose settings predate the toggle", async () => {
+    // A stored suggest object from before the setting existed has no key for
+    // it. Treating that as off would take the feature away from everyone who
+    // already had it, which is why the check is for an explicit false.
+    const items = await ask({ links: true, tabs: false });
+    expect(items[0]).toMatchObject({ kind: "answer" });
+  });
+
+  it("stops when it is explicitly turned off", async () => {
+    const items = await ask({ links: true, answers: false });
+    expect(items.some((i) => i.kind === "answer")).toBe(false);
+  });
+
+  it("leaves the rest of the box alone when it is off", async () => {
+    // Turning answers off must not cost the "Go to site" row, which is the
+    // other thing the box puts above the ranked results.
+    const items = await gatherSuggestions({
+      query: "example.com",
+      links: [],
+      enabled: { links: true, answers: false },
+    });
+    expect(items[0]).toMatchObject({ kind: "go" });
+  });
+});

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { originOf, requestOrigin } from "@daybreak/sdk";
+import { Button, HOVER_SOFT, originOf, requestOrigin } from "@daybreak/sdk";
 
 function NewsSettings({ config, setConfig, toast }) {
   const source = config.source || "hn";
@@ -49,7 +49,7 @@ function NewsSettings({ config, setConfig, toast }) {
               color: "var(--fg)",
             }}
           />
-          <button
+          <Button
             type="submit"
             style={{
               alignSelf: "flex-start",
@@ -61,9 +61,10 @@ function NewsSettings({ config, setConfig, toast }) {
               border: "1px solid var(--line)",
               color: "var(--fg)",
             }}
+            hover={HOVER_SOFT}
           >
             Use this feed instead
-          </button>
+          </Button>
         </form>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -78,8 +79,7 @@ function NewsSettings({ config, setConfig, toast }) {
           >
             {config.feedUrl}
           </div>
-          <button
-            type="button"
+          <Button
             onClick={() => setConfig({ source: "hn", feedUrl: null })}
             style={{
               alignSelf: "flex-start",
@@ -91,9 +91,10 @@ function NewsSettings({ config, setConfig, toast }) {
               border: "1px solid var(--line)",
               color: "var(--fg)",
             }}
+            hover={HOVER_SOFT}
           >
             Back to Hacker News
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -4,7 +4,7 @@ export default {
   glyph: "crypto",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.3.0",
   tagline: "A short watchlist, no key required.",
   description:
     "Prices, 24-hour change, logos and a 7-day sparkline from CoinGecko's " +
@@ -13,12 +13,17 @@ export default {
     "refreshes at most every 5 minutes and caches the last reading rather " +
     "than going blank.",
   sizes: [
+    [2, 2],
     [3, 2],
     [3, 3],
     [4, 3],
   ],
   defaultSize: [3, 2],
-  options: [],
+  options: [
+    { key: "showSparkline", label: "Show the 7-day line", type: "boolean", default: true },
+    { key: "showChange", label: "Show the 24-hour change", type: "boolean", default: true },
+    { key: "showLogos", label: "Show coin logos", type: "boolean", default: true },
+  ],
   // Never "Live": the free tier rate-limits aggressively.
   refresh: ["5 min", "1 hr"],
   permissions: { chrome: [], hosts: ["api.coingecko.com"] },

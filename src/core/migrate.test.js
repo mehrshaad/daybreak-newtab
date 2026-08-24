@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { migrateV1, migrateV1Local, needsMigration } from "./migrate";
 import { defaultSettings } from "./schema";
+import { migrateV1, migrateV1Local, needsMigration } from "./migrate";
 
 // Shaped like a real v1 `daybreakSettings` blob, including the Tehran +
 // Toronto city list v1 shipped as its default.
@@ -153,11 +153,19 @@ describe("migrateV1", () => {
   });
 
   it("returns clean defaults for junk input", () => {
+    // The default name, not an empty one: junk in means this is effectively a
+    // fresh install, and a fresh install is greeted by name like any other.
+    // A real v1 name still wins — the case below covers that.
+    const { profile } = defaultSettings();
     for (const junk of [null, undefined, "nope", 42, []]) {
       const result = migrateV1(junk);
       expect(result.v).toBe(2);
-      expect(result.profile.name).toBe("");
+      expect(result.profile.name).toBe(profile.name);
     }
+  });
+
+  it("keeps a real v1 name rather than the default", () => {
+    expect(migrateV1({ general: { name: "Sam" } }).profile.name).toBe("Sam");
   });
 
   it("does not invent widget records for absent v1 features", () => {

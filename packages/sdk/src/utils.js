@@ -121,9 +121,40 @@ export const formatDate = (date) => {
 
 export const todayKey = () => formatDate(new Date());
 
+// The inverse of formatDate, and it has to be hand-rolled: formatDate builds
+// its key from local getters, but `new Date("2026-08-07")` is parsed as UTC
+// midnight, which in any negative offset is the previous day. Reading the parts
+// out and handing them to the local constructor round-trips exactly.
+export const parseDateKey = (key) => {
+  const [y, m, d] = String(key).split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const date = new Date(y, m - 1, d);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+// "Wed". Through the browser's own locale rather than a hardcoded table, so it
+// follows the user's language the way every other date in the app does.
+export const weekdayShort = (key, locale) => {
+  const date = typeof key === "string" ? parseDateKey(key) : key;
+  if (!date) return "";
+  return date.toLocaleDateString(locale, { weekday: "short" });
+};
+
 // Stable id without pulling in a uuid dependency.
 export const uid = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 // Clamp helper used by the grid sliders and size pickers.
 export const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+// Whether this is a Mac, for the two places the answer changes what is shown or
+// chosen: the search field's ⌘K hint, and whether a fresh install opts into the
+// heavier look. userAgentData is the supported way to ask and is present from
+// Chrome 90; navigator.platform is deprecated but is the only fallback there
+// is, and returning false is the safe answer either way.
+export function isMac() {
+  if (typeof navigator === "undefined") return false;
+  const modern = navigator.userAgentData?.platform;
+  if (modern) return modern === "macOS";
+  return /Mac|iPhone|iPad/.test(navigator.platform || "");
+}

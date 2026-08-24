@@ -1,11 +1,19 @@
-import { MONO, useMinutes, useSeconds } from "@daybreak/sdk";
-import AnalogFace from "./AnalogFace";
+import { MONO, useMeasuredBox, useMinutes, useSeconds } from "@daybreak/sdk";
+import { digitFontSize } from "./digitSize";
+import RoundFace from "./faces/RoundFace";
+import BareFace from "./faces/BareFace";
+import SquaredFace from "./faces/SquaredFace";
 
 // Layout does not change when the tile is zoomed: zooming magnifies the board
 // like a page zoom, so a tile that rearranged itself on the way in would look
 // out of place. Sizing keys off the tile's own span instead.
-function Clock({ options, size }) {
-  const { hour24, seconds, hideDate, analog } = options;
+function Clock({ options, size, bare }) {
+  const { hour24, seconds, analog, align, accentFace, face, dateForm, textSize } = options;
+
+  // "full" | "day" | null. Coerced rather than trusted: this replaced both an
+  // enum under a different key and a separate hide switch, and a board
+  // restored from an old backup can still carry either.
+  const dateMode = dateForm === "none" ? null : dateForm === "day" ? "day" : "full";
   const bySecond = useSeconds(!!seconds);
   const byMinute = useMinutes();
   const now = seconds ? bySecond : byMinute;
@@ -24,19 +32,86 @@ function Clock({ options, size }) {
 
   // The taller size exists to be bigger, so it drives the type and the face.
   const tall = (size?.[1] ?? 2) >= 3;
+  // Measured width, not the grid span: a two-column tile is 203px on the
+  // default board and 370px on a full-width one, and the digits fit perfectly
+  // well at 370. The span rule shrank them either way. 240px is where they stop
+  // fitting, and is the same answer as the old rule on the default board.
+  const [boxRef, box] = useMeasuredBox();
+  const measured = box?.width ?? null;
+  const narrow = measured == null ? (size?.[0] ?? 3) <= 2 : measured < 240;
 
-  const date = hideDate ? null : (
-    <div style={{ fontSize: tall ? 14 : 13, color: "var(--dim)", marginTop: 10 }}>
-      {now.toLocaleDateString(undefined, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      })}
+  // The digits are sized from the tile rather than the window (see digitSize),
+  // and the meridiem and the date line follow them: they are part of the same
+  // piece of type, and leaving them at fixed sizes made a large clock look like
+  // big digits with somebody else's caption under it.
+  const digitPx = analog
+    ? null
+    : digitFontSize(box, digits, {
+        meridiem: !!meridiem,
+        date: !!dateMode,
+        size: textSize,
+      });
+  const meridiemPx = digitPx
+    ? Math.max(10, Math.round(digitPx * 0.26))
+    : tall
+    ? 16
+    : narrow
+    ? 11
+    : 13;
+  const datePx = digitPx
+    ? Math.max(11, Math.min(22, Math.round(digitPx * 0.24)))
+    : tall
+    ? 14
+    : narrow
+    ? 11
+    : 13;
+
+  // Transitioned rather than swapped: alignment is a thing the user changes
+  // while looking at it, and the digits sliding across reads as the setting
+  // taking effect. `align-items` cannot be transitioned, so the row is laid out
+  // with auto margins, which can.
+  const centred = align === "center";
+  const right = align === "right";
+
+  // With the tile's chrome gone the dial becomes the tile itself: no drawn
+  // outline, and markers on the tile's real edges rather than on a square
+  // inscribed inside it. Only for the analog faces — a bare digital clock is
+  // just the digits, which already fill what they are given.
+  const Face = bare && analog ? BareFace : face === "squared" ? SquaredFace : RoundFace;
+
+  // On a dial the date is always on the dial. It used to be a choice between
+  // there and a line underneath, and the line was the default — which spent
+  // the bottom of the tile on text and left the face smaller than the mode is
+  // for.
+  const inDial = analog ? dateMode : null;
+
+  const date = !dateMode ? null : (
+    <div
+      style={{
+        fontSize: datePx,
+        color: "var(--dim)",
+        marginTop: narrow ? 6 : 10,
+        // Same auto-margin trick as the digits, so the two move together.
+        marginInlineStart: centred || right ? "auto" : 0,
+        marginInlineEnd: centred ? "auto" : 0,
+        transition:
+          "margin .32s cubic-bezier(.22,1,.36,1), font-size .22s cubic-bezier(.2,.8,.2,1)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {dateMode === "day"
+        ? now.getDate()
+        : now.toLocaleDateString(undefined, {
+            // A long weekday and month will not fit two columns; the short
+            // forms still say everything the line is for.
+            weekday: narrow ? "short" : "long",
+            month: narrow ? "short" : "long",
+            day: "numeric",
+          })}
     </div>
   );
 
-  if (analog) {
-    return (
+  const body = analog ? (
       <div
         style={{
           display: "flex",
@@ -46,20 +121,23 @@ function Clock({ options, size }) {
           gap: 4,
           flex: 1,
           minWidth: 0,
+          minHeight: 0,
         }}
       >
-        <AnalogFace
+        {/* No pixel cap: the face fills whatever the tile has left after the
+            label row and the date line, and the viewBox letterboxes itself
+            inside that box. The old caps left a 2x2 tile mostly empty, because
+            92px was a guess about how much room there would be rather than a
+            measurement of it. */}
+        <Face
           date={now}
-          size={tall ? "min(74%, 208px)" : "min(88%, 122px)"}
           showSeconds={!!seconds}
+          showDate={inDial}
+          accentFace={!!accentFace}
           label={time}
         />
-        {date}
       </div>
-    );
-  }
-
-  return (
+  ) : (
     <div
       style={{
         display: "flex",
@@ -69,14 +147,35 @@ function Clock({ options, size }) {
         minWidth: 0,
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 8,
+          width: "fit-content",
+          marginInlineStart: centred || right ? "auto" : 0,
+          marginInlineEnd: centred ? "auto" : 0,
+          transition: "margin .32s cubic-bezier(.22,1,.36,1)",
+        }}
+      >
         <span
           style={{
-            fontSize: tall ? "clamp(44px, 6.4vw, 84px)" : "clamp(28px, 3.6vw, 44px)",
+            // Measured from the tile; the clamps are only what the first paint
+            // shows for the frame before the box is known.
+            fontSize:
+              digitPx ??
+              (tall
+                ? "clamp(44px, 6.4vw, 84px)"
+                : narrow
+                ? "clamp(22px, 2.4vw, 32px)"
+                : "clamp(28px, 3.6vw, 44px)"),
             fontWeight: 500,
             letterSpacing: "-.035em",
             lineHeight: 1,
             fontVariantNumeric: "tabular-nums",
+            // Grows into the new size rather than snapping, both when the size
+            // setting changes and when the tile is dragged to a new one.
+            transition: "font-size .22s cubic-bezier(.2,.8,.2,1)",
           }}
         >
           {digits}
@@ -85,8 +184,9 @@ function Clock({ options, size }) {
           <span
             style={{
               fontFamily: MONO,
-              fontSize: tall ? 16 : 13,
+              fontSize: meridiemPx,
               color: "var(--faint)",
+              transition: "font-size .22s cubic-bezier(.2,.8,.2,1)",
             }}
           >
             {meridiem}
@@ -95,6 +195,28 @@ function Clock({ options, size }) {
       </div>
 
       {date}
+    </div>
+  );
+
+  // Keyed on the *options*, never on the time: a change of mode remounts and
+  // fades, while a tick does not. Keying on the displayed value instead would
+  // re-fade the whole clock every second with the second hand switched on.
+  //
+  // Alignment is deliberately absent from the key — it animates by sliding its
+  // own margins, and a remount would throw that away and snap instead.
+  return (
+    <div
+      ref={boxRef}
+      key={[
+        analog ? `analog-${face || "round"}` : "digital",
+        seconds ? "s" : "",
+        dateMode || "",
+        inDial || "",
+        accentFace ? "a" : "",
+      ].join("-")}
+      style={{ display: "flex", flex: 1, minWidth: 0, animation: "db-fade .28s ease both" }}
+    >
+      {body}
     </div>
   );
 }

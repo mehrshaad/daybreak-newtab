@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { hasOrigin, MONO, useWidgetLocal } from "@daybreak/sdk";
-import { symbolFor } from "./currencies";
+import { flagFor, symbolFor } from "./currencies";
 import { crossToBase, ERAPI_URL, parseErApi, parseTgju, TGJU_ORIGIN, TGJU_URL } from "./irr";
 import { formatRate, parseRates, ratesUrl } from "./rates";
 
@@ -33,7 +33,25 @@ async function fetchIrrPerUsd() {
 
 // No refresh control in the manifest (rates barely move within a day), so
 // this fetches once per mount rather than keying off refreshKey.
-function Currency({ id, config }) {
+function Currency({ id, options, config }) {
+  const { decimals, showSymbols, textSize } = options;
+
+  // Two sizes, regular being exactly what was here, matching World Clocks.
+  // Everything in a row moves together: the flag, the code, the sign and the
+  // figure are one line of information, and a row with only its number
+  // enlarged reads as unbalanced.
+  const big = textSize === "large";
+  const type = {
+    code: big ? 16 : 13,
+    rate: big ? 20 : 16,
+    sign: big ? 15 : 12,
+    base: big ? 14 : 12,
+  };
+
+  // On the spans, never on a row: nothing here is FLIP-animated today, but
+  // World Clocks' rows are, and the two widgets should not disagree about
+  // where a transition belongs.
+  const TYPE_TRANSITION = "font-size .2s cubic-bezier(.2,.8,.2,1)";
   const base = config.base || "USD";
   const targets =
     Array.isArray(config.targets) && config.targets.length ? config.targets : DEFAULT_TARGETS;
@@ -111,7 +129,8 @@ function Currency({ id, config }) {
           flex: 1,
           display: "grid",
           placeItems: "center",
-          fontSize: 12,
+          fontSize: type.base,
+          transition: TYPE_TRANSITION,
           color: "var(--faint)",
         }}
       >
@@ -140,16 +159,57 @@ function Currency({ id, config }) {
           color: "var(--faint)",
         }}
       >
-        1 {data.base}
+        1 {flagFor(data.base) ? `${flagFor(data.base)} ` : ""}
+        {data.base}
       </div>
       {data.pairs.map((p) => (
         <div key={p.code} style={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <span style={{ fontSize: 13, color: "var(--dim)" }}>
-              {symbolFor(p.code)} {p.code}
+            <span
+              style={{ display: "flex", alignItems: "baseline", gap: 6, color: "var(--dim)" }}
+            >
+              {/* Nothing at all where flags do not render — Windows has no
+                  glyphs for them and draws the two letters instead, which is
+                  the country code beside the currency code and reads as a bug.
+                  See flagsRender. */}
+              {flagFor(p.code) ? (
+                <span
+                  style={{ fontSize: type.code, lineHeight: 1, transition: TYPE_TRANSITION }}
+                >
+                  {flagFor(p.code)}
+                </span>
+              ) : null}
+              <span style={{ fontSize: type.code, transition: TYPE_TRANSITION }}>
+                {p.code}
+              </span>
             </span>
-            <span style={{ fontSize: 16, color: "var(--fg)", fontWeight: 500 }}>
-              {formatRate(p.rate)}
+            <span
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 4,
+                color: "var(--fg)",
+                fontWeight: 500,
+              }}
+            >
+              {/* The sign leads the number and is set quieter than it, the way
+                  a price is written: the figure is what is being read and the
+                  sign only says what it is denominated in. */}
+              {showSymbols ? (
+                <span
+                  style={{
+                    fontSize: type.sign,
+                    color: "var(--dim)",
+                    fontWeight: 400,
+                    transition: TYPE_TRANSITION,
+                  }}
+                >
+                  {symbolFor(p.code)}
+                </span>
+              ) : null}
+              <span style={{ fontSize: type.rate, transition: TYPE_TRANSITION }}>
+                {formatRate(p.rate, decimals)}
+              </span>
             </span>
           </div>
           {p.irrSource === "erapi" ? (

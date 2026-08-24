@@ -4,12 +4,13 @@ export default {
   glyph: "quote",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.2.0",
   tagline: "One line, changed daily.",
   description:
     "A short quote picked from a bundled list by the day of the year — the " +
     "same one all day, and no network call to get it.",
   sizes: [
+    [2, 2],
     [3, 2],
     [4, 2],
   ],

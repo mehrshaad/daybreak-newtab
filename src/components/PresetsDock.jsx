@@ -1,6 +1,6 @@
-import { LuBookmark, LuRotateCcw, LuWandSparkles } from "react-icons/lu";
+import { LuBookmark, LuBookmarkCheck, LuCheck, LuWandSparkles } from "react-icons/lu";
 import { PRESETS, SAVED_LAYOUT } from "../core/schema";
-import { Appear, HOVER_LIFT, MONO, primaryButton, softButton, Tooltip, useTooltip } from "@daybreak/sdk";
+import { HOVER_LIFT, MONO, primaryButton, softButton, Tooltip, useTooltip } from "@daybreak/sdk";
 import { Button, Pill } from "./primitives";
 
 // The floating dock shown in layout-edit mode. Occupies the same spot as the
@@ -9,6 +9,7 @@ function PresetsDock({
   closing,
   layoutName,
   hasSaved,
+  savedState,
   onPreset,
   onApplySaved,
   onSaveCurrent,
@@ -20,10 +21,18 @@ function PresetsDock({
   const savedTip = useTooltip(
     hasSaved ? "Switch to the layout you saved" : "Save the current board as your layout"
   );
-  const resetTip = useTooltip("Reset your saved layout to the board as it is now");
+  // Only offered when the board has actually moved away from the snapshot, so
+  // its presence is the answer to "is what I am looking at saved".
+  const changed = savedState === "changed";
+  const saveTip = useTooltip(
+    changed
+      ? "Save the board as it is now, over what Yours holds"
+      : "This board is what Yours holds"
+  );
   const autoArrangeTip = useTooltip("Tidy the current widgets into neat rows");
   return (
     <div
+      data-tour="dock"
       onContextMenu={onContextMenu}
       style={{
         position: "fixed",
@@ -106,28 +115,53 @@ function PresetsDock({
           </Pill>
         </span>
         <Tooltip {...savedTip} />
-        <Appear open={hasSaved} style={{ display: "flex" }}>
-          <span ref={resetTip.anchorRef} style={{ display: "inline-flex" }} {...resetTip.anchorProps}>
-            <Button
-              onClick={onSaveCurrent}
-              aria-label="Reset your saved layout to the current board"
-              styleFor={softButton}
+        {/* Stays put whether or not there is anything to save, and says which.
+            Appearing and disappearing made the row jump and, worse, meant a
+            press was answered by the button vanishing — which reads as "did
+            that work?" rather than as "saved". Same box either way, so the
+            label crossfades in place and nothing beside it moves. */}
+        <span ref={saveTip.anchorRef} style={{ display: "inline-flex" }} {...saveTip.anchorProps}>
+          <Button
+            onClick={changed ? onSaveCurrent : undefined}
+            aria-label={
+              changed ? "Save the board as it is now, replacing what Yours holds" : "Yours matches this board"
+            }
+            aria-disabled={!changed}
+            styleFor={softButton}
+            style={{
+              padding: "8px 13px",
+              background: "transparent",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 7,
+              whiteSpace: "nowrap",
+              // Wide enough for the longer of the two labels, so swapping
+              // between them cannot resize the button and shove the row along.
+              minWidth: 124,
+              cursor: changed ? "pointer" : "default",
+              color: changed ? "var(--fg)" : "var(--faint)",
+              transition: "color .2s ease, border-color .2s ease",
+            }}
+            hover={changed ? { ...HOVER_LIFT, color: "var(--accent)" } : null}
+          >
+            {/* Keyed so the two states crossfade rather than swapping between
+                frames, the same way the toolbar's Edit label does. */}
+            <span
+              key={changed ? "save" : "saved"}
               style={{
-                padding: 0,
-                width: 28,
-                height: 28,
-                borderRadius: 999,
-                display: "grid",
-                placeItems: "center",
-                background: "transparent",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                animation: "db-fade .2s ease both",
               }}
-              hover={{ ...HOVER_LIFT, color: "var(--accent)" }}
             >
-              <LuRotateCcw size={13} />
-            </Button>
-          </span>
-        </Appear>
-        <Tooltip {...resetTip} />
+              {changed ? <LuBookmarkCheck size={13} /> : <LuCheck size={13} />}
+              {changed ? "Save this view" : "Saved"}
+            </span>
+          </Button>
+        </span>
+        <Tooltip {...saveTip} />
       </div>
 
       <div style={{ width: 1, height: 22, background: "var(--line)", margin: "0 2px" }} />

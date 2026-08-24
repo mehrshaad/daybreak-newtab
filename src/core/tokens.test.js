@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  ACCENT_NAMES,
   ACCENTS,
+  TINTS,
+  TINT_EXTRAS,
+  TINT_NAMES,
+  hslOf,
+  tileFill,
+  tileSurfaces,
+  wallTint,
   DEFAULTS,
   background,
   backgroundSwatch,
@@ -42,7 +50,7 @@ describe("luminance", () => {
 describe("onAccentFor", () => {
   // The design hardcoded #ffffff for light theme, which is unreadable on the
   // pale swatches. Contrast-picking must beat that for every shipped accent.
-  it("returns the dark ink for all six accents", () => {
+  it("returns the dark ink for every shipped accent", () => {
     for (const a of ACCENTS) expect(onAccentFor(a)).toBe("#0a0b0e");
   });
 
@@ -240,5 +248,302 @@ describe("baseColor", () => {
   it("matches the design's page base per theme", () => {
     expect(baseColor("dark")).toBe("#0a0b0e");
     expect(baseColor("light")).toBe("#f3f3f1");
+  });
+});
+
+describe("every accent, in both themes", () => {
+  // The whole point of deriving the ramp instead of hardcoding it: a swatch is
+  // only safe to ship if it reads in both themes, and that has to be checked
+  // per swatch rather than assumed from how it looks in the picker. This is
+  // what makes adding a seventeenth accent a two-line change.
+  const contrast = (a, b) =>
+    (Math.max(luminance(a), luminance(b)) + 0.05) /
+    (Math.min(luminance(a), luminance(b)) + 0.05);
+
+  it("names every one of them, and names nothing that is not one", () => {
+    // The picker reads these out. A swatch with no name would announce itself
+    // as a hex string, which is what having names is meant to fix.
+    for (const a of ACCENTS) expect(ACCENT_NAMES[a], a).toBeTruthy();
+    expect(Object.keys(ACCENT_NAMES).sort()).toEqual([...ACCENTS].sort());
+    expect(new Set(Object.values(ACCENT_NAMES)).size).toBe(ACCENTS.length);
+  });
+
+  it("has fifteen of them, all distinct, all valid hex", () => {
+    // Fifteen since slate went: it and steel were the closest pair in the
+    // palette, so one of them was doing no work. Five to a row in the picker,
+    // which makes fifteen three whole rows.
+    expect(ACCENTS).toHaveLength(15);
+    expect(new Set(ACCENTS).size).toBe(15);
+    expect(ACCENTS).not.toContain("#adb8c6");
+    for (const a of ACCENTS) expect(a).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("keeps the original six first and unmoved, so no stored accent shifts", () => {
+    expect(ACCENTS.slice(0, 6)).toEqual([
+      "#6f9bff",
+      "#7de2b8",
+      "#ffb26f",
+      "#ff8fb1",
+      "#c79bff",
+      "#e8e6df",
+    ]);
+  });
+
+  it("reads as text on the dark theme, where the raw swatch is used", () => {
+    // Nothing darkens the accent on dark theme — --accentText is the swatch
+    // itself — so each one has to clear the bar against near-black unaided.
+    for (const a of ACCENTS) {
+      const text = tokens("dark", a)["--accentText"];
+      expect(text).toBe(a);
+      expect(contrast(text, baseColor("dark")), a).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("reads as text on the light theme, after being stepped down", () => {
+    for (const a of ACCENTS) {
+      const text = tokens("light", a)["--accentText"];
+      expect(contrast(text, baseColor("light")), a).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("carries readable ink when used as a fill", () => {
+    // Buttons and pills paint --onAccent on --accent. 4.5 rather than 3:1
+    // because that pairing carries button labels, which are body-sized text.
+    for (const a of ACCENTS) {
+      expect(contrast(onAccentFor(a), a), a).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("stays in the pale register the whole ramp is built for", () => {
+    // --accentSoft and --accentLine are the accent at 13% and 33% alpha. A
+    // fully saturated swatch turns every panel edge on the board into a shout,
+    // so the set is deliberately held to light, unsaturated colours.
+    for (const a of ACCENTS) {
+      expect(luminance(a), a).toBeGreaterThan(0.25);
+    }
+  });
+});
+
+describe("wallpapers on every accent", () => {
+  // A wallpaper is the accent laid over the base, so an accent near the base
+  // has nothing to show — on the light theme every option built from the pale
+  // neutral came out as the same plain page. wallTint exists to fix that, and
+  // with sixteen accents including three near-neutral ones, it has to hold for
+  // all of them rather than for the one that was reported.
+  const contrast = (a, b) =>
+    (Math.max(luminance(a), luminance(b)) + 0.05) /
+    (Math.min(luminance(a), luminance(b)) + 0.05);
+
+  it("is visible against the light base whichever accent is chosen", () => {
+    for (const a of ACCENTS) {
+      const tint = wallTint(a, false);
+      expect(contrast(tint, baseColor("light")), `${ACCENT_NAMES[a]} (${a})`).toBeGreaterThan(1.35);
+    }
+  });
+
+  it("leaves the dark theme alone, where every accent already reads", () => {
+    for (const a of ACCENTS) expect(wallTint(a, true)).toBe(a);
+  });
+
+  it("keeps a neutral accent neutral instead of inventing a colour", () => {
+    // Only lightness moves, so hue and saturation come out where they went in.
+    // Saturation is the right invariant and absolute channel spread is not: at
+    // a fixed HSL saturation the spread widens as lightness falls, so a grey
+    // stepped down is a darker grey with a wider raw spread and the same
+    // saturation. Asserting the spread instead is how I first got this wrong.
+    for (const a of ["#e8e6df", "#adb8c6", "#8fb0c9", "#dcc9a4"]) {
+      const tint = wallTint(a, false);
+      const [hue, s] = hslOf(a);
+      const [tintHue, tintS] = hslOf(tint);
+      expect(tintS, a).toBeCloseTo(s, 1);
+      // A degree of slack, not none: the round trip out to an 8-bit hex and
+      // back cannot land exactly, and #e8e6df comes back 0.6 degrees along.
+      // That is rounding, not the function moving the hue.
+      expect(Math.abs(tintHue - hue), a).toBeLessThan(1.5);
+    }
+  });
+
+  it("gives every accent a full set of distinct wallpapers in both themes", () => {
+    for (const theme of ["dark", "light"]) {
+      for (const a of ACCENTS) {
+        const made = WALLPAPERS.map((w) => background(theme, a, w));
+        expect(new Set(made).size, `${theme}/${ACCENT_NAMES[a]}`).toBe(WALLPAPERS.length);
+      }
+    }
+  });
+});
+
+describe("the tint palette", () => {
+  // Local: the one in the tileFill block below is scoped to it.
+  const rgb = (css) => css.match(/[\d.]+/g).map(Number);
+
+  it("is the accents plus two, so its picker fills two whole rows", () => {
+    // Nine to a row with "none" in the first cell, so eighteen cells.
+    expect(TINTS).toHaveLength(17);
+    expect(TINTS.slice(0, ACCENTS.length)).toEqual(ACCENTS);
+    expect((1 + TINTS.length) % 9).toBe(0);
+  });
+
+  it("leaves the accent picker three whole rows of five", () => {
+    expect(ACCENTS.length % 5).toBe(0);
+  });
+
+  it("lets a tint be deeper than an accent, but not without limit", () => {
+    // What TINT_EXTRAS is for: a tint is a wash, carries no ink and owes
+    // nothing to contrast, which is the freedom that lets it be dark enough to
+    // tell apart. It still has to leave a light tile light and a dark tile
+    // dark. The first teal tried here failed that at 192 against a floor of
+    // 200, which is why it is not the one in the file.
+    for (const t of TINT_EXTRAS) {
+      const light = rgb(tileFill("light", 100, t)).slice(0, 3);
+      const dark = rgb(tileFill("dark", 100, t)).slice(0, 3);
+      expect(Math.min(...light), t).toBeGreaterThan(200);
+      expect(Math.max(...dark), t).toBeLessThan(140);
+    }
+  });
+
+  it("has no near-duplicate pairs left", () => {
+    // The complaint this answers: two swatches that render as the same tile.
+    // Measured on the rendered tile in whichever theme the pair is closest,
+    // weighted for how the eye reads red, green and blue.
+    const fills = (t) => [
+      rgb(tileFill("dark", 100, t)).slice(0, 3),
+      rgb(tileFill("light", 100, t)).slice(0, 3),
+    ];
+    const gap = (a, b) =>
+      Math.sqrt(2 * (a[0] - b[0]) ** 2 + 4 * (a[1] - b[1]) ** 2 + 3 * (a[2] - b[2]) ** 2);
+    let worst = { d: Infinity, pair: null };
+    for (let i = 0; i < TINTS.length; i += 1) {
+      for (let j = i + 1; j < TINTS.length; j += 1) {
+        const [ad, al] = fills(TINTS[i]);
+        const [bd, bl] = fills(TINTS[j]);
+        const d = Math.min(gap(ad, bd), gap(al, bl));
+        if (d < worst.d) worst = { d, pair: [TINT_NAMES[TINTS[i]], TINT_NAMES[TINTS[j]]] };
+      }
+    }
+    // The pair that prompted this was 12.0 (a light teal against mint), with
+    // steel/slate at 12.1. Both are gone; the closest left is mint against
+    // green at 15.4, which reads as two colours.
+    expect(worst.d, `closest: ${worst.pair?.join(" vs ")}`).toBeGreaterThan(14);
+  });
+
+  it("names every tint, including the extra", () => {
+    for (const t of TINTS) expect(TINT_NAMES[t], t).toBeTruthy();
+    expect(new Set(Object.values(TINT_NAMES)).size).toBe(TINTS.length);
+  });
+
+  it("has no duplicates and all valid hex", () => {
+    expect(new Set(TINTS).size).toBe(TINTS.length);
+    for (const t of TINTS) expect(t).toMatch(/^#[0-9a-f]{6}$/);
+  });
+});
+
+describe("tileFill", () => {
+  const rgb = (css) => css.match(/[\d.]+/g).map(Number);
+
+  it("is the plain panel when there is no tint", () => {
+    expect(tileFill("dark", 100, null)).toBe("rgba(28,30,38,1)");
+    expect(tileFill("light", 100, null)).toBe("rgba(255,255,255,1)");
+  });
+
+  it("passes the opacity slider straight through, tinted or not", () => {
+    // Tinting a tile must not quietly change how much wallpaper shows through
+    // it — the two settings are independent and have to stay that way.
+    for (const tint of [null, "#86d99a", "#f5d979"]) {
+      for (const alpha of [0, 35, 50, 100]) {
+        expect(rgb(tileFill("dark", alpha, tint))[3], `${tint}@${alpha}`).toBeCloseTo(alpha / 100, 5);
+      }
+    }
+  });
+
+  it("moves the panel toward the colour without becoming it", () => {
+    // The safety argument for the whole feature: a tint is a wash over the
+    // theme's own panel, so a dark tile stays dark and a light one stays light
+    // however saturated the swatch. If this ever became a fill, text on the
+    // tile would have to be re-checked per colour.
+    for (const tint of TINTS) {
+      const [r, g, b] = rgb(tileFill("dark", 100, tint));
+      const [lr, lg, lb] = rgb(tileFill("light", 100, tint));
+      // Dark stays nearer the dark panel than the swatch.
+      expect(Math.max(r, g, b), tint).toBeLessThan(140);
+      // Light stays near white.
+      expect(Math.min(lr, lg, lb), tint).toBeGreaterThan(200);
+    }
+  });
+
+  it("keeps body text readable on every tinted tile, in both themes", () => {
+    // --fg is near-white on dark and near-black on light. 4.5:1 on the opaque
+    // tile, which is the worst case for the darker theme and the realistic one
+    // for a solid tile.
+    const contrast = (a, b) =>
+      (Math.max(luminance(a), luminance(b)) + 0.05) /
+      (Math.min(luminance(a), luminance(b)) + 0.05);
+    const hex = (css) =>
+      `#${rgb(css).slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+
+    for (const tint of [null, ...TINTS]) {
+      const onDark = contrast("#f4f4f6", hex(tileFill("dark", 100, tint)));
+      const onLight = contrast("#2a2c33", hex(tileFill("light", 100, tint)));
+      expect(onDark, `dark ${tint}`).toBeGreaterThanOrEqual(4.5);
+      expect(onLight, `light ${tint}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("gives every swatch a visibly different tile from the plain one", () => {
+    // A tint nobody can see is a setting that does nothing.
+    const plain = tileFill("dark", 100, null);
+    const tinted = ACCENTS.map((c) => tileFill("dark", 100, c));
+    for (const [i, css] of tinted.entries()) {
+      expect(css, ACCENTS[i]).not.toBe(plain);
+    }
+    // And from each other, so sixteen swatches are sixteen choices.
+    expect(new Set(tinted).size).toBe(ACCENTS.length);
+  });
+
+  it("ignores a malformed tint rather than emitting a broken colour", () => {
+    expect(tileFill("dark", 100, "not-a-colour")).toBe("rgba(28,30,38,1)");
+  });
+});
+
+describe("tileSurfaces", () => {
+  it("leaves an untinted tile entirely alone", () => {
+    // No overrides at all, so an uncoloured tile resolves the theme's own
+    // panels exactly as it always did.
+    expect(tileSurfaces("dark", null)).toBeNull();
+    expect(tileSurfaces("light", null)).toBeNull();
+  });
+
+  it("keeps the alphas, so only the hue follows the tile", () => {
+    // The depth and layering of a widget's inputs are the theme's business.
+    // What was wrong was the colour: 92% white over a lilac tile is a stark
+    // white box sitting on lilac.
+    const light = tileSurfaces("light", "#c79bff");
+    expect(light["--panel"]).toMatch(/,0\.62\)$/);
+    expect(light["--panel2"]).toMatch(/,0\.92\)$/);
+    const dark = tileSurfaces("dark", "#c79bff");
+    expect(dark["--panel"]).toMatch(/,0\.05\)$/);
+    expect(dark["--panel2"]).toMatch(/,0\.1\)$/);
+  });
+
+  it("moves the white toward the tile's colour", () => {
+    const channels = (css) => css.match(/[\d.]+/g).slice(0, 3).map(Number);
+    // A violet tint has more blue than green, so the wash must too — plain
+    // white would come back equal on all three.
+    const [r, g, b] = channels(tileSurfaces("light", "#c79bff")["--panel"]);
+    expect(b).toBeGreaterThan(g);
+    expect(r).toBeGreaterThan(g);
+    expect(new Set([r, g, b]).size).toBeGreaterThan(1);
+  });
+
+  it("gives every swatch its own set of surfaces", () => {
+    const seen = new Set(ACCENTS.map((c) => tileSurfaces("light", c)["--panel2"]));
+    expect(seen.size).toBe(ACCENTS.length);
+  });
+
+  it("does not touch the light theme's row highlight", () => {
+    // It is a dark wash over a light surface, and tinting it would lighten the
+    // one thing whose job is to be darker than what it sits on.
+    expect(tileSurfaces("light", "#c79bff")["--sheetHover"]).toBeUndefined();
+    expect(tileSurfaces("dark", "#c79bff")["--sheetHover"]).toBeTruthy();
   });
 });

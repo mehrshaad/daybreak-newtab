@@ -1,7 +1,9 @@
 import { Suspense, lazy, useMemo } from "react";
+import { LuBan } from "react-icons/lu";
 import { MONO, pill } from "@daybreak/sdk";
+import { TINT_NAMES, TINTS, tileFill } from "../core/tokens";
 import { getWidget, resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
-import { Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
+import { Button, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 const panelCache = new Map();
 function panelFor(manifest) {
@@ -18,6 +20,45 @@ function panelFor(manifest) {
   return panelCache.get(manifest.id);
 }
 
+// Painted as the tile it produces rather than as the raw colour, so the row
+// shows what the board will look like instead of a line of pastels.
+function TintSwatch({ theme, tint, selected, onPick, plain = false }) {
+  const label = plain ? "No colour" : `Colour: ${TINT_NAMES[tint] || tint}`;
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={selected}
+      onClick={onPick}
+      style={{
+        width: "100%",
+        aspectRatio: "1",
+        borderRadius: 8,
+        cursor: "pointer",
+        background: tileFill(theme, 100, tint),
+        border: "1px solid var(--line)",
+        padding: 0,
+        display: "grid",
+        placeItems: "center",
+        color: "var(--faint)",
+        fontFamily: MONO,
+        fontSize: 9,
+        lineHeight: 1,
+        boxShadow: selected ? "0 0 0 2px var(--sheet), 0 0 0 4px var(--accent)" : "none",
+        transition: "box-shadow .18s ease, transform .15s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (!selected) e.currentTarget.style.transform = "scale(1.1)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+      }}
+    >
+      {plain ? <LuBan size={11} aria-hidden="true" /> : null}
+    </button>
+  );
+}
+
 function WidgetSettingsDrawer({
   open,
   instanceId,
@@ -28,7 +69,11 @@ function WidgetSettingsDrawer({
   onOptions,
   onConfig,
   onRate,
+  onTint,
   onRemove,
+  theme,
+  appearance,
+  keepInteractive,
   toast,
 }) {
   const manifest = getWidget(instanceId);
@@ -40,20 +85,41 @@ function WidgetSettingsDrawer({
 
   if (!manifest) return null;
 
+  // What a manifest may ask about the board, as opposed to about its own
+  // options. Deliberately a short, fixed list: an option should almost always
+  // depend on the widget's own state, and anything here is a coupling between
+  // a widget and the app's settings that has to be worth its keep.
+  const environment = {
+    // Whether tiles show a header at all. A widget that bleeds into the header
+    // row when it is gone can render quite differently without it.
+    tileHeader: (appearance.tileLabels || "both") !== "none",
+  };
+
   const currentSize = resolveSize(instanceId, board.sizes);
   const rate = resolveRate(instanceId, record.rate);
   const Panel = panelFor(manifest);
 
   return (
-    <Drawer open={open} onClose={onClose} width={340} label={`${manifest.name} settings`}>
-      <DrawerHeader
-        eyebrow="Widget settings"
-        title={manifest.name}
-        subtitle={manifest.tagline}
-        onClose={onClose}
-      />
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+    <Drawer
+      open={open}
+      onClose={onClose}
+      width={340}
+      label={`${manifest.name} settings`}
+      // The widget being configured stays live while its own settings are
+      // open: adding a city, ticking a habit or reordering a link should not
+      // mean closing the panel that sent you there. Every other click still
+      // closes it, and still only closes it.
+      keepInteractive={keepInteractive}
+      header={
+        <DrawerHeader
+          eyebrow="Widget settings"
+          title={manifest.name}
+          subtitle={manifest.tagline}
+          onClose={onClose}
+        />
+      }
+    >
+      <div data-tour="panel" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {manifest.sizes.length > 1 ? (
           <Section title="Size">
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -70,6 +136,37 @@ function WidgetSettingsDrawer({
             </div>
           </Section>
         ) : null}
+
+        <Section title="Colour" data-tour="panel-colour">
+          <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5, marginBottom: 8 }}>
+            The colour of this tile. Set per widget, so a board can tell one from
+            another at a glance.
+          </div>
+          <div
+            role="group"
+            aria-label="Widget colour"
+            style={{ display: "grid", gridTemplateColumns: "repeat(9, 1fr)", gap: 8 }}
+          >
+            {/* "None" first and the same shape as the rest, so going back to a
+                plain tile is the same gesture as picking a colour. */}
+            <TintSwatch
+              theme={theme}
+              tint={null}
+              plain
+              selected={!record.tint}
+              onPick={() => onTint(null)}
+            />
+            {TINTS.map((c) => (
+              <TintSwatch
+                key={c}
+                theme={theme}
+                tint={c}
+                selected={record.tint === c}
+                onPick={() => onTint(c)}
+              />
+            ))}
+          </div>
+        </Section>
 
         {Panel ? (
           <Section title={manifest.settingsPanel.title || "Configure"}>
@@ -88,7 +185,33 @@ function WidgetSettingsDrawer({
         {manifest.options.length ? (
           <Section title="Options">
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {manifest.options.map((o) => {
+              {manifest.options
+                // An option can say which mode it belongs to. Without this the
+                // clock offered "Analog face" alongside "Accent dial edge" and
+                // "24-hour time" all at once, half of them doing nothing
+                // whatever mode you were in. `showIf` is a plain map of
+                // option key to accepted values, so it stays declarative and a
+                // widget cannot smuggle a function into its manifest.
+                //
+                // A key can also name something about the board rather than
+                // one of the widget's own options — see ENVIRONMENT. Same
+                // reason, one step out: with tile labels off the clock's dial
+                // is drawn to the tile's own rectangle, so Squared and Round
+                // produce identical output and the choice between them is a
+                // control that does nothing.
+                .filter((o) => {
+                  if (!o.showIf) return true;
+                  return Object.entries(o.showIf).every(([key, accepted]) => {
+                    const current =
+                      key in environment
+                        ? environment[key]
+                        : options[key] ?? manifest.options.find((x) => x.key === key)?.default;
+                    return Array.isArray(accepted)
+                      ? accepted.includes(current)
+                      : accepted === current;
+                  });
+                })
+                .map((o) => {
                 // Options started out boolean-only; enum and number let a
                 // widget ask for a choice or a count without needing its own
                 // settings panel.
@@ -220,8 +343,7 @@ function WidgetSettingsDrawer({
               <span style={{ color: "var(--dim)" }}>{v}</span>
             </div>
           ))}
-          <button
-            type="button"
+          <Button
             onClick={onRemove}
             style={pill(false, {
               marginTop: 8,
@@ -232,9 +354,10 @@ function WidgetSettingsDrawer({
               textAlign: "center",
               width: "100%",
             })}
+            hover={{ background: "var(--panel2)", border: "1px solid var(--danger)" }}
           >
             Remove from home
-          </button>
+          </Button>
         </div>
       </div>
     </Drawer>

@@ -42,3 +42,24 @@ describe("boardShift", () => {
     expect(boardShift(0, 400)).toBe(0);
   });
 });
+
+describe("boardShift with a wider board", () => {
+  it("still clears the drawer when the board is allowed to spread", () => {
+    // A "full" board reaches the drawer at every window size, so the inset can
+    // never be skipped for it the way it can for a capped one.
+    for (const w of [1440, 2000, 2560, 3440]) {
+      expect(boardShift(w, 400, "full"), `${w}px full`).toBe(400);
+    }
+  });
+
+  it("treats a wider cap as wider when deciding whether the drawer overlaps", () => {
+    // At 2560 a comfortable board clears a 400px drawer; a 2000px-capped one
+    // does not, so only the latter gets inset.
+    expect(boardShift(2560, 400, "comfortable")).toBe(0);
+    expect(boardShift(2560, 400, "wide")).toBe(400);
+  });
+
+  it("falls back to the comfortable cap for an unknown value", () => {
+    expect(boardShift(2560, 400, "nonsense")).toBe(boardShift(2560, 400, "comfortable"));
+  });
+});

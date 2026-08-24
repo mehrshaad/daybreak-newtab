@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LuLayoutGrid, LuMousePointerClick, LuStore } from "react-icons/lu";
 import { hasPermissionsApi, requestAllPermissions, usePresence } from "@daybreak/sdk";
-import { Pill } from "./primitives";
+import { Button, Pill } from "./primitives";
 
 // Requested together so the results (open tabs, bookmarks, history) come with
 // real site icons rather than a generic placeholder.
@@ -21,10 +21,31 @@ const THEMES = [
   ["light", "Light"],
 ];
 
+// Blur is the single most expensive thing the page draws: every tile, panel,
+// sheet and menu is its own blurred surface, and on a modest machine that is
+// the difference between a new tab that appears and one that fades in. It is
+// the better-looking setting and not the better default, so it is asked rather
+// than assumed — and asked in the language of the trade being made rather than
+// as "backdrop-filter", which means nothing to anyone.
+const FEELS = [
+  ["performance", "Performance", "Solid panels. Opens instantly."],
+  ["quality", "Quality", "Frosted glass. A little heavier."],
+];
+
 // One card, shown once on the first tab. No chrome.identity — that only
 // returns an email, not a display name, so the name is just asked for here
 // instead of guessed at the cost of a permission.
-function WelcomeCard({ open, name, theme, onNameChange, onThemeChange, onEnableSearch, onDismiss }) {
+function WelcomeCard({
+  open,
+  name,
+  theme,
+  blur,
+  onNameChange,
+  onThemeChange,
+  onBlurChange,
+  onEnableSearch,
+  onDismiss,
+}) {
   const [present, closing] = usePresence(open, EXIT_MS);
   const inputRef = useRef(null);
   // idle: not yet asked (or dev has nothing to ask for) | granted | denied.
@@ -50,7 +71,8 @@ function WelcomeCard({ open, name, theme, onNameChange, onThemeChange, onEnableS
       if (e.key === "Escape" || e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
-        onDismiss();
+        // A keystroke is not a request for a guided tour.
+        onDismiss({ tour: false });
       }
     };
     document.addEventListener("keydown", onKeyDown);
@@ -122,6 +144,31 @@ function WelcomeCard({ open, name, theme, onNameChange, onThemeChange, onEnableS
         </label>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 12, color: "var(--dim)" }}>Look</span>
+          <div style={{ display: "flex", gap: 6 }}>
+            {FEELS.map(([value, label, hint]) => (
+              <Pill
+                key={value}
+                active={(blur ? "quality" : "performance") === value}
+                onClick={() => onBlurChange(value === "quality")}
+                style={{
+                  flex: 1,
+                  textAlign: "center",
+                  padding: "10px 8px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  lineHeight: 1.3,
+                }}
+              >
+                {label}
+                <span style={{ fontSize: 10, opacity: 0.75, fontWeight: 400 }}>{hint}</span>
+              </Pill>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: 12, color: "var(--dim)" }}>Theme</span>
           <div style={{ display: "flex", gap: 6 }}>
             {THEMES.map(([value, label]) => (
@@ -169,22 +216,44 @@ function WelcomeCard({ open, name, theme, onNameChange, onThemeChange, onEnableS
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={onDismiss}
-          style={{
-            padding: "11px 16px",
-            borderRadius: 12,
-            border: 0,
-            background: "var(--accent)",
-            color: "var(--onAccent)",
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
-        >
-          Get started
-        </button>
+        {/* Two ways out, and the tour is the recommended one — the three lines
+            above are a summary of a page nobody has seen yet, and reading about
+            a right-click menu is not the same as being shown where it is. */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button
+            onClick={() => onDismiss({ tour: true })}
+            style={{
+              flex: 1,
+              padding: "11px 16px",
+              borderRadius: 12,
+              border: 0,
+              background: "var(--accent)",
+              color: "var(--onAccent)",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+            hover={{ opacity: 0.9, transform: "translateY(-1px)" }}
+          >
+            Show me around
+          </Button>
+          <Button
+            onClick={() => onDismiss({ tour: false })}
+            style={{
+              padding: "11px 16px",
+              borderRadius: 12,
+              background: "transparent",
+              border: "1px solid var(--line)",
+              color: "var(--dim)",
+              fontSize: 14,
+              cursor: "pointer",
+              flex: "none",
+            }}
+            hover={{ background: "var(--panel2)", color: "var(--fg)" }}
+          >
+            Skip
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { LuX } from "react-icons/lu";
-import { iconCellSize } from "../iconCellSize";
+import { ICON_GRID_PAD, iconCellSize } from "../iconCellSize";
 import { useFlip } from "../useFlip";
 import { usePointerReorder } from "../usePointerReorder";
+import { useHover } from "../useHover";
 import { useTooltip } from "../useTooltip";
 import Appear from "./Appear";
 import IconTile from "./IconTile";
@@ -27,10 +28,22 @@ function IconGridItem({
 }) {
   const ref = useRef(null);
   const wrapRef = useRef(null);
-  const [hovered, setHovered] = useState(false);
+  // Every measurement of the cell from one place, so this button and the
+  // callers that predict its size cannot drift apart.
+  const { pad, labelGap, fontSize } = iconCellSize(iconSize, showLabels);
+  // Hover as state rather than a background written straight onto the node.
+  // The imperative form could not be undone once its mouseleave went missing,
+  // and in a grid that reorders under the pointer it went missing often: an
+  // icon that had been passed over kept its highlight until it was hovered
+  // again. useHover closes itself (see usePointerExit), and a render driven by
+  // state is a render that cannot disagree with what the node currently says.
+  const [hovered, bind] = useHover();
   // The hover card already covers this, so the tooltip only applies where
   // there is no card to duplicate.
   const tip = useTooltip(hoverCard ? null : item.title || item.name);
+  // A card is a deliberate reveal, so it stays out of the way of the two
+  // things that are not one: a grid mid-drag, and the icon being carried.
+  const cardOpen = hovered && !anyDragging && !held;
 
   return (
     // The grid's own child, so it is what carries `data-flip-id`. Both the
@@ -71,11 +84,10 @@ function IconGridItem({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: Math.max(4, Math.round(iconSize * 0.16)),
-          padding: `${Math.max(4, Math.round(iconSize * 0.16))}px 2px`,
+          gap: labelGap,
+          padding: `${pad}px 2px`,
           borderRadius: 12,
           border: 0,
-          background: "transparent",
           cursor: held ? "grabbing" : "pointer",
           width: "100%",
           minWidth: 0,
@@ -83,19 +95,17 @@ function IconGridItem({
           // Dragged past the grid's edge, the icon reads as "release to
           // remove" instead of "still reordering".
           opacity: danger ? 0.4 : 1,
+          background: hovered && !held ? "var(--panel2)" : "transparent",
           boxShadow: danger ? "0 0 0 2px var(--danger)" : "none",
           transition: "background .16s ease, opacity .16s ease, box-shadow .16s ease",
         }}
         onMouseEnter={(e) => {
           tip.anchorProps.onMouseEnter?.();
-          if (held) return;
-          e.currentTarget.style.background = "var(--panel2)";
-          if (!anyDragging) setHovered(true);
+          bind.onMouseEnter(e);
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={() => {
           tip.anchorProps.onMouseLeave?.();
-          e.currentTarget.style.background = "transparent";
-          setHovered(false);
+          bind.onMouseLeave();
         }}
       >
         <IconTile
@@ -106,7 +116,7 @@ function IconGridItem({
         {showLabels ? (
           <span
             style={{
-              fontSize: Math.max(9, Math.round(iconSize * 0.3)),
+              fontSize,
               color: "var(--dim)",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -128,9 +138,9 @@ function IconGridItem({
 
       {hoverCard && !editing ? (
         <Popover
-          open={hovered}
+          open={cardOpen}
           anchorRef={ref}
-          onClose={() => setHovered(false)}
+          onClose={bind.onMouseLeave}
           placement="bottom-center"
           width={230}
         >
@@ -197,7 +207,7 @@ function IconGrid({
   cols,
   iconSize,
   showLabels = true,
-  gap = 6,
+  gap,
   onOpen,
   onReorder,
   reorderable = true,
@@ -205,6 +215,7 @@ function IconGrid({
   onRemove,
   onRemoveByDrag,
   hoverCard,
+  scroll = false,
   trailing = null,
 }) {
   const gridRef = useRef(null);
@@ -215,7 +226,10 @@ function IconGrid({
   // Wide enough for a typical short label; a `max-content` column would
   // instead size itself per row from whatever occupied it, drifting wider or
   // narrower depending on which label landed in which column.
-  const { width: cellWidth } = iconCellSize(iconSize, showLabels);
+  const { width: cellWidth, gap: cellGap } = iconCellSize(iconSize, showLabels);
+  // A caller may still pin it, but none needs to: the default now scales with
+  // the icon the same way the cell does.
+  const gridGap = gap ?? cellGap;
 
   // Reordering is always available — an icon can be rearranged without first
   // entering edit mode. Dropping one *outside* the grid deletes it, though,
@@ -257,11 +271,38 @@ function IconGrid({
         // within a row's worth of empty columns.
         gridTemplateColumns: `repeat(auto-fit, ${cellWidth}px)`,
         justifyContent: "center",
-        gap,
+        gap: gridGap,
         flex: 1,
-        alignContent: "center",
+        // `safe center` rather than plain `center` once this can scroll: a
+        // centred grid that overflows spills equally in both directions, and
+        // the part above the top edge cannot be scrolled back to. `safe` falls
+        // back to start exactly when centring would do that.
+        alignContent: scroll ? "safe center" : "center",
         minWidth: 0,
-        ...(draggingId ? { position: "relative", zIndex: 6, overflow: "visible" } : null),
+        ...(scroll
+          ? {
+              // A widget whose items the user chose — Quick Links — cannot hide
+              // the overflow behind a "+N more" the way Google Apps does, so at
+              // a large icon size a second row that did not fit was simply cut
+              // off. minHeight is what lets a flex item shrink under its own
+              // content, which is what makes this scroll rather than push the
+              // tile open.
+              minHeight: 0,
+              overscrollBehavior: "contain",
+              padding: ICON_GRID_PAD,
+            }
+          : null),
+        ...(draggingId ? { position: "relative", zIndex: 6 } : null),
+        // One property, computed, rather than a longhand here and the shorthand
+        // in a conditional spread. React sets and clears these one at a time,
+        // and clearing the shorthand it added for the drag took the longhand
+        // underneath with it — so the grid stopped scrolling for good after the
+        // first icon was dragged. Same trap as border/borderColor; see
+        // src/core/shorthandStyles.test.js.
+        //
+        // `visible` for the length of a drag because a scroll container clips
+        // its children, and the icon being carried has to be able to leave.
+        overflow: draggingId ? "visible" : scroll ? "hidden auto" : undefined,
       }}
     >
       {items.map((item) => (

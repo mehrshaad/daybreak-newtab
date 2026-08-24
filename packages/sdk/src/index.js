@@ -16,17 +16,28 @@ export { fitForSync, resolveSynced, useWidgetSynced } from "./synced";
 // Storage plumbing. The host owns the settings schema; the sdk owns the
 // mechanics of reading and writing it, so both sides share one implementation.
 export {
+  ACTIVE_PROFILE_KEY,
   LOCAL_KEY,
+  PROFILES_KEY,
   SYNC_KEY,
   SYNC_MIRROR_KEY,
   V1_KEY,
   debounceWriter,
+  forgetProfileStorage,
   hasChromeLocal,
   hasChromeSync,
   localArea,
+  localAreaFor,
+  localKeyFor,
+  profilesArea,
+  readActiveProfile,
   readSyncMirror,
   readV1Settings,
   syncArea,
+  syncAreaFor,
+  syncKeyFor,
+  syncMirrorKeyFor,
+  writeActiveProfile,
   writeSyncMirror,
 } from "./storage";
 
@@ -44,6 +55,7 @@ export {
   originOf,
   requestAllPermissions,
   requestOrigin,
+  requestOrigins,
   requestPermission,
 } from "./permissions";
 
@@ -55,6 +67,7 @@ export { faviconUrl } from "./favicon";
 export {
   CONTROL_TRANSITION,
   HOVER_LIFT,
+  HOVER_SOFT,
   LIST_BLEED,
   LIST_ROW_HEIGHT,
   LIST_ROW_HIGHLIGHT,
@@ -62,6 +75,7 @@ export {
   labelStyle,
   listRow,
   mark,
+  menuRow,
   pill,
   primaryButton,
   roundControl,
@@ -75,10 +89,20 @@ export { GLYPHS, glyphNames } from "./glyphs";
 
 // Keeps a floating rectangle inside the viewport. Shared by the context menu
 // and Popover, so there is one implementation of "don't run off the screen".
+export { default as EngineMark } from "./components/EngineMark";
 export { clampToViewport } from "./clamp";
 
 // Brand marks for app-style icons.
-export { BRANDS, brandFor, brandForLink, brandForUrl, glyphInk, hashHue } from "./brands";
+export {
+  BRANDS,
+  brandFor,
+  brandForLink,
+  brandForUrl,
+  hashHue,
+  inkSafeGradient,
+  relativeLuminance,
+  whiteContrast,
+} from "./brands";
 export { isUsable, resetSiteIcons, sampleOf, siteIcon } from "./siteIcon";
 export { useSiteIcon } from "./useSiteIcon";
 
@@ -99,32 +123,72 @@ export {
   usePointerReorder,
 } from "./usePointerReorder";
 export { useHover } from "./useHover";
+export { useMeasuredBox, useMeasuredWidth } from "./useMeasuredWidth";
+export { usePointerExit } from "./usePointerExit";
+export { useRovingMenu } from "./useRovingMenu";
 export { useLongPress } from "./useLongPress";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
-export { iconCellSize } from "./iconCellSize";
+export { ICON_GRID_PAD, ICON_STEPS, iconCellSize, iconGridSize } from "./iconCellSize";
+export { addMonths, monthGrid, weekdayLabels, WEEKDAY_LABELS } from "./monthGrid";
 
 // Small utilities.
+export { onSyncQuotaError } from "./storage";
+
+export { formatHijri, hijriAvailable, toHijri } from "./hijri";
+
+// Jalali (Solar Hijri) dates, for the countdown and calendar widgets.
+export {
+  formatJalali,
+  fromJalali,
+  isJalaliLeapYear,
+  JALALI_MONTHS,
+  JALALI_MONTHS_FA,
+  jalaliMonthLength,
+  toFarsiDigits,
+  toJalali,
+} from "./jalali";
+
+// Sun and moon, worked out locally — no network, no key. Shared by the Sun &
+// daylight, Moon phase and Prayer times widgets.
+export {
+  dayLengthDelta,
+  dayProgress,
+  daysUntilPhase,
+  moonPhase,
+  moonPhaseName,
+  MOON_PHASE_NAMES,
+  sunPosition,
+  sunTimes,
+  SUN_ANGLES,
+  SYNODIC_MONTH,
+} from "./astro";
 export {
   SEARCH_ENGINES,
   clamp,
   classNames,
   formatDate,
+  parseDateKey,
   geocodeCity,
   greeting,
+  isMac,
   searchCities,
   todayKey,
+  weekdayShort,
   uid,
   wmoWeather,
 } from "./utils";
 
 // Shared components.
 export { APPEAR_MS, default as Appear } from "./components/Appear";
+export { default as Button } from "./components/Button";
 export { default as CitySearch } from "./components/CitySearch";
+export { default as DatePicker } from "./components/DatePicker";
 export { default as EditableText } from "./components/EditableText";
 export { default as Favicon } from "./components/Favicon";
 export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";
+export { default as MenuRow } from "./components/MenuRow";
 export { default as Popover } from "./components/Popover";
 export { default as Tooltip } from "./components/Tooltip";
 export { default as WidgetMark } from "./components/WidgetMark";

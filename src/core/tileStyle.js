@@ -2,8 +2,11 @@
 // function of (appearance, tile state) so the zoom behaviour is testable
 // without mounting the board.
 
+import { TILE_PAD, tileFill, tileSurfaces } from "./tokens";
+
 export function tileStyle({
   theme = "dark",
+  tint = null,
   radius = 18,
   alpha = 100,
   blur = true,
@@ -11,6 +14,7 @@ export function tileStyle({
   columns = 12,
   editing = false,
   menuTarget = false,
+  panelTarget = false,
   zoomed = false,
   focused = false,
   zoomMode = "Camera",
@@ -21,15 +25,19 @@ export function tileStyle({
   // page on a narrow window.
   const w = Math.min(size[0], columns);
   const h = size[1];
-  const al = alpha / 100;
-
   // The opacity slider maps straight through: 100% is a fully opaque tile, 0%
   // leaves only the content floating on the page. The surface colour is the
   // theme's own panel colour, so a solid tile is a dark card in dark mode
-  // rather than a white one.
-  const fill = dark ? `rgba(28,30,38,${al})` : `rgba(255,255,255,${al})`;
+  // rather than a white one — moved a fraction toward the tile's own colour
+  // when it has been given one. See tileFill.
+  const fill = tileFill(theme, alpha, tint);
 
   const base = {
+    // Inputs, buttons and rows inside a coloured tile follow its colour. The
+    // widgets need no changes for this: they already paint with var(--panel),
+    // and these override what that resolves to within this tile. See
+    // tileSurfaces.
+    ...tileSurfaces(theme, tint),
     // Positioned so edit-mode chrome can float over the tile instead of taking
     // part in its layout.
     position: "relative",
@@ -37,7 +45,7 @@ export function tileStyle({
     gridRow: `span ${h}`,
     display: "flex",
     flexDirection: "column",
-    padding: "16px 18px",
+    padding: `${TILE_PAD.y}px ${TILE_PAD.x}px`,
     borderRadius: `${radius}px`,
     background: fill,
     // Frosted glass when blur is on, plain translucency when it is off.
@@ -68,7 +76,11 @@ export function tileStyle({
   };
 
   if (editing) base.boxShadow = "0 0 0 1px var(--accentLine) inset";
-  if (menuTarget) base.boxShadow = "0 0 0 1.5px var(--accent) inset";
+  // The same outline for "the menu is on this tile" and "this tile's settings
+  // are open", because they answer the same question: which one am I working
+  // on. The drawer names the widget but not which copy of it, and a board with
+  // two clocks on it gave no way to tell.
+  if (menuTarget || panelTarget) base.boxShadow = "0 0 0 1.5px var(--accent) inset";
 
   if (!zoomed) return base;
 

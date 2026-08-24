@@ -1,7 +1,7 @@
 {
   "name": "daybreak-newtab",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "homepage": "https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen",
   "type": "module",
   "scripts": {

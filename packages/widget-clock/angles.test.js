@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { handAngles, handPoint } from "./angles";
+import { continueAngle, handAngles, handPoint } from "./angles";
 
 const at = (h, m, s = 0, ms = 0) => new Date(2026, 0, 5, h, m, s, ms);
 
@@ -52,5 +52,48 @@ describe("handPoint", () => {
       const p = handPoint(deg, 40);
       expect(Math.hypot(p.x - 50, p.y - 50)).toBeCloseTo(40);
     }
+  });
+});
+
+describe("continueAngle", () => {
+  it("takes the short way forward across the seam", () => {
+    // 59 minutes is 354deg and 0 minutes is 0deg. Interpolating those two
+    // numbers directly sweeps the hand anticlockwise across the whole dial.
+    expect(continueAngle(354, 354, 0)).toBeCloseTo(360, 6);
+  });
+
+  it("takes the short way backward across the seam", () => {
+    expect(continueAngle(360, 0, 354)).toBeCloseTo(354, 6);
+  });
+
+  it("keeps accumulating past a full turn", () => {
+    let shown = 354;
+    let last = 354;
+    for (const next of [0, 6, 12]) {
+      shown = continueAngle(shown, last, next);
+      last = next;
+    }
+    // Three steps of six degrees forward from 354.
+    expect(shown).toBeCloseTo(372, 6);
+  });
+
+  it("never moves more than half a turn in one step", () => {
+    for (const [last, next] of [[354, 0], [0, 354], [179, 181], [1, 359]]) {
+      const moved = continueAngle(0, last, next);
+      expect(Math.abs(moved), `${last}->${next}`).toBeLessThanOrEqual(180);
+    }
+  });
+
+  it("is a no-op when nothing changed, which is what makes the ref safe", () => {
+    // StrictMode invokes a component twice; the second pass must not advance it.
+    expect(continueAngle(720, 12, 12)).toBe(720);
+  });
+
+  it("moves forward through midnight on the hour hand too", () => {
+    const before = handAngles(new Date(2026, 7, 21, 11, 59, 59)).hour;
+    const after = handAngles(new Date(2026, 7, 22, 0, 0, 0)).hour;
+    expect(before).toBeGreaterThan(359);
+    expect(after).toBe(0);
+    expect(continueAngle(before, before, after)).toBeGreaterThan(before);
   });
 });

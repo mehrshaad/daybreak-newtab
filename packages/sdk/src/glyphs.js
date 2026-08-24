@@ -9,14 +9,17 @@ import {
   LuLayoutGrid,
   LuHistory,
   LuLink,
+  LuMoon,
   LuNewspaper,
   LuNotebookPen,
   LuQuote,
   LuSquareCheck,
   LuSun,
+  LuSunrise,
   LuTimer,
   LuWind,
 } from "react-icons/lu";
+import { PrayingPerson } from "./components/glyphIcons";
 
 // Glyph names a manifest can ask for. Deliberately generic (`clock`, `weather`,
 // `list`) so a widget from another repository can pick one without shipping
@@ -25,6 +28,9 @@ import {
 // can never render an empty chip.
 export const GLYPHS = {
   air: LuWind,
+  moon: LuMoon,
+  prayer: PrayingPerson,
+  sun: LuSunrise,
   bookmark: LuBookmark,
   calendar: LuCalendarCheck,
   calendarDays: LuCalendarDays,
