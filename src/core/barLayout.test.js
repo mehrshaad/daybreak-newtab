@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { BAR_TIERS, barTier, searchWidth } from "./barLayout";
+import {
+  BAR_TIERS,
+  barTier,
+  HERO_HINTS_MIN,
+  searchWidth,
+  showHeroHints,
+} from "./barLayout";
 
 describe("barTier", () => {
   it("keeps everything on a wide window", () => {
@@ -47,5 +53,28 @@ describe("searchWidth", () => {
 
   it("stays wide enough to type in on the narrowest window", () => {
     expect(searchWidth(320, { active: true, scrolled: false })).toBe(180);
+  });
+});
+
+describe("showHeroHints", () => {
+  it("keeps them on a roomy window", () => {
+    expect(showHeroHints(1440)).toBe(true);
+    expect(showHeroHints(HERO_HINTS_MIN)).toBe(true);
+  });
+
+  it("drops them before they can wrap under the greeting", () => {
+    // The wrap happens around 740 on the default name; the threshold sits above
+    // it so a longer name does not sneak past.
+    expect(showHeroHints(HERO_HINTS_MIN - 1)).toBe(false);
+    expect(showHeroHints(740)).toBe(false);
+    expect(showHeroHints(360)).toBe(false);
+  });
+
+  it("is decided by the room available, not the window", () => {
+    // A 400px settings drawer over a 1100px window leaves 700, which is under
+    // the threshold even though the window is not — which is the case that
+    // showed the hints wrapped with a drawer open.
+    expect(showHeroHints(1100)).toBe(true);
+    expect(showHeroHints(1100 - 400)).toBe(false);
   });
 });

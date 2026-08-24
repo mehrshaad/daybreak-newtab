@@ -151,14 +151,16 @@ function SettingsDrawer({
       </Section>
 
       <Section title="Accent" data-tour="settings-accent" style={{ marginBottom: 22 }}>
-        {/* Eight to a row, as a grid rather than a wrapping flex row. Sixteen
-            30px swatches wrapped to seven, seven and a ragged two; two rows of
-            eight read as a palette. The swatches size themselves from the
-            column so the row stays whole if the drawer width ever changes. */}
+        {/* Five to a row, as a grid rather than a wrapping flex row: a wrapping
+            row of 30px swatches broke into a ragged seven, seven and two, where
+            even rows read as a palette. Five because there are fifteen since
+            slate went (see ACCENTS), which is three whole rows. The swatches
+            size themselves from the column, so the rows stay whole if the
+            drawer width ever changes. */}
         <div
           role="group"
           aria-label="Accent colour"
-          style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 8 }}
+          style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}
         >
           {ACCENTS.map((c) => (
             <button

@@ -3,6 +3,7 @@ import {
   ACCENT_NAMES,
   ACCENTS,
   TINTS,
+  TINT_EXTRAS,
   TINT_NAMES,
   hslOf,
   tileFill,
@@ -267,12 +268,13 @@ describe("every accent, in both themes", () => {
     expect(new Set(Object.values(ACCENT_NAMES)).size).toBe(ACCENTS.length);
   });
 
-  it("has sixteen of them, all distinct, all valid hex", () => {
-    // Sixteen exactly, because the accent picker is eight to a row and two
-    // clean rows is what sixteen buys. The tint picker needs seventeen for the
-    // same reason at nine to a row; that extra one lives in TINTS, not here.
-    expect(ACCENTS).toHaveLength(16);
-    expect(new Set(ACCENTS).size).toBe(16);
+  it("has fifteen of them, all distinct, all valid hex", () => {
+    // Fifteen since slate went: it and steel were the closest pair in the
+    // palette, so one of them was doing no work. Five to a row in the picker,
+    // which makes fifteen three whole rows.
+    expect(ACCENTS).toHaveLength(15);
+    expect(new Set(ACCENTS).size).toBe(15);
+    expect(ACCENTS).not.toContain("#adb8c6");
     for (const a of ACCENTS) expect(a).toMatch(/^#[0-9a-f]{6}$/);
   });
 
@@ -372,19 +374,57 @@ describe("wallpapers on every accent", () => {
 });
 
 describe("the tint palette", () => {
-  it("is the accents plus one, so its picker fills two whole rows", () => {
-    // Nine to a row with "none" in the first cell: sixteen colours left the
-    // second row a cell short and the grid read as unfinished.
+  // Local: the one in the tileFill block below is scoped to it.
+  const rgb = (css) => css.match(/[\d.]+/g).map(Number);
+
+  it("is the accents plus two, so its picker fills two whole rows", () => {
+    // Nine to a row with "none" in the first cell, so eighteen cells.
     expect(TINTS).toHaveLength(17);
-    expect(TINTS.slice(0, 16)).toEqual(ACCENTS);
-    expect(1 + TINTS.length).toBe(18);
+    expect(TINTS.slice(0, ACCENTS.length)).toEqual(ACCENTS);
     expect((1 + TINTS.length) % 9).toBe(0);
   });
 
-  it("keeps the accent picker's own two rows of eight intact", () => {
-    // The reason the extra one is not an accent: seventeen accents would fix
-    // one grid by breaking the other.
-    expect(ACCENTS.length % 8).toBe(0);
+  it("leaves the accent picker three whole rows of five", () => {
+    expect(ACCENTS.length % 5).toBe(0);
+  });
+
+  it("lets a tint be deeper than an accent, but not without limit", () => {
+    // What TINT_EXTRAS is for: a tint is a wash, carries no ink and owes
+    // nothing to contrast, which is the freedom that lets it be dark enough to
+    // tell apart. It still has to leave a light tile light and a dark tile
+    // dark. The first teal tried here failed that at 192 against a floor of
+    // 200, which is why it is not the one in the file.
+    for (const t of TINT_EXTRAS) {
+      const light = rgb(tileFill("light", 100, t)).slice(0, 3);
+      const dark = rgb(tileFill("dark", 100, t)).slice(0, 3);
+      expect(Math.min(...light), t).toBeGreaterThan(200);
+      expect(Math.max(...dark), t).toBeLessThan(140);
+    }
+  });
+
+  it("has no near-duplicate pairs left", () => {
+    // The complaint this answers: two swatches that render as the same tile.
+    // Measured on the rendered tile in whichever theme the pair is closest,
+    // weighted for how the eye reads red, green and blue.
+    const fills = (t) => [
+      rgb(tileFill("dark", 100, t)).slice(0, 3),
+      rgb(tileFill("light", 100, t)).slice(0, 3),
+    ];
+    const gap = (a, b) =>
+      Math.sqrt(2 * (a[0] - b[0]) ** 2 + 4 * (a[1] - b[1]) ** 2 + 3 * (a[2] - b[2]) ** 2);
+    let worst = { d: Infinity, pair: null };
+    for (let i = 0; i < TINTS.length; i += 1) {
+      for (let j = i + 1; j < TINTS.length; j += 1) {
+        const [ad, al] = fills(TINTS[i]);
+        const [bd, bl] = fills(TINTS[j]);
+        const d = Math.min(gap(ad, bd), gap(al, bl));
+        if (d < worst.d) worst = { d, pair: [TINT_NAMES[TINTS[i]], TINT_NAMES[TINTS[j]]] };
+      }
+    }
+    // The pair that prompted this was 12.0 (a light teal against mint), with
+    // steel/slate at 12.1. Both are gone; the closest left is mint against
+    // green at 15.4, which reads as two colours.
+    expect(worst.d, `closest: ${worst.pair?.join(" vs ")}`).toBeGreaterThan(14);
   });
 
   it("names every tint, including the extra", () => {

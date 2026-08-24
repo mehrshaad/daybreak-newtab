@@ -1,9 +1,10 @@
 import { greeting, MONO } from "@daybreak/sdk";
+import { showHeroHints } from "../core/barLayout";
 
 // The design's hero carried invented copy ("2 meetings, 4 open tasks, and clear
 // skies until Thursday"). This builds the same line from what is actually on
 // the board, and simply omits any part it cannot source.
-function Hero({ name, summary, layoutName, tileCount, onContextMenu }) {
+function Hero({ name, summary, layoutName, tileCount, onContextMenu, width }) {
   return (
     <div
       onContextMenu={onContextMenu}
@@ -33,20 +34,23 @@ function Hero({ name, summary, layoutName, tileCount, onContextMenu }) {
           </div>
         ) : null}
       </div>
-      <div
-        style={{
-          fontFamily: MONO,
-          fontSize: "11px",
-          color: "var(--faint)",
-          textAlign: "right",
-          lineHeight: 1.7,
-        }}
-      >
-        <div>
-          {layoutName} layout · {tileCount} {tileCount === 1 ? "widget" : "widgets"}
+      {/* Gone rather than wrapped below the greeting. See showHeroHints. */}
+      {showHeroHints(width) ? (
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: "11px",
+            color: "var(--faint)",
+            textAlign: "right",
+            lineHeight: 1.7,
+          }}
+        >
+          <div>
+            {layoutName} layout · {tileCount} {tileCount === 1 ? "widget" : "widgets"}
+          </div>
+          <div>right-click a tile for its menu · esc to close</div>
         </div>
-        <div>right-click a tile for its menu · esc to close</div>
-      </div>
+      ) : null}
     </div>
   );
 }

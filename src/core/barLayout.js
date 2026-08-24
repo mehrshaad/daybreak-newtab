@@ -37,3 +37,17 @@ export function searchWidth(viewportWidth, { active, scrolled }) {
   const reserved = viewportWidth >= 900 ? 420 : 260;
   return Math.max(180, Math.min(wanted, viewportWidth - reserved));
 }
+
+// The hint block in the hero — "Custom layout · 9 widgets", and the line about
+// right-clicking. It sits opposite the greeting in a wrapping flex row, so when
+// the room runs out it does not shrink, it drops onto its own line and sits
+// there as a stray left-aligned paragraph under the heading. Hidden below the
+// width where that happens: it is a hint, and a hint that has rearranged the
+// page to be seen has stopped being worth its place.
+//
+// 820 rather than the measured wrap point of about 740, because the greeting is
+// as long as the name in it and "Good evening, Konstantinos" needs more room
+// than the default does.
+export const HERO_HINTS_MIN = 820;
+
+export const showHeroHints = (width) => width >= HERO_HINTS_MIN;

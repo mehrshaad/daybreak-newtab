@@ -678,6 +678,7 @@ function App() {
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
         onOpenSettings={openSettings}
+        inset={openDrawerWidth}
         onManageProfiles={() => revealInSettings("settings-profiles")}
         onContextMenu={openBoardMenu}
         searchRef={searchRef}
@@ -692,6 +693,8 @@ function App() {
           layoutName={board.layoutName}
           tileCount={ids.length}
           onContextMenu={openBoardMenu}
+          // The room the hero actually has, which an open drawer reduces.
+          width={Math.max(0, viewportWidth - openDrawerWidth)}
         />
       </Collapse>
 

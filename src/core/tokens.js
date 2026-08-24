@@ -24,6 +24,21 @@ export const THEMES = ["dark", "light"];
 // is used, which is why every one of these has to be light enough to read on
 // near-black in the first place. Both directions are asserted for all sixteen
 // in tokens.test.js, which is what makes adding a seventeenth safe.
+// Fifteen, and the picker lays them out five to a row.
+//
+// Slate was the sixteenth and it is gone. Slate and steel were the closest pair
+// in the palette once rendered as tiles — two desaturated blue-greys about 12
+// units apart where everything else sits above 15 — so one of them was doing no
+// work. Steel is the more saturated of the two and stayed.
+//
+// Nothing pale replaced it, because there is nothing pale left to add. Measured
+// across the whole wheel, every gap between these fifteen washes out to
+// something very like both of its neighbours: an orchid dropped into the
+// 46-degree gap between violet and magenta came back 9.9 from violet, which is
+// closer than the pair that was removed. The room left here is in depth, and
+// depth is not available to an accent — it has to stay pale enough to carry
+// near-black ink and to leave a light tile near white, both tested below. So the
+// deep colours are tints only. See TINT_EXTRAS.
 export const ACCENTS = [
   // The original six.
   "#6f9bff", // blue
@@ -41,7 +56,6 @@ export const ACCENTS = [
   "#8fb0c9", // steel
   "#9b96ff", // indigo
   "#ef92dc", // magenta
-  "#adb8c6", // slate
   "#dcc9a4", // sand
 ];
 
@@ -65,7 +79,6 @@ export const ACCENT_NAMES = {
   "#8fb0c9": "steel",
   "#9b96ff": "indigo",
   "#ef92dc": "magenta",
-  "#adb8c6": "slate",
   "#dcc9a4": "sand",
 };
 
@@ -155,17 +168,34 @@ const TINT_MIX = { dark: 0.34, light: 0.28 };
 // "none" taking the first cell, so sixteen colours left the second row one
 // short and the grid looked unfinished. Eighteen cells is two full rows.
 //
-// Added here rather than to ACCENTS because the accent picker is eight to a row
-// and two clean rows of eight is exactly what sixteen gives it: a seventeenth
-// accent would fix this grid by breaking that one. And teal earns a place among
-// tints more than among accents on its own merits — as a wash it reads clearly
-// apart from both mint and cyan, while as an accent, driving buttons and links
-// and the wallpaper, it would sit very close to what cyan already does.
-export const TINT_EXTRA = "#74d1c4";
+// Two colours that are tints and not accents.
+//
+// Here rather than in ACCENTS because an accent has to stay pale: it carries
+// near-black ink on buttons and it has to leave a light tile near white. A tint
+// has neither duty — it is a wash over the theme's own panel, so however deep
+// the swatch, the tile only ever becomes a slightly darker card. That freedom is
+// what these two use, and depth is the one thing this palette had none of.
+//
+// The first attempt at this slot was a light teal, and it measured as the
+// closest pair in the whole palette once rendered — closer than the steel/slate
+// pair it was meant to sit beside. Hue was the wrong axis to look for room on;
+// fifteen accents already ring the wheel.
+//
+// Two rather than one because it also makes both pickers whole: fifteen accents
+// are three rows of five, and seventeen tints plus "none" are two rows of nine.
+// #3f8f8f and not the deeper #1f8a8a tried first: a tint may be deeper than an
+// accent but not without limit, and at 1f8a8a a light tile came out at 192
+// against the rule below that it stay above 200. Still 46 units from its
+// nearest neighbour, three times the closest pair left in the palette.
+export const TINT_EXTRAS = ["#3f8f8f", "#a34a7f"];
 
-export const TINTS = [...ACCENTS, TINT_EXTRA];
+export const TINTS = [...ACCENTS, ...TINT_EXTRAS];
 
-export const TINT_NAMES = { ...ACCENT_NAMES, [TINT_EXTRA]: "teal" };
+export const TINT_NAMES = {
+  ...ACCENT_NAMES,
+  "#3f8f8f": "teal",
+  "#a34a7f": "plum",
+};
 
 // The theme's untinted panel surface, which is also what a tint moves away from.
 const PANEL_RGB = { dark: [28, 30, 38], light: [255, 255, 255] };

@@ -4,7 +4,7 @@ export default {
   glyph: "currency",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.4.0",
   tagline: "Exchange rates, no key required.",
   description:
     "Rates from Frankfurter, built on European Central Bank data — no API " +
@@ -26,6 +26,14 @@ export default {
       // Auto picks by magnitude, which is right for a mixed list and wrong for
       // anyone watching one pair move in the fourth place.
       default: "auto",
+    },
+    {
+      key: "textSize",
+      label: "Text size",
+      type: "enum",
+      of: ["regular", "large"],
+      labels: { regular: "Regular", large: "Large" },
+      default: "regular",
     },
     { key: "showSymbols", label: "Show currency symbols", type: "boolean", default: true },
   ],

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuLayoutGrid, LuMonitor, LuMoon, LuPlus, LuSettings, LuSun, LuX } from "react-icons/lu";
+import { LuMonitor, LuMoon, LuPencil, LuPlus, LuSettings, LuSun, LuX } from "react-icons/lu";
 import { useNotices } from "../core/noticeContext";
 import { useSettings } from "../core/settingsContext";
 import {
@@ -144,6 +144,8 @@ function Header({
   onManageProfiles,
   onContextMenu,
   searchRef,
+  // How much of the window an open drawer is covering on the right.
+  inset = 0,
 }) {
   const { settings, update, profiles } = useSettings();
   const { notify } = useNotices();
@@ -156,7 +158,14 @@ function Header({
   // an explicit theme over a board that had been following the system.
   const themeSetting = settings.appearance.theme || "system";
   const [now, setNow] = useState(() => new Date());
-  const width = useViewportWidth();
+  // The bar's own width, not the window's. A drawer is fixed to the right edge
+  // and covers whatever is under it, so with one open the bar has several
+  // hundred pixels less to work with — and it did not know. The end groups are
+  // right-aligned inside columns that may shrink to nothing, so the controls
+  // did not clip, they overflowed leftwards and drew on top of the search
+  // field. Both of the numbers below come off this width, and the padding
+  // below keeps the whole bar out of the drawer's way.
+  const width = Math.max(320, useViewportWidth() - inset);
   const tier = barTier(width);
   const nextThemeValue = nextTheme(themeSetting);
   const themeTip = useTooltip(`Switch to ${THEME_LABELS[nextThemeValue]}`);
@@ -306,11 +315,13 @@ function Header({
         // lot. The bar still says it has been scrolled, with its background,
         // its border and a narrower search field — none of which move anything.
         padding: "20px 28px",
+        paddingRight: 28 + inset,
         background: scrolled ? "var(--sheet)" : "transparent",
         borderBottom: `1px solid ${scrolled ? "var(--line)" : "transparent"}`,
         backdropFilter: scrolled ? "var(--blur-panel)" : "none",
         transition:
           "grid-template-columns .28s cubic-bezier(.2,.8,.2,1), " +
+          "padding-right .3s cubic-bezier(.2,.8,.2,1), " +
           "background .25s ease, border-color .25s ease",
       }}
     >
@@ -528,7 +539,7 @@ function Header({
                 whiteSpace: "nowrap",
               }}
             >
-              {tier.labels ? (editing ? "Editing" : "Edit layout") : <LuLayoutGrid size={15} />}
+              {tier.labels ? (editing ? "Editing" : "Edit layout") : <LuPencil size={15} />}
             </span>
           </Button>
         </span>
@@ -548,7 +559,17 @@ function Header({
           >
             <span
               key={tier.labels ? "text" : "icon"}
-              style={{ animation: "db-fade .2s ease both", whiteSpace: "nowrap" }}
+              style={{
+                animation: "db-fade .2s ease both",
+                whiteSpace: "nowrap",
+                // Without these the span is inline, so the glyph sits on a text
+                // baseline inside a button that centres its grid items — which
+                // put the plus a couple of pixels low and slightly left of the
+                // circle it lives in. The edit button beside it already did
+                // this; this one was the odd one out.
+                display: tier.labels ? undefined : "grid",
+                placeItems: tier.labels ? undefined : "center",
+              }}
             >
               {tier.labels ? "Store" : <LuPlus size={16} />}
             </span>
