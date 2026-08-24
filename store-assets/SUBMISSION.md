@@ -1,4 +1,4 @@
-# Chrome Web Store — publishing Daybreak 2.1.0
+# Chrome Web Store — publishing Daybreak 2.2.0
 
 This goes out as **a new version of the existing listing**, not a new item. Open
 the current *Daybreak - New Tab* item in the developer dashboard and upload a new
@@ -21,7 +21,7 @@ Then zip the **contents** of `dist/` so `manifest.json` sits at the root of the
 archive:
 
 ```powershell
-Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-v2-2.1.0.zip -Force
+Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-newtab-v2.2.0.zip -Force
 ```
 
 The zip is git-ignored — rebuild it whenever `dist/` changes. The store rejects an
@@ -29,19 +29,30 @@ archive whose `manifest.json` is nested inside a folder.
 
 ## What the reviewer will see change
 
-| | 2.0.0 (live) | 2.1.0 (this upload) |
+| | 2.1.0 (live) | 2.2.0 (this upload) |
 | --- | --- | --- |
 | Name | Daybreak - New Tab | unchanged |
 | Required permissions | `storage` | unchanged |
-| Optional permissions | `sessions`, `tabs`, `history`, `bookmarks` | + **`favicon`** |
+| Optional permissions | `sessions`, `tabs`, `history`, `bookmarks`, `favicon` | + **`topSites`** |
 | Host permissions | none | none |
-| Optional host permissions | none | **`https://*/*`** (see below) |
+| Optional host permissions | `https://*/*` | unchanged |
 | Remote code | none | none |
 | Minimum Chrome | 117 | unchanged |
 
 **Required permissions are unchanged**, so this update installs silently for
-existing users — no re-enable prompt. Two things are new for the reviewer to
+existing users — no re-enable prompt. One thing is new for the reviewer to
 notice:
+
+- **`topSites`** (optional) — the Top Sites widget shows the sites you visit
+  most, using the list Chrome has already compiled for its own new tab page.
+  Requested only when that widget is added to the board, and only then; the
+  widget shows a single "Allow" button until it is granted, and works not at
+  all without it rather than degrading to something else. Titles and addresses
+  are read to draw the tiles and nothing is stored or sent. Covered in
+  `privacy-policy.html`.
+
+Carried over from 2.1.0 and unchanged, repeated here because the reviewer
+seeing this upload may not have seen the last one:
 
 - **`favicon`** (optional) — lets search suggestions show a page's real icon,
   reading Chrome's own already-cached favicon store. Requested alongside
@@ -87,15 +98,20 @@ not match the manifest is a common rejection.
 > want them. Drag tiles around, cycle their sizes, and keep only what you use —
 > or start from one of four layout presets and save your own.
 >
-> SEVENTEEN WIDGETS
+> TWENTY-TWO WIDGETS
 > Clock (digital or analog) · World Clocks · Weather · Air quality · Tasks ·
-> Quick Links · Google Apps · Scratchpad · Focus Timer · Habits · Currency ·
-> Crypto · On this day · News · Calendar · Quote of the day · Recent Tabs
+> Quick Links · Google Apps · Most visited · Scratchpad · Focus Timer · Habits ·
+> Countdown · Currency · Crypto · On this day · News · Calendar · Prayer times ·
+> Moon phase · Sun & daylight · Quote of the day · Recent Tabs
 >
 > MADE YOURS
-> Dark and light themes, or follow your system. Six accent colours, twelve
-> generated backgrounds, adjustable tile opacity, corner radius and page zoom.
-> Frosted glass, or solid surfaces if you prefer.
+> Dark and light themes, or follow your system. Fifteen accent colours, twelve
+> generated backgrounds, a colour per widget, adjustable tile opacity, corner
+> radius and page zoom. Frosted glass, or solid surfaces if you prefer.
+>
+> UP TO THREE BOARDS
+> Keep work and home apart. Each profile has its own layout, its own look and
+> its own widget settings, and each syncs on its own.
 >
 > QUIET BY DEFAULT
 > No accounts, no analytics, no ads, no tracking, no API keys anywhere. Your
@@ -109,44 +125,37 @@ not match the manifest is a common rejection.
 
 ### What's new (release notes)
 
-> Six new widgets, a lighter drag-and-drop interaction, and search that
-> actually feels like the omnibox.
+> A guided tour, up to three separate boards, and a lot of polish found by
+> measuring rather than by looking.
 >
-> - New: Air quality, Currency, Crypto, On this day, News (Hacker News or your
->   own feed) and Calendar (paste a private iCal link, or several) — all
->   keyless, no account required
-> - Press and hold a tile — or empty space — to enter edit mode; drag from the
->   handle that appears, no separate toggle needed first
-> - Tiles and Quick Links icons can also be dragged into a new order any time,
->   without entering edit mode at all
-> - Search suggestions are ranked, show real site icons, and offer "Go to
->   site" for an address you type directly — turn on tabs, bookmarks and
->   history right from the welcome card, or later in Settings
-> - Habit history and Scratchpad notes now sync (when small enough) instead of
->   staying local-only
-> - Habits: double-click a name to rename it, the same as tasks and world
->   clocks
-> - Quick Links: name a link yourself, remove one with an edit-mode badge, and
->   hover any icon for its full name and address
-> - Custom date picker for tasks, opening on today without defaulting a new
->   task's due date to it
-> - Switching layout presets no longer discards your own arrangement — it is
->   saved as "Yours" automatically the first time, so it is always one click
->   away
-> - Hover any icon-only control for a quick label — what it does, not just
->   what it looks like
-> - Quick Links now show the real mark of the site they point at, resolved
->   from the address rather than the name — so a link you called "Work" still
->   arrives wearing its own icon. 114 brands built in, and Chrome's own cached
->   favicon for anything outside that list
-> - Four more backgrounds — Prism, Lattice, Tide and Spot — and every one of
->   them now reads properly on the neutral accent instead of coming out a
->   plain page
-> - Dragging a tile is smooth the whole way across the board, including
->   through a reorder, and the tile it would displace is outlined as you go
-> - An open drawer no longer sits on top of the widgets on a mid-width window
-> - Everything else — sliders, the search box's clear button, dropdown
->   placement — now matches the theme completely, in both light and dark
+> - New: a guided tour on first run — fifteen steps that open each drawer for
+>   real as they explain it, and stay out of your way otherwise
+> - New: profiles. Up to three boards on one install, each with its own
+>   layout, look and widget settings, each syncing on its own. A switcher
+>   appears in the toolbar once you have more than one
+> - New widgets: Countdown, Prayer times, Moon phase, Sun & daylight and Most
+>   visited, bringing it to twenty-two
+> - The calendar is a calendar now: a real month grid with the Jalali and
+>   Hijri dates, holidays, and your events on the day they fall
+> - A colour per widget, so a full board can be read at a glance. Fifteen
+>   accents, and the near-duplicate swatches are gone
+> - Size options: five for the digital clock, three for the icon grids, two for
+>   World Clocks and Currency — and the icons themselves are larger, with the
+>   padding around them cut back
+> - When a widget goes wrong it now says what went wrong, and offers a button
+>   that opens a GitHub issue with the error, the version and the browser
+>   already filled in. Nothing from your board, your settings or your widgets
+>   goes with it
+> - Quick Links: 233 brand marks built in, and a link falling back to its own
+>   favicon now sits on a gradient rather than a flat square
+> - Blur is off by default so the page opens instantly; the welcome card asks
+>   which you would rather have, and macOS starts on the frosted look where it
+>   is close to free
+> - Fixes: a date one day early between January and Nowruz in the Jalali
+>   calendar, a tooltip that could stay behind after the pointer left the
+>   window, the board not centring when a row was short, the toolbar drawing
+>   over itself with a drawer open, and the analog clock swallowing its own
+>   drag handle and right-click
 
 ## Images
 
@@ -197,6 +206,12 @@ dashboard of widgets.
   suggestion, reading Chrome's own already-cached favicon store rather than
   making a request to the site. Requested the first time the user turns on
   one of the suggestion sources above.
+- **topSites** (optional) — Powers the Most visited widget, which shows the
+  sites the user visits most as shortcuts, using the list Chrome has already
+  compiled for its own new tab page. Requested only when that widget is added
+  to the board; until it is granted the widget shows a single Allow button and
+  nothing else. Titles and addresses are read to draw the tiles, nothing is
+  stored and nothing is sent.
 - **Host permissions (optional, `https://*/*` pattern)** — Used only when the
   user pastes in a private calendar address (Calendar widget) or a custom
   feed URL (News widget). Chrome's per-origin permission API requires this
@@ -227,15 +242,58 @@ reaches the developer, who operates no server.
 
 - [ ] the updated `privacy-policy.html` is live at the URL on the listing
 - [ ] the zip's `manifest.json` is at the archive root
-- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.1.0`
-- [ ] loaded the built `dist/` unpacked once, over a 2.0.0 profile, and
+- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.2.0`
+- [ ] loaded the built `dist/` unpacked once, over a 2.1.0 profile, and
       confirmed existing settings, board layout and widget content are intact
 - [ ] store icon, five screenshots, the small promo tile and the marquee
-      uploaded — re-captured on 2026-08-09, each one on a different theme,
-      accent and background so the listing shows what is adjustable
+      uploaded. **The five on file are from 2026-08-09 and predate the tour,
+      profiles, the rebuilt calendar, the new accent palette and the larger
+      icon grids — they need re-capturing.** See "Re-capturing the screenshots"
+      below.
 - [ ] release notes filled in
 - [ ] every permission justification filled in, including `favicon` and the
       optional host permission
+
+## Re-capturing the screenshots
+
+The five on file were captured on 2026-08-09 against 2.1.0. They are stale in
+ways a reviewer will not notice but a visitor will: no tour, no profile chip in
+the toolbar, the old agenda-style calendar, sixteen accent swatches in two rows
+of eight rather than fifteen in three rows of five, smaller icons in Quick Links
+and Google Apps, and a grid glyph on Edit layout where there is now a pencil.
+
+This part cannot be automated from here — the captures have to come off a real
+window at a real size. The pipeline that turns them into store cards is already
+written and does the rest.
+
+1. Build and load `dist/` unpacked, or use the dev server. Set the window to
+   1280 wide or more; the cards inset the capture at its own resolution rather
+   than stretching it, so a bigger window means a sharper card.
+2. Take five captures as JPEGs into a scratch folder, named `1.jpg` .. `4.jpg`
+   plus `5-dark.jpg` and `5-light.jpg` — card five is built from the same board
+   under both themes, so those two want the same layout and the same moment,
+   with only the theme switched between them.
+3. What each card is for, from `scripts/store-assets.mjs`:
+   - `1.jpg` — a full board, arranged, showing the point of the thing
+   - `2.jpg` — a board with plenty of different widgets on it
+   - `3.jpg` — mid-drag, a tile lifted and the others moved aside
+   - `4.jpg` — the Store open, on a category
+   - `5-dark.jpg` / `5-light.jpg` — the same board, both themes
+4. Each capture should use a different accent and background, so the listing
+   shows what is adjustable without a caption having to say it.
+5. Then:
+
+```powershell
+node scripts/store-assets.mjs <that-folder>
+```
+
+   Outputs land in `store-assets/`: `screenshot-1.png` .. `screenshot-5.png` at
+   1280x800, plus the promo tile and marquee.
+
+The captions live in `CARDS` in that script and are already updated for this
+release — they had said "seventeen widgets" and "six accents" for two releases
+after both stopped being true, which is the kind of claim worth counting rather
+than remembering.
 
 ## Checking the migration by hand
 

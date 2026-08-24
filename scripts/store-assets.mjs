@@ -43,7 +43,9 @@ const CARDS = [
   },
   {
     file: "2.jpg",
-    title: "Seventeen widgets, all offline-first",
+    // Counted, not remembered: 22 packages under packages/widget-*. It read
+    // "seventeen" for two releases after it stopped being seventeen.
+    title: "Twenty-two widgets, all offline-first",
     sub: "Weather, world clocks, tasks, habits, links, a focus timer, a scratchpad and more.",
   },
   {
@@ -62,7 +64,7 @@ const CARDS = [
     // arrangement, same moment, under both themes.
     split: ["5-dark.jpg", "5-light.jpg"],
     title: "Customize your own way",
-    sub: "Dark or light, six accents, twelve generated backgrounds, and dials for the rest.",
+    sub: "Dark or light, fifteen accents, twelve generated backgrounds, and dials for the rest.",
   },
 ];
 
