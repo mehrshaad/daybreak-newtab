@@ -73,6 +73,7 @@ function WidgetSettingsDrawer({
   onRemove,
   theme,
   appearance,
+  keepInteractive,
   toast,
 }) {
   const manifest = getWidget(instanceId);
@@ -104,6 +105,11 @@ function WidgetSettingsDrawer({
       onClose={onClose}
       width={340}
       label={`${manifest.name} settings`}
+      // The widget being configured stays live while its own settings are
+      // open: adding a city, ticking a habit or reordering a link should not
+      // mean closing the panel that sent you there. Every other click still
+      // closes it, and still only closes it.
+      keepInteractive={keepInteractive}
       header={
         <DrawerHeader
           eyebrow="Widget settings"

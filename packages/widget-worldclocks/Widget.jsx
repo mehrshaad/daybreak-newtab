@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
-import { Appear, Button, CitySearch, EditableText, LIST_BLEED, LIST_ROW_HIGHLIGHT, MONO, listRow, moveItem, useFlip, useMinutes, usePointerReorder } from "@daybreak/sdk";
+import { Appear, Button, CitySearch, EditableText, LIST_ROW_HIGHLIGHT, MONO, listRow, moveItem, useFlip, useMinutes, usePointerReorder } from "@daybreak/sdk";
 import { MAX_ZONES, zoneParts } from "./zones";
 
 const DEFAULT_ZONES = [
@@ -41,7 +41,12 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
   const big = textSize === "large";
   const type = {
     city: big ? 16 : 13,
-    time: (tall ? 19 : 15) + (big ? 4 : 0),
+    // +2 and not +4. At +4 four cities at this size wanted 154px of a 146px
+    // tile, and the answer to that was a scroller on the list — which turned
+    // the list into a scroll container, which is a clipping context, which is
+    // the thing a row being dragged has to escape. Two pixels of type is a
+    // much cheaper price than owning that interaction.
+    time: (tall ? 19 : 15) + (big ? 2 : 0),
     small: big ? 12 : 10,
   };
 
@@ -127,23 +132,13 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
           flexDirection: "column",
           gap: 2,
           minWidth: 0,
-          // Four cities in a two-row tile with its label row showing needs
-          // 130px and has 122, and that was true before the text sizes below
-          // existed — the last row was simply cut off. Large makes it 154, so
-          // the list scrolls rather than clipping. minHeight lets a flex item
-          // shrink below its content, which is what makes the overflow scroll
-          // instead of pushing the tile open.
-          minHeight: 0,
-          overflowY: "auto",
-          // Or a wheel that reaches the end of this list carries on into the
-          // board behind it, the same reason the settings drawer contains its
-          // own (see primitives.jsx).
-          overscrollBehavior: "contain",
-          // A row bleeds LIST_BLEED past its column on each side so its
-          // highlight reaches the tile's padding. Inside a scroller that extra
-          // width becomes horizontal overflow and the list grows a scrollbar
-          // along the bottom; matching padding puts the bleed back inside.
-          padding: `0 ${LIST_BLEED}px`,
+          // No scroller here, deliberately. One went in to catch four cities at
+          // the large text size overflowing by 8px, and it cost the drag: a
+          // scroll container clips its children, so the row being carried was
+          // clipped, and `overflow: visible` for the length of the drag both
+          // fights the base value React has to remove afterwards and moves the
+          // slots the drag measures against. The size came down instead, and
+          // now nothing this widget can show overflows. See worldClockFit.
           ...(draggingId
             ? { position: "relative", zIndex: 6, overflow: "visible" }
             : null),
@@ -184,9 +179,16 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                 }}
               >
                 <Appear open={editing} style={{ display: "flex", flex: "none" }}>
+                  {/* The handle sizes and eases with the type around it: it is
+                      part of the row, and a fixed 12px pip beside 16px text
+                      reads as something left behind. Its colour warms on the
+                      way in as well, so it arrives rather than appears. */}
                   <LuGripVertical
-                    size={12}
-                    style={{ color: "var(--faint)" }}
+                    size={big ? 15 : 12}
+                    style={{
+                      color: "var(--faint)",
+                      transition: `${TYPE_TRANSITION}, color .2s ease, width .2s ease, height .2s ease`,
+                    }}
                     aria-hidden="true"
                   />
                 </Appear>

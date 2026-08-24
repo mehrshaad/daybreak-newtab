@@ -113,6 +113,11 @@ function App() {
     else delete tileEls.current[id];
   }, []);
 
+  // The tile whose settings are open, for the drawer to leave interactive.
+  // A stable callback per panel rather than the node itself: tileEls is a ref,
+  // so the node is not there on the render that opens the drawer.
+  const panelTileEl = useCallback(() => (panel ? tileEls.current[panel] : null), [panel]);
+
   const closeZoom = useCallback(() => {
     setZoom(null);
     setCam(null);
@@ -804,6 +809,7 @@ function App() {
           onTint={(tint) => updateWidget(panelId, { tint })}
           theme={theme}
           appearance={appearance}
+          keepInteractive={panel ? panelTileEl : null}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />

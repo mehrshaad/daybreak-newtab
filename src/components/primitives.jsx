@@ -140,7 +140,15 @@ export function Slider({ label, value, min, max, step, suffix = "", onChange }) 
 // for it to finish.
 const EXIT_MS = 220;
 
-export function Drawer({ open, onClose, width = 340, label, header, children }) {
+export function Drawer({
+  open,
+  onClose,
+  width = 340,
+  label,
+  header,
+  keepInteractive,
+  children,
+}) {
   const panelRef = useRef(null);
   const restoreRef = useRef(null);
   const [present, closing] = usePresence(open, EXIT_MS);
@@ -162,16 +170,53 @@ export function Drawer({ open, onClose, width = 340, label, header, children }) 
     };
   }, [present, closing]);
 
+  // Closing on an outside click, with one element allowed to stay live.
+  //
+  // The catcher below is a single sheet over everything, which is the right
+  // answer when nothing underneath may be touched. It cannot have a hole in it
+  // though, and the widget being configured needs one: adding a city while its
+  // own settings are open should not mean closing them first. A capture-phase
+  // listener can make that distinction, and it swallows the event exactly the
+  // way the catcher did, so a click meant for another widget still only closes
+  // the drawer rather than also pressing something.
+  //
+  // Preferred over raising the tile above the catcher, which would also raise
+  // it above the sticky header and let a tile paint over the toolbar on scroll.
+  useEffect(() => {
+    if (!present || closing || !keepInteractive) return undefined;
+    const outside = (e) => {
+      if (panelRef.current?.contains(e.target)) return;
+      if (keepInteractive()?.contains(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // One close per gesture: mousedown is where the decision is made, and
+      // the click and contextmenu that follow are only being swallowed.
+      if (e.type === "mousedown") onClose();
+    };
+    for (const type of ["mousedown", "click", "contextmenu"]) {
+      document.addEventListener(type, outside, true);
+    }
+    return () => {
+      for (const type of ["mousedown", "click", "contextmenu"]) {
+        document.removeEventListener(type, outside, true);
+      }
+    };
+  }, [present, closing, keepInteractive, onClose]);
+
   if (!present) return null;
 
   return (
     <>
-      {/* Transparent: catches the outside click without hiding the board. */}
-      <div
-        onClick={onClose}
-        aria-hidden="true"
-        style={{ position: "fixed", inset: 0, zIndex: 49, background: "transparent" }}
-      />
+      {/* Transparent: catches the outside click without hiding the board. Not
+          rendered when one element has to stay reachable — the effect above
+          does that job, because a sheet cannot have a hole in it. */}
+      {keepInteractive ? null : (
+        <div
+          onClick={onClose}
+          aria-hidden="true"
+          style={{ position: "fixed", inset: 0, zIndex: 49, background: "transparent" }}
+        />
+      )}
       <div
         ref={panelRef}
         role="dialog"

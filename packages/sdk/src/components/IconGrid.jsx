@@ -288,12 +288,21 @@ function IconGrid({
               // content, which is what makes this scroll rather than push the
               // tile open.
               minHeight: 0,
-              overflowY: "auto",
               overscrollBehavior: "contain",
               padding: ICON_GRID_PAD,
             }
           : null),
-        ...(draggingId ? { position: "relative", zIndex: 6, overflow: "visible" } : null),
+        ...(draggingId ? { position: "relative", zIndex: 6 } : null),
+        // One property, computed, rather than a longhand here and the shorthand
+        // in a conditional spread. React sets and clears these one at a time,
+        // and clearing the shorthand it added for the drag took the longhand
+        // underneath with it — so the grid stopped scrolling for good after the
+        // first icon was dragged. Same trap as border/borderColor; see
+        // src/core/shorthandStyles.test.js.
+        //
+        // `visible` for the length of a drag because a scroll container clips
+        // its children, and the icon being carried has to be able to leave.
+        overflow: draggingId ? "visible" : scroll ? "hidden auto" : undefined,
       }}
     >
       {items.map((item) => (
