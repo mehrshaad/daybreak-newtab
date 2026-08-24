@@ -3,6 +3,8 @@ import {
   BAR_TIERS,
   barTier,
   HERO_HINTS_MIN,
+  PROFILE_NAME_MIN,
+  profileShowsName,
   searchWidth,
   showHeroHints,
 } from "./barLayout";
@@ -76,5 +78,35 @@ describe("showHeroHints", () => {
     // showed the hints wrapped with a drawer open.
     expect(showHeroHints(1100)).toBe(true);
     expect(showHeroHints(1100 - 400)).toBe(false);
+  });
+});
+
+describe("profileShowsName", () => {
+  it("keeps the name where the group has room", () => {
+    expect(profileShowsName(300, { labels: true })).toBe(true);
+    expect(profileShowsName(PROFILE_NAME_MIN, { labels: true })).toBe(true);
+  });
+
+  it("drops to the emoji when the group is squeezed", () => {
+    // The chip's column is minmax(0, 1fr), so it does not push anything aside —
+    // it gets squeezed and the name inside truncates. A chip reading "M…" is a
+    // stub where a label used to be; the emoji still says which board you are
+    // on and asks for a third of the room.
+    expect(profileShowsName(PROFILE_NAME_MIN - 1, { labels: true })).toBe(false);
+    expect(profileShowsName(60, { labels: true })).toBe(false);
+  });
+
+  it("still follows the bar tier when labels are off entirely", () => {
+    // Below the widest tier the bar sheds labels anyway, and the chip goes with
+    // them however much room its own group happens to have.
+    expect(profileShowsName(900, { labels: false })).toBe(false);
+  });
+
+  it("assumes room before the first measurement", () => {
+    // A ResizeObserver has not reported yet on the first paint. Showing the
+    // name and dropping it a frame later is better than the reverse, which
+    // would flash the emoji on every load.
+    expect(profileShowsName(null, { labels: true })).toBe(true);
+    expect(profileShowsName(null, { labels: false })).toBe(false);
   });
 });

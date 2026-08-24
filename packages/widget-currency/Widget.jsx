@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { hasOrigin, MONO, useWidgetLocal } from "@daybreak/sdk";
-import { flagFor, symbolFor } from "./currencies";
+import { emojiFor, symbolFor } from "./currencies";
 import { crossToBase, ERAPI_URL, parseErApi, parseTgju, TGJU_ORIGIN, TGJU_URL } from "./irr";
 import { formatRate, parseRates, ratesUrl } from "./rates";
 
@@ -159,7 +159,7 @@ function Currency({ id, options, config }) {
           color: "var(--faint)",
         }}
       >
-        1 {flagFor(data.base) ? `${flagFor(data.base)} ` : ""}
+        1 {emojiFor(data.base) ? `${emojiFor(data.base)} ` : ""}
         {data.base}
       </div>
       {data.pairs.map((p) => (
@@ -168,15 +168,14 @@ function Currency({ id, options, config }) {
             <span
               style={{ display: "flex", alignItems: "baseline", gap: 6, color: "var(--dim)" }}
             >
-              {/* Nothing at all where flags do not render — Windows has no
-                  glyphs for them and draws the two letters instead, which is
-                  the country code beside the currency code and reads as a bug.
-                  See flagsRender. */}
-              {flagFor(p.code) ? (
+              {/* Not aria-hidden: with six currencies sharing a dollar sign this
+                  is often the only thing telling two rows apart, and a reader
+                  that skipped it would hear the code alone. */}
+              {emojiFor(p.code) ? (
                 <span
                   style={{ fontSize: type.code, lineHeight: 1, transition: TYPE_TRANSITION }}
                 >
-                  {flagFor(p.code)}
+                  {emojiFor(p.code)}
                 </span>
               ) : null}
               <span style={{ fontSize: type.code, transition: TYPE_TRANSITION }}>

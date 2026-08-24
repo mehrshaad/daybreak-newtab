@@ -1,11 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import {
-  CURRENCIES,
-  flagFor,
-  flagGlyph,
-  setFlagSupport,
-  symbolFor,
-} from "./currencies";
+import { describe, expect, it } from "vitest";
+import { CURRENCIES, emojiFor, symbolFor } from "./currencies";
 import manifest from "./manifest";
 import clocks from "../widget-worldclocks/manifest";
 
@@ -29,74 +23,47 @@ describe("symbolFor", () => {
   });
 });
 
-describe("flagFor", () => {
-  // The derivation is only safe because every currency this widget offers
-  // starts with its own ISO 3166 country code. Checked one by one rather than
-  // trusted, since the first code that breaks the rule would otherwise render
-  // two letter boxes and nobody would know why.
-  const EXPECTED = {
-    AUD: "🇦🇺", BRL: "🇧🇷", CAD: "🇨🇦", CHF: "🇨🇭", CNY: "🇨🇳", CZK: "🇨🇿",
-    DKK: "🇩🇰", EUR: "🇪🇺", GBP: "🇬🇧", HKD: "🇭🇰", HUF: "🇭🇺", IDR: "🇮🇩",
-    ILS: "🇮🇱", INR: "🇮🇳", IRR: "🇮🇷", ISK: "🇮🇸", JPY: "🇯🇵", KRW: "🇰🇷",
-    MXN: "🇲🇽", MYR: "🇲🇾", NOK: "🇳🇴", NZD: "🇳🇿", PHP: "🇵🇭", PLN: "🇵🇱",
-    RON: "🇷🇴", SEK: "🇸🇪", SGD: "🇸🇬", THB: "🇹🇭", TRY: "🇹🇷", USD: "🇺🇸",
-    ZAR: "🇿🇦",
-  };
+describe("emojiFor", () => {
+  it("gives every currency one", () => {
+    for (const [code] of CURRENCIES) expect(emojiFor(code), code).toBeTruthy();
+  });
 
-  it("gives the right flag for every currency offered", () => {
+  it("never repeats one", () => {
+    // Two rows carrying the same mark is worse than no marks at all: the mark
+    // is there to tell them apart. India's elephant is why Thailand has a
+    // tuk-tuk, and Iran's lion is why Singapore has a skyline.
+    const used = CURRENCIES.map(([c]) => emojiFor(c));
+    expect(new Set(used).size).toBe(used.length);
+  });
+
+  it("uses a lion for Iran, as asked", () => {
+    expect(emojiFor("IRR")).toBe("🦁");
+  });
+
+  it("uses no flags at all", () => {
+    // Why this is a table and not derived from the code: Windows has no flag
+    // glyphs and paints a regional-indicator pair as two letters, so "US USD"
+    // was the code twice. Nothing in here may be one.
     for (const [code] of CURRENCIES) {
-      expect(flagGlyph(code), code).toBe(EXPECTED[code]);
+      for (const ch of emojiFor(code)) {
+        const cp = ch.codePointAt(0);
+        expect(cp < 0x1f1e6 || cp > 0x1f1ff, code + " " + ch).toBe(true);
+      }
     }
   });
 
-  it("covers the whole list, with nothing left over", () => {
-    // If a currency is added above and not here, this is what says so.
-    expect(Object.keys(EXPECTED).sort()).toEqual(CURRENCIES.map(([c]) => c).sort());
-  });
-
-  it("returns two regional indicators, not letters", () => {
-    const flag = [...flagGlyph("USD")];
-    expect(flag).toHaveLength(2);
-    for (const ch of flag) {
-      expect(ch.codePointAt(0)).toBeGreaterThanOrEqual(0x1f1e6);
-      expect(ch.codePointAt(0)).toBeLessThanOrEqual(0x1f1ff);
+  it("says nothing for something that is not a currency here", () => {
+    for (const junk of ["", null, undefined, "XAU", "nonsense"]) {
+      expect(emojiFor(junk), String(junk)).toBe("");
     }
   });
 
-  it("says nothing rather than something wrong", () => {
-    // A metal or a drawing right has no country, so it gets no flag instead of
-    // a pair of tofu boxes.
-    for (const junk of ["", null, undefined, "X", "1US", "$$$"]) {
-      expect(flagGlyph(junk), String(junk)).toBe("");
-    }
+  it("is case-insensitive, since a stored config could hold either", () => {
+    expect(emojiFor("usd")).toBe(emojiFor("USD"));
   });
 
   it("still has a symbol for every currency, since that moved rather than went", () => {
     for (const [code] of CURRENCIES) expect(symbolFor(code), code).toBeTruthy();
-  });
-});
-
-describe("where flags cannot be drawn", () => {
-  afterEach(() => setFlagSupport(null));
-
-  it("shows nothing rather than the country code in letters", () => {
-    // Windows has no flag glyphs and paints the two regional indicators as
-    // "US", so the row read "US USD": the same thing twice, looking broken.
-    setFlagSupport(false);
-    for (const [code] of CURRENCIES) expect(flagFor(code), code).toBe("");
-  });
-
-  it("shows the flag where it does render", () => {
-    setFlagSupport(true);
-    expect(flagFor("USD")).toBe(flagGlyph("USD"));
-    expect(flagFor("JPY")).toBe(flagGlyph("JPY"));
-  });
-
-  it("keeps the mapping testable either way", () => {
-    // flagGlyph answers what a code maps to; flagFor answers what to show here.
-    setFlagSupport(false);
-    expect(flagGlyph("GBP")).toBeTruthy();
-    expect(flagFor("GBP")).toBe("");
   });
 });
 

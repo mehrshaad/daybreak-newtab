@@ -51,3 +51,28 @@ export function searchWidth(viewportWidth, { active, scrolled }) {
 export const HERO_HINTS_MIN = 820;
 
 export const showHeroHints = (width) => width >= HERO_HINTS_MIN;
+
+// How much room the toolbar's left group needs before the profile chip may
+// spell its name out.
+//
+// The chip is the one thing in the bar whose width depends on data rather than
+// on the design: a board called "Main" and one called "Personal projects" are
+// not the same size. Its column is minmax(0, 1fr), so it does not get to push
+// anything aside — it gets squeezed, and the name inside it truncates. At the
+// narrow end that produced a chip reading "M…", which is not a label, it is a
+// stub where a label used to be. Below this, the chip drops to its emoji, which
+// still says which board you are on and asks for a third of the room.
+//
+// Measured from what the group holds at that point: the chip with a short name
+// is about 90px, the gap 10, and the clock beside it 40.
+export const PROFILE_NAME_MIN = 150;
+
+// `available` is the measured width of the group, which is knowable and does not
+// depend on what the chip decides to render — the column is a share of the free
+// space, not a fit to its contents. Before the first measurement the bar tier is
+// the best guess there is.
+export function profileShowsName(available, { labels }) {
+  if (!labels) return false;
+  if (available == null) return true;
+  return available >= PROFILE_NAME_MIN;
+}
