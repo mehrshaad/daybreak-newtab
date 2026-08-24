@@ -84,20 +84,56 @@ export const symbolFor = (code) => SYMBOLS[code] || code;
 // offers resolves correctly that way, which the tests check one at a time --
 // the day someone adds a code where it does not (XAU, XDR) a table would have
 // been the safer choice, and this comment is where they will look.
-//
-// Known and accepted: Windows ships no flag glyphs, so Chrome there draws a
-// regional-indicator pair as its two letters -- "US USD" rather than a flag and
-// a code. This was tried the other way, with a chosen emoji per place, and a
-// kangaroo for Australia and a teapot for Britain are not what anyone means by
-// "the emoji for that currency". Flags are what the row is asking for, on the
-// platforms that can draw them.
 const FLAG_BASE = 0x1f1e6; // regional indicator A
 const LETTER_A = 65;
 
 // Iran is the exception, by request: the lion rather than the flag.
 const OVERRIDES = { IRR: "🦁" };
 
-export function emojiFor(code) {
+// Whether this machine can actually draw a flag.
+//
+// Windows ships no flag glyphs, and Chrome there renders a pair of regional
+// indicators as the two letters instead -- so a US flag comes out as the text
+// "US" and the row reads "US USD", the currency code printed twice. Detected by
+// measurement rather than by sniffing the user agent: a supported pair
+// ligatures into one glyph and is about as wide as a single emoji, while an
+// unsupported one is two separate letter boxes and close to twice that.
+// Comparing the pair against one of its own halves needs no reference glyph.
+//
+// This gates the lion too, which is the point of it being here rather than in
+// the widget. The lion stands in for a flag; it is not a mark Iran gets and the
+// others do not. Where flags cannot be drawn, no row gets one -- otherwise the
+// column would be blank except for a single lion halfway down it, which reads
+// as a bug rather than as a choice.
+let flagsWork = null;
+
+const US_FLAG = [0x1f1fa, 0x1f1f8];
+
+export function flagsRender() {
+  if (flagsWork !== null) return flagsWork;
+  if (typeof document === "undefined") return false;
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return false;
+    ctx.font = "16px sans-serif";
+    const pair = ctx.measureText(String.fromCodePoint(...US_FLAG)).width;
+    const half = ctx.measureText(String.fromCodePoint(US_FLAG[0])).width;
+    flagsWork = pair > 0 && half > 0 && pair < half * 1.6;
+  } catch {
+    flagsWork = false;
+  }
+  return flagsWork;
+}
+
+// Lets a test ask for either answer. The widget never calls it.
+export function setFlagSupport(value) {
+  flagsWork = value;
+}
+
+// What a code maps to, whether or not this machine can draw it. Kept separate
+// because the mapping and "what should be shown here" are different questions,
+// and only the second depends on the platform.
+export function emojiGlyph(code) {
   const key = String(code || "").toUpperCase();
   if (OVERRIDES[key]) return OVERRIDES[key];
   const country = key.slice(0, 2);
@@ -110,4 +146,11 @@ export function emojiFor(code) {
     points.push(FLAG_BASE + offset);
   }
   return String.fromCodePoint(...points);
+}
+
+// What the row should show: the glyph, or nothing at all where flags are only
+// going to come out as letters.
+export function emojiFor(code) {
+  if (!flagsRender()) return "";
+  return emojiGlyph(code);
 }

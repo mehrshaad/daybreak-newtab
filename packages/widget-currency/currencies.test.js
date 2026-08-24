@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { CURRENCIES, emojiFor, symbolFor } from "./currencies";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  CURRENCIES,
+  emojiFor,
+  emojiGlyph,
+  setFlagSupport,
+  symbolFor,
+} from "./currencies";
 import manifest from "./manifest";
 import clocks from "../widget-worldclocks/manifest";
 
@@ -23,9 +29,8 @@ describe("symbolFor", () => {
   });
 });
 
-describe("emojiFor", () => {
-  // Derived from the code, so this checks the derivation lands on the right
-  // country one at a time rather than trusting the rule.
+describe("emojiGlyph", () => {
+  // The mapping, independent of whether this machine can draw it.
   const EXPECTED = {
     AUD: "🇦🇺", BRL: "🇧🇷", CAD: "🇨🇦",
     CHF: "🇨🇭", CNY: "🇨🇳", CZK: "🇨🇿",
@@ -40,47 +45,65 @@ describe("emojiFor", () => {
     ZAR: "🇿🇦",
   };
 
-  it("gives the right flag for every currency offered", () => {
-    for (const [code] of CURRENCIES) expect(emojiFor(code), code).toBe(EXPECTED[code]);
+  it("gives the right glyph for every currency offered", () => {
+    for (const [code] of CURRENCIES) expect(emojiGlyph(code), code).toBe(EXPECTED[code]);
   });
 
   it("covers the whole list, with nothing left over", () => {
-    // Add a currency above without adding it here and this is what says so.
     expect(Object.keys(EXPECTED).sort()).toEqual(CURRENCIES.map(([c]) => c).sort());
   });
 
   it("uses a lion for Iran rather than its flag, by request", () => {
-    expect(emojiFor("IRR")).toBe("🦁");
-    // And it is the one exception: everything else is a pair of indicators.
+    expect(emojiGlyph("IRR")).toBe("🦁");
+    // And it is the only one that is not a pair of regional indicators.
     for (const [code] of CURRENCIES) {
       if (code === "IRR") continue;
-      expect([...emojiFor(code)], code).toHaveLength(2);
+      expect([...emojiGlyph(code)], code).toHaveLength(2);
     }
   });
 
   it("never repeats one", () => {
-    const used = CURRENCIES.map(([c]) => emojiFor(c));
+    const used = CURRENCIES.map(([c]) => emojiGlyph(c));
     expect(new Set(used).size).toBe(used.length);
   });
 
-  it("builds real regional indicators, not letters", () => {
-    for (const ch of emojiFor("USD")) {
-      expect(ch.codePointAt(0)).toBeGreaterThanOrEqual(0x1f1e6);
-      expect(ch.codePointAt(0)).toBeLessThanOrEqual(0x1f1ff);
-    }
-  });
-
   it("says nothing rather than something wrong", () => {
-    // A metal or a drawing right has no country, so it gets nothing instead of
-    // a pair of tofu boxes.
     for (const junk of ["", null, undefined, "X", "1US", "$$$"]) {
-      expect(emojiFor(junk), String(junk)).toBe("");
+      expect(emojiGlyph(junk), String(junk)).toBe("");
     }
   });
 
   it("is case-insensitive, since a stored config could hold either", () => {
-    expect(emojiFor("usd")).toBe(emojiFor("USD"));
-    expect(emojiFor("irr")).toBe(emojiFor("IRR"));
+    expect(emojiGlyph("usd")).toBe(emojiGlyph("USD"));
+    expect(emojiGlyph("irr")).toBe(emojiGlyph("IRR"));
+  });
+});
+
+describe("emojiFor, which is what the row actually shows", () => {
+  afterEach(() => setFlagSupport(null));
+
+  it("shows the glyph where flags render", () => {
+    setFlagSupport(true);
+    for (const [code] of CURRENCIES) expect(emojiFor(code), code).toBe(emojiGlyph(code));
+  });
+
+  it("shows nothing at all where they do not, the lion included", () => {
+    // The lion stands in for a flag; it is not a mark Iran gets and the others
+    // do not. On Windows, where a regional-indicator pair comes out as its two
+    // letters, no row gets one -- otherwise the column is blank except for a
+    // single lion halfway down it, which reads as a bug rather than a choice.
+    setFlagSupport(false);
+    for (const [code] of CURRENCIES) expect(emojiFor(code), code).toBe("");
+    expect(emojiFor("IRR")).toBe("");
+  });
+
+  it("keeps the lion and the flags together either way", () => {
+    // Whatever the platform does, the answer for Iran and the answer for
+    // everyone else agree about whether there is a mark at all.
+    for (const supported of [true, false]) {
+      setFlagSupport(supported);
+      expect(!!emojiFor("IRR")).toBe(!!emojiFor("USD"));
+    }
   });
 
   it("still has a symbol for every currency, since that moved rather than went", () => {
