@@ -13,10 +13,11 @@ import {
   SEARCH_ENGINES,
   softButton,
   Tooltip,
+  useMeasuredWidth,
   useRovingMenu,
   useTooltip,
 } from "@daybreak/sdk";
-import { barTier, searchWidth } from "../core/barLayout";
+import { barTier, profileShowsName, searchWidth } from "../core/barLayout";
 import { gatherSuggestions } from "../core/suggest";
 import { nextTheme, THEME_LABELS } from "../core/themeCycle";
 import { useViewportWidth } from "../core/useColumns";
@@ -167,6 +168,9 @@ function Header({
   // below keeps the whole bar out of the drawer's way.
   const width = Math.max(320, useViewportWidth() - inset);
   const tier = barTier(width);
+  // The left group's real width, for the one decision that cannot be made from
+  // the window alone.
+  const [leftRef, leftWidth] = useMeasuredWidth();
   const nextThemeValue = nextTheme(themeSetting);
   const themeTip = useTooltip(`Switch to ${THEME_LABELS[nextThemeValue]}`);
   const settingsTip = useTooltip("Settings");
@@ -326,14 +330,23 @@ function Header({
       }}
     >
       {/* Both end groups are their own column now, so neither needs a width:
-          they take what they take and the field stays put regardless. */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+          they take what they take and the field stays put regardless.
+          Measured, though, because the profile chip is the one item in the bar
+          whose width comes from data rather than from the design — see
+          profileShowsName. */}
+      <div
+        ref={leftRef}
+        style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}
+      >
         {/* Renders nothing at all on a single-profile install, which is most of
             them, so the bar is unchanged for anyone not using profiles. When it
             does appear it takes the wordmark's place rather than crowding it:
             which board you are looking at is worth a permanent spot in the bar
             and a wordmark on your own new tab is not. */}
-        <ProfileSwitcher compact={!tier.labels} onManage={onManageProfiles} />
+        <ProfileSwitcher
+          compact={!profileShowsName(leftWidth, { labels: tier.labels })}
+          onManage={onManageProfiles}
+        />
         <Appear open={tier.wordmark && !hasProfiles} style={{ display: "flex" }}>
           <span
             style={{

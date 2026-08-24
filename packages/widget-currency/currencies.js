@@ -76,84 +76,59 @@ const SYMBOLS = {
 
 export const symbolFor = (code) => SYMBOLS[code] || code;
 
-// The flag for a currency, beside its code.
+// An emoji for each currency, beside its code.
 //
-// This file used to argue against flags on the grounds that a currency is not a
-// country, which is true — the euro is the obvious case, and the dollar sign is
-// shared by six of the entries above. It reads better anyway: a column of
-// three-letter codes is a column of things to decode, and a flag is recognised
-// before it is read. The code stays right next to it, so nothing is lost for
-// the currencies where the flag is only an approximation.
+// Flags were the obvious choice and the wrong one. Windows ships no flag glyphs
+// at all, so Chrome there paints a pair of regional indicators as the two
+// letters instead: a US flag came out as the text "US" and the row read
+// "US USD" -- the code twice, looking like a bug. That is the majority platform.
 //
-// Derived rather than tabled. ISO 4217 builds a currency code from the ISO 3166
-// country code plus a letter for the unit, so the first two letters already are
-// the country — USD is US, JPY is JP, IRR is IR. Every one of the currencies
-// above resolves correctly that way, which the tests check one by one, because
-// the day someone adds a code where it does not (XAU, XDR) a table would have
-// been the safer choice and this comment is where they will look.
-const FLAG_BASE = 0x1f1e6; // regional indicator A
-const LETTER_A = 65;
-
-// Whether this machine can actually draw a flag.
+// Ordinary emoji render everywhere, so each currency gets one thing associated
+// with the place instead. Not a code, not a letterform and not a flag: a lion
+// for Iran, a maple leaf for Canada, Liberty for the dollar. It is more use
+// than a flag was, too, because it does not need reading -- the point of a mark
+// beside the code is that it is recognised before the code is.
 //
-// Windows ships no flag glyphs at all, and Chrome on Windows renders a pair of
-// regional indicators as the two letters instead, so a US flag comes out as the
-// text "US" and the row reads "US USD" -- the code twice, looking like a bug.
-// Reported exactly that way, and Windows is the majority platform, so this is
-// not an edge case to wave through.
+// A table rather than anything derived. No rule produces a kangaroo from "AUD",
+// and each of these is a judgement about what a place is known for, which is
+// the kind of thing that should be written where it can be argued with.
 //
-// Detected by measurement rather than by sniffing the user agent: a supported
-// pair ligatures into one glyph and is about as wide as a single emoji, while an
-// unsupported one is two letter boxes and close to twice that. Comparing the
-// pair against one of its own halves needs no reference glyph.
-let flagsWork = null;
+// One rule inside it: nothing appears twice. India's elephant is why Thailand
+// gets a tuk-tuk, and Iran having the lion is why Singapore -- the Lion City --
+// gets its skyline instead. A repeated emoji is worse than none, since two rows
+// would carry the same mark.
+const EMOJI = {
+  AUD: "🦘", // kangaroo
+  BRL: "🦜", // macaw
+  CAD: "🍁", // maple leaf
+  CHF: "🏔️", // snow-capped mountain
+  CNY: "🐼", // panda
+  CZK: "🏰", // castle
+  DKK: "🧱", // brick
+  EUR: "🏛️", // classical building
+  GBP: "🫖", // teapot
+  HKD: "🏙️", // cityscape
+  HUF: "🌶️", // hot pepper
+  IDR: "🦎", // lizard
+  ILS: "🕎", // menorah
+  INR: "🐘", // elephant
+  IRR: "🦁", // lion
+  ISK: "🌋", // volcano
+  JPY: "🗻", // mount fuji
+  KRW: "🐯", // tiger face
+  MXN: "🌮", // taco
+  MYR: "🌺", // hibiscus
+  NOK: "⛷️", // skier
+  NZD: "🥝", // kiwi fruit
+  PHP: "🏝️", // desert island
+  PLN: "🥟", // dumpling
+  RON: "🧛", // vampire
+  SEK: "🦌", // deer
+  SGD: "🌇", // sunset over buildings
+  THB: "🛺", // auto rickshaw
+  TRY: "🧿", // nazar amulet
+  USD: "🗽", // statue of liberty
+  ZAR: "🦓", // zebra
+};
 
-const US_FLAG = [0x1f1fa, 0x1f1f8];
-
-export function flagsRender() {
-  if (flagsWork !== null) return flagsWork;
-  if (typeof document === "undefined") return false;
-  try {
-    const ctx = document.createElement("canvas").getContext("2d");
-    if (!ctx) return false;
-    ctx.font = "16px sans-serif";
-    const pair = ctx.measureText(String.fromCodePoint(...US_FLAG)).width;
-    const half = ctx.measureText(String.fromCodePoint(US_FLAG[0])).width;
-    flagsWork = pair > 0 && half > 0 && pair < half * 1.6;
-  } catch {
-    flagsWork = false;
-  }
-  return flagsWork;
-}
-
-// Lets a test ask for either answer, and the widget nothing at all.
-export function setFlagSupport(value) {
-  flagsWork = value;
-}
-
-export function flagFor(code) {
-  if (!flagsRender()) return "";
-  const country = String(code || "").slice(0, 2).toUpperCase();
-  if (country.length < 2) return "";
-  const points = [];
-  for (const ch of country) {
-    const offset = ch.charCodeAt(0) - LETTER_A;
-    // Anything that is not a plain A-Z pair has no flag to make.
-    if (offset < 0 || offset > 25) return "";
-    points.push(FLAG_BASE + offset);
-  }
-  return String.fromCodePoint(...points);
-}
-
-// The flag a code maps to, whether or not this machine can draw it. The mapping
-// and "what should be shown here" are different questions, and only the second
-// one depends on the platform.
-export function flagGlyph(code) {
-  const was = flagsWork;
-  flagsWork = true;
-  try {
-    return flagFor(code);
-  } finally {
-    flagsWork = was;
-  }
-}
+export const emojiFor = (code) => EMOJI[String(code || "").toUpperCase()] || "";
