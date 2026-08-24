@@ -82,7 +82,7 @@
     <main>
       <h1>Privacy Policy</h1>
       <p class="updated">
-        <strong>Daybreak - New Tab</strong> · Last updated: August 7, 2026
+        <strong>Daybreak - New Tab</strong> · Last updated: August 23, 2026
       </p>
 
       <p>
@@ -144,6 +144,15 @@
           Matches what you type against your saved bookmarks. Read-only: the
           extension never creates, edits or deletes a bookmark, and it reads them
           only while you are typing.
+        </li>
+        <li>
+          <strong>Top Sites widget — <code>topSites</code>.</strong> Shows the
+          sites you visit most often as shortcuts. Chrome supplies the list it
+          has already compiled for its own new tab page; the extension reads the
+          titles and addresses in it to draw the tiles, and nothing else. It is
+          read at most once per new tab, it never leaves your browser, and
+          hiding a site from the widget is remembered locally rather than
+          changing anything in Chrome.
         </li>
         <li>
           <strong>Site icons — <code>favicon</code>.</strong> Lets search
@@ -260,8 +269,9 @@
         Further permissions are <em>optional</em> and requested only when you
         turn on the feature that needs one:
         <strong>sessions</strong>, <strong>tabs</strong>,
-        <strong>history</strong>, <strong>bookmarks</strong> and
-        <strong>favicon</strong>, each described above.
+        <strong>history</strong>, <strong>bookmarks</strong>,
+        <strong>topSites</strong> and <strong>favicon</strong>, each described
+        above.
       </p>
       <p>
         The extension declares no host permissions up front, so it starts with
