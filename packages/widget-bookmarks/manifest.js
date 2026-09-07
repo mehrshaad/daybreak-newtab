@@ -4,7 +4,7 @@ export default {
   glyph: "bookmark",
   category: "Essentials",
   author: "Daybreak",
-  version: "1.0.0",
+  version: "1.1.0",
   tagline: "The folders you already keep.",
   description:
     "Your browser's own bookmarks, by folder. Read live from Chrome on this " +
@@ -33,7 +33,23 @@ export default {
   // reason the mode exists — and a 2x2 holding four links is a good tile.
   sizesFor: (sizes, options) =>
     options?.separate ? sizes : sizes.filter(([w, h]) => w >= 4 && h >= 3),
-  actions: [{ id: "add", label: "Add a bookmark", panel: true }],
+  actions: [
+    { id: "add", label: "Add a bookmark", panel: true },
+    // Same pair as Quick Links, and offered from the tile's own menu for the
+    // same reason. See actionsFor below for when each one shows.
+    { id: "separate", label: "Give each folder a card", icon: "layers" },
+    { id: "rejoin", label: "Put the folders back in one card", icon: "layers" },
+  ],
+  // The folders live in Chrome, so this cannot count them from config the way
+  // Quick Links does — the widget knows and the manifest does not. Offering
+  // the split on an unsplit card is the honest approximation: if there are no
+  // folders the widget's own handler declines and says so.
+  actionsFor: (actions, options, config) =>
+    actions.filter((a) => {
+      if (a.id === "separate") return config?.folderId == null;
+      if (a.id === "rejoin") return config?.folderId != null;
+      return true;
+    }),
   options: [
     {
       key: "layout",

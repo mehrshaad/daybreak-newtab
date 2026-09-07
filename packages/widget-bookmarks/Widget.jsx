@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Button,
   IconGrid,
+  MONO,
   hasPermission,
   iconGridSize,
   requestPermission,
+  useWidgetAction,
 } from "@daybreak/sdk";
 import { cap, hasBookmarksApi, readFolders, selectFolders, watchBookmarks } from "./tree";
 
@@ -45,19 +47,41 @@ function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing })
       {showHeading ? (
         <div
           style={{
-            fontSize: 10,
-            letterSpacing: ".14em",
-            textTransform: "uppercase",
-            color: "var(--faint)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            // Sits on the row above its links without the gap reading as a
-            // blank line between two groups.
-            paddingBottom: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            // Sticky in the card's scroller, so a long list of folders never
+            // leaves you looking at links with no idea which folder they are
+            // in. --tile-bg is the tile's own computed fill; see tileStyle.
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+            background: "var(--tile-bg, var(--panel))",
+            paddingBottom: 3,
           }}
         >
-          {folder.title}
+          <span
+            style={{
+              fontSize: 10,
+              letterSpacing: ".14em",
+              textTransform: "uppercase",
+              color: "var(--dim)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              flex: "none",
+              maxWidth: "70%",
+            }}
+          >
+            {folder.title}
+          </span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: "var(--faint)", flex: "none" }}>
+            {folder.links.length}
+          </span>
+          <span
+            aria-hidden
+            style={{ flex: 1, height: 1, background: "var(--line)", minWidth: 8 }}
+          />
         </div>
       ) : null}
 
@@ -75,6 +99,8 @@ function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing })
         list={list}
         onOpen={onOpen}
         editing={editing}
+        // Lined up under the heading rather than centred beneath it.
+        align={showHeading ? "start" : "center"}
         // Bookmarks are Chrome's, and their order is Chrome's. Dragging one
         // here would have to move it in the browser's own tree, which is a
         // reorder of somebody's bookmarks bar done by accident on the way past
@@ -118,7 +144,19 @@ function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing })
   );
 }
 
-function Bookmarks({ options, config, setConfig, size, editing, refreshKey }) {
+function Bookmarks({
+  options,
+  config,
+  setConfig,
+  setOptions,
+  size,
+  editing,
+  refreshKey,
+  action,
+  onSpawn,
+  onRejoin,
+  toast,
+}) {
   const { layout, iconScale, perFolder, showHeadings, newTab } = options;
   const [granted, setGranted] = useState(null);
   const [folders, setFolders] = useState([]);
@@ -145,6 +183,48 @@ function Bookmarks({ options, config, setConfig, size, editing, refreshKey }) {
     if (!granted) return undefined;
     return watchBookmarks(load);
   }, [granted, load]);
+
+  // Splitting and rejoining, from the tile's own menu.
+  //
+  // The folders are Chrome's, so this is the one that can tell whether there
+  // are any — the manifest cannot, which is why actionsFor there offers the
+  // split on any unsplit card and this declines with a reason.
+  useWidgetAction(action, "separate", () => {
+    const chosen = selectFolders(folders, { selected: config.folders });
+    if (chosen.length < 2) {
+      toast?.(
+        folders.length
+          ? "Only one folder here — nothing to split"
+          : "No bookmark folders to split yet"
+      );
+      return;
+    }
+    setOptions({ separate: true });
+    onSpawn?.(
+      chosen.map((f) => ({ folders: [], folderId: f.id, folderTitle: f.title }))
+    );
+  });
+
+  // Back to one card. Nothing has to be merged — a Bookmarks card holds no
+  // content of its own, only which folder to read — so the merge just clears
+  // the pin, and the host removes the siblings.
+  useWidgetAction(action, "rejoin", () => {
+    onRejoin?.(() => ({ folders: [], folderId: null, folderTitle: "" }));
+    setOptions({ separate: false });
+  });
+
+  // A card pinned to a folder that has since been deleted in Chrome.
+  //
+  // It would otherwise sit there empty for good, with its title still naming
+  // something that no longer exists. Only once the folders have actually
+  // loaded, or the first render before the read lands would unpin every card.
+  useEffect(() => {
+    if (!config.folderId || !folders.length) return;
+    if (folders.some((f) => f.id === config.folderId)) return;
+    setConfig({ folderId: null, folderTitle: "" });
+    setOptions({ separate: false });
+    toast?.("That bookmark folder is gone — showing all of them");
+  }, [config.folderId, folders, setConfig, setOptions, toast]);
 
   // Keep the card's own title in step with the folder's name.
   //
