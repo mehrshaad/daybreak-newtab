@@ -16,11 +16,17 @@ function available() {
   };
 }
 
-export function clampToViewport(x, y, width, height, edge = 12) {
+// `zoom` is the page-zoom factor — see zoom.js. clientWidth is a visual
+// measurement and the box being placed is in layout pixels, so the space has
+// to be converted before the two are compared, or a 90% zoom would clamp
+// everything into the left ten per cent of a viewport it thought was narrow.
+export function clampToViewport(x, y, width, height, edge = 12, zoom = 1) {
   const space = available();
+  const w = space.width / zoom;
+  const h = space.height / zoom;
   return {
-    left: Math.max(edge, Math.min(x, space.width - width - edge)),
-    top: Math.max(edge, Math.min(y, space.height - height - edge)),
+    left: Math.max(edge, Math.min(x, w - width - edge)),
+    top: Math.max(edge, Math.min(y, h - height - edge)),
   };
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { clampToViewport } from "../clamp";
+import { layoutRect, pageZoomFactor } from "../zoom";
 import { usePresence } from "../usePresence";
 
 const GAP = 6;
@@ -31,7 +32,11 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
     const panel = panelRef.current;
     if (!anchor || !panel) return;
 
-    const a = anchor.getBoundingClientRect();
+    // Layout pixels throughout, because `left` and `top` below are read as
+    // layout pixels and getBoundingClientRect answers in visual ones. They are
+    // the same until a page zoom is set. See zoom.js.
+    const zoom = pageZoomFactor();
+    const a = layoutRect(anchor, zoom);
     // Resolved once here and carried in state (not recomputed at render time),
     // so the width used to clamp is exactly the width that gets rendered —
     // measuring the panel at one width and then rendering it at another would
@@ -39,7 +44,7 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
     const w = width ?? a.width;
     const h = panel.offsetHeight;
 
-    const fitsBelow = a.bottom + GAP + h <= window.innerHeight - 12;
+    const fitsBelow = a.bottom + GAP + h <= window.innerHeight / zoom - 12;
     const y =
       placement === "top-start" || placement === "top-center" || !fitsBelow
         ? a.top - GAP - h
@@ -52,13 +57,19 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
         ? a.left + (a.width - w) / 2
         : a.left;
 
-    setPos({ ...clampToViewport(x, y, w, h), width: w });
+    setPos({ ...clampToViewport(x, y, w, h, 12, zoom), width: w });
   };
 
-  // Measured after the panel has real content, so its height is not a guess.
+  // Measured after the panel has real content, so its height is not a guess —
+  // and again whenever that content changes size, which a font arriving under
+  // font-display: swap does. See the same note in Tooltip.
   useLayoutEffect(() => {
     if (!present) return undefined;
     reposition();
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => reposition());
+    if (observer && panelRef.current) observer.observe(panelRef.current);
+    return () => observer?.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [present, children, width]);
 

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MenuRow, MONO, clampToViewport } from "@daybreak/sdk";
+import { MenuRow, MONO, clampToViewport, pageZoomFactor } from "@daybreak/sdk";
 import { Pill } from "./primitives";
 
 const MENU_WIDTH = 236;
@@ -14,7 +14,12 @@ function useClampedPosition(x, y, deps) {
   useLayoutEffect(() => {
     const h = ref.current?.offsetHeight || 0;
     const w = ref.current?.offsetWidth || MENU_WIDTH;
-    setPos(clampToViewport(x, y, w, h));
+    // x and y are a pointer event's clientX/clientY, which are visual pixels;
+    // `left` and `top` on this menu are read as layout pixels. Identical until
+    // a page zoom is set, and off by the zoom afterwards — the menu opened
+    // above and left of the pointer at 90%. See zoom.js.
+    const zoom = pageZoomFactor();
+    setPos(clampToViewport(x / zoom, y / zoom, w, h, 12, zoom));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [x, y, ...deps]);
 
