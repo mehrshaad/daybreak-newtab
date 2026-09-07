@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LuClipboard, LuPlus, LuTrash2 } from "react-icons/lu";
+import { LuPlus, LuTrash2 } from "react-icons/lu";
 import {
   Appear,
+  ColorField,
   Favicon,
   hasPermission,
   IconGrid,
@@ -13,13 +14,13 @@ import {
   Popover,
   readClipboardLink,
   requestPermission,
-  TILE_COLOR_ORDER,
-  TILE_COLORS,
-  TILE_INKS,
+  Select,
   uid,
+  useLiveRef,
   useWidgetAction,
 } from "@daybreak/sdk";
 import { LOOSE, folderNames, groupLinks, selectGroup } from "./folders";
+import { findIcon } from "./findIcon";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.
@@ -48,19 +49,6 @@ const FIELD_INPUT_STYLE = {
   color: "var(--fg)",
 };
 
-const INK_BUTTON_STYLE = {
-  flex: 1,
-  padding: "5px 8px",
-  borderRadius: 8,
-  background: "var(--panel2)",
-  fontSize: 11,
-  fontFamily: "inherit",
-  textTransform: "none",
-  letterSpacing: "normal",
-  cursor: "pointer",
-  transition: "border-color .15s ease, color .15s ease, background .15s ease",
-};
-
 const REMOVE_ROW_STYLE = {
   display: "inline-flex",
   alignItems: "center",
@@ -78,70 +66,6 @@ const REMOVE_ROW_STYLE = {
   cursor: "pointer",
   transition: "background .15s ease",
 };
-
-const PASTE_BUTTON_STYLE = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  width: "100%",
-  justifyContent: "center",
-  padding: "6px 10px",
-  borderRadius: 8,
-  background: "var(--panel2)",
-  border: "1px solid var(--line)",
-  color: "var(--dim)",
-  fontSize: 11,
-  fontFamily: "inherit",
-  cursor: "pointer",
-  transition: "background .15s ease, color .15s ease",
-};
-
-// One colour in the picker, painted as the tile it produces rather than as a
-// flat sample. A row of flat colours is a row of colours; a row of gradients
-// is a preview of the grid.
-function ColorSwatch({ name, selected, onPick, link }) {
-  const pair = name ? TILE_COLORS[name] : null;
-  return (
-    <button
-      type="button"
-      aria-label={name ? `Colour: ${name}` : "Colour: automatic"}
-      aria-pressed={selected}
-      onClick={onPick}
-      style={{
-        width: 22,
-        height: 22,
-        padding: 0,
-        borderRadius: 7,
-        cursor: "pointer",
-        display: "grid",
-        placeItems: "center",
-        overflow: "hidden",
-        // The whole border in one declaration. A `border` here and a
-        // `borderColor` in a selected state would leave the swatch with no
-        // border at all once React removed the longhand — see
-        // shorthandStyles.test.js, which exists because of exactly this.
-        border: selected ? "2px solid var(--fg)" : "1px solid var(--line)",
-        background: pair ? `linear-gradient(160deg, ${pair.from}, ${pair.to})` : "transparent",
-        transition: "border-color .15s ease, transform .15s ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "scale(1.12)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
-      }}
-    >
-      {/* Automatic draws the tile it would actually produce — this link's own
-          brand mark, or its monogram on a hashed hue. A neutral square would
-          have needed a legend; showing the answer needs none. It also renders
-          as nothing at all on a light theme, where --panel2 and --line are
-          both within a few percent of white. */}
-      {pair ? null : (
-        <IconTile name={link?.name || "?"} url={link?.url} size={20} radius={5} />
-      )}
-    </button>
-  );
-}
 
 const DEFAULTS = [
   { id: "d1", name: "GitHub", url: "https://github.com" },
@@ -178,6 +102,9 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   const [adding, setAdding] = useState(false);
   const [draftUrl, setDraftUrl] = useState("");
   const [draftName, setDraftName] = useState("");
+  // null means "whatever this card is", which is the right default and not the
+  // same as "" (no folder), so it cannot be folded into one value.
+  const [draftFolder, setDraftFolder] = useState(null);
   const addBtnRef = useRef(null);
   // Whether the clipboard can be read: null until asked, so the Paste button
   // does not flash into view for a tenth of a second on every open before the
@@ -187,7 +114,15 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   // element rather than a ref: each icon has its own node and there is no ref
   // to hold them all, so IconGrid hands over the one that was right-clicked.
   const [editId, setEditId] = useState(null);
-  const editAnchor = useRef(null);
+  // Resolved on read, not held. Filing a link into a folder moves it to a
+  // different group and therefore a different IconGrid, so the icon is
+  // unmounted and remade — and a held reference to the old node answers
+  // getBoundingClientRect with zeroes, which sent this popover to the corner
+  // of the window mid-keystroke. See useLiveRef.
+  const rootRef = useRef(null);
+  const editAnchor = useLiveRef(() =>
+    editId ? findIcon(rootRef.current, editId) : null
+  );
 
   // "Add a link" from the tile's right-click menu, which is where people
   // look for it before they find the button that only exists in edit mode.
@@ -197,6 +132,7 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
     setAdding(false);
     setDraftUrl("");
     setDraftName("");
+    setDraftFolder(null);
   };
 
   // Offer whatever address is on the clipboard, which is nearly always the
@@ -219,16 +155,33 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
     };
   }, [adding]);
 
-  // The first paste, which is also the permission prompt.
+  // Opening the add form, and — the first time only — asking for the
+  // clipboard so it can fill itself in.
   //
-  // requestPermission has to be the first await in the handler or Chrome has
-  // already spent the click gesture by the time it is called and refuses.
-  const pasteFromClipboard = async () => {
-    const granted = await requestPermission("clipboardRead");
-    setCanPaste(granted);
-    if (!granted) return;
-    const link = await readClipboardLink();
-    if (link) setDraftUrl(link);
+  // There is no Paste button any more. A button that might turn out to have
+  // nothing to paste is worse than no button, and the address on the clipboard
+  // is nearly always the reason the form is being opened, so the right
+  // behaviour is for it to already be there. The permission is the only reason
+  // a button was needed, and a click on Add is a user gesture, which is all
+  // Chrome requires — so it is asked for here, once, and never again either
+  // way. Declined, the field is simply typed into.
+  const askedPaste = useRef(false);
+  const openAdd = (e) => {
+    e.stopPropagation();
+    if (adding) {
+      closeAdd();
+      return;
+    }
+    setAdding(true);
+    if (canPaste !== false || askedPaste.current) return;
+    askedPaste.current = true;
+    // Nothing may be awaited before this or the gesture is already spent.
+    requestPermission("clipboardRead").then(async (granted) => {
+      setCanPaste(granted);
+      if (!granted) return;
+      const link = await readClipboardLink();
+      if (link) setDraftUrl((current) => current || link);
+    });
   };
 
   // Width decides how many icons fit per row; height decides how big they are.
@@ -254,6 +207,21 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   // scroller on the grid itself. Any board that has never used a folder must
   // come out of this unchanged.
   const plain = groups.length === 1 && !groups[0].name;
+
+  // The folder this card is pinned to, as a plain name ("" for the ungrouped
+  // card, null for a card showing everything).
+  const cardFolder =
+    config.folder == null ? null : config.folder === LOOSE ? "" : config.folder;
+
+  // What either form offers. "No folder" first because it is the common answer
+  // and the one a link starts in.
+  const folderOptions = useMemo(
+    () => [
+      { value: "", label: "No folder" },
+      ...folderNames(items).map((name) => ({ value: name, label: name })),
+    ],
+    [items]
+  );
 
   const toGridItem = (l) => ({
     key: l.id,
@@ -302,7 +270,9 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
     // On a card that holds one folder, a new link joins that folder. Without
     // this it would be filed as loose and then not shown at all by the very
     // card it was added from.
-    const folder = config.folder == null || config.folder === LOOSE ? "" : config.folder;
+    // The folder the form chose, defaulting to this card's own — a card that
+    // holds one folder cannot show a link filed anywhere else.
+    const folder = (draftFolder ?? cardFolder) || "";
     setConfig({ items: [...items, { id: uid(), name, url, ...(folder ? { folder } : null) }] });
     closeAdd();
   };
@@ -313,10 +283,9 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   // Right-clicking one icon edits that one link. The tile's own menu still
   // opens from anywhere else in the widget, which is where "Add a link" and
   // the size picker live; this is about the icon under the pointer.
-  const openItemMenu = (item, el) => {
-    editAnchor.current = el;
-    setEditId(item.key);
-  };
+  // The element is not kept — editAnchor finds whichever node currently
+  // carries the key, every time it is read. See useLiveRef.
+  const openItemMenu = (item) => setEditId(item.key);
 
   const edited = items.find((l) => l.id === editId) || null;
 
@@ -346,7 +315,10 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
+    <div
+      ref={rootRef}
+      style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}
+    >
       {/* One grid per folder, or exactly one unheaded grid where nobody has
           used folders — see groupLinks. The column is the scroller in the
           grouped case; see the `scroll` prop below. */}
@@ -464,10 +436,7 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
               <button
                 ref={addBtnRef}
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setAdding((v) => !v);
-                }}
+                onClick={openAdd}
                 aria-label="Add a link"
                 style={{
                   display: "flex",
@@ -558,24 +527,20 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
               style={FIELD_INPUT_STYLE}
             />
           </label>
-          {/* Only until the permission exists, and only while the field is
-              empty — once either is settled there is nothing for it to do. */}
-          <Appear open={canPaste === false && !draftUrl}>
-            <button
-              type="button"
-              onClick={pasteFromClipboard}
-              style={PASTE_BUTTON_STYLE}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--panel)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "var(--panel2)";
-              }}
-            >
-              <LuClipboard size={12} aria-hidden />
-              Paste what I copied
-            </button>
-          </Appear>
+          {/* The folder a new link goes into. Defaults to whatever this card
+              holds, so a link added from the "Dev" card joins Dev. */}
+          <label style={FIELD_LABEL_STYLE}>
+            Folder
+            <Select
+              value={draftFolder ?? cardFolder ?? ""}
+              options={folderOptions}
+              onChange={setDraftFolder}
+              onCreate={(name) => setDraftFolder(name)}
+              createLabel="New folder…"
+              createPlaceholder="Folder name"
+              ariaLabel="Folder"
+            />
+          </label>
           {/* A form with two text fields and no button does not submit
               on Enter — this restores that without a visible button. */}
           <button type="submit" style={{ display: "none" }} aria-hidden="true" />
@@ -627,81 +592,24 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
 
             <label style={FIELD_LABEL_STYLE}>
               Folder
-              <input
+              <Select
                 value={edited.folder || ""}
-                onChange={(e) => patch({ folder: e.target.value })}
-                placeholder="None"
-                aria-label="Folder"
-                list="db-link-folders"
-                style={FIELD_INPUT_STYLE}
+                options={folderOptions}
+                onChange={(folder) => patch({ folder })}
+                onCreate={(folder) => patch({ folder })}
+                createLabel="New folder…"
+                createPlaceholder="Folder name"
+                ariaLabel="Folder"
               />
-              {/* The folders already in use, offered rather than imposed: a
-                  free field is what makes a new folder, and a picker of
-                  existing ones is what stops "AI" and "Ai" both existing. */}
-              <datalist id="db-link-folders">
-                {folderNames(items).map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
             </label>
 
-            <div style={FIELD_LABEL_STYLE}>
-              Tile colour
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, 22px)",
-                  justifyContent: "space-between",
-                  gap: 6,
-                  paddingTop: 2,
-                }}
-              >
-                <ColorSwatch
-                  name={null}
-                  link={edited}
-                  selected={!edited.color}
-                  onPick={() => patch({ color: null, ink: null })}
-                />
-                {TILE_COLOR_ORDER.map((name) => (
-                  <ColorSwatch
-                    key={name}
-                    name={name}
-                    selected={edited.color === name}
-                    onPick={() => patch({ color: name })}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Only with a colour chosen. On an automatic tile the mark is the
-                brand's own or a monogram on a hashed hue, and neither has a
-                second legible ink to offer — the option would be visible and
-                inert, which reads as broken. */}
-            <Appear open={!!edited.color}>
-              <div style={FIELD_LABEL_STYLE}>
-                Icon
-                <div style={{ display: "flex", gap: 6, paddingTop: 2 }}>
-                  {TILE_INKS.map((name) => (
-                    <button
-                      key={name}
-                      type="button"
-                      onClick={() => patch({ ink: name })}
-                      aria-pressed={(edited.ink || "light") === name}
-                      style={{
-                        ...INK_BUTTON_STYLE,
-                        border:
-                          (edited.ink || "light") === name
-                            ? "1px solid var(--fg)"
-                            : "1px solid var(--line)",
-                        color: (edited.ink || "light") === name ? "var(--fg)" : "var(--dim)",
-                      }}
-                    >
-                      {name === "light" ? "Light" : "Dark"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </Appear>
+            <ColorField
+              color={edited.color}
+              ink={edited.ink}
+              onColor={(color) => patch({ color })}
+              onInk={(ink) => patch({ ink })}
+              sample={{ name: edited.name, url: edited.url }}
+            />
 
             <button
               type="button"

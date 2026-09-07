@@ -57,7 +57,24 @@ export const ACCENTS = [
   "#9b96ff", // indigo
   "#ef92dc", // magenta
   "#dcc9a4", // sand
+  // Sixteen, not fifteen, so the picker comes out two full rows of eight
+  // instead of eight and then seven. Chosen by measuring rather than by eye:
+  // in CIE Lab this sits 19.9 from its nearest neighbour, where the tightest
+  // pair already shipping (mint against green) is 12.2 — so it is more
+  // distinct from everything than two of the existing swatches are from each
+  // other. Eight other candidates were measured; ash, chartreuse, rose and
+  // slate all came in under that 12.2 bar and were dropped.
+  "#a9b6ff", // periwinkle
 ];
+
+// How many columns each picker lays its swatches out in.
+//
+// Here rather than in the component so the palette lengths above can be
+// checked against them: a picker whose column count does not divide its
+// palette comes out with a short last row and a hole on the end of it, which
+// is what fifteen accents in eight columns looked like.
+export const ACCENT_COLUMNS = 8;
+export const TINT_COLUMNS = 10;
 
 // What each swatch is called, for the picker's accessible names. A screen
 // reader saying "Accent #6f9bff" is reading out a number nobody can picture;
@@ -80,6 +97,7 @@ export const ACCENT_NAMES = {
   "#9b96ff": "indigo",
   "#ef92dc": "magenta",
   "#dcc9a4": "sand",
+  "#a9b6ff": "periwinkle",
 };
 
 // Procedural backgrounds. v2 has no photo wallpapers, so these are generated
@@ -187,7 +205,11 @@ const TINT_MIX = { dark: 0.34, light: 0.28 };
 // accent but not without limit, and at 1f8a8a a light tile came out at 192
 // against the rule below that it stay above 200. Still 46 units from its
 // nearest neighbour, three times the closest pair left in the palette.
-export const TINT_EXTRAS = ["#3f8f8f", "#a34a7f"];
+// Deeper than an accent may be, because a tint is a wash with no ink on it.
+// Three now rather than two: with sixteen accents the tint picker is
+// 16 + 3 + the plain swatch = 20, which is two rows of ten. At two extras it
+// was nineteen and left a hole at the end of the second row.
+export const TINT_EXTRAS = ["#3f8f8f", "#a34a7f", "#4a5b8f"];
 
 export const TINTS = [...ACCENTS, ...TINT_EXTRAS];
 
@@ -195,6 +217,7 @@ export const TINT_NAMES = {
   ...ACCENT_NAMES,
   "#3f8f8f": "teal",
   "#a34a7f": "plum",
+  "#4a5b8f": "denim",
 };
 
 // The theme's untinted panel surface, which is also what a tint moves away from.

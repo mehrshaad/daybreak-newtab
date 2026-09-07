@@ -1,6 +1,6 @@
 import googleMark from "../assets/brand/google-favicon-2025.webp";
 import { brandForLink, hashHue, inkSafeGradient } from "../brands";
-import { DARK_INK, tileColor } from "../tilePalette";
+import { DARK_INK, defaultInk, gradientFor } from "../tilePalette";
 import { useSiteIcon } from "../useSiteIcon";
 
 // Google's current favicon, supplied as artwork rather than a monochrome path,
@@ -22,7 +22,7 @@ const ARTWORK = { google: googleMark };
 // favicon.
 function IconTile({ name = "", url = "", size = 40, radius, bare = false, color, ink }) {
   const key = String(name).toLowerCase().trim();
-  const chosen = tileColor(color);
+  const chosen = gradientFor(color);
   const brand = brandForLink(url, name);
   const hue = hashHue(key || "?");
   const Glyph = brand?.Glyph;
@@ -121,7 +121,9 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false, color,
   // Dark ink wants the colour it was chosen against, so the darkening that
   // exists to keep a white mark legible is skipped for it — darkening a pale
   // tile under a dark glyph makes both harder to read, not easier.
-  const darkInk = ink === "dark";
+  // The ink the colour asks for, unless the person has said otherwise. Keeps
+  // the tile and the picker's own buttons agreeing about what is in use.
+  const darkInk = (ink || defaultInk(color)) === "dark";
   const pair = chosen || brand;
   const safe = pair && !darkInk ? inkSafeGradient(pair.from, pair.to) : pair;
   const gradient = safe

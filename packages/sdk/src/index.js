@@ -130,11 +130,15 @@ export { clipboardLink, hasClipboardRead, readClipboardLink } from "./clipboardL
 export { layoutRect, pageZoomFactor } from "./zoom";
 export {
   DARK_INK,
+  TILE_COLOR_COLUMNS,
   TILE_COLOR_ORDER,
   TILE_COLORS,
   TILE_INKS,
+  defaultInk,
+  gradientFor,
   tileColor,
 } from "./tilePalette";
+export { useLiveRef } from "./useLiveRef";
 export { useLongPress } from "./useLongPress";
 export { useWidgetAction } from "./useWidgetAction";
 export { usePresence } from "./usePresence";
@@ -193,6 +197,7 @@ export {
 export { APPEAR_MS, default as Appear } from "./components/Appear";
 export { default as Button } from "./components/Button";
 export { default as CitySearch } from "./components/CitySearch";
+export { default as ColorField } from "./components/ColorField";
 export { default as DatePicker } from "./components/DatePicker";
 export { default as EditableText } from "./components/EditableText";
 export { default as Favicon } from "./components/Favicon";
@@ -200,5 +205,6 @@ export { default as IconGrid } from "./components/IconGrid";
 export { default as IconTile } from "./components/IconTile";
 export { default as MenuRow } from "./components/MenuRow";
 export { default as Popover } from "./components/Popover";
+export { default as Select } from "./components/Select";
 export { default as Tooltip } from "./components/Tooltip";
 export { default as WidgetMark } from "./components/WidgetMark";

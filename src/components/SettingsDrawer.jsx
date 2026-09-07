@@ -8,6 +8,7 @@ import {
 } from "../core/backup";
 import { dropPermission, MONO, requestAllPermissions, sunTimes } from "@daybreak/sdk";
 import {
+  ACCENT_COLUMNS,
   ACCENT_NAMES,
   ACCENTS,
   PAGE_ZOOM_MAX,
@@ -206,10 +207,15 @@ function SettingsDrawer({
         <div
           role="group"
           aria-label="Accent colour"
+          // Eight fixed columns against sixteen accents, so it is always two
+          // full rows. `auto-fit` asked the browser how many fitted and
+          // answered eight for a palette of fifteen, which left the second row
+          // seven long with a hole on the end — and the answer changed with the
+          // drawer's width, so the hole moved about.
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(30px, 34px))",
-            justifyContent: "space-between",
+            gridTemplateColumns: `repeat(${ACCENT_COLUMNS}, 1fr)`,
+            justifyItems: "center",
             gap: 8,
           }}
         >

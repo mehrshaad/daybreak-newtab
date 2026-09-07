@@ -1,7 +1,7 @@
 import { Suspense, lazy, useMemo } from "react";
 import { LuBan } from "react-icons/lu";
 import { MONO, pill } from "@daybreak/sdk";
-import { TINT_NAMES, TINTS, tileFill } from "../core/tokens";
+import { TINT_COLUMNS, TINT_NAMES, TINTS, tileFill } from "../core/tokens";
 import { getWidget, resolveOptions, resolveRate, resolveSize, sizesFor } from "../widgets/registry";
 import { Button, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
@@ -150,7 +150,10 @@ function WidgetSettingsDrawer({
           <div
             role="group"
             aria-label="Widget colour"
-            style={{ display: "grid", gridTemplateColumns: "repeat(9, 1fr)", gap: 8 }}
+            // Ten columns against nineteen tints plus the plain swatch — two
+            // full rows of ten. See TINT_EXTRAS, which gained a third entry to
+            // make the count come out even.
+            style={{ display: "grid", gridTemplateColumns: `repeat(${TINT_COLUMNS}, 1fr)`, gap: 6 }}
           >
             {/* "None" first and the same shape as the rest, so going back to a
                 plain tile is the same gesture as picking a colour. */}
