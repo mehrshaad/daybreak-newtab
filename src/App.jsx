@@ -26,6 +26,7 @@ import { background, baseColor, tokens } from "./core/tokens";
 import { boardShift, useColumns, useViewportWidth } from "./core/useColumns";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { resolveTheme, useSystemTheme } from "./core/useSystemTheme";
+import { useSunTheme } from "./core/useSunTheme";
 import { animateExit, clearBucket, hasPermissionsApi, moveItem, requestAllPermissions, usePresence } from "@daybreak/sdk";
 import {
   getWidget,
@@ -42,10 +43,13 @@ function App() {
     useSettings();
   const { appearance, behavior, board, widgets, profile } = settings;
   const { accent, wall } = appearance;
-  // The stored preference may be "system"; resolve it once here so every token
-  // lookup and every child sees a concrete theme.
+  // The stored preference may be "system" or "sun"; resolve it once here so
+  // every token lookup and every child sees a concrete theme.
   const fromSystem = useSystemTheme();
-  const theme = resolveTheme(appearance.theme, fromSystem);
+  // Reads a city from whichever widget has one in the local timezone, which is
+  // why it is given the widget records — see sunLocation.
+  const fromSun = useSunTheme(appearance.theme === "sun", widgets);
+  const theme = resolveTheme(appearance.theme, fromSystem, fromSun);
 
   // Everything below the app gets the *resolved* theme. Passing the raw
   // preference down meant tileStyle saw "system" and, since it treats anything

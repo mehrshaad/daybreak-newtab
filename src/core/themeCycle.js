@@ -7,10 +7,11 @@
 // back to following the system except by opening Settings and finding the row.
 // A control that can leave a state it cannot return to is a dead end.
 //
-// Three states in a ring instead, starting from the setting rather than from
-// what it resolved to. System first because it is the default and the one worth
-// getting back to.
-export const THEME_CYCLE = ["system", "light", "dark"];
+// A ring instead, starting from the setting rather than from what it resolved
+// to. System first because it is the default and the one worth getting back
+// to, and sunrise last because it is the deliberate choice — nobody arrives at
+// it by pressing a button twice.
+export const THEME_CYCLE = ["system", "light", "dark", "sun"];
 
 export function nextTheme(current) {
   const at = THEME_CYCLE.indexOf(current);
@@ -23,4 +24,5 @@ export const THEME_LABELS = {
   system: "following your system",
   light: "light",
   dark: "dark",
+  sun: "following the sun",
 };

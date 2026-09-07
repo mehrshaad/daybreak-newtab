@@ -23,8 +23,14 @@ export function useSystemTheme() {
   return theme;
 }
 
-// The stored preference may be "system"; everything downstream wants a real
-// theme, so resolve it in one place.
-export function resolveTheme(preference, fromSystem) {
-  return preference === "dark" || preference === "light" ? preference : fromSystem;
+// The stored preference may be "system" or "sun"; everything downstream wants a
+// real theme, so resolve it in one place.
+//
+// `fromSun` is null wherever the sun cannot answer — a polar summer, or before
+// the first computation lands — and falls through to the system setting rather
+// than to a guess.
+export function resolveTheme(preference, fromSystem, fromSun = null) {
+  if (preference === "dark" || preference === "light") return preference;
+  if (preference === "sun") return fromSun || fromSystem;
+  return fromSystem;
 }

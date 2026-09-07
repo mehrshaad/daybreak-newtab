@@ -6,7 +6,7 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { dropPermission, MONO, requestAllPermissions } from "@daybreak/sdk";
+import { dropPermission, MONO, requestAllPermissions, sunTimes } from "@daybreak/sdk";
 import {
   ACCENT_NAMES,
   ACCENTS,
@@ -19,6 +19,7 @@ import { CATEGORIES, CATEGORY_LABELS } from "../core/notices";
 import { SOURCES } from "../core/suggest";
 import { boardWidthChoices, useViewportWidth } from "../core/useColumns";
 import { systemTheme } from "../core/useSystemTheme";
+import { sunLocation } from "../core/sunTheme";
 import {
   Button,
   Collapse,
@@ -33,6 +34,30 @@ import AboutSection from "./AboutSection";
 import ProfilesSection from "./ProfilesSection";
 
 const BOARD_WIDTH_LABELS = { comfortable: "Comfortable", wide: "Wide", full: "Full" };
+
+// What the sunrise theme is actually going to use, said out loud.
+//
+// Because the answer changes with the board, and a setting whose behaviour
+// depends on another widget's configuration has to say so — otherwise "it
+// switched at the wrong time" has no explanation anywhere in the app. It also
+// tells somebody exactly how to make it exact, which is the only thing they
+// can do about it.
+function sunThemeNote(widgets) {
+  const place = sunLocation(widgets);
+  if (!place) {
+    return "Your browser is not telling us your timezone, so this follows your system setting. Set a city in the Weather widget to fix it.";
+  }
+  const marks = sunTimes(new Date(), place.latitude, place.longitude);
+  const at = (t) =>
+    t ? t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "—";
+  if (!marks.sunrise || !marks.sunset) {
+    return "The sun neither rises nor sets where you are today, so this follows your system setting until it does.";
+  }
+  const today = `Light from ${at(marks.sunrise)} to ${at(marks.sunset)} today.`;
+  return place.exact
+    ? `${today} Using ${place.name}, from your weather widget.`
+    : `${today} Estimated from your timezone — set a city in the Weather widget to make it exact.`;
+}
 
 
 const SWATCH_FADE = 320;
@@ -95,7 +120,7 @@ function SettingsDrawer({
   onTour,
   toast,
 }) {
-  const { appearance, behavior, profile } = settings;
+  const { appearance, behavior, profile, widgets } = settings;
   const viewport = useViewportWidth();
   const widthChoices = boardWidthChoices(viewport, appearance.boardWidth || "comfortable");
   const suggest = behavior.suggest || { links: true };
@@ -127,17 +152,26 @@ function SettingsDrawer({
     >
 
       <Section title="Appearance" data-tour="settings-appearance" style={{ marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: 6 }}>
+        {/* Four now, so they wrap two by two rather than being squeezed into
+            one row of quarter-width pills. */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: 6,
+          }}
+        >
           {[
             ["system", "System"],
-            ["dark", "Dark"],
+            ["sun", "Sunrise"],
             ["light", "Light"],
+            ["dark", "Dark"],
           ].map(([value, label]) => (
             <Pill
               key={value}
               active={(appearance.theme || "system") === value}
               onClick={() => update("appearance", { theme: value })}
-              style={{ flex: 1, textAlign: "center", padding: 10 }}
+              style={{ textAlign: "center", padding: 10 }}
             >
               {label}
             </Pill>
@@ -146,6 +180,11 @@ function SettingsDrawer({
         <Collapse open={(appearance.theme || "system") === "system"}>
           <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 8 }}>
             Following your {systemTheme()} browser setting.
+          </div>
+        </Collapse>
+        <Collapse open={(appearance.theme || "system") === "sun"}>
+          <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 8, lineHeight: 1.5 }}>
+            {sunThemeNote(widgets)}
           </div>
         </Collapse>
       </Section>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuMonitor, LuMoon, LuPencil, LuPlus, LuSettings, LuSun, LuX } from "react-icons/lu";
+import { LuMonitor, LuMoon, LuPencil, LuPlus, LuSettings, LuSun, LuSunrise, LuX } from "react-icons/lu";
 import { useNotices } from "../core/noticeContext";
 import { useSettings } from "../core/settingsContext";
 import {
@@ -614,6 +614,10 @@ function Header({
             >
               {themeSetting === "system" ? (
                 <LuMonitor size={15} />
+              ) : themeSetting === "sun" ? (
+                // A sun over a horizon, not the plain sun that means "light".
+                // Two states that both mean daylight need two marks.
+                <LuSunrise size={15} />
               ) : themeSetting === "light" ? (
                 <LuSun size={15} />
               ) : (
