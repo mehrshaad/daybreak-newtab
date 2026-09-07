@@ -4,7 +4,7 @@ export default {
   glyph: "clock",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.4.0",
   tagline: "Two to four cities, side by side.",
   description:
     "Track the time in the places you care about. Add a city and Daybreak " +
@@ -14,6 +14,7 @@ export default {
     "dragged into whatever order you like while editing the layout.",
   // The taller sizes are where the extra room pays: four cities sit
   // comfortably and each row can carry its timezone.
+  actions: [{ id: "add", label: "Add a city" }],
   sizes: [
     [3, 2],
     [4, 2],

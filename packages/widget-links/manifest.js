@@ -12,6 +12,8 @@ export default {
     "it, or leave it to the address; hover any icon for its full name, " +
     "address and site icon. Remove one with the badge that appears in edit " +
     "mode, or drag it out of the grid.",
+  // Answered by the widget, not here: see useWidgetAction.
+  actions: [{ id: "add", label: "Add a link" }],
   sizes: [
     [2, 2],
     [3, 2],

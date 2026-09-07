@@ -14,6 +14,7 @@ export default {
     "tgju.org's open-market rate (a one-time permission for that single " +
     "address, asked for when you turn it on) and falls back to the " +
     "official rate everyone else quotes when that isn't available.",
+  actions: [{ id: "add", label: "Add a currency", panel: true }],
   sizes: [
     [2, 2],
     [3, 2],

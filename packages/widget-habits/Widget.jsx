@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { LuCheck, LuMinus, LuPlus, LuSettings2, LuTrash2 } from "react-icons/lu";
-import { Appear, Button, EditableText, MONO, Popover, Tooltip, uid, useMeasuredWidth, useTooltip, useWidgetSynced, weekdayShort } from "@daybreak/sdk";
+import { Appear, Button, EditableText, MONO, Popover, Tooltip, uid, useMeasuredWidth, useTooltip, useWidgetAction, useWidgetSynced, weekdayShort } from "@daybreak/sdk";
 import { toggleDay, trimHistory } from "./streak";
 import { habitProgress, weekStartIndex } from "./weeks";
 
@@ -334,13 +334,15 @@ function HabitRow({
   );
 }
 
-function Habits({ id, options, config, setConfig, size, editing }) {
+function Habits({ id, options, config, setConfig, size, editing, action }) {
   // Names and per-habit targets are settings (small, worth syncing); tick
   // history is content that grows, so it syncs separately with its own
   // budget, trimmed to ~370 days on every write.
   const [history, setHistory] = useWidgetSynced(id, "history", {}, { trim: trimHistory });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
+
+  useWidgetAction(action, "add", () => setAdding(true));
   // Target and goal are set here rather than only in the row's own settings
   // afterwards: "five times a week for eight weeks" is the whole shape of a
   // habit, and having to create it and then go and configure it made the new

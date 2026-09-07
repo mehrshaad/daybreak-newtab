@@ -188,6 +188,7 @@ function Tile({
   dragging = false,
   rate,
   manualRefresh = 0,
+  action,
   tileRef,
   onOpen,
   onMenu,
@@ -520,6 +521,9 @@ function Tile({
             // rather than sitting inside it.
             bare={headerHidden}
             refreshKey={refreshKey}
+            // The right-click menu's "Add …" arriving as a counter. See
+            // useWidgetAction in the SDK.
+            action={action}
             setConfig={setConfig}
             setOptions={setOptions}
             toast={toast}

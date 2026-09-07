@@ -14,6 +14,7 @@ export default {
     "begins — so a slow start never breaks a run. Weeks that hit the target " +
     "stack up into a streak. History syncs across your signed-in browsers " +
     "when it's small enough to, and otherwise stays on this device.",
+  actions: [{ id: "add", label: "Add a habit" }],
   sizes: [
     [3, 2],
     [4, 2],

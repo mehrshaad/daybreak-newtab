@@ -11,6 +11,7 @@ export default {
     "it, pick a due date from a themed calendar, and clear finished tasks in " +
     "one click. Tasks sync with your Chrome profile; nothing is sent " +
     "anywhere else.",
+  actions: [{ id: "add", label: "Add a task" }],
   sizes: [
     [4, 2],
     [3, 3],

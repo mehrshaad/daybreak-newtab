@@ -4,7 +4,7 @@ export default {
   glyph: "calendarRange",
   category: "Productivity",
   author: "Daybreak",
-  version: "3.0.0",
+  version: "3.1.0",
   tagline: "A real month grid, with your events on it.",
   description:
     "A month you can actually read: today marked, a dot on any day with " +
@@ -16,6 +16,7 @@ export default {
     "needs one-time permission to fetch that single calendar. Daily and " +
     "weekly recurring events are expanded over the next two weeks; monthly " +
     "and yearly ones show only their next occurrence.",
+  actions: [{ id: "add", label: "Add a calendar", panel: true }],
   sizes: [
     [3, 3],
     [4, 3],

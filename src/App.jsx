@@ -63,6 +63,11 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
   const [manualRefresh, setManualRefresh] = useState({});
+  // Which widget was last asked to do something from its right-click menu,
+  // and how many times. Shaped like manualRefresh above and for the same
+  // reason: a per-instance counter is the only thing a widget can react to
+  // without the host having to clear it afterwards.
+  const [widgetAction, setWidgetAction] = useState({});
 
   const searchRef = useRef(null);
   const boardRef = useRef(null);
@@ -444,6 +449,14 @@ function App() {
     [board.ids, update]
   );
 
+  // Route a declared action to the widget itself. Widget settings are opened
+  // first for the ones whose add form lives there, so the menu item lands the
+  // person in front of the form either way.
+  const runWidgetAction = useCallback((id, name, { panel: inPanel } = {}) => {
+    if (inPanel) setPanel(id);
+    setWidgetAction((m) => ({ ...m, [id]: { name, nonce: (m[id]?.nonce || 0) + 1 } }));
+  }, []);
+
   const refreshNow = useCallback(
     (id) => {
       setManualRefresh((m) => ({ ...m, [id]: (m[id] || 0) + 1 }));
@@ -540,13 +553,20 @@ function App() {
       onDuplicate: () => duplicateTile(menu.id),
       onMoveTop: () => moveToTop(menu.id),
       onRemove: () => removeTile(menu.id),
-      onAction: (action) =>
-        action.run?.({
-          toast,
-          openSettings: () => setPanel(menu.id),
-          setOptions: (patch) => setWidgetOptions(menu.id, patch),
-          options: widgets[menu.id]?.options || {},
-        }),
+      onAction: (action) => {
+        // A manifest may still handle its own action outright. Anything without
+        // a `run` is for the widget, which answers it through useWidgetAction.
+        if (action.run) {
+          action.run({
+            toast,
+            openSettings: () => setPanel(menu.id),
+            setOptions: (patch) => setWidgetOptions(menu.id, patch),
+            options: widgets[menu.id]?.options || {},
+          });
+          return;
+        }
+        runWidgetAction(menu.id, action.id, { panel: action.panel });
+      },
     });
   }, [
     menu,
@@ -566,6 +586,7 @@ function App() {
     focusTile,
     setSize,
     refreshNow,
+    runWidgetAction,
     duplicateTile,
     moveToTop,
     removeTile,
@@ -710,6 +731,7 @@ function App() {
         panelId={panel}
         menu={menu}
         manualRefresh={manualRefresh}
+        widgetAction={widgetAction}
         boardRef={boardRef}
         registerTile={registerTile}
         onEnterEditing={enterEditing}
@@ -812,6 +834,7 @@ function App() {
           theme={theme}
           appearance={appearance}
           keepInteractive={panel ? panelTileEl : null}
+          action={widgetAction?.[panelId]}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />

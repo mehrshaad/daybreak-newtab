@@ -127,6 +127,7 @@ export { useMeasuredBox, useMeasuredWidth } from "./useMeasuredWidth";
 export { usePointerExit } from "./usePointerExit";
 export { useRovingMenu } from "./useRovingMenu";
 export { useLongPress } from "./useLongPress";
+export { useWidgetAction } from "./useWidgetAction";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
 export { ICON_GRID_PAD, ICON_STEPS, iconCellSize, iconGridSize } from "./iconCellSize";

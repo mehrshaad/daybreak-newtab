@@ -73,6 +73,7 @@ function WidgetSettingsDrawer({
   onRemove,
   theme,
   appearance,
+  action,
   keepInteractive,
   toast,
 }) {
@@ -176,6 +177,9 @@ function WidgetSettingsDrawer({
                 setConfig={onConfig}
                 options={options}
                 setOptions={onOptions}
+                // For the widgets whose add form lives in here rather than in
+                // the tile: the menu opens this drawer and signals in one go.
+                action={action}
                 toast={toast}
               />
             </Suspense>

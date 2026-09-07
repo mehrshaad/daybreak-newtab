@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
-import { Appear, Button, DatePicker, EditableText, LIST_BLEED, LIST_ROW_HIGHLIGHT, MONO, animateExit, formatDate, listRow, uid, useFlip, usePointerReorder } from "@daybreak/sdk";
+import { Appear, Button, DatePicker, EditableText, LIST_BLEED, LIST_ROW_HIGHLIGHT, MONO, animateExit, formatDate, listRow, uid, useFlip, usePointerReorder, useWidgetAction } from "@daybreak/sdk";
 import { reorderVisible } from "./reorder";
 
 const isOverdue = (due) => !!due && due < formatDate(new Date());
@@ -131,13 +131,19 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
   );
 }
 
-function Tasks({ options, config, setConfig, editing }) {
+function Tasks({ options, config, setConfig, editing, action }) {
   const { hideCompleted, showDates } = options;
   const items = Array.isArray(config.items) ? config.items : [];
   const [draft, setDraft] = useState("");
   const [due, setDue] = useState("");
   const listRef = useRef(null);
   const rowEls = useRef({});
+  const draftRef = useRef(null);
+
+  // Tasks has no add form to open: the field is always there. So the menu
+  // item puts the caret in it, which is the whole of what pressing "add"
+  // on this widget means.
+  useWidgetAction(action, "add", () => draftRef.current?.focus());
 
   const save = (next) => setConfig({ items: next });
 
@@ -235,6 +241,7 @@ function Tasks({ options, config, setConfig, editing }) {
         style={{ display: "flex", gap: 6, alignItems: "center", paddingTop: 8 }}
       >
         <input
+          ref={draftRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Add a task"

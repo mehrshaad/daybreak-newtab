@@ -4,7 +4,7 @@ export default {
   glyph: "crypto",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.4.0",
   tagline: "A short watchlist, no key required.",
   description:
     "Prices, 24-hour change, logos and a 7-day sparkline from CoinGecko's " +
@@ -12,6 +12,7 @@ export default {
     "to price them in. The free tier is easy to exhaust, which is why this " +
     "refreshes at most every 5 minutes and caches the last reading rather " +
     "than going blank.",
+  actions: [{ id: "add", label: "Add a coin", panel: true }],
   sizes: [
     [2, 2],
     [3, 2],

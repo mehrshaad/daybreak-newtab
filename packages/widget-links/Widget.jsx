@@ -11,6 +11,7 @@ import {
   moveItem,
   Popover,
   uid,
+  useWidgetAction,
 } from "@daybreak/sdk";
 
 // Add-form fields: a small eyebrow label above each input, matching the
@@ -68,13 +69,17 @@ function nameFromUrl(href) {
   }
 }
 
-function Links({ options, config, setConfig, size, editing, columns }) {
+function Links({ options, config, setConfig, size, editing, columns, action }) {
   const { hideLabels, newTab, iconScale, hoverCard } = options;
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
   const [draftUrl, setDraftUrl] = useState("");
   const [draftName, setDraftName] = useState("");
   const addBtnRef = useRef(null);
+
+  // "Add a link" from the tile's right-click menu, which is where people
+  // look for it before they find the button that only exists in edit mode.
+  useWidgetAction(action, "add", () => setAdding(true));
 
   const closeAdd = () => {
     setAdding(false);
@@ -188,7 +193,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
         // Appear rather than a ternary so it leaves the way it arrived and the
         // grid closes up after it.
         trailing={
-          <Appear open={!!editing} style={{ minWidth: 0 }}>
+          <Appear open={!!editing || adding} style={{ minWidth: 0 }}>
           <button
             ref={addBtnRef}
             type="button"

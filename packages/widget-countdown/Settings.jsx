@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LuCalendarDays, LuMinus, LuX } from "react-icons/lu";
-import { Button, DatePicker, EditableText, HOVER_SOFT, MONO, Tooltip, toggleStyles, uid, useTooltip } from "@daybreak/sdk";
+import { Button, DatePicker, EditableText, HOVER_SOFT, MONO, Tooltip, toggleStyles, uid, useTooltip, useWidgetAction } from "@daybreak/sdk";
 import { formatRemaining, nextOccurrence } from "./countdown";
 
 // Six and a blank, down from twelve. A swatch row is something you take in at a
@@ -266,9 +266,15 @@ function EntryRow({ entry, onPatch, onRemove }) {
   );
 }
 
-function CountdownSettings({ config, setConfig }) {
+function CountdownSettings({ config, setConfig, action }) {
   const entries = Array.isArray(config.entries) ? config.entries : [];
   const [draft, setDraft] = useState("");
+  const draftRef = useRef(null);
+
+  // Arrived here from the tile's "Add a date". The drawer has just opened,
+  // so the caret goes in the field rather than leaving the person to find
+  // it below however many entries they already have.
+  useWidgetAction(action, "add", () => draftRef.current?.focus());
 
   const add = (e) => {
     e.preventDefault();
@@ -314,6 +320,7 @@ function CountdownSettings({ config, setConfig }) {
 
       <form onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <input
+          ref={draftRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="What are you counting toward?"
