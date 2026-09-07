@@ -80,9 +80,24 @@ const STEP_SCALE = { s: 0.78, m: 1, l: 1.22 };
 //
 // The bases went up with the padding coming down — the room freed by tighter
 // cells belongs to the icons, which is the whole point of the change.
+// A ceiling by column span, because height alone is not enough.
+//
+// Height decides how big an icon can be; width decides how many fit beside it,
+// and until square sizes existed every tile was wider than it was tall so the
+// second never bound. A 3x3 broke that: three rows of height asks for a 52px
+// icon, and on a narrow board three columns is about 220px, which fits two of
+// them. Two icons per row in a nine-cell tile is not an icon grid.
+//
+// Calibrated so no size that existed before this changes: a 4x2 and a 4x3 are
+// already under their cap, and only the new squares are pulled down by it.
+const BY_COLUMNS = { 2: 42, 3: 48, 4: 52, 5: 58 };
+const WIDEST = 62;
+
 export function iconGridSize(size, { hideLabels = false, step = "m" } = {}) {
   const rows = Array.isArray(size) ? size[1] || 2 : 2;
-  const base = rows >= 4 ? 62 : rows === 3 ? 52 : 42;
+  const cols = Array.isArray(size) ? size[0] || 4 : 4;
+  const byRows = rows >= 4 ? 62 : rows === 3 ? 52 : 42;
+  const base = Math.min(byRows, BY_COLUMNS[cols] ?? WIDEST);
   const scaled = base * (STEP_SCALE[step] ?? STEP_SCALE.m);
   // Without a label underneath, that row of vertical space goes back into the
   // icon rather than being left empty.

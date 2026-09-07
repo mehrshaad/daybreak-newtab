@@ -4,15 +4,17 @@ export default {
   glyph: "note",
   category: "Productivity",
   author: "Daybreak",
-  version: "2.1.0",
+  version: "2.2.0",
   tagline: "One text field. No folders.",
   description:
     "Somewhere to put a thought before it escapes. Saves as you type, and " +
     "syncs across your signed-in browsers up to about 6KB — longer notes " +
     "just stay on this device rather than losing anything you typed.",
   sizes: [
+    [2, 2],
     [3, 2],
     [4, 2],
+    [3, 3],
     [4, 3],
     [6, 3],
   ],

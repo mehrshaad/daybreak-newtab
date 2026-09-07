@@ -69,7 +69,7 @@ function nameFromUrl(href) {
 }
 
 function Links({ options, config, setConfig, size, editing, columns }) {
-  const { hideLabels, newTab, iconScale } = options;
+  const { hideLabels, newTab, iconScale, hoverCard } = options;
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
   const [draftUrl, setDraftUrl] = useState("");
@@ -144,7 +144,7 @@ function Links({ options, config, setConfig, size, editing, columns }) {
         editing={editing}
         onRemove={remove}
         onRemoveByDrag={remove}
-        hoverCard={(gridItem) => {
+        hoverCard={!hoverCard ? undefined : (gridItem) => {
           const link = items.find((l) => l.id === gridItem.key);
           if (!link) return null;
           return (

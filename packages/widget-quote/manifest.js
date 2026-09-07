@@ -4,7 +4,7 @@ export default {
   glyph: "quote",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "One line, changed daily.",
   description:
     "A short quote picked from a bundled list by the day of the year — the " +
@@ -13,6 +13,7 @@ export default {
     [2, 2],
     [3, 2],
     [4, 2],
+    [3, 3],
   ],
   defaultSize: [4, 2],
   options: [

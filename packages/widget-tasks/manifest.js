@@ -4,7 +4,7 @@ export default {
   glyph: "list",
   category: "Productivity",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "A short list you actually finish.",
   description:
     "A to-do list that lives on your new tab. Double-click a task to rename " +
@@ -13,6 +13,7 @@ export default {
     "anywhere else.",
   sizes: [
     [4, 2],
+    [3, 3],
     [4, 3],
     [5, 3],
     [4, 4],

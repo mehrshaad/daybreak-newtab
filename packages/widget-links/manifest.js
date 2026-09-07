@@ -4,7 +4,7 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
@@ -13,15 +13,28 @@ export default {
     "address and site icon. Remove one with the badge that appears in edit " +
     "mode, or drag it out of the grid.",
   sizes: [
+    [2, 2],
     [3, 2],
     [4, 2],
+    [3, 3],
     [5, 2],
     [6, 2],
     [4, 3],
+    [4, 4],
     [6, 3],
   ],
   defaultSize: [5, 2],
   options: [
+    {
+      key: "hoverCard",
+      label: "Card on hover",
+      type: "boolean",
+      // Off. The card is a deliberate reveal and it was appearing on the way
+      // past: crossing a row of icons to reach the one you wanted popped a
+      // card over the others. The tooltip still names the icon, which is what
+      // the hover was mostly being used for, so nothing is lost by default.
+      default: false,
+    },
     {
       key: "iconScale",
       label: "Icon size",

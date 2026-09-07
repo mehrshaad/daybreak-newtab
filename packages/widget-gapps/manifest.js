@@ -4,7 +4,7 @@ export default {
   glyph: "grid",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.1.0",
   tagline: "The launcher grid, without the extra click.",
   description:
     "Direct links to Google's apps. Plain links — the tile just opens the " +
@@ -18,7 +18,9 @@ export default {
   // widget no longer offers.
   sizes: [
     [4, 2],
+    [3, 3],
     [5, 2],
+    [4, 4],
   ],
   defaultSize: [5, 2],
   options: [

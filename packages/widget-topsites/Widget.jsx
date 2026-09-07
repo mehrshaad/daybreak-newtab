@@ -29,7 +29,7 @@ const shortName = (site) => {
 };
 
 function TopSites({ config, setConfig, options, refreshKey, size, columns, editing, toast }) {
-  const { hideLabels, count } = options;
+  const { hideLabels, count, hoverCard } = options;
   const hidden = Array.isArray(config.hidden) ? config.hidden : [];
   const [granted, setGranted] = useState(null);
   const [sites, setSites] = useState([]);
@@ -168,7 +168,7 @@ function TopSites({ config, setConfig, options, refreshKey, size, columns, editi
       // written to, and nothing about the user's history is changed.
       onRemove={(item) => setConfig({ hidden: [...hidden, item.key] })}
       onRemoveByDrag={(item) => setConfig({ hidden: [...hidden, item.key] })}
-      hoverCard={(item) => {
+      hoverCard={!hoverCard ? undefined : (item) => {
         const site = visible.find((s) => s.url === item.key);
         if (!site) return null;
         return (

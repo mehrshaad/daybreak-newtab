@@ -4,7 +4,7 @@ export default {
   glyph: "currency",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.5.0",
   tagline: "Exchange rates, no key required.",
   description:
     "Rates from Frankfurter, built on European Central Bank data — no API " +
@@ -14,7 +14,11 @@ export default {
     "tgju.org's open-market rate (a one-time permission for that single " +
     "address, asked for when you turn it on) and falls back to the " +
     "official rate everyone else quotes when that isn't available.",
-  sizes: [[2, 2], [3, 2]],
+  sizes: [
+    [2, 2],
+    [3, 2],
+    [3, 3],
+  ],
   defaultSize: [3, 2],
   options: [
     {
