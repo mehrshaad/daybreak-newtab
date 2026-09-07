@@ -60,7 +60,7 @@ const CARDS = [
   {
     file: "3.jpg",
     title: "Give every widget its own colour",
-    sub: "Fifteen accents, twelve generated backgrounds, and a colour per tile — so a full board reads at a glance instead of being searched.",
+    sub: "Sixteen accents, twelve generated backgrounds, and a colour per tile — so a full board reads at a glance instead of being searched.",
   },
   {
     file: "4.jpg",

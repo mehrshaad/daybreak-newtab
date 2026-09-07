@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ACCENTS } from "./tokens";
 
 // The README's widget table and the store listing's widget list, checked against
 // the packages that actually exist.
@@ -21,6 +22,26 @@ const README = "README.md";
 const LISTING = "store-assets/SUBMISSION.md";
 const CAPTIONS = "scripts/store-assets.mjs";
 const POLICY = "privacy-policy.html";
+
+// Spelled out, because that is how the listing and the README write it — the
+// store's description field is prose, not a spec sheet.
+const NUMBER_WORDS = [
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+  "thirteen",
+  "fourteen",
+  "fifteen",
+  "sixteen",
+  "seventeen",
+  "eighteen",
+];
+const ACCENT_NUMBER = NUMBER_WORDS[ACCENTS.length - 6];
+const ACCENT_WORD = `${ACCENT_NUMBER} accent`;
 
 function widgetNames() {
   const out = [];
@@ -164,11 +185,25 @@ describe("the screenshot captions", () => {
   });
 
   it("do not carry a stale accent count", () => {
-    // Case-insensitive: the number is the claim, and a caption may open a
-    // sentence with it. The point is that it matches ACCENTS, not how it is
-    // capitalised.
-    const src = readFileSync(CAPTIONS, "utf8").toLowerCase();
-    expect(src).not.toContain("six accents");
-    expect(src).toContain("fifteen accents");
+    // This one had gone wrong in the worst way a guard can: it asserted the
+    // literal "fifteen accents" and the sixteenth accent was added without
+    // anybody coming back here, so the test was holding three documents at a
+    // number the code had already left. A hardcoded expectation is only a
+    // guard until the thing it guards moves.
+    //
+    // Counted from ACCENTS now, so adding a swatch fails every place that
+    // prints the number instead of quietly agreeing with the stalest one.
+    // Case-insensitive because a caption may open a sentence with it.
+    for (const file of [CAPTIONS, README, LISTING]) {
+      // Whitespace flattened: these are wrapped prose, and the README happens
+      // to break the line between the number and the word it counts.
+      const src = readFileSync(file, "utf8").toLowerCase().replace(/\s+/g, " ");
+      expect(src, `${file} does not say ${ACCENT_WORD}`).toContain(ACCENT_WORD);
+      for (const stale of NUMBER_WORDS.filter((w) => w !== ACCENT_NUMBER)) {
+        expect(src, `${file} still says "${stale} accent"`).not.toMatch(
+          new RegExp(`${stale} accent`)
+        );
+      }
+    }
   });
 });

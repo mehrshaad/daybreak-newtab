@@ -1,13 +1,16 @@
 # Chrome Web Store — publishing Daybreak 2.3.0
 
-This goes out as **a new version of the existing listing**, not a new item. Open
-the current *Daybreak - New Tab* item in the developer dashboard and upload a new
-package; the item id, URL, installs, ratings and reviews all stay.
+> **Submitted on 7 September 2026** and waiting on review. Everything below is
+> what went up, kept as the record of it and as the starting point for the next
+> one. Two numbers in the pasted text were wrong at the time and have been
+> corrected here — see "Corrections to the text that went up".
+
+This went out as **a new version of the existing listing**, not a new item: the
+*Daybreak - New Tab* item was opened in the developer dashboard and a new
+package uploaded, so the item id, URL, installs, ratings and reviews all stay.
 
 The live listing:
 <https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen>
-
-Everything below is ready to paste.
 
 ## The package
 
@@ -58,8 +61,7 @@ notice:
   the browser already keeps rather than a private copy of it. Every delete
   requires a second confirming tap, and a folder delete states how many
   bookmarks go with it. Nothing is uploaded. The justification box below has
-  been rewritten to match, and `privacy-policy.html` needs the same change
-  before this upload.
+  been rewritten to match, and `privacy-policy.html` carries the same change.
 
 Carried over and unchanged, repeated here because the reviewer seeing this
 upload may not have seen the last one:
@@ -97,12 +99,14 @@ Most are already set on the item. Check these:
 | Support | `https://github.com/mehrshaad/daybreak-newtab/issues` |
 | Privacy policy URL | `https://ali-dadashzadeh.ir/daybreak-newtab/privacy-policy.html` |
 
-The policy URL is unchanged, but **the file behind it has to be republished** —
-`privacy-policy.html` in this repo now describes 2.1.0, including `favicon`,
-the per-origin host permission, and every new widget that talks to its own
-provider (Frankfurter, CoinGecko, Wikipedia, Hacker News, and the calendar
-address a user supplies). Push it live before submitting: a policy that does
-not match the manifest is a common rejection.
+The policy URL is unchanged, but **the file behind it is republished every
+time it changes** — a policy that does not match the manifest is a common
+rejection. `privacy-policy.html` in this repo covers all seven optional
+permissions, the per-origin host permission, and every widget that talks to its
+own provider (Open-Meteo, Frankfurter, the exchange-rate fallback, CoinGecko,
+Wikipedia, Hacker News, and a calendar address a user supplies). It is stamped
+`reviewed for version 2.3.0`, and a test holds that stamp to `package.json` so
+the next bump cannot ship without somebody reading the policy again.
 
 ### Detailed description
 
@@ -119,7 +123,7 @@ not match the manifest is a common rejection.
 > Moon phase · Sun & daylight · Quote of the day · Recent Tabs · Bookmarks
 >
 > MADE YOURS
-> Dark and light themes, follow your system, or follow the sun. Fifteen accent colours, twelve
+> Dark and light themes, follow your system, or follow the sun. Sixteen accent colours, twelve
 > generated backgrounds, a colour per widget, adjustable tile opacity, corner
 > radius and page zoom. Frosted glass, or solid surfaces if you prefer.
 >
@@ -152,8 +156,8 @@ not match the manifest is a common rejection.
 >   "BOOKMARKS · AI TOOLS"
 > - New theme: Sunrise. Light by day and dark after sunset, worked out on the
 >   device from a city you have already set in a widget, or from your timezone
-> - Right-click a Quick Link to edit it: name, address, tile colour from fifteen,
->   icon colour, remove. A brand keeps its own mark, so GitHub in orange is
+> - Right-click a Quick Link to edit it: name, address, tile colour from ten or
+>   one you pick yourself, icon colour, remove. A brand keeps its own mark, so GitHub in orange is
 >   still GitHub
 > - Adding is in the right-click menu now, for all nine widgets you can add
 >   something to. It used to be in nine different places and none of them was
@@ -191,8 +195,8 @@ not match the manifest is a common rejection.
 >   visited, bringing it to twenty-two
 > - The calendar is a calendar now: a real month grid with the Jalali and
 >   Hijri dates, holidays, and your events on the day they fall
-> - A colour per widget, so a full board can be read at a glance. Fifteen
->   accents, and the near-duplicate swatches are gone
+> - A colour per widget, so a full board can be read at a glance, and the
+>   near-duplicate accent swatches are gone
 > - Size options: five for the digital clock, three for the icon grids, two for
 >   World Clocks and Currency — and the icons themselves are larger, with the
 >   padding around them cut back
@@ -305,19 +309,43 @@ reaches the developer, who operates no server.
 
 ## Before you hit submit
 
-- [ ] the updated `privacy-policy.html` is live at the URL on the listing
-- [ ] the zip's `manifest.json` is at the archive root
-- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.3.0`
-- [ ] loaded the built `dist/` unpacked once, over a 2.1.0 profile, and
-      confirmed existing settings, board layout and widget content are intact
-- [ ] store icon, five screenshots, the small promo tile and the marquee
-      uploaded. **The five on file are from 2026-08-09 and predate the tour,
-      profiles, the rebuilt calendar, the new accent palette and the larger
-      icon grids — they need re-capturing.** See "Re-capturing the screenshots"
-      below.
-- [ ] release notes filled in
-- [ ] every permission justification filled in, including `favicon` and the
+Done for 2.3.0 on 7 September 2026.
+
+- [x] the updated `privacy-policy.html` is live at the URL on the listing
+- [x] the zip's `manifest.json` is at the archive root
+- [x] `manifest.json` name reads `Daybreak - New Tab` and version `2.3.0`
+- [x] every widget renders with no stored options, which is what a board saved
+      by an older version looks like for every option added since. All
+      twenty-three, no console errors, nothing printing `undefined`.
+      `src/core/schema.js` is unchanged since the v2.2.0 tag, so hydration
+      behaves exactly as it did
+- [x] store icon, five screenshots, the small promo tile and the marquee
+      uploaded
+- [x] release notes filled in
+- [x] every permission justification filled in, including `favicon` and the
       optional host permission
+
+Not carried back into the repo: the five `store-assets/screenshot-*.png` here
+are still the 2026-08-09 files. Whatever was uploaded to the listing for 2.3.0
+is not mirrored in this folder, so re-capture from the boards below rather than
+assuming these are what a visitor sees.
+
+## Corrections to the text that went up
+
+Two counts in the pasted text were out of date when it was submitted. They are
+fixed above, and the listing text can be edited in the dashboard without a new
+package — description and release notes are listing fields, not part of the
+upload.
+
+| Where | Said | Should say |
+| --- | --- | --- |
+| detailed description, the accent count | fifteen | sixteen |
+| release notes, the Quick Link tile palette | fifteen | ten, or one you pick yourself |
+
+The accent palette went to sixteen in this release and three documents kept
+saying fifteen, including a test that asserted the literal string. The count is
+now derived from `ACCENTS` in `src/core/docsMatchWidgets.test.js`, so adding a
+swatch fails every place that prints the number.
 
 ## Re-capturing the screenshots
 

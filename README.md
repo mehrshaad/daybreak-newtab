@@ -14,10 +14,13 @@ Vite.
 - 🔍 **Click to focus** — click a tile to zoom into it. Four behaviours to
   choose from, including a camera zoom that scales the whole board toward the
   tile you picked.
-- 🎨 **Themed end to end** — dark and light (follow your system, or the sun), fifteen
+- 🎨 **Themed end to end** — dark and light (follow your system, or the sun), sixteen
   accent colours, twelve generated backgrounds, a colour per widget, and sliders
   for corner radius, tile opacity and page zoom. Frosted glass on, or solid
   surfaces off.
+- 📁 **Folders that come apart** — group your Quick Links and see your Chrome
+  bookmark folders as they are, then split either one so each folder becomes
+  its own card to place and size on the board.
 - 👥 **Up to three boards** — keep work and home apart. Each profile has its own
   layout, its own look and its own widget settings, and each syncs on its own.
 - 🧭 **A tour on the first run** — fifteen steps that open each drawer for real
