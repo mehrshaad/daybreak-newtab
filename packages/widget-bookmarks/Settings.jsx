@@ -12,6 +12,7 @@ import {
   Button,
   HOVER_SOFT,
   MONO,
+  Select,
   hasPermission,
   useWidgetAction,
 } from "@daybreak/sdk";
@@ -268,26 +269,20 @@ function LinkRow({ link, folders, onSaved, onError }) {
             placeholder="https://example.com"
             style={{ ...FIELD, fontSize: 12, padding: "6px 10px" }}
           />
-          <select
+          <Select
             value={link.parentId || ""}
-            onChange={async (e) => {
+            options={folders.map((f) => ({ value: f.id, label: f.path }))}
+            onChange={async (parentId) => {
               try {
                 const { moveNode } = await import("./tree");
-                await moveNode(link.id, e.target.value);
+                await moveNode(link.id, parentId);
                 onSaved?.();
               } catch (error) {
                 onError?.(error);
               }
             }}
-            aria-label="Folder"
-            style={{ ...FIELD, fontSize: 12, padding: "6px 10px", cursor: "pointer" }}
-          >
-            {folders.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.path}
-              </option>
-            ))}
-          </select>
+            ariaLabel="Folder"
+          />
           <Button onClick={save} style={{ ...ROUND, padding: "5px 12px" }} hover={HOVER_SOFT}>
             Save
           </Button>
@@ -687,18 +682,12 @@ function BookmarksSettings({ config, setConfig, options, setOptions, action, onS
           aria-label="New bookmark address"
           style={FIELD}
         />
-        <select
+        <Select
           value={draftParent}
-          onChange={(e) => setDraftParent(e.target.value)}
-          aria-label="Folder for the new bookmark"
-          style={{ ...FIELD, cursor: "pointer" }}
-        >
-          {allFolders.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.path}
-            </option>
-          ))}
-        </select>
+          options={allFolders.map((f) => ({ value: f.id, label: f.path }))}
+          onChange={setDraftParent}
+          ariaLabel="Folder for the new bookmark"
+        />
         <Button type="submit" style={ROUND} hover={HOVER_SOFT}>
           <LuPlus size={13} aria-hidden />
           Add to Chrome

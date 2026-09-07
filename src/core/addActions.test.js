@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { widgetMenu } from "./menus";
+import { boardMenu, widgetMenu } from "./menus";
 
 // Every widget you can add something to offers it in its right-click menu.
 //
@@ -112,6 +112,19 @@ describe("the widget menu", () => {
     });
     items[0].run();
     expect(seen).toEqual([{ id: "add", label: "Add a link" }]);
+  });
+
+  it("gives every row an icon", () => {
+    // All of them, not most: a menu where three rows have a glyph and four do
+    // not reads as a menu that failed to finish loading. The icon is a name
+    // here and ContextMenu owns the name-to-glyph map, so this checks the
+    // names exist and the render test below checks they resolve.
+    const rows = [
+      ...widgetMenu({ manifest, currentSize: [5, 2], zoomMode: "Focus" }).items,
+      ...boardMenu({ editing: false, theme: "dark", hasSaved: true, savedState: "dirty" }).items,
+    ].filter((i) => i.label);
+    expect(rows.length).toBeGreaterThan(12);
+    expect(rows.filter((i) => !i.icon).map((i) => i.label)).toEqual([]);
   });
 
   it("separates the actions from everything else", () => {

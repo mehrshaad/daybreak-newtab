@@ -3,7 +3,10 @@ import { MenuRow, MONO, pill, primaryButton, WidgetMark } from "@daybreak/sdk";
 import { WIDGETS, categories, getWidget, typeOf } from "../widgets/registry";
 import { Button, Pill } from "./primitives";
 
-const TABS = ["Discover", "Installed"];
+// Three, because "everything" and "the ones I have" leaves the question people
+// actually open this to answer — what is there that I am not using — needing
+// them to read twenty-three cards and check each badge.
+const TABS = ["Discover", "Installed", "Not installed"];
 
 const REPO_URL = "https://github.com/mehrshaad/daybreak-newtab/issues";
 
@@ -327,6 +330,7 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
     return WIDGETS.filter((w) => {
       if (category !== "All" && w.category !== category) return false;
       if (tab === "Installed" && !onBoard.has(w.id)) return false;
+      if (tab === "Not installed" && onBoard.has(w.id)) return false;
       if (!q) return true;
       return `${w.name} ${w.tagline} ${w.author} ${w.category}`
         .toLowerCase()
@@ -519,9 +523,11 @@ function Store({ open = true, boardIds, onClose, onToggle, initialDetail }) {
                 <div style={{ fontSize: 16, fontWeight: 500 }}>
                   {tab === "Installed"
                     ? "On your board"
-                    : category === "All"
-                    ? "All widgets"
-                    : category}
+                    : tab === "Not installed"
+                      ? "Not on your board"
+                      : category === "All"
+                        ? "All widgets"
+                        : category}
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: 11, color: "var(--faint)" }}>
                   {results.length} {results.length === 1 ? "widget" : "widgets"}

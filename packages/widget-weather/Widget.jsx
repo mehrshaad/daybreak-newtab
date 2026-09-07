@@ -124,9 +124,11 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              fontSize: view.tall
-                ? "clamp(38px, 4.4vw, 54px)"
-                : "clamp(30px, 3.4vw, 40px)",
+              fontSize: view.narrow
+                ? "clamp(26px, 2.4vw, 32px)"
+                : view.tall
+                  ? "clamp(38px, 4.4vw, 54px)"
+                  : "clamp(30px, 3.4vw, 40px)",
               fontWeight: 500,
               letterSpacing: "-.03em",
               lineHeight: 1,
@@ -139,7 +141,7 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
           <ConditionIcon
             condition={data.condition}
             day={data.isDay}
-            size={view.tall ? 38 : 30}
+            size={view.narrow ? 24 : view.tall ? 38 : 30}
           />
         </div>
         <div
@@ -152,7 +154,7 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
             whiteSpace: "nowrap",
           }}
         >
-          {data.label} · {city?.name || data.city}
+          {view.narrow ? city?.name || data.city : `${data.label} · ${city?.name || data.city}`}
         </div>
         {view.stats && !view.details ? (
           <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 8 }}>

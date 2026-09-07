@@ -4,7 +4,7 @@ export default {
   glyph: "weather",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "Current conditions and the next few hours.",
   description:
     "Weather from Open-Meteo — no API key, no account, no tracking. Only the " +
@@ -13,6 +13,7 @@ export default {
     "earns its space: wider adds the high, low and how it feels; taller adds " +
     "a detail grid and an icon on every hour.",
   sizes: [
+    [2, 2],
     [3, 2],
     [4, 2],
     [3, 3],
