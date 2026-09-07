@@ -184,21 +184,21 @@
             {
               "id": "c1",
               "title": "Lisbon",
-              "date": "2026-09-16",
+              "date": "2026-09-30",
               "yearly": false,
               "emoji": ""
             },
             {
               "id": "c2",
               "title": "Mum's birthday",
-              "date": "2026-10-24",
+              "date": "2026-11-07",
               "yearly": true,
               "emoji": ""
             },
             {
               "id": "c3",
               "title": "Marathon",
-              "date": "2026-12-20",
+              "date": "2027-01-03",
               "yearly": false,
               "emoji": ""
             }
@@ -346,26 +346,26 @@
   "buckets": {
     "habits:history": {
       "h1": {
-        "2026-08-24": true,
-        "2026-08-23": true,
-        "2026-08-22": true,
-        "2026-08-20": true,
-        "2026-08-19": true,
-        "2026-08-17": true,
-        "2026-08-16": true
+        "2026-09-07": true,
+        "2026-09-06": true,
+        "2026-09-05": true,
+        "2026-09-03": true,
+        "2026-09-02": true,
+        "2026-08-31": true,
+        "2026-08-30": true
       },
       "h2": {
-        "2026-08-24": true,
-        "2026-08-23": true,
-        "2026-08-21": true,
-        "2026-08-20": true,
-        "2026-08-19": true,
-        "2026-08-18": true
+        "2026-09-07": true,
+        "2026-09-06": true,
+        "2026-09-04": true,
+        "2026-09-03": true,
+        "2026-09-02": true,
+        "2026-09-01": true
       },
       "h3": {
-        "2026-08-23": true,
-        "2026-08-22": true,
-        "2026-08-19": true
+        "2026-09-06": true,
+        "2026-09-05": true,
+        "2026-09-02": true
       }
     },
     "scratchpad:text": "Lisbon\n- Tuesday, early flight\n- the blue tile place by the station\n- pastries, obviously"

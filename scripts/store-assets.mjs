@@ -48,7 +48,7 @@ const CARDS = [
   {
     file: "1.jpg",
     title: "A new tab worth opening",
-    sub: "Your day, laid out the moment you need it — the time, the weather, what's next, and the places you actually go.",
+    sub: "Your day, laid out the moment you need it — the time, the weather, what's next, your own bookmarks, and the places you actually go.",
   },
   {
     file: "2.jpg",
@@ -73,7 +73,7 @@ const CARDS = [
     // arrangement, same moment, under both themes.
     split: ["5-dark.jpg", "5-light.jpg"],
     title: "Dark or light, and yours either way",
-    sub: "Follow your system or pick a side. Corners, opacity, zoom, frosted glass or flat — every dial is where you can find it.",
+    sub: "Follow your system, follow the sun, or pick a side. Corners, opacity, zoom, frosted glass or flat — every dial is where you can find it.",
   },
 ];
 

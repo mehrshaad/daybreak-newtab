@@ -1,4 +1,4 @@
-# Chrome Web Store — publishing Daybreak 2.2.0
+# Chrome Web Store — publishing Daybreak 2.3.0
 
 This goes out as **a new version of the existing listing**, not a new item. Open
 the current *Daybreak - New Tab* item in the developer dashboard and upload a new
@@ -21,7 +21,7 @@ Then zip the **contents** of `dist/` so `manifest.json` sits at the root of the
 archive:
 
 ```powershell
-Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-newtab-v2.2.0.zip -Force
+Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-newtab-v2.3.0.zip -Force
 ```
 
 The zip is git-ignored — rebuild it whenever `dist/` changes. The store rejects an
@@ -29,30 +29,44 @@ archive whose `manifest.json` is nested inside a folder.
 
 ## What the reviewer will see change
 
-| | 2.1.0 (live) | 2.2.0 (this upload) |
+| | 2.2.0 (live) | 2.3.0 (this upload) |
 | --- | --- | --- |
 | Name | Daybreak - New Tab | unchanged |
 | Required permissions | `storage` | unchanged |
-| Optional permissions | `sessions`, `tabs`, `history`, `bookmarks`, `favicon` | + **`topSites`** |
+| Optional permissions | `sessions`, `tabs`, `history`, `bookmarks`, `favicon`, `topSites` | + **`clipboardRead`** |
 | Host permissions | none | none |
 | Optional host permissions | `https://*/*` | unchanged |
 | Remote code | none | none |
 | Minimum Chrome | 117 | unchanged |
 
 **Required permissions are unchanged**, so this update installs silently for
-existing users — no re-enable prompt. One thing is new for the reviewer to
+existing users — no re-enable prompt. Two things are new for the reviewer to
 notice:
 
-- **`topSites`** (optional) — the Top Sites widget shows the sites you visit
-  most, using the list Chrome has already compiled for its own new tab page.
-  Requested only when that widget is added to the board, and only then; the
-  widget shows a single "Allow" button until it is granted, and works not at
-  all without it rather than degrading to something else. Titles and addresses
-  are read to draw the tiles and nothing is stored or sent. Covered in
-  `privacy-policy.html`.
+- **`clipboardRead`** (optional) — when the user adds a Quick Link, the address
+  they have just copied is offered in the address field so they do not have to
+  paste it by hand. Read only while that add form is open, used only to fill
+  that one field, and never stored or sent. Requested the first time the user
+  presses "Paste what I copied" inside the widget, never at install, and
+  revocable in Chrome's own permission list. Covered in `privacy-policy.html`.
 
-Carried over from 2.1.0 and unchanged, repeated here because the reviewer
-seeing this upload may not have seen the last one:
+- **`bookmarks` is no longer read-only.** It was already an optional permission
+  for search suggestions. The new Bookmarks widget shows the user's bookmark
+  folders on the new tab page and lets them add, rename, move and delete
+  bookmarks and folders from the widget's settings — those edits are made in
+  Chrome's own bookmarks, deliberately: the widget shows and edits the one list
+  the browser already keeps rather than a private copy of it. Every delete
+  requires a second confirming tap, and a folder delete states how many
+  bookmarks go with it. Nothing is uploaded. The justification box below has
+  been rewritten to match, and `privacy-policy.html` needs the same change
+  before this upload.
+
+Carried over and unchanged, repeated here because the reviewer seeing this
+upload may not have seen the last one:
+
+- **`topSites`** (optional) — the Most visited widget shows the sites the user
+  visits most, from the list Chrome has already compiled for its own new tab
+  page. Requested only when that widget is added.
 
 - **`favicon`** (optional) — lets search suggestions show a page's real icon,
   reading Chrome's own already-cached favicon store. Requested alongside
@@ -125,6 +139,46 @@ not match the manifest is a common rejection.
 
 ### What's new (release notes)
 
+> Your bookmarks on the new tab page, folders you can pull apart into their own
+> cards, a theme that follows the sun, and a positioning bug that had been
+> quietly moving every tooltip.
+>
+> - New widget: Bookmarks. Your browser's own folders, read live from Chrome —
+>   and edited there too. Add, rename, move and delete from the widget's
+>   settings and the change is in Chrome's bookmark manager as well. Twenty-three
+>   widgets now
+> - Folders, for Bookmarks and for Quick Links, and either can be pulled apart
+>   so each folder becomes its own card to arrange and resize — titled
+>   "BOOKMARKS · AI TOOLS"
+> - New theme: Sunrise. Light by day and dark after sunset, worked out on the
+>   device from a city you have already set in a widget, or from your timezone
+> - Right-click a Quick Link to edit it: name, address, tile colour from fifteen,
+>   icon colour, remove. A brand keeps its own mark, so GitHub in orange is
+>   still GitHub
+> - Adding is in the right-click menu now, for all nine widgets you can add
+>   something to. It used to be in nine different places and none of them was
+>   the menu
+> - Quick Links offers the address you just copied when you add a link, asking
+>   for the clipboard permission the first time and never at install
+> - Quick Links and Google Apps can be a list instead of a grid, for when the
+>   names matter more than the marks
+> - The focus timer puts its countdown in the tab title while it runs, so a
+>   round is visible from the tab you went off to work in
+> - Square sizes across fourteen widgets, and more of them per widget
+> - There is a way to reach me from inside the extension now: a website link,
+>   a feedback box that composes an email, and a bug report that arrives with
+>   the version and browser already filled in
+> - Hover cards on Quick Links and Most visited are off by default, and are an
+>   option — they were appearing on the way past
+> - Fixed: every floating surface was positioned in the wrong units under a
+>   page zoom, so tooltips, popovers and the context menu all landed off by the
+>   zoom — further out the further across the page they were. Reported as a
+>   tooltip sitting twenty pixels left of its icon on one machine
+> - Fixed: a tooltip measured before the font finished loading stayed centred on
+>   a width it no longer had
+>
+> Everything below is from 2.2.0 and still true.
+>
 > A guided tour, up to three separate boards, and a lot of polish found by
 > measuring rather than by looking.
 >
@@ -253,7 +307,7 @@ reaches the developer, who operates no server.
 
 - [ ] the updated `privacy-policy.html` is live at the URL on the listing
 - [ ] the zip's `manifest.json` is at the archive root
-- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.2.0`
+- [ ] `manifest.json` name reads `Daybreak - New Tab` and version `2.3.0`
 - [ ] loaded the built `dist/` unpacked once, over a 2.1.0 profile, and
       confirmed existing settings, board layout and widget content are intact
 - [ ] store icon, five screenshots, the small promo tile and the marquee

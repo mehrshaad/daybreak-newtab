@@ -143,7 +143,7 @@ const SHOTS = [
       ["weather", 4, 2],
       ["links", 5, 2],
       ["tasks", 4, 3],
-      ["habits", 4, 3],
+      ["bookmarks", 4, 3],
       ["scratchpad", 4, 3],
       ["worldclocks", 3, 2],
       ["timer", 3, 2],
@@ -174,7 +174,7 @@ const SHOTS = [
   },
   {
     file: "shot-3-colours.json",
-    what: "A colour on every tile. The feature this release leads with.",
+    what: "A colour on every tile, including the two deep tints.",
     appearance: { theme: "light", accent: "#7de2b8", wall: "Prism", alpha: 60, blur: true },
     name: "Sam",
     rows: [
@@ -222,7 +222,7 @@ const SHOTS = [
       ["moon", 3, 2],
       ["calendar", 4, 3],
       ["tasks", 5, 3],
-      ["news", 3, 3],
+      ["bookmarks", 3, 3],
       ["links", 5, 2],
       ["habits", 4, 2],
       ["quote", 3, 2],

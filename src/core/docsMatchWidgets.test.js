@@ -20,6 +20,7 @@ const PACKAGES = "packages";
 const README = "README.md";
 const LISTING = "store-assets/SUBMISSION.md";
 const CAPTIONS = "scripts/store-assets.mjs";
+const POLICY = "privacy-policy.html";
 
 function widgetNames() {
   const out = [];
@@ -106,6 +107,24 @@ describe("the permissions the docs list", () => {
   it("are every one the manifest asks for, in the README", () => {
     const src = readFileSync(README, "utf8");
     expect(OPTIONAL.filter((p) => !src.includes(`\`${p}\``))).toEqual([]);
+  });
+
+  it("are every one the manifest asks for, in the privacy policy", () => {
+    // The one that gets an upload rejected rather than commented on. The
+    // original submission was refused over the policy link, and a permission
+    // the extension asks for and the policy does not mention is the same
+    // class of problem with a slower feedback loop.
+    const src = readFileSync(POLICY, "utf8");
+    expect(OPTIONAL.filter((p) => !src.includes(`<code>${p}</code>`))).toEqual([]);
+  });
+
+  it("does not still claim the bookmarks access is read-only", () => {
+    // It was, and the Bookmarks widget writes now. A stale "the extension
+    // never creates, edits or deletes a bookmark" in a published policy is
+    // worse than no sentence at all.
+    const src = readFileSync(POLICY, "utf8");
+    expect(src).not.toContain("never creates, edits or deletes a bookmark");
+    expect(readFileSync(LISTING, "utf8")).not.toContain("Read-only");
   });
 
   it("are every one the manifest asks for, in the listing's justifications", () => {
