@@ -127,6 +127,13 @@ export { useMeasuredBox, useMeasuredWidth } from "./useMeasuredWidth";
 export { usePointerExit } from "./usePointerExit";
 export { useRovingMenu } from "./useRovingMenu";
 export { clipboardLink, hasClipboardRead, readClipboardLink } from "./clipboardLink";
+export {
+  DARK_INK,
+  TILE_COLOR_ORDER,
+  TILE_COLORS,
+  TILE_INKS,
+  tileColor,
+} from "./tilePalette";
 export { useLongPress } from "./useLongPress";
 export { useWidgetAction } from "./useWidgetAction";
 export { usePresence } from "./usePresence";

@@ -24,6 +24,7 @@ function IconGridItem({
   onPointerDown,
   editing,
   onRemove,
+  onItemMenu,
   hoverCard,
 }) {
   const ref = useRef(null);
@@ -64,6 +65,17 @@ function IconGridItem({
         zIndex: held ? 5 : undefined,
         filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
       }}
+      // Stopped rather than allowed to bubble: the tile behind this would
+      // otherwise open its own menu over the top of the item's.
+      onContextMenu={
+        onItemMenu
+          ? (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onItemMenu(item, wrapRef.current);
+            }
+          : undefined
+      }
     >
       <button
         ref={(el) => {
@@ -112,6 +124,8 @@ function IconGridItem({
           name={item.iconName || item.key || item.name}
           url={item.iconUrl}
           size={iconSize}
+          color={item.color}
+          ink={item.ink}
         />
         {showLabels ? (
           <span
@@ -214,6 +228,7 @@ function IconGrid({
   editing = false,
   onRemove,
   onRemoveByDrag,
+  onItemMenu,
   hoverCard,
   scroll = false,
   trailing = null,
@@ -319,6 +334,7 @@ function IconGrid({
           onPointerDown={onPointerDown}
           editing={editing}
           onRemove={onRemove}
+          onItemMenu={onItemMenu}
           hoverCard={hoverCard}
         />
       ))}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LuClipboard, LuPlus } from "react-icons/lu";
+import { LuClipboard, LuPlus, LuTrash2 } from "react-icons/lu";
 import {
   Appear,
   Favicon,
@@ -13,6 +13,9 @@ import {
   Popover,
   readClipboardLink,
   requestPermission,
+  TILE_COLOR_ORDER,
+  TILE_COLORS,
+  TILE_INKS,
   uid,
   useWidgetAction,
 } from "@daybreak/sdk";
@@ -44,6 +47,37 @@ const FIELD_INPUT_STYLE = {
   color: "var(--fg)",
 };
 
+const INK_BUTTON_STYLE = {
+  flex: 1,
+  padding: "5px 8px",
+  borderRadius: 8,
+  background: "var(--panel2)",
+  fontSize: 11,
+  fontFamily: "inherit",
+  textTransform: "none",
+  letterSpacing: "normal",
+  cursor: "pointer",
+  transition: "border-color .15s ease, color .15s ease, background .15s ease",
+};
+
+const REMOVE_ROW_STYLE = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  width: "100%",
+  padding: "6px 10px",
+  marginTop: 2,
+  borderRadius: 8,
+  background: "transparent",
+  border: "1px solid var(--line)",
+  color: "var(--danger)",
+  fontSize: 11,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "background .15s ease",
+};
+
 const PASTE_BUTTON_STYLE = {
   display: "inline-flex",
   alignItems: "center",
@@ -60,6 +94,53 @@ const PASTE_BUTTON_STYLE = {
   cursor: "pointer",
   transition: "background .15s ease, color .15s ease",
 };
+
+// One colour in the picker, painted as the tile it produces rather than as a
+// flat sample. A row of flat colours is a row of colours; a row of gradients
+// is a preview of the grid.
+function ColorSwatch({ name, selected, onPick, link }) {
+  const pair = name ? TILE_COLORS[name] : null;
+  return (
+    <button
+      type="button"
+      aria-label={name ? `Colour: ${name}` : "Colour: automatic"}
+      aria-pressed={selected}
+      onClick={onPick}
+      style={{
+        width: 22,
+        height: 22,
+        padding: 0,
+        borderRadius: 7,
+        cursor: "pointer",
+        display: "grid",
+        placeItems: "center",
+        overflow: "hidden",
+        // The whole border in one declaration. A `border` here and a
+        // `borderColor` in a selected state would leave the swatch with no
+        // border at all once React removed the longhand — see
+        // shorthandStyles.test.js, which exists because of exactly this.
+        border: selected ? "2px solid var(--fg)" : "1px solid var(--line)",
+        background: pair ? `linear-gradient(160deg, ${pair.from}, ${pair.to})` : "transparent",
+        transition: "border-color .15s ease, transform .15s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "scale(1.12)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "scale(1)";
+      }}
+    >
+      {/* Automatic draws the tile it would actually produce — this link's own
+          brand mark, or its monogram on a hashed hue. A neutral square would
+          have needed a legend; showing the answer needs none. It also renders
+          as nothing at all on a light theme, where --panel2 and --line are
+          both within a few percent of white. */}
+      {pair ? null : (
+        <IconTile name={link?.name || "?"} url={link?.url} size={20} radius={5} />
+      )}
+    </button>
+  );
+}
 
 const DEFAULTS = [
   { id: "d1", name: "GitHub", url: "https://github.com" },
@@ -100,6 +181,11 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   // does not flash into view for a tenth of a second on every open before the
   // answer comes back and takes it away again.
   const [canPaste, setCanPaste] = useState(null);
+  // Which link is being edited, and the element its popover hangs from. The
+  // element rather than a ref: each icon has its own node and there is no ref
+  // to hold them all, so IconGrid hands over the one that was right-clicked.
+  const [editId, setEditId] = useState(null);
+  const editAnchor = useRef(null);
 
   // "Add a link" from the tile's right-click menu, which is where people
   // look for it before they find the button that only exists in edit mode.
@@ -163,6 +249,8 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
         // for an address we don't recognise.
         iconUrl: l.url,
         iconName: l.name,
+        color: l.color,
+        ink: l.ink,
       })),
     [items]
   );
@@ -188,6 +276,41 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   const remove = (item) =>
     setConfig({ items: items.filter((l) => l.id !== item.key) });
 
+  // Right-clicking one icon edits that one link. The tile's own menu still
+  // opens from anywhere else in the widget, which is where "Add a link" and
+  // the size picker live; this is about the icon under the pointer.
+  const openItemMenu = (item, el) => {
+    editAnchor.current = el;
+    setEditId(item.key);
+  };
+
+  const edited = items.find((l) => l.id === editId) || null;
+
+  // Patched live rather than on a Save button. A colour is a thing you try,
+  // and a name is two characters changed — both are worse behind a commit
+  // step, and the popover closing is the commit.
+  const patch = (changes) =>
+    setConfig({
+      items: items.map((l) => (l.id === editId ? { ...l, ...changes } : l)),
+    });
+
+  // The address field writes what is typed, so "git" is briefly the link.
+  // Settled when the field is left and again when the popover closes, because
+  // Escape closes it without a blur. Left alone where it does not parse: the
+  // person may have meant to keep typing, and replacing their text with
+  // "https://git/" would be worse than leaving it.
+  const commitUrl = () => {
+    if (!editId) return;
+    const link = items.find((l) => l.id === editId);
+    const settled = link && normalizeUrl(link.url);
+    if (settled && settled !== link.url) patch({ url: settled });
+  };
+
+  const closeEdit = () => {
+    commitUrl();
+    setEditId(null);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
       <IconGrid
@@ -205,6 +328,7 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
         editing={editing}
         onRemove={remove}
         onRemoveByDrag={remove}
+        onItemMenu={openItemMenu}
         hoverCard={!hoverCard ? undefined : (gridItem) => {
           const link = items.find((l) => l.id === gridItem.key);
           if (!link) return null;
@@ -365,6 +489,128 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
               on Enter — this restores that without a visible button. */}
           <button type="submit" style={{ display: "none" }} aria-hidden="true" />
         </form>
+      </Popover>
+
+      {/* One link's own settings, from a right-click on its icon. Anchored to
+          the icon rather than opened at the pointer, so it is obvious which of
+          eight icons is being edited. */}
+      <Popover
+        open={!!edited}
+        anchorRef={editAnchor}
+        onClose={closeEdit}
+        placement="bottom-center"
+        width={228}
+      >
+        {edited ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              padding: "10px 12px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <label style={FIELD_LABEL_STYLE}>
+              Name
+              <input
+                autoFocus
+                value={edited.name || ""}
+                onChange={(e) => patch({ name: e.target.value })}
+                placeholder={nameFromUrl(edited.url)}
+                aria-label="Link name"
+                style={FIELD_INPUT_STYLE}
+              />
+            </label>
+            <label style={FIELD_LABEL_STYLE}>
+              Link
+              <input
+                value={edited.url || ""}
+                onChange={(e) => patch({ url: e.target.value })}
+                onBlur={commitUrl}
+                placeholder="example.com"
+                aria-label="Link address"
+                style={FIELD_INPUT_STYLE}
+              />
+            </label>
+
+            <div style={FIELD_LABEL_STYLE}>
+              Tile colour
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, 22px)",
+                  justifyContent: "space-between",
+                  gap: 6,
+                  paddingTop: 2,
+                }}
+              >
+                <ColorSwatch
+                  name={null}
+                  link={edited}
+                  selected={!edited.color}
+                  onPick={() => patch({ color: null, ink: null })}
+                />
+                {TILE_COLOR_ORDER.map((name) => (
+                  <ColorSwatch
+                    key={name}
+                    name={name}
+                    selected={edited.color === name}
+                    onPick={() => patch({ color: name })}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Only with a colour chosen. On an automatic tile the mark is the
+                brand's own or a monogram on a hashed hue, and neither has a
+                second legible ink to offer — the option would be visible and
+                inert, which reads as broken. */}
+            <Appear open={!!edited.color}>
+              <div style={FIELD_LABEL_STYLE}>
+                Icon
+                <div style={{ display: "flex", gap: 6, paddingTop: 2 }}>
+                  {TILE_INKS.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => patch({ ink: name })}
+                      aria-pressed={(edited.ink || "light") === name}
+                      style={{
+                        ...INK_BUTTON_STYLE,
+                        border:
+                          (edited.ink || "light") === name
+                            ? "1px solid var(--fg)"
+                            : "1px solid var(--line)",
+                        color: (edited.ink || "light") === name ? "var(--fg)" : "var(--dim)",
+                      }}
+                    >
+                      {name === "light" ? "Light" : "Dark"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Appear>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditId(null);
+                setConfig({ items: items.filter((l) => l.id !== edited.id) });
+              }}
+              style={REMOVE_ROW_STYLE}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--panel)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              <LuTrash2 size={12} aria-hidden />
+              Remove
+            </button>
+          </div>
+        ) : null}
       </Popover>
     </div>
   );

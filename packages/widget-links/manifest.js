@@ -4,7 +4,7 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.5.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
