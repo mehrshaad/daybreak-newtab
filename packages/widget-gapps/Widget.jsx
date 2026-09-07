@@ -112,6 +112,20 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
         overflow: showAll ? "auto" : "hidden",
       }}
     >
+      {/* The grid inside a box that can shrink, rather than directly in this
+          column.
+ 
+          IconGrid is `flex: 1`, which in a flex column means it takes every
+          spare pixel — including the row the "+N more" button needs. The
+          button was drawn 11px below the bottom of a 4x2 tile and clipped:
+          the one control whose whole job is keeping the rest of the list
+          inside the tile was itself outside it, with nothing to scroll it into
+          view because this widget caps its content instead of scrolling.
+ 
+          A wrapper with minHeight 0 lets the column give the button its row
+          first and the grid whatever is left, which is the height the capacity
+          maths above already assumed. */}
+      <div style={{ display: "flex", flex: 1, minHeight: 0, minWidth: 0 }}>
       <IconGrid
         items={visible}
         cols={cols}
@@ -127,6 +141,7 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
         }
         onRemoveByDrag={(app) => setConfig({ hidden: [...hiddenKeys, app.key] })}
       />
+      </div>
 
       {hidden > 0 || showAll ? (
         <Button

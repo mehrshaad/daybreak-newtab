@@ -4,7 +4,7 @@ export default {
   glyph: "air",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.5.0",
   tagline: "How's the air outside.",
   description:
     "US AQI and PM2.5/PM10 from Open-Meteo — the same keyless, no-account " +
@@ -24,7 +24,7 @@ export default {
       label: "Index",
       type: "enum",
       of: ["us", "european"],
-      labels: ["US AQI", "European"],
+      labels: { us: "US AQI", european: "European" },
       // US by default only because that is what this tile has always shown;
       // the number is meaningless without knowing which index it is on, and
       // 55 is "moderate" in the US and "poor" in Europe.
