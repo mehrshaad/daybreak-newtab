@@ -223,7 +223,17 @@ function RemoveBadge({ label, onRemove }) {
           padding: 0,
           borderRadius: 999,
           cursor: "pointer",
-          background: "var(--sheet)",
+          // Frosted when the board is, solid when it is not.
+          //
+          // --sheet is translucent and this badge sits directly on top of an
+          // app icon, so with blur switched off the icon read straight through
+          // an 18px circle carrying a cross. The tile publishes the pair it
+          // uses for exactly this — see tileStyle — so the badge is blurred
+          // glass on quality and an opaque disc on performance, without the
+          // SDK needing to know which mode the board is in.
+          background: "var(--tile-sticky-bg, var(--sheet))",
+          backdropFilter: "var(--tile-sticky-blur, none)",
+          WebkitBackdropFilter: "var(--tile-sticky-blur, none)",
           border: "1px solid var(--line)",
           color: "var(--danger)",
           boxShadow: "0 4px 10px rgba(0,0,0,.3)",
@@ -235,7 +245,9 @@ function RemoveBadge({ label, onRemove }) {
         }}
         onMouseLeave={(e) => {
           tip.anchorProps.onMouseLeave?.();
-          e.currentTarget.style.background = "var(--sheet)";
+          // Back to the same pair, not to --sheet, or leaving the badge
+          // makes it translucent again on performance mode.
+          e.currentTarget.style.background = "var(--tile-sticky-bg, var(--sheet))";
         }}
         onFocus={tip.anchorProps.onFocus}
         onBlur={tip.anchorProps.onBlur}

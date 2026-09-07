@@ -6,7 +6,7 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "3.2.0",
+  version: "3.3.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
@@ -29,10 +29,20 @@ export default {
   // back is only meaningful once there is something to come back from.
   actionsFor: (actions, options, config) => {
     const items = Array.isArray(config?.items) ? config.items : [];
-    const hasFolders = items.some((l) => String(l?.folder || "").trim());
+    // How many cards a split would make: one per folder, plus one for
+    // whatever is unfiled. Offering it at one card is offering to rearrange
+    // the board into exactly what it already is.
+    const folders = new Set();
+    let loose = 0;
+    for (const link of items) {
+      const name = String(link?.folder || "").trim();
+      if (name) folders.add(name);
+      else loose += 1;
+    }
+    const groups = folders.size + (loose ? 1 : 0);
     const split = config?.folder != null;
     return actions.filter((a) => {
-      if (a.id === "separate") return hasFolders && !split;
+      if (a.id === "separate") return groups > 1 && !split;
       if (a.id === "rejoin") return split;
       return true;
     });

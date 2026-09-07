@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { LuMonitor, LuMoon, LuSun, LuSunrise } from "react-icons/lu";
 import {
   backupFilename,
   download,
@@ -113,18 +114,30 @@ function SettingsDrawer({
             gap: 6,
           }}
         >
+          {/* The same four marks the toolbar's theme button cycles through,
+              so the row and the button cannot disagree about which state is
+              which. Sunrise is a sun over a horizon rather than the plain sun
+              that means Light: two states both mean daylight, and one glyph
+              for both would make the pair unreadable. */}
           {[
-            ["system", "System"],
-            ["sun", "Sunrise"],
-            ["light", "Light"],
-            ["dark", "Dark"],
-          ].map(([value, label]) => (
+            ["system", "System", LuMonitor],
+            ["sun", "Sunrise", LuSunrise],
+            ["light", "Light", LuSun],
+            ["dark", "Dark", LuMoon],
+          ].map(([value, label, Icon]) => (
             <Pill
               key={value}
               active={(appearance.theme || "system") === value}
               onClick={() => update("appearance", { theme: value })}
-              style={{ textAlign: "center", padding: 10 }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 7,
+                padding: 10,
+              }}
             >
+              <Icon size={14} aria-hidden />
               {label}
             </Pill>
           ))}

@@ -129,6 +129,8 @@ function LinksSettings({ config, setConfig, options, setOptions, action, onSpawn
   const names = folderNames(items);
   const loose = items.filter((l) => !String(l.folder || "").trim()).length;
   const separate = !!options.separate;
+  // How many cards a split would actually make.
+  const groupCount = groupLinks(items).filter((g) => g.links.length).length;
 
   // Nothing to focus here — the add form is in the tile — so the menu's "Add a
   // link" reaching this panel just says where to go.
@@ -152,7 +154,6 @@ function LinksSettings({ config, setConfig, options, setOptions, action, onSpawn
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={LABEL}>Folders</div>
         <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5 }}>
           {names.length
             ? "A folder is a name on a link. File one by right-clicking its icon."
@@ -179,7 +180,11 @@ function LinksSettings({ config, setConfig, options, setOptions, action, onSpawn
         ) : null}
       </div>
 
-      {names.length ? (
+      {/* Offered once there is more than one group to split into. One folder
+          with every link in it splits into a single card, which is the board
+          it already has — and the loose links count as a group, so one folder
+          plus anything unfiled is two cards and worth offering. */}
+      {groupCount > 1 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={LABEL}>A card per folder</div>
           <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5 }}>
@@ -190,7 +195,7 @@ function LinksSettings({ config, setConfig, options, setOptions, action, onSpawn
           {separate ? (
             <Button onClick={split} style={ROUND} hover={HOVER_SOFT}>
               <LuFolderPlus size={13} aria-hidden />
-              {`Split into ${groupLinks(items).filter((g) => g.links.length).length} cards`}
+              {`Split into ${groupCount} cards`}
             </Button>
           ) : (
             <Button onClick={() => setOptions({ separate: true })} style={ROUND} hover={HOVER_SOFT}>

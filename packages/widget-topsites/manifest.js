@@ -4,7 +4,7 @@ export default {
   glyph: "grid",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.5.0",
   tagline: "The places you actually go.",
   description:
     "Chrome's own most-visited list, the tiles the default new tab page shows " +
