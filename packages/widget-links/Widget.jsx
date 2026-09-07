@@ -19,6 +19,7 @@ import {
   uid,
   useWidgetAction,
 } from "@daybreak/sdk";
+import { LOOSE, folderNames, groupLinks, selectGroup } from "./folders";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.
@@ -171,7 +172,7 @@ function nameFromUrl(href) {
 }
 
 function Links({ options, config, setConfig, size, editing, columns, action }) {
-  const { hideLabels, newTab, iconScale, hoverCard, layout } = options;
+  const { hideLabels, newTab, iconScale, hoverCard, layout, folderHeadings } = options;
   const list = layout === "list";
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
@@ -239,22 +240,50 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   // the Add cell below matches the real icons exactly.
   const cell = iconCellSize(iconSize, !hideLabels);
 
-  const gridItems = useMemo(
-    () =>
-      items.map((l) => ({
-        key: l.id,
-        name: l.name,
-        title: l.url,
-        // Both, in that order of authority: the address names the site even
-        // when the user called it "Work", and the label still gets its say
-        // for an address we don't recognise.
-        iconUrl: l.url,
-        iconName: l.name,
-        color: l.color,
-        ink: l.ink,
-      })),
-    [items]
+  // The links as groups, and the ones this card is actually holding.
+  //
+  // config.folder rather than an option, for the reason the Bookmarks widget
+  // found the hard way: a card split out of another starts with its options at
+  // their defaults, so a card that has been given a folder has to know it from
+  // its config. null means every group.
+  const groups = useMemo(
+    () => selectGroup(groupLinks(items), config.folder ?? null),
+    [items, config.folder]
   );
+  // Exactly what it rendered before folders existed: one grid, no heading, the
+  // scroller on the grid itself. Any board that has never used a folder must
+  // come out of this unchanged.
+  const plain = groups.length === 1 && !groups[0].name;
+
+  const toGridItem = (l) => ({
+    key: l.id,
+    name: l.name,
+    title: l.url,
+    // Both, in that order of authority: the address names the site even
+    // when the user called it "Work", and the label still gets its say
+    // for an address we don't recognise.
+    iconUrl: l.url,
+    iconName: l.name,
+    color: l.color,
+    ink: l.ink,
+  });
+
+  // A drag inside one group, written back into that group's own slots.
+  //
+  // IconGrid reports indices within the grid it is drawing, and with folders
+  // there are several grids over one list — so a plain moveItem on `items`
+  // would move the wrong link the moment a second group existed. Only the
+  // positions this group already occupies are rewritten, which also means a
+  // drag can never move a link out of its folder by accident.
+  const reorderWithin = (group, from, to) => {
+    const slots = group.links.map((l) => items.indexOf(l));
+    const order = moveItem(group.links, from, to);
+    const next = [...items];
+    slots.forEach((slot, at) => {
+      next[slot] = order[at];
+    });
+    return next;
+  };
 
   const open = (item) => {
     if (editing) return;
@@ -270,7 +299,11 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
     const url = normalizeUrl(draftUrl);
     if (!url) return;
     const name = draftName.trim() || nameFromUrl(url);
-    setConfig({ items: [...items, { id: uid(), name, url }] });
+    // On a card that holds one folder, a new link joins that folder. Without
+    // this it would be filed as loose and then not shown at all by the very
+    // card it was added from.
+    const folder = config.folder == null || config.folder === LOOSE ? "" : config.folder;
+    setConfig({ items: [...items, { id: uid(), name, url, ...(folder ? { folder } : null) }] });
     closeAdd();
   };
 
@@ -314,119 +347,175 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
-      <IconGrid
-        items={gridItems}
-        cols={cols}
-        iconSize={iconSize}
-        // Matches the icon-to-label gap inside each item, so horizontal and
-        // vertical rhythm read as the same spacing scaled by icon size.
-        showLabels={!hideLabels}
-        list={list}
-        // The links are the user's own, so none of them may be hidden the way
-        // Google Apps hides its long tail. If they do not fit, they scroll.
-        scroll
-        onOpen={open}
-        onReorder={(from, to) => setConfig({ items: moveItem(items, from, to) })}
-        editing={editing}
-        onRemove={remove}
-        onRemoveByDrag={remove}
-        onItemMenu={openItemMenu}
-        hoverCard={!hoverCard ? undefined : (gridItem) => {
-          const link = items.find((l) => l.id === gridItem.key);
-          if (!link) return null;
+      {/* One grid per folder, or exactly one unheaded grid where nobody has
+          used folders — see groupLinks. The column is the scroller in the
+          grouped case; see the `scroll` prop below. */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: plain ? 0 : 8,
+          flex: 1,
+          minWidth: 0,
+          minHeight: 0,
+          overflow: plain ? "visible" : "hidden auto",
+          overscrollBehavior: plain ? undefined : "contain",
+        }}
+      >
+        {groups.map((group, at) => {
+          const last = at === groups.length - 1;
           return (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", maxWidth: 240 }}>
-              <Favicon
-                url={link.url}
-                size={20}
-                fallback={<IconTile name={link.name} url={link.url} size={20} />}
-              />
-              <div style={{ minWidth: 0 }}>
+            <div
+              key={group.name || "__loose"}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                minWidth: 0,
+                // The one grid in the plain case keeps the tile's whole height,
+                // the way it did before this. Grouped ones take what they need.
+                flex: plain ? 1 : "none",
+              }}
+            >
+              {/* No heading on the loose group and none on a card holding a
+                  single folder, where the tile's own title already says which
+                  — see the manifest's `subtitle`. */}
+              {group.name && folderHeadings && !config.folder ? (
                 <div
                   style={{
-                    fontSize: 13,
-                    color: "var(--fg)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {link.name}
-                </div>
-                <div
-                  style={{
-                    fontFamily: MONO,
                     fontSize: 10,
+                    letterSpacing: ".14em",
+                    textTransform: "uppercase",
                     color: "var(--faint)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
+                    paddingLeft: 2,
                   }}
                 >
-                  {link.url}
+                  {group.name}
                 </div>
-              </div>
+              ) : null}
+          <IconGrid
+            items={group.links.map(toGridItem)}
+            cols={cols}
+            iconSize={iconSize}
+            // Matches the icon-to-label gap inside each item, so horizontal and
+            // vertical rhythm read as the same spacing scaled by icon size.
+            showLabels={!hideLabels}
+            list={list}
+            // The links are the user's own, so none of them may be hidden the way
+            // Google Apps hides its long tail. If they do not fit, they scroll —
+            // on the grid itself when it is the only one, and on the column
+            // below when there are several, because two grids each flexing to
+            // fill the tile is neither of them fitting.
+            scroll={plain}
+            onOpen={open}
+            onReorder={(from, to) => setConfig({ items: reorderWithin(group, from, to) })}
+            editing={editing}
+            onRemove={remove}
+            onRemoveByDrag={remove}
+            onItemMenu={openItemMenu}
+            hoverCard={!hoverCard ? undefined : (gridItem) => {
+              const link = items.find((l) => l.id === gridItem.key);
+              if (!link) return null;
+              return (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", maxWidth: 240 }}>
+                  <Favicon
+                    url={link.url}
+                    size={20}
+                    fallback={<IconTile name={link.name} url={link.url} size={20} />}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "var(--fg)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {link.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: "var(--faint)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {link.url}
+                    </div>
+                  </div>
+                </div>
+              );
+            }}
+            // Only while arranging the board: adding a link changes what the tile
+            // holds rather than being something done at a glance, and a resting grid
+            // of icons reads better without a permanent empty slot at the end.
+            // Appear rather than a ternary so it leaves the way it arrived and the
+            // grid closes up after it.
+            trailing={!last ? null : (
+              <Appear open={!!editing || adding} style={{ minWidth: 0 }}>
+              <button
+                ref={addBtnRef}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAdding((v) => !v);
+                }}
+                aria-label="Add a link"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: cell.labelGap,
+                  padding: `${cell.pad}px 2px`,
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  border: 0,
+                  background: "transparent",
+                  color: "var(--faint)",
+                  width: "100%",
+                  transition: "color .2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--accent)";
+                  e.currentTarget.firstElementChild.style.borderColor = "var(--accent)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--faint)";
+                  e.currentTarget.firstElementChild.style.borderColor = "var(--line)";
+                }}
+              >
+                <span
+                  style={{
+                    width: iconSize,
+                    height: iconSize,
+                    borderRadius: iconSize * 0.28,
+                    border: "1.5px dashed var(--line)",
+                    display: "grid",
+                    placeItems: "center",
+                    transition: "border-color .2s",
+                  }}
+                >
+                  <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
+                </span>
+                {hideLabels ? null : (
+                  <span style={{ fontSize: cell.fontSize }}>Add</span>
+                )}
+              </button>
+              </Appear>
+            )}
+          />
             </div>
           );
-        }}
-        // Only while arranging the board: adding a link changes what the tile
-        // holds rather than being something done at a glance, and a resting grid
-        // of icons reads better without a permanent empty slot at the end.
-        // Appear rather than a ternary so it leaves the way it arrived and the
-        // grid closes up after it.
-        trailing={
-          <Appear open={!!editing || adding} style={{ minWidth: 0 }}>
-          <button
-            ref={addBtnRef}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setAdding((v) => !v);
-            }}
-            aria-label="Add a link"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: cell.labelGap,
-              padding: `${cell.pad}px 2px`,
-              borderRadius: 12,
-              cursor: "pointer",
-              border: 0,
-              background: "transparent",
-              color: "var(--faint)",
-              width: "100%",
-              transition: "color .2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--accent)";
-              e.currentTarget.firstElementChild.style.borderColor = "var(--accent)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--faint)";
-              e.currentTarget.firstElementChild.style.borderColor = "var(--line)";
-            }}
-          >
-            <span
-              style={{
-                width: iconSize,
-                height: iconSize,
-                borderRadius: iconSize * 0.28,
-                border: "1.5px dashed var(--line)",
-                display: "grid",
-                placeItems: "center",
-                transition: "border-color .2s",
-              }}
-            >
-              <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
-            </span>
-            {hideLabels ? null : (
-              <span style={{ fontSize: cell.fontSize }}>Add</span>
-            )}
-          </button>
-          </Appear>
-        }
-      />
+        })}
+      </div>
 
       {/* Floating rather than a grid item: an inline form used to grow the
           grid's own row to fit two text fields, which shifted every icon
@@ -534,6 +623,26 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
                 aria-label="Link address"
                 style={FIELD_INPUT_STYLE}
               />
+            </label>
+
+            <label style={FIELD_LABEL_STYLE}>
+              Folder
+              <input
+                value={edited.folder || ""}
+                onChange={(e) => patch({ folder: e.target.value })}
+                placeholder="None"
+                aria-label="Folder"
+                list="db-link-folders"
+                style={FIELD_INPUT_STYLE}
+              />
+              {/* The folders already in use, offered rather than imposed: a
+                  free field is what makes a new folder, and a picker of
+                  existing ones is what stops "AI" and "Ai" both existing. */}
+              <datalist id="db-link-folders">
+                {folderNames(items).map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
             </label>
 
             <div style={FIELD_LABEL_STYLE}>

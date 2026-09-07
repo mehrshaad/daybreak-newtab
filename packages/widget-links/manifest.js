@@ -1,10 +1,12 @@
+import { LOOSE } from "./folders";
+
 export default {
   id: "links",
   name: "Quick Links",
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.6.0",
+  version: "3.0.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
@@ -14,6 +16,15 @@ export default {
     "mode, or drag it out of the grid.",
   // Answered by the widget, not here: see useWidgetAction.
   actions: [{ id: "add", label: "Add a link" }],
+  // A card holding one folder says which — "QUICK LINKS · AI". The loose links
+  // get the sentinel rather than an empty title, or the card would look like
+  // it had failed to name itself.
+  subtitle: (config) =>
+    config?.folder == null ? "" : config.folder === LOOSE ? "Ungrouped" : config.folder,
+  // Several folders in one card needs room for their headings and links, the
+  // same as the Bookmarks widget. One folder to a card does not.
+  sizesFor: (sizes, options) =>
+    options?.separate ? sizes : sizes.filter(([w, h]) => w >= 3 || h >= 3),
   sizes: [
     [2, 2],
     [3, 2],
@@ -35,6 +46,21 @@ export default {
       // past: crossing a row of icons to reach the one you wanted popped a
       // card over the others. The tooltip still names the icon, which is what
       // the hover was mostly being used for, so nothing is lost by default.
+      default: false,
+    },
+    {
+      key: "folderHeadings",
+      label: "Folder headings",
+      type: "boolean",
+      default: true,
+      // Only worth showing where folders are actually in use, which the widget
+      // knows and a manifest does not — so it is gated on the mode instead.
+      showIf: { separate: false },
+    },
+    {
+      key: "separate",
+      label: "A card per folder",
+      type: "boolean",
       default: false,
     },
     {
@@ -66,6 +92,10 @@ export default {
     { key: "newTab", label: "Open in a new tab", type: "boolean", default: false },
   ],
   refresh: null,
+  settingsPanel: {
+    title: "Folders",
+    load: () => import("./Settings.jsx"),
+  },
   permissions: { chrome: [], hosts: [] },
   load: () => import("./Widget.jsx"),
 };
