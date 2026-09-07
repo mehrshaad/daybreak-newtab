@@ -198,6 +198,7 @@ export { APPEAR_MS, default as Appear } from "./components/Appear";
 export { default as Button } from "./components/Button";
 export { default as CitySearch } from "./components/CitySearch";
 export { default as ColorField } from "./components/ColorField";
+export { FILL_FADE, default as CrossfadeFill } from "./components/CrossfadeFill";
 export { default as DatePicker } from "./components/DatePicker";
 export { default as EditableText } from "./components/EditableText";
 export { default as Favicon } from "./components/Favicon";

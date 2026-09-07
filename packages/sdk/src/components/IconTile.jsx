@@ -2,6 +2,7 @@ import googleMark from "../assets/brand/google-favicon-2025.webp";
 import { brandForLink, hashHue, inkSafeGradient } from "../brands";
 import { DARK_INK, defaultInk, gradientFor } from "../tilePalette";
 import { useSiteIcon } from "../useSiteIcon";
+import CrossfadeFill from "./CrossfadeFill";
 
 // Google's current favicon, supplied as artwork rather than a monochrome path,
 // so it is used directly instead of being tinted like the glyph brands.
@@ -135,25 +136,37 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false, color,
     <div
       aria-hidden="true"
       style={{
+        position: "relative",
+        overflow: "hidden",
         width: size,
         height: size,
         borderRadius: radius ?? size * 0.28,
-        background: gradient,
         display: "grid",
         placeItems: "center",
         flex: "none",
         boxShadow: "0 1px 2px rgba(0,0,0,.18)",
       }}
     >
+      {/* The fill is a layer rather than this element's own background, so
+          changing colour fades instead of snapping — a gradient cannot be
+          transitioned. See CrossfadeFill. */}
+      <CrossfadeFill css={gradient} />
       {Glyph ? (
-        <Glyph size={Math.round(size * 0.5)} color={glyphColor} />
+        <Glyph
+          size={Math.round(size * 0.5)}
+          color={glyphColor}
+          // A plain colour does interpolate, so the ink can just ease.
+          style={{ position: "relative", transition: "color .3s ease" }}
+        />
       ) : (
         <span
           style={{
+            position: "relative",
             fontSize: size * 0.42,
             color: glyphColor,
             fontWeight: 600,
             lineHeight: 1,
+            transition: "color .3s ease",
           }}
         >
           {letter}

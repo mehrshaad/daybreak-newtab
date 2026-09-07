@@ -47,26 +47,36 @@ export const TILE_COLORS = {
 // A named order rather than Object.keys, so adding one is a decision about
 // where it goes.
 // Six to a row, which with "automatic" at the front and the custom swatch at
-// the end makes eighteen cells in three full rows. A picker that leaves a hole
-// on its last row looks unfinished, so the count and the column width are
-// decided together rather than one being left to the browser.
+// the end makes twelve cells in two full rows. A picker that leaves a hole on
+// its last row looks unfinished, so the count and the column width are decided
+// together rather than one being left to the browser.
 export const TILE_COLOR_COLUMNS = 6;
 
+// Ten offered, of the sixteen defined above.
+//
+// Three rows of swatches was more picker than the job needs, and the sixteen
+// included pairs nobody was choosing between: indigo beside blue and violet,
+// pink between magenta and red, cyan beside teal, steel and navy among the
+// blues. Trimming to an even walk round the wheel plus the two neutrals takes
+// the closest pair in the picker from 17.4 to 25.7 in CIE Lab — so the ten are
+// further apart from each other than the sixteen were, as well as fewer.
+//
+// A purely maximal-distance selection came out at 34.7 and dropped orange and
+// green, which are two of the colours people actually reach for. Distinct
+// enough and useful beats distinct and awkward.
+//
+// The six that went are still in TILE_COLORS on purpose: a tile already set to
+// navy stays navy and renders exactly as before. They are no longer offered,
+// not removed.
 export const TILE_COLOR_ORDER = [
   "blue",
-  "indigo",
   "violet",
   "magenta",
-  "pink",
   "red",
   "orange",
   "yellow",
-  "lime",
   "green",
   "teal",
-  "cyan",
-  "steel",
-  "navy",
   "sand",
   "graphite",
 ];

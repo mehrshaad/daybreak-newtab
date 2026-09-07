@@ -422,7 +422,9 @@ function Links({
                     top: 0,
                     zIndex: 1,
                     // Its own backing, or the icons scroll up through the text.
-                    background: "var(--tile-bg, var(--panel))",
+                    background: "var(--tile-sticky-bg, var(--panel))",
+                    backdropFilter: "var(--tile-sticky-blur, none)",
+                    WebkitBackdropFilter: "var(--tile-sticky-blur, none)",
                     paddingBottom: 3,
                   }}
                 >
@@ -699,7 +701,6 @@ function Links({
               ink={edited.ink}
               onColor={(color) => patch({ color })}
               onInk={(ink) => patch({ ink })}
-              sample={{ name: edited.name, url: edited.url }}
             />
 
             <button

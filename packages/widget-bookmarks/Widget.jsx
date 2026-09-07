@@ -56,7 +56,9 @@ function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing })
             position: "sticky",
             top: 0,
             zIndex: 1,
-            background: "var(--tile-bg, var(--panel))",
+            background: "var(--tile-sticky-bg, var(--panel))",
+            backdropFilter: "var(--tile-sticky-blur, none)",
+            WebkitBackdropFilter: "var(--tile-sticky-blur, none)",
             paddingBottom: 3,
           }}
         >

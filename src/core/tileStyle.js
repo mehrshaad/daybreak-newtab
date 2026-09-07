@@ -48,11 +48,24 @@ export function tileStyle({
     padding: `${TILE_PAD.y}px ${TILE_PAD.x}px`,
     borderRadius: `${radius}px`,
     background: fill,
-    // The same fill as a custom property, so a widget can back a sticky
-    // heading with whatever its own tile happens to be. Widgets cannot compute
+    // The tile's own fill as a custom property, so a widget can back a sticky
+    // heading with whatever its tile happens to be. Widgets cannot compute
     // this — it is the theme, the tint and the opacity slider combined — and a
     // heading over --panel is visibly the wrong colour on a tinted tile.
     "--tile-bg": fill,
+    // And the pair a sticky overlay actually needs.
+    //
+    // --tile-bg is translucent: the opacity slider is the whole point of it,
+    // and a sticky heading painted with it has the widget's own content
+    // scrolling visibly through the words. Reported as a folder heading with a
+    // link's label showing through it.
+    //
+    // So: with blur on, the same translucent fill plus a backdrop blur, which
+    // is how every other floating surface here stays legible without going
+    // opaque. With blur off there is nothing to blur, and the only honest
+    // answer is a solid fill.
+    "--tile-sticky-bg": blur ? fill : tileFill(theme, 100, tint),
+    "--tile-sticky-blur": blur ? "var(--blur-tile)" : "none",
     // Frosted glass when blur is on, plain translucency when it is off.
     backdropFilter: blur ? "var(--blur-tile)" : "none",
     WebkitBackdropFilter: blur ? "var(--blur-tile)" : "none",

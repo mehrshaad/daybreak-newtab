@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   backupFilename,
   download,
@@ -6,7 +6,7 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { dropPermission, MONO, requestAllPermissions, sunTimes } from "@daybreak/sdk";
+import { CrossfadeFill, dropPermission, MONO, requestAllPermissions, sunTimes } from "@daybreak/sdk";
 import {
   ACCENT_COLUMNS,
   ACCENT_NAMES,
@@ -60,55 +60,6 @@ function sunThemeNote(widgets) {
     : `${today} Estimated from your timezone — set a city in the Weather widget to make it exact.`;
 }
 
-
-const SWATCH_FADE = 320;
-
-// The swatch's own fill, crossfaded rather than swapped.
-//
-// Gradients do not interpolate, so `transition: background` does nothing for
-// these — picking a new accent repainted all twelve swatches on the same frame
-// the page behind them was smoothly crossfading, which read as the picker
-// glitching. Backdrop solves this at full size the same way: keep the outgoing
-// fill underneath and fade the incoming one over it.
-function SwatchFill({ css }) {
-  const [layers, setLayers] = useState(() => [{ key: 0, css }]);
-  const shown = useRef(css);
-
-  useEffect(() => {
-    if (shown.current === css) return;
-    shown.current = css;
-    setLayers((prev) => {
-      const last = prev[prev.length - 1];
-      // Only ever one layer underneath, so dragging across the accent row
-      // cannot stack up a dozen gradients per swatch.
-      return [last, { key: last.key + 1, css }];
-    });
-  }, [css]);
-
-  // A timer, not animationend: an occluded tab never fires it and the spent
-  // layer would sit there for the life of the page.
-  useEffect(() => {
-    if (layers.length < 2) return undefined;
-    const t = setTimeout(() => setLayers((prev) => prev.slice(-1)), SWATCH_FADE + 60);
-    return () => clearTimeout(t);
-  }, [layers]);
-
-  return layers.map((layer, i) => (
-    <span
-      key={layer.key}
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        inset: 0,
-        borderRadius: "inherit",
-        background: layer.css,
-        ...(layers.length > 1 && i === layers.length - 1
-          ? { animation: `db-fade ${SWATCH_FADE}ms ease both` }
-          : null),
-      }}
-    />
-  ));
-}
 
 function SettingsDrawer({
   open,
@@ -295,7 +246,7 @@ function SettingsDrawer({
                 boxShadow: "0 4px 14px rgba(0,0,0,.18)",
               }}
             >
-              <SwatchFill css={backgroundSwatch(theme, appearance.accent, w)} />
+              <CrossfadeFill css={backgroundSwatch(theme, appearance.accent, w)} />
               <span
                 style={{
                   // Above the fill layers, which are positioned.

@@ -9,7 +9,6 @@ import {
   gradientFor,
 } from "../tilePalette";
 import { labelStyle } from "../styles";
-import IconTile from "./IconTile";
 
 // Picking a tile's colour and the ink on it.
 //
@@ -18,14 +17,23 @@ import IconTile from "./IconTile";
 // widget will want the same field.
 //
 // Three kinds of answer in one grid, deliberately: automatic (which draws the
-// tile it would actually produce, so it needs no legend), sixteen presets, and
-// any colour at all from the system picker. Eighteen cells over six columns,
-// which is three full rows — a picker with a hole on its last row reads as
-// unfinished.
+// tile it would actually produce, so it needs no legend), ten presets, and any
+// colour at all from the system picker. Twelve cells over six columns, which is
+// two full rows — a picker with a hole on its last row reads as unfinished.
 
 const SWATCH = 22;
 
-function Swatch({ label, selected, onPick, background, children }) {
+// The "any colour" swatch, before one has been chosen.
+//
+// A conic rainbow was the obvious thing and the wrong thing: it is the only
+// element in the picker not drawn like a tile, so it read as a control
+// borrowed from somewhere else. This is the same 160-degree linear sweep every
+// tile and every brand uses, through four of the palette's own colours — so it
+// says "a colour, any colour" in the grid's own voice.
+const PICKER_SWEEP =
+  "linear-gradient(160deg, #ff8f8f, #ffd76f 32%, #4fd8c4 66%, #8a3ff0)";
+
+function Swatch({ label, selected, onPick, background, dashed = false, children }) {
   return (
     <button
       type="button"
@@ -38,16 +46,20 @@ function Swatch({ label, selected, onPick, background, children }) {
         padding: 0,
         borderRadius: 7,
         cursor: "pointer",
-        // Grid rather than flex, and placeItems rather than align/justify: the
-        // automatic swatch holds a 20px tile inside a 22px box and was sitting
-        // a pixel high and a pixel left of centre.
         display: "grid",
         placeItems: "center",
         overflow: "hidden",
         // The whole border in one declaration — a `border` here plus a
         // `borderColor` in a selected state leaves the swatch with no border at
         // all once React removes the longhand. See shorthandStyles.test.js.
-        border: selected ? "2px solid var(--fg)" : "1px solid var(--line)",
+        //
+        // Dashed marks the automatic swatch, which is not a colour: it used to
+        // draw the tile it would produce, at 20px inside a 22px box, and never
+        // quite looked centred however it was aligned. A dashed outline says
+        // "no colour chosen" without needing to be centred at all.
+        border: `${selected ? 2 : 1}px ${dashed ? "dashed" : "solid"} ${
+          selected ? "var(--fg)" : "var(--line)"
+        }`,
         background,
         transition: "border-color .15s ease, transform .15s ease",
       }}
@@ -97,8 +109,6 @@ function ColorField({
   ink,
   onColor,
   onInk,
-  // What "automatic" would draw, so that swatch can show it.
-  sample,
   label = "Tile colour",
   inkLabel = "Icon",
 }) {
@@ -127,14 +137,8 @@ function ColorField({
             selected={!color}
             onPick={() => onColor(null)}
             background="transparent"
-          >
-            <IconTile
-              name={sample?.name || "?"}
-              url={sample?.url}
-              size={SWATCH - 2}
-              radius={5}
-            />
-          </Swatch>
+            dashed
+          />
 
           {TILE_COLOR_ORDER.map((name) => {
             const pair = TILE_COLORS[name];
@@ -165,15 +169,22 @@ function ColorField({
               border: custom ? "2px solid var(--fg)" : "1px solid var(--line)",
               background: custom
                 ? `linear-gradient(160deg, ${gradientFor(custom).from}, ${gradientFor(custom).to})`
-                : "conic-gradient(from .25turn, #ff8f8f, #ffd76f, #b6dd7f, #4fd8c4, #6f9bff, #c79bff, #ef92dc, #ff8f8f)",
+                : PICKER_SWEEP,
+              boxShadow: "0 1px 2px rgba(0,0,0,.18)",
               transition: "border-color .15s ease",
             }}
           >
             {custom ? null : (
+              // White, like the mark on every other saturated tile in the
+              // grid, with the same soft shadow the tiles carry.
               <LuPipette
                 size={11}
                 aria-hidden
-                style={{ color: "#1c1c22", pointerEvents: "none" }}
+                style={{
+                  color: "#fff",
+                  pointerEvents: "none",
+                  filter: "drop-shadow(0 1px 1px rgba(0,0,0,.35))",
+                }}
               />
             )}
             <input
