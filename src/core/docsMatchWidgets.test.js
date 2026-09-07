@@ -87,6 +87,34 @@ describe("the store listing", () => {
   });
 });
 
+describe("the permissions the docs list", () => {
+  // Same failure as the widget count above, and it had already happened: the
+  // README's table said five optional permissions and named five while the
+  // manifest asked for six, because `topSites` was added to one and not the
+  // other. A permission is the thing a reviewer and a cautious user read most
+  // carefully, so an undocumented one is worse than an undocumented widget.
+  const OPTIONAL = JSON.parse(readFileSync("public/manifest.json", "utf8"))
+    .optional_permissions;
+
+  it("asks for the ones we think it does", () => {
+    // A guard on the guard: an empty list would make both checks below vacuous.
+    expect(OPTIONAL.length).toBeGreaterThanOrEqual(6);
+    expect(OPTIONAL).toContain("clipboardRead");
+  });
+
+  it("are every one the manifest asks for, in the README", () => {
+    const src = readFileSync(README, "utf8");
+    expect(OPTIONAL.filter((p) => !src.includes(`\`${p}\``))).toEqual([]);
+  });
+
+  it("are every one the manifest asks for, in the listing's justifications", () => {
+    // The Store makes you write one box per permission, and a missing box is a
+    // rejected upload rather than a note from the reviewer.
+    const src = readFileSync(LISTING, "utf8");
+    expect(OPTIONAL.filter((p) => !src.includes(`**${p}** (optional)`))).toEqual([]);
+  });
+});
+
 describe("the screenshot captions", () => {
   it("do not carry a stale widget count", () => {
     // These are drawn onto the store cards, so a wrong number there is a wrong

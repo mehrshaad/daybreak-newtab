@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from "react";
-import { LuPlus } from "react-icons/lu";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { LuClipboard, LuPlus } from "react-icons/lu";
 import {
   Appear,
   Favicon,
+  hasPermission,
   IconGrid,
   iconCellSize,
   iconGridSize,
@@ -10,6 +11,8 @@ import {
   MONO,
   moveItem,
   Popover,
+  readClipboardLink,
+  requestPermission,
   uid,
   useWidgetAction,
 } from "@daybreak/sdk";
@@ -39,6 +42,23 @@ const FIELD_INPUT_STYLE = {
   textTransform: "none",
   letterSpacing: "normal",
   color: "var(--fg)",
+};
+
+const PASTE_BUTTON_STYLE = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  width: "100%",
+  justifyContent: "center",
+  padding: "6px 10px",
+  borderRadius: 8,
+  background: "var(--panel2)",
+  border: "1px solid var(--line)",
+  color: "var(--dim)",
+  fontSize: 11,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "background .15s ease, color .15s ease",
 };
 
 const DEFAULTS = [
@@ -76,6 +96,10 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   const [draftUrl, setDraftUrl] = useState("");
   const [draftName, setDraftName] = useState("");
   const addBtnRef = useRef(null);
+  // Whether the clipboard can be read: null until asked, so the Paste button
+  // does not flash into view for a tenth of a second on every open before the
+  // answer comes back and takes it away again.
+  const [canPaste, setCanPaste] = useState(null);
 
   // "Add a link" from the tile's right-click menu, which is where people
   // look for it before they find the button that only exists in edit mode.
@@ -85,6 +109,38 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
     setAdding(false);
     setDraftUrl("");
     setDraftName("");
+  };
+
+  // Offer whatever address is on the clipboard, which is nearly always the
+  // reason this form is open at all. Only when the permission is already
+  // granted: the first paste is a button, and after that it happens by itself.
+  useEffect(() => {
+    if (!adding) return undefined;
+    let live = true;
+    hasPermission("clipboardRead").then(async (granted) => {
+      if (!live) return;
+      setCanPaste(granted);
+      if (!granted) return;
+      const link = await readClipboardLink();
+      // Never over the top of something typed: the read is asynchronous and a
+      // fast typist can be a word in before it lands.
+      if (live) setDraftUrl((current) => current || link);
+    });
+    return () => {
+      live = false;
+    };
+  }, [adding]);
+
+  // The first paste, which is also the permission prompt.
+  //
+  // requestPermission has to be the first await in the handler or Chrome has
+  // already spent the click gesture by the time it is called and refuses.
+  const pasteFromClipboard = async () => {
+    const granted = await requestPermission("clipboardRead");
+    setCanPaste(granted);
+    if (!granted) return;
+    const link = await readClipboardLink();
+    if (link) setDraftUrl(link);
   };
 
   // Width decides how many icons fit per row; height decides how big they are.
@@ -287,6 +343,24 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
               style={FIELD_INPUT_STYLE}
             />
           </label>
+          {/* Only until the permission exists, and only while the field is
+              empty — once either is settled there is nothing for it to do. */}
+          <Appear open={canPaste === false && !draftUrl}>
+            <button
+              type="button"
+              onClick={pasteFromClipboard}
+              style={PASTE_BUTTON_STYLE}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--panel)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--panel2)";
+              }}
+            >
+              <LuClipboard size={12} aria-hidden />
+              Paste what I copied
+            </button>
+          </Appear>
           {/* A form with two text fields and no button does not submit
               on Enter — this restores that without a visible button. */}
           <button type="submit" style={{ display: "none" }} aria-hidden="true" />

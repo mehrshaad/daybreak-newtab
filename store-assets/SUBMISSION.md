@@ -212,6 +212,12 @@ dashboard of widgets.
   to the board; until it is granted the widget shows a single Allow button and
   nothing else. Titles and addresses are read to draw the tiles, nothing is
   stored and nothing is sent.
+- **clipboardRead** (optional) — When the user adds a Quick Link, the address
+  they have just copied is offered in the address field, so they do not have to
+  paste it by hand. Read at the moment the add form is open and used only to
+  fill that one field; nothing from the clipboard is stored or sent anywhere.
+  Requested the first time the user presses "Paste what I copied", never at
+  install, and revocable in Chrome's own permission list.
 - **Host permissions (optional, `https://*/*` pattern)** — Used only when the
   user pastes in a private calendar address (Calendar widget) or a custom
   feed URL (News widget). Chrome's per-origin permission API requires this

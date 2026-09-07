@@ -70,8 +70,8 @@ scratchpad text and habit history stays local. Nothing is sent to the
 developer — no analytics, no tracking, no accounts.
 
 The extension requests **one** permission up front: `storage`, to save your
-settings. Five more are **optional**, each requested only when you turn on the
-feature that needs it, and revocable at any time:
+settings. Seven more are **optional**, each requested only when you turn on
+the feature that needs it, and revocable at any time:
 
 | Permission | Used by |
 | --- | --- |
@@ -80,6 +80,8 @@ feature that needs it, and revocable at any time:
 | `history` | search suggestions from pages you have visited |
 | `bookmarks` | search suggestions from your bookmarks (read-only) |
 | `favicon` | real site icons in search suggestions, from Chrome's own favicon cache — no request to the site |
+| `topSites` | the Most Visited widget, from the list Chrome already keeps for its own new tab page |
+| `clipboardRead` | offering the address you just copied when you add a Quick Link, asked for the first time you press Paste |
 
 It declares no host permissions up front, so it starts with no standing access
 to any site's content. Calendar and a custom News feed instead ask Chrome, at

@@ -9,6 +9,7 @@
     "storage"
   ],
   "optional_permissions": [
+    "clipboardRead",
     "sessions",
     "tabs",
     "bookmarks",

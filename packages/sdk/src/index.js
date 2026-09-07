@@ -126,6 +126,7 @@ export { useHover } from "./useHover";
 export { useMeasuredBox, useMeasuredWidth } from "./useMeasuredWidth";
 export { usePointerExit } from "./usePointerExit";
 export { useRovingMenu } from "./useRovingMenu";
+export { clipboardLink, hasClipboardRead, readClipboardLink } from "./clipboardLink";
 export { useLongPress } from "./useLongPress";
 export { useWidgetAction } from "./useWidgetAction";
 export { usePresence } from "./usePresence";
