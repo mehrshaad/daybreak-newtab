@@ -216,16 +216,16 @@ not match the manifest is a common rejection.
 | Asset | File |
 | --- | --- |
 | Store icon (128x128) | `store-icon-128.png` — the mark at 96x96 with the transparent padding the image guidelines ask for. Not `public/icon-128.png`, which is full-bleed for Chrome's own surfaces. |
-| Screenshot 1 (1280x800) | `screenshot-1.png` — the board |
-| Screenshot 2 (1280x800) | `screenshot-2.png` — widgets in use |
-| Screenshot 3 (1280x800) | `screenshot-3.png` — layout mode, mid-drag |
-| Screenshot 4 (1280x800) | `screenshot-4.png` — the widget browser |
+| Screenshot 1 (1280x800) | `screenshot-1.png` — the hero board, arranged, on a warm light theme |
+| Screenshot 2 (1280x800) | `screenshot-2.png` — the widget Store open over a full dark board |
+| Screenshot 3 (1280x800) | `screenshot-3.png` — a different colour on each of twelve tiles |
+| Screenshot 4 (1280x800) | `screenshot-4.png` — the work board with the profile switcher open |
 | Screenshot 5 (1280x800) | `screenshot-5.png` — one board split down the middle, dark on the left and light on the right, built by the generator from `raw/5-dark.jpg` and `raw/5-light.jpg` |
+| Small promo tile (440x280) | `promo-tile-440x280.png` |
+| Marquee promo tile (1400x560) | `marquee-1400x560.png` — only used if the store features the item |
 
 Five is the store's maximum, so each card has to carry its own idea — no two
 show the same theme, accent, background or name.
-| Small promo tile (440x280) | `promo-tile-440x280.png` |
-| Marquee promo tile (1400x560) | `marquee-1400x560.png` — only used if the store features the item |
 
 Regenerate from fresh captures with:
 
@@ -326,6 +326,8 @@ a reviewer will not notice but a visitor will: no tour, no profile chip in the
 toolbar, the old agenda-style calendar, sixteen accent swatches in two rows of
 eight rather than fifteen in three rows of five, smaller icons in Quick Links
 and Google Apps, and a grid glyph on Edit layout where there is now a pencil.
+Two releases on, they also show none of what 2.3.0 leads with: no Bookmarks
+widget, no folder cards, no Sunrise theme in the appearance row.
 
 They also all show the same board, in the same colour, five times — which
 quietly tells a visitor that is all it does. The five are a sequence now, not
@@ -345,10 +347,10 @@ unalike:
 
 | Shot | Board | Theme | Accent | Background | Shows |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `shot-1-hero.json` | light | orange | Aurora | 10 widgets, arranged, analog clock |
+| 1 | `shot-1-hero.json` | light | orange | Aurora | 10 widgets, arranged, analog clock, Bookmarks |
 | 2 | `shot-2-store.json` | dark | indigo | Nebula | the Store open over a full board |
 | 3 | `shot-3-colours.json` | light | mint | Prism | 12 tiles, a different colour on each |
-| 4 | `shot-4-profiles.json` | light | blue | Halo | the work board, with the profile switcher open |
+| 4 | `shot-4-profiles.json` | light | blue | Halo | the work board, Bookmarks, profile switcher open |
 | 5 | `shot-5-themes.json` | dark → light | magenta | Mesh | the same board under both themes |
 
 Each carries `tourDone: true`, or the welcome card sits over the middle of every
@@ -356,15 +358,23 @@ shot.
 
 ### Capturing
 
-1. Build and load `dist/` unpacked, or run the dev server. Set the window to
-   1280 wide or more — the cards inset the capture at its own resolution rather
-   than stretching it, so a bigger window is a sharper card.
+1. Build and load `dist/` **unpacked** — not the dev server, for these five.
+   Shots 1 and 4 carry the Bookmarks widget, and Chrome's bookmarks are
+   unreachable from a plain page: on the dev server both tiles read "available
+   in the installed extension", which is a photograph of an error message.
+   Set the window to 1280 wide or more — the cards inset the capture at its own
+   resolution rather than stretching it, so a bigger window is a sharper card.
 2. For each shot: Settings → Backup → Import, pick the board, then give the
    live widgets a few seconds. Weather, air quality, currency, crypto and news
    all fetch, and a half-loaded tile in a store screenshot looks like a broken
    one.
 3. Capture as JPEG into a scratch folder, named `1.jpg` .. `4.jpg` plus
    `5-dark.jpg` and `5-light.jpg`.
+   - Shots 1 and 4: grant the bookmarks permission when the widget asks, and
+     make sure Chrome has a few bookmarks in named folders — a backup cannot
+     carry these, because they are the browser's and not the board's. Two or
+     three folders of four or five links each photographs best; an empty
+     bookmarks bar reads as a broken widget.
    - Shot 2: open the Store and pick a category before capturing.
    - Shot 4: add a second profile first — Settings → Profiles → Add, name them
      Work and Home — then open the switcher in the toolbar and capture with the
