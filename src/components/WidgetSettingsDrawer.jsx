@@ -1,8 +1,8 @@
 import { Suspense, lazy, useMemo } from "react";
 import { LuBan } from "react-icons/lu";
 import { MONO, pill } from "@daybreak/sdk";
-import { TINT_NAMES, TINTS, tileFill } from "../core/tokens";
-import { getWidget, resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
+import { TINT_COLUMNS, TINT_NAMES, TINTS, tileFill } from "../core/tokens";
+import { getWidget, resolveOptions, resolveRate, resolveSize, sizesFor } from "../widgets/registry";
 import { Button, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 const panelCache = new Map();
@@ -73,6 +73,8 @@ function WidgetSettingsDrawer({
   onRemove,
   theme,
   appearance,
+  action,
+  onSpawn,
   keepInteractive,
   toast,
 }) {
@@ -85,17 +87,33 @@ function WidgetSettingsDrawer({
 
   if (!manifest) return null;
 
-  // What a manifest may ask about the board, as opposed to about its own
-  // options. Deliberately a short, fixed list: an option should almost always
-  // depend on the widget's own state, and anything here is a coupling between
-  // a widget and the app's settings that has to be worth its keep.
+  const currentSize = resolveSize(instanceId, board.sizes);
+
+  // What a manifest may ask about the board and the tile, as opposed to about
+  // its own options. Deliberately a short, fixed list: an option should almost
+  // always depend on the widget's own state, and anything here is a coupling
+  // between a widget and the app that has to be worth its keep.
   const environment = {
     // Whether tiles show a header at all. A widget that bleeds into the header
     // row when it is gone can render quite differently without it.
     tileHeader: (appearance.tileLabels || "both") !== "none",
+    // The shape of this tile.
+    //
+    // Because an option that only does something at one size is, at every
+    // other size, a control that does nothing — and the drawer had eight of
+    // them on a 2x2 weather tile, four of which had nowhere to draw. The names
+    // match what the widgets' own layout modules already call these, so a
+    // manifest and its layout cannot disagree about what "wide" means.
+    cols: currentSize[0],
+    rows: currentSize[1],
+    tall: currentSize[1] >= 3,
+    wide: currentSize[0] >= 4,
+    narrow: currentSize[0] <= 2,
+    roomy: currentSize[0] >= 4 && currentSize[1] >= 3,
   };
-
-  const currentSize = resolveSize(instanceId, board.sizes);
+  // Which sizes are worth offering for the options as they stand — see
+  // sizesFor. The tile keeps whatever it is on; this is the shortlist.
+  const offeredSizes = sizesFor(instanceId, options, record.config);
   const rate = resolveRate(instanceId, record.rate);
   const Panel = panelFor(manifest);
 
@@ -120,10 +138,10 @@ function WidgetSettingsDrawer({
       }
     >
       <div data-tour="panel" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {manifest.sizes.length > 1 ? (
+        {offeredSizes.length > 1 ? (
           <Section title="Size">
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {manifest.sizes.map((s) => (
+              {offeredSizes.map((s) => (
                 <Pill
                   key={s.join("x")}
                   active={currentSize[0] === s[0] && currentSize[1] === s[1]}
@@ -145,7 +163,10 @@ function WidgetSettingsDrawer({
           <div
             role="group"
             aria-label="Widget colour"
-            style={{ display: "grid", gridTemplateColumns: "repeat(9, 1fr)", gap: 8 }}
+            // Ten columns against nineteen tints plus the plain swatch — two
+            // full rows of ten. See TINT_EXTRAS, which gained a third entry to
+            // make the count come out even.
+            style={{ display: "grid", gridTemplateColumns: `repeat(${TINT_COLUMNS}, 1fr)`, gap: 6 }}
           >
             {/* "None" first and the same shape as the rest, so going back to a
                 plain tile is the same gesture as picking a colour. */}
@@ -176,6 +197,12 @@ function WidgetSettingsDrawer({
                 setConfig={onConfig}
                 options={options}
                 setOptions={onOptions}
+                // For the widgets whose add form lives in here rather than in
+                // the tile: the menu opens this drawer and signals in one go.
+                action={action}
+                // Lets a panel turn its one tile into several — see
+                // spawnInstances. Only Bookmarks uses it.
+                onSpawn={onSpawn}
                 toast={toast}
               />
             </Suspense>

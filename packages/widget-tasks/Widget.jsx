@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
-import { Appear, Button, DatePicker, EditableText, LIST_BLEED, LIST_ROW_HIGHLIGHT, MONO, animateExit, formatDate, listRow, uid, useFlip, usePointerReorder } from "@daybreak/sdk";
+import { Appear, Button, DatePicker, EditableText, LIST_BLEED, LIST_ROW_HIGHLIGHT, MONO, animateExit, formatDate, listRow, uid, useFlip, usePointerReorder, useWidgetAction } from "@daybreak/sdk";
 import { reorderVisible } from "./reorder";
 
 const isOverdue = (due) => !!due && due < formatDate(new Date());
@@ -78,18 +78,19 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
           inputStyle={{ display: "block", width: "100%", fontSize: 13 }}
         />
       </div>
-      {showDates && task.due ? (
+      {/* Appear, so turning due dates off eases rather than blinking. */}
+      <Appear open={!!(showDates && task.due)} style={{ display: "flex", flex: "none" }}>
         <span
           style={{
             fontFamily: MONO,
             fontSize: 10,
-            flex: "none",
             color: isOverdue(task.due) && !task.done ? "var(--danger)" : "var(--faint)",
+            transition: "color .25s ease",
           }}
         >
-          {task.due.slice(5)}
+          {task.due?.slice(5)}
         </span>
-      ) : null}
+      </Appear>
       {/* Always in the layout, only ever faded. Mounting it on hover took its
           width with it, so a row's due date jumped sideways the moment the
           pointer arrived or left — the fade was animated, the reflow was not. */}
@@ -131,13 +132,19 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
   );
 }
 
-function Tasks({ options, config, setConfig, editing }) {
+function Tasks({ options, config, setConfig, editing, action }) {
   const { hideCompleted, showDates } = options;
   const items = Array.isArray(config.items) ? config.items : [];
   const [draft, setDraft] = useState("");
   const [due, setDue] = useState("");
   const listRef = useRef(null);
   const rowEls = useRef({});
+  const draftRef = useRef(null);
+
+  // Tasks has no add form to open: the field is always there. So the menu
+  // item puts the caret in it, which is the whole of what pressing "add"
+  // on this widget means.
+  useWidgetAction(action, "add", () => draftRef.current?.focus());
 
   const save = (next) => setConfig({ items: next });
 
@@ -235,6 +242,7 @@ function Tasks({ options, config, setConfig, editing }) {
         style={{ display: "flex", gap: 6, alignItems: "center", paddingTop: 8 }}
       >
         <input
+          ref={draftRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Add a task"
@@ -251,7 +259,9 @@ function Tasks({ options, config, setConfig, editing }) {
             color: "var(--fg)",
           }}
         />
-        {showDates ? <DatePicker value={due} onChange={setDue} /> : null}
+        <Appear open={!!showDates} style={{ display: "flex", flex: "none" }}>
+          <DatePicker value={due} onChange={setDue} />
+        </Appear>
         <button
           type="submit"
           aria-label="Add task"

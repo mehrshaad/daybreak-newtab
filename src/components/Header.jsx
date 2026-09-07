@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LuMonitor, LuMoon, LuPencil, LuPlus, LuSettings, LuSun, LuX } from "react-icons/lu";
+import { LuMonitor, LuMoon, LuPencil, LuPlus, LuSettings, LuSun, LuSunrise, LuX } from "react-icons/lu";
 import { useNotices } from "../core/noticeContext";
 import { useSettings } from "../core/settingsContext";
 import {
@@ -17,7 +17,13 @@ import {
   useRovingMenu,
   useTooltip,
 } from "@daybreak/sdk";
-import { barTier, profileShowsName, searchWidth } from "../core/barLayout";
+import {
+  barLabels,
+  barTier,
+  endColumnWidth,
+  profileShowsName,
+  searchWidth,
+} from "../core/barLayout";
 import { gatherSuggestions } from "../core/suggest";
 import { nextTheme, THEME_LABELS } from "../core/themeCycle";
 import { useViewportWidth } from "../core/useColumns";
@@ -145,8 +151,6 @@ function Header({
   onManageProfiles,
   onContextMenu,
   searchRef,
-  // How much of the window an open drawer is covering on the right.
-  inset = 0,
 }) {
   const { settings, update, profiles } = useSettings();
   const { notify } = useNotices();
@@ -159,31 +163,6 @@ function Header({
   // an explicit theme over a board that had been following the system.
   const themeSetting = settings.appearance.theme || "system";
   const [now, setNow] = useState(() => new Date());
-  // The bar's own width, not the window's. A drawer is fixed to the right edge
-  // and covers whatever is under it, so with one open the bar has several
-  // hundred pixels less to work with — and it did not know. The end groups are
-  // right-aligned inside columns that may shrink to nothing, so the controls
-  // did not clip, they overflowed leftwards and drew on top of the search
-  // field. Both of the numbers below come off this width, and the padding
-  // below keeps the whole bar out of the drawer's way.
-  const width = Math.max(320, useViewportWidth() - inset);
-  const tier = barTier(width);
-  // The left group's real width, for the one decision that cannot be made from
-  // the window alone.
-  const [leftRef, leftWidth] = useMeasuredWidth();
-  const nextThemeValue = nextTheme(themeSetting);
-  const themeTip = useTooltip(`Switch to ${THEME_LABELS[nextThemeValue]}`);
-  const settingsTip = useTooltip("Settings");
-  const editTip = useTooltip(tier.labels ? null : editing ? "Done editing" : "Edit layout");
-  // More than one board to be on. The wordmark stands down for the chip rather
-  // than sitting beside it.
-  const hasProfiles = (profiles?.list?.length || 1) > 1;
-  const storeTip = useTooltip(tier.labels ? null : "Add a widget");
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 20000);
-    return () => clearInterval(t);
-  }, []);
 
   const [searchActive, setSearchActive] = useState(false);
   const [searchHover, setSearchHover] = useState(false);
@@ -192,6 +171,39 @@ function Header({
   const [active, setActive] = useState(-1);
   const seq = useRef(0);
   const formRef = useRef(null);
+
+  // The bar's own width, measured, rather than the window's.
+  //
+  // It used to be told how much a drawer was covering and subtract that itself,
+  // and that was wrong twice over. The container the bar sits in *already*
+  // insets for an open drawer — it grows a 400px right padding — so subtracting
+  // again counted the drawer twice and left the bar 717px of a real 1173, which
+  // is what squeezed the end columns to 59px and had the buttons drawing over
+  // the search field. Measuring cannot double-count: whatever the parent does,
+  // this is the room there is.
+  const [barRef, barWidth] = useMeasuredWidth();
+  const viewportWidth = useViewportWidth();
+  const width = Math.max(320, barWidth ?? viewportWidth);
+  const tier = barTier(width);
+  // Computed once and shared: the field's width decides the end columns, and
+  // the end columns decide whether the labels fit in them.
+  const searchPx = searchWidth(width, { active: searchActive, scrolled });
+  const endCol = endColumnWidth(width, searchPx);
+  const labels = barLabels(width, searchPx, tier);
+
+  const nextThemeValue = nextTheme(themeSetting);
+  const themeTip = useTooltip(`Switch to ${THEME_LABELS[nextThemeValue]}`);
+  const settingsTip = useTooltip("Settings");
+  const editTip = useTooltip(labels ? null : editing ? "Done editing" : "Edit layout");
+  // More than one board to be on. The wordmark stands down for the chip rather
+  // than sitting beside it.
+  const hasProfiles = (profiles?.list?.length || 1) > 1;
+  const storeTip = useTooltip(labels ? null : "Add a widget");
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 20000);
+    return () => clearInterval(t);
+  }, []);
 
   const suggestEnabled = settings.behavior.suggest || { links: true };
   const linkItems = useMemo(() => {
@@ -286,6 +298,7 @@ function Header({
 
   return (
     <header
+      ref={barRef}
       onContextMenu={onContextMenu}
       style={{
         position: "sticky",
@@ -303,10 +316,7 @@ function Header({
         // long enough label on either end would still shove the field off
         // centre instead of being clipped.
         display: "grid",
-        gridTemplateColumns: `minmax(0, 1fr) minmax(0, ${searchWidth(width, {
-          active: searchActive,
-          scrolled,
-        })}px) minmax(0, 1fr)`,
+        gridTemplateColumns: `minmax(0, 1fr) minmax(0, ${searchPx}px) minmax(0, 1fr)`,
         alignItems: "center",
         gap: "20px",
         // Constant, and that is the fix for the jump. This used to shrink to
@@ -319,13 +329,11 @@ function Header({
         // lot. The bar still says it has been scrolled, with its background,
         // its border and a narrower search field — none of which move anything.
         padding: "20px 28px",
-        paddingRight: 28 + inset,
         background: scrolled ? "var(--sheet)" : "transparent",
         borderBottom: `1px solid ${scrolled ? "var(--line)" : "transparent"}`,
         backdropFilter: scrolled ? "var(--blur-panel)" : "none",
         transition:
           "grid-template-columns .28s cubic-bezier(.2,.8,.2,1), " +
-          "padding-right .3s cubic-bezier(.2,.8,.2,1), " +
           "background .25s ease, border-color .25s ease",
       }}
     >
@@ -334,17 +342,14 @@ function Header({
           Measured, though, because the profile chip is the one item in the bar
           whose width comes from data rather than from the design — see
           profileShowsName. */}
-      <div
-        ref={leftRef}
-        style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}
-      >
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
         {/* Renders nothing at all on a single-profile install, which is most of
             them, so the bar is unchanged for anyone not using profiles. When it
             does appear it takes the wordmark's place rather than crowding it:
             which board you are looking at is worth a permanent spot in the bar
             and a wordmark on your own new tab is not. */}
         <ProfileSwitcher
-          compact={!profileShowsName(leftWidth, { labels: tier.labels })}
+          compact={!profileShowsName(endCol, { labels })}
           onManage={onManageProfiles}
         />
         <Appear open={tier.wordmark && !hasProfiles} style={{ display: "flex" }}>
@@ -526,11 +531,11 @@ function Header({
             aria-pressed={editing}
             aria-label={editing ? "Done editing" : "Edit layout"}
             style={{
-              padding: tier.labels ? "9px 14px" : 0,
-              width: tier.labels ? undefined : 36,
-              height: tier.labels ? undefined : 36,
-              display: tier.labels ? undefined : "grid",
-              placeItems: tier.labels ? undefined : "center",
+              padding: labels ? "9px 14px" : 0,
+              width: labels ? undefined : 36,
+              height: labels ? undefined : 36,
+              display: labels ? undefined : "grid",
+              placeItems: labels ? undefined : "center",
               borderRadius: "999px",
               fontSize: "13px",
               cursor: "pointer",
@@ -544,15 +549,15 @@ function Header({
             {/* Keyed so the label crossfades on toggle instead of swapping
                 between frames. */}
             <span
-              key={`${editing ? "on" : "off"}-${tier.labels ? "text" : "icon"}`}
+              key={`${editing ? "on" : "off"}-${labels ? "text" : "icon"}`}
               style={{
                 animation: "db-fade .2s ease both",
-                display: tier.labels ? undefined : "grid",
-                placeItems: tier.labels ? undefined : "center",
+                display: labels ? undefined : "grid",
+                placeItems: labels ? undefined : "center",
                 whiteSpace: "nowrap",
               }}
             >
-              {tier.labels ? (editing ? "Editing" : "Edit layout") : <LuPencil size={15} />}
+              {labels ? (editing ? "Editing" : "Edit layout") : <LuPencil size={15} />}
             </span>
           </Button>
         </span>
@@ -567,11 +572,11 @@ function Header({
           <Button
             onClick={onOpenStore}
             aria-label="Add a widget"
-            styleFor={tier.labels ? softButton : roundControl}
+            styleFor={labels ? softButton : roundControl}
             hover={HOVER_LIFT}
           >
             <span
-              key={tier.labels ? "text" : "icon"}
+              key={labels ? "text" : "icon"}
               style={{
                 animation: "db-fade .2s ease both",
                 whiteSpace: "nowrap",
@@ -580,11 +585,11 @@ function Header({
                 // put the plus a couple of pixels low and slightly left of the
                 // circle it lives in. The edit button beside it already did
                 // this; this one was the odd one out.
-                display: tier.labels ? undefined : "grid",
-                placeItems: tier.labels ? undefined : "center",
+                display: labels ? undefined : "grid",
+                placeItems: labels ? undefined : "center",
               }}
             >
-              {tier.labels ? "Store" : <LuPlus size={16} />}
+              {labels ? "Store" : <LuPlus size={16} />}
             </span>
           </Button>
         </span>
@@ -609,6 +614,10 @@ function Header({
             >
               {themeSetting === "system" ? (
                 <LuMonitor size={15} />
+              ) : themeSetting === "sun" ? (
+                // A sun over a horizon, not the plain sun that means "light".
+                // Two states that both mean daylight need two marks.
+                <LuSunrise size={15} />
               ) : themeSetting === "light" ? (
                 <LuSun size={15} />
               ) : (

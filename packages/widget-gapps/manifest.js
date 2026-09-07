@@ -4,7 +4,7 @@ export default {
   glyph: "grid",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.0.0",
+  version: "2.4.0",
   tagline: "The launcher grid, without the extra click.",
   description:
     "Direct links to Google's apps. Plain links — the tile just opens the " +
@@ -18,10 +18,20 @@ export default {
   // widget no longer offers.
   sizes: [
     [4, 2],
+    [3, 3],
     [5, 2],
+    [4, 4],
   ],
   defaultSize: [5, 2],
   options: [
+    {
+      key: "layout",
+      label: "Layout",
+      type: "enum",
+      of: ["grid", "list"],
+      labels: { grid: "Grid", list: "List" },
+      default: "grid",
+    },
     {
       key: "iconScale",
       label: "Icon size",
@@ -30,7 +40,16 @@ export default {
       labels: { s: "S", m: "M", l: "L" },
       default: "m",
     },
-    { key: "hideLabels", label: "Hide labels", type: "boolean", default: false },
+    {
+      key: "hideLabels",
+      label: "Hide labels",
+      type: "boolean",
+      default: false,
+      // A list row is a name with a mark beside it. Without the name
+      // it is a column of icons in a tile's full width, so the option
+      // is not offered there rather than being offered and ignored.
+      showIf: { layout: "grid" },
+    },
     { key: "newTab", label: "Open in a new tab", type: "boolean", default: false },
   ],
   refresh: null,

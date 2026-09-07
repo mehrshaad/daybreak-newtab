@@ -14,10 +14,13 @@ Vite.
 - 🔍 **Click to focus** — click a tile to zoom into it. Four behaviours to
   choose from, including a camera zoom that scales the whole board toward the
   tile you picked.
-- 🎨 **Themed end to end** — dark and light (or follow your system), fifteen
+- 🎨 **Themed end to end** — dark and light (follow your system, or the sun), sixteen
   accent colours, twelve generated backgrounds, a colour per widget, and sliders
   for corner radius, tile opacity and page zoom. Frosted glass on, or solid
   surfaces off.
+- 📁 **Folders that come apart** — group your Quick Links and see your Chrome
+  bookmark folders as they are, then split either one so each folder becomes
+  its own card to place and size on the board.
 - 👥 **Up to three boards** — keep work and home apart. Each profile has its own
   layout, its own look and its own widget settings, and each syncs on its own.
 - 🧭 **A tour on the first run** — fifteen steps that open each drawer for real
@@ -31,7 +34,7 @@ Vite.
 
 ### The widgets
 
-Twenty-two of them. Counted from `packages/widget-*`, which is the only place
+Twenty-three of them. Counted from `packages/widget-*`, which is the only place
 the number is actually true.
 
 | Widget | What it does |
@@ -49,6 +52,7 @@ the number is actually true.
 | Countdown | The dates you are counting toward, in days |
 | Scratchpad | One text field that saves as you type, syncing up to 6KB |
 | Quick Links | The places you actually go, wearing their own brand marks — 233 built in, and the site's own favicon for the rest |
+| Bookmarks | Your browser's own bookmark folders, read and edited live in Chrome (optional permission) |
 | Google Apps | The launcher grid, without the extra click |
 | Most visited | The sites you open most, from Chrome's own list (optional permission) |
 | Recent Tabs | Reopen what you closed by accident (optional permission) |
@@ -70,8 +74,8 @@ scratchpad text and habit history stays local. Nothing is sent to the
 developer — no analytics, no tracking, no accounts.
 
 The extension requests **one** permission up front: `storage`, to save your
-settings. Five more are **optional**, each requested only when you turn on the
-feature that needs it, and revocable at any time:
+settings. Seven more are **optional**, each requested only when you turn on
+the feature that needs it, and revocable at any time:
 
 | Permission | Used by |
 | --- | --- |
@@ -80,6 +84,8 @@ feature that needs it, and revocable at any time:
 | `history` | search suggestions from pages you have visited |
 | `bookmarks` | search suggestions from your bookmarks (read-only) |
 | `favicon` | real site icons in search suggestions, from Chrome's own favicon cache — no request to the site |
+| `topSites` | the Most Visited widget, from the list Chrome already keeps for its own new tab page |
+| `clipboardRead` | offering the address you just copied when you add a Quick Link, asked for the first time you press Paste |
 
 It declares no host permissions up front, so it starts with no standing access
 to any site's content. Calendar and a custom News feed instead ask Chrome, at

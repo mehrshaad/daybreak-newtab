@@ -48,6 +48,26 @@ export function tileStyle({
     padding: `${TILE_PAD.y}px ${TILE_PAD.x}px`,
     borderRadius: `${radius}px`,
     background: fill,
+    // The tile's own fill as a custom property, so a widget can back a sticky
+    // heading with whatever its tile happens to be. Widgets cannot compute
+    // this — it is the theme, the tint and the opacity slider combined — and a
+    // heading over --panel is visibly the wrong colour on a tinted tile.
+    "--tile-bg": fill,
+    // A small control that sits on top of the widget's own content and has to
+    // read as raised: the remove badge over an app icon, a month arrow over a
+    // calendar grid.
+    //
+    // Deliberately *stronger* than the tile rather than the same as it. The
+    // first attempt was the tile's own fill, on the theory that an overlay
+    // should match its surface — which is exactly wrong twice over. Painted on
+    // the tile it doubles (0.55 white over 0.55 white reads as 0.80, a
+    // visibly lighter patch), and a control that matches its background is a
+    // control you cannot see. A chip wants to stand out.
+    //
+    // Opaque when there is no blur, because then there is nothing to soften it
+    // and a translucent disc simply shows the icon through the cross.
+    "--tile-chip-bg": tileFill(theme, blur ? 78 : 100, tint),
+    "--tile-chip-blur": blur ? "var(--blur-tile)" : "none",
     // Frosted glass when blur is on, plain translucency when it is off.
     backdropFilter: blur ? "var(--blur-tile)" : "none",
     WebkitBackdropFilter: blur ? "var(--blur-tile)" : "none",

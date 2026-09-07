@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { MONO, daysUntilPhase, moonPhase, moonPhaseName } from "@daybreak/sdk";
+import { Appear, daysUntilPhase, MONO, moonPhase, moonPhaseName } from "@daybreak/sdk";
 import { litPath, whenLabel } from "./terminator";
 
 // The moon's illuminated fraction changes by about 3% a day, so once every ten
@@ -89,17 +89,19 @@ function Moon({ options, size }) {
         }}
       >
         <div style={{ fontSize: 14, color: "var(--fg)", fontWeight: 500 }}>{moon.name}</div>
-        {showPercent ? (
+        {/* Appear rather than a ternary, so switching these on and off in the
+            settings eases the way every other change on the page does. */}
+        <Appear open={!!showPercent}>
           <div style={{ fontFamily: MONO, fontSize: 11, color: "var(--dim)", fontVariantNumeric: "tabular-nums" }}>
             {Math.round(moon.illumination * 100)}% lit
           </div>
-        ) : null}
-        {showNext ? (
+        </Appear>
+        <Appear open={!!showNext}>
           <div style={{ fontFamily: MONO, fontSize: 10, color: "var(--faint)", lineHeight: 1.6 }}>
             <div>Full {whenLabel(moon.toFull)}</div>
             <div>New {whenLabel(moon.toNew)}</div>
           </div>
-        ) : null}
+        </Appear>
       </div>
     </div>
   );

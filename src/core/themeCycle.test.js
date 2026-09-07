@@ -5,12 +5,13 @@ describe("nextTheme", () => {
   it("rings back round to system", () => {
     expect(nextTheme("system")).toBe("light");
     expect(nextTheme("light")).toBe("dark");
-    expect(nextTheme("dark")).toBe("system");
+    expect(nextTheme("dark")).toBe("sun");
+    expect(nextTheme("sun")).toBe("system");
   });
 
   it("reaches every state from every state", () => {
-    // The point of the ring: no setting is a dead end. Three presses from
-    // anywhere has to come back to where it started, having visited the rest.
+    // The point of the ring: no setting is a dead end. A lap from anywhere has
+    // to come back to where it started, having visited the rest.
     for (const start of THEME_CYCLE) {
       const seen = [];
       let at = start;

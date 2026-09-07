@@ -344,9 +344,19 @@ function Tour({ open, onClose, onScene, hasWidgets = true }) {
           maxWidth: "calc(100vw - 32px)",
           padding: "16px 18px",
           borderRadius: 16,
-          background: "var(--sheet)",
+          // Opaque, and no backdrop-filter.
+          //
+          // It had both, and the filter was inert: the wrapper above fades in
+          // with an opacity animation, and an ancestor at less than full
+          // opacity starts a new backdrop root — so the blur had nothing
+          // behind it to blur and the board showed through 66% white, with a
+          // paragraph of text on top of somebody's icons. Reported on Edge and
+          // true everywhere; it is the markup, not the browser.
+          //
+          // A card that is modal over a dimmed board should be solid in any
+          // case. See --sheetSolid.
+          background: "var(--sheetSolid)",
           border: "1px solid var(--line)",
-          backdropFilter: "var(--blur-sheet)",
           boxShadow: "0 30px 70px rgba(0,0,0,.45)",
           pointerEvents: "auto",
           transition: "left .24s cubic-bezier(.2,.8,.2,1), top .24s cubic-bezier(.2,.8,.2,1)",

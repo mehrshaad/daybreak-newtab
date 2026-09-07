@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { clampToViewport } from "../clamp";
+import { layoutRect, pageZoomFactor } from "../zoom";
 import { usePresence } from "../usePresence";
 
 const GAP = 6;
@@ -25,18 +26,39 @@ function Tooltip({ anchorRef, open, label, placement = "bottom-center" }) {
       const anchor = anchorRef.current;
       const panel = panelRef.current;
       if (!anchor || !panel) return;
-      const a = anchor.getBoundingClientRect();
+      // One coordinate space for all of it. offsetWidth is layout pixels and
+      // getBoundingClientRect is visual ones, and `left` below is read as
+      // layout — mixing them put this tooltip at x * zoom. See zoom.js.
+      const zoom = pageZoomFactor();
+      const a = layoutRect(anchor, zoom);
       const w = panel.offsetWidth;
       const h = panel.offsetHeight;
-      const fitsBelow = a.bottom + GAP + h <= window.innerHeight - 12;
+      const viewportHeight = window.innerHeight / zoom;
+      const fitsBelow = a.bottom + GAP + h <= viewportHeight - 12;
       const y = placement === "top-center" || !fitsBelow ? a.top - GAP - h : a.bottom + GAP;
       const x = a.left + (a.width - w) / 2;
-      setPos(clampToViewport(x, y, w, h));
+      setPos(clampToViewport(x, y, w, h, 12, zoom));
     };
     reposition();
+
+    // Measured again whenever the box changes size under us.
+    //
+    // The fonts are declared font-display: swap, so a tooltip shown before
+    // DM Sans has loaded is measured in the fallback — which is wider, wraps
+    // differently against the 240px cap, and leaves the box centred on a width
+    // it no longer has. Whether that window is ever hit depends on the
+    // machine's font cache, which is exactly the shape of a bug that appears
+    // on one computer and nowhere else. A ResizeObserver covers the swap and
+    // anything else that resizes the panel after its first layout, without
+    // needing to know what did.
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(reposition);
+    if (observer && panelRef.current) observer.observe(panelRef.current);
+
     window.addEventListener("scroll", reposition, { capture: true, passive: true });
     window.addEventListener("resize", reposition);
     return () => {
+      observer?.disconnect();
       window.removeEventListener("scroll", reposition, { capture: true });
       window.removeEventListener("resize", reposition);
     };

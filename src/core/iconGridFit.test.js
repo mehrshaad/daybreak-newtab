@@ -1,4 +1,10 @@
-import { ICON_GRID_PAD, ICON_STEPS, iconCellSize, iconGridSize } from "@daybreak/sdk";
+import {
+  ICON_GRID_PAD,
+  ICON_STEPS,
+  iconCellSize,
+  iconGridSize,
+  iconListSize,
+} from "@daybreak/sdk";
 import { describe, expect, it } from "vitest";
 import { GRID_GAP, TILE_PAD, tileBodyHeight } from "./tokens";
 import gapps from "../../packages/widget-gapps/manifest";
@@ -200,6 +206,68 @@ describe("Quick Links, which cannot hide anything", () => {
     const perRow = Math.floor((room + c.cell.gap) / (c.cell.width + c.cell.gap));
     expect(perRow).toBeGreaterThanOrEqual(DEFAULT_LINKS + 1);
     expect(c.cell.height).toBeLessThanOrEqual(c.avail);
+  });
+});
+
+describe("the same grid as a list", () => {
+  // A row is measured differently from a cell (iconListSize), and the reason
+  // the numbers live in the SDK at all is that Google Apps has to know how
+  // many fit before it draws them. So the same question as above, asked of a
+  // row: does it fit, and does it fit enough of them to be a list.
+  const ROWS = TILE_SIZES.flatMap(([cols, rows]) =>
+    ICON_STEPS.map((step) => {
+      const iconSize = iconGridSize([cols, rows], { hideLabels: false, step });
+      return {
+        cols,
+        rows,
+        step,
+        iconSize,
+        row: iconListSize(iconSize),
+        // A list always shows names, so the tile's own label row is the only
+        // variable left, and the tighter of the two is what has to fit.
+        avail: tileBodyHeight(rows, { header: true }),
+      };
+    })
+  );
+  const at = (c) => `${c.cols}x${c.rows} ${c.step} (row ${c.row.height} in ${c.avail})`;
+
+  it("covers every size at every step", () => {
+    expect(ROWS).toHaveLength(TILE_SIZES.length * ICON_STEPS.length);
+  });
+
+  it("fits at least two rows in the shortest tile", () => {
+    // One row in a tile is not a list, it is a link with a lot of space around
+    // it. Two is the minimum that reads as one.
+    for (const c of ROWS) {
+      expect(2 * c.row.height + c.row.rowGap, at(c)).toBeLessThanOrEqual(c.avail);
+    }
+  });
+
+  it("fits more rows in a taller tile", () => {
+    // The point of a large size. If row height grew with the tile as fast as
+    // the tile did, a 4-row tile would show the same number of links as a
+    // 2-row one, only bigger.
+    const fit = (c) => Math.floor((c.avail + c.row.rowGap) / (c.row.height + c.row.rowGap));
+    for (const step of ICON_STEPS) {
+      const short = ROWS.find((c) => c.rows === 2 && c.step === step);
+      const tall = ROWS.find((c) => c.rows === 4 && c.step === step);
+      if (!short || !tall) continue;
+      expect(fit(tall), `${step}: ${fit(short)} -> ${fit(tall)}`).toBeGreaterThan(fit(short));
+    }
+  });
+
+  it("keeps a row shorter than the cell it replaces", () => {
+    // The trade a list makes: smaller marks, more of them. A row taller than
+    // a captioned cell would be strictly worse than the grid at everything.
+    for (const c of ROWS) {
+      expect(c.row.height, at(c)).toBeLessThan(iconCellSize(c.iconSize, true).height);
+    }
+  });
+
+  it("keeps the caption readable at the smallest step", () => {
+    // The icon shrinks with the step; the name must not follow it below the
+    // size at which it stops being text.
+    for (const c of ROWS) expect(c.row.fontSize, at(c)).toBeGreaterThanOrEqual(11);
   });
 });
 

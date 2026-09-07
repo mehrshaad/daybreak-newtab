@@ -83,9 +83,20 @@ describe("Header theme button", () => {
   });
 
   it("can get back to following the system, which it could not before", () => {
-    const { update } = mount({ theme: "dark" });
+    // The ring's whole point. Sunrise is the last state before it comes back
+    // round, so this is the press that proves there is no dead end at the end.
+    const { update } = mount({ theme: "sun" });
     fireEvent.click(themeButton());
     expect(update).toHaveBeenCalledWith("appearance", { theme: "system" });
+  });
+
+  it("shows sunrise as its own state, not as light", () => {
+    // Two states both mean daylight, and one mark for both would make the
+    // button lie about which one it is in.
+    mount({ theme: "sun" });
+    expect(themeButton().getAttribute("aria-label")).toBe(
+      "Theme: following the sun. Switch to following your system"
+    );
   });
 
   it("says which state it is in, not which one it resolved to", () => {

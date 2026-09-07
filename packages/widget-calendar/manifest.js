@@ -4,7 +4,7 @@ export default {
   glyph: "calendarRange",
   category: "Productivity",
   author: "Daybreak",
-  version: "3.0.0",
+  version: "3.4.0",
   tagline: "A real month grid, with your events on it.",
   description:
     "A month you can actually read: today marked, a dot on any day with " +
@@ -16,6 +16,7 @@ export default {
     "needs one-time permission to fetch that single calendar. Daily and " +
     "weekly recurring events are expanded over the next two weeks; monthly " +
     "and yearly ones show only their next occurrence.",
+  actions: [{ id: "add", label: "Add a calendar", panel: true }],
   sizes: [
     [3, 3],
     [4, 3],
@@ -29,7 +30,7 @@ export default {
       label: "Show",
       type: "enum",
       of: ["month", "agenda"],
-      labels: ["Month", "Agenda"],
+      labels: { month: "Month", agenda: "Agenda" },
       // The month grid is the default because the widget is called Calendar
       // and a list of the next few events is not one. The agenda is still here
       // for anyone who preferred it, which is what it used to be.
@@ -40,7 +41,7 @@ export default {
       label: "Second calendar",
       type: "enum",
       of: ["none", "jalali", "hijri"],
-      labels: ["None", "Jalali", "Hijri"],
+      labels: { none: "None", jalali: "Jalali", hijri: "Hijri" },
       default: "none",
     },
     {
@@ -48,7 +49,7 @@ export default {
       label: "Week starts",
       type: "enum",
       of: ["sun", "mon", "sat"],
-      labels: ["Sun", "Mon", "Sat"],
+      labels: { sun: "Sun", mon: "Mon", sat: "Sat" },
       default: "sun",
       showIf: { view: "month" },
     },

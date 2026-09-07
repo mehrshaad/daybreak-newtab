@@ -10,9 +10,29 @@ describe("iconGridSize", () => {
     expect(new Set(sizes).size, "width must not affect icon size").toBe(1);
   });
 
-  it("grows with the tile's height, which is what actually constrains it", () => {
-    expect(iconGridSize([4, 3])).toBeGreaterThan(iconGridSize([4, 2]));
-    expect(iconGridSize([4, 4])).toBeGreaterThan(iconGridSize([4, 3]));
+  it("grows with the tile's height, which is mostly what constrains it", () => {
+    // On a tile wide enough that width is not the binding constraint.
+    expect(iconGridSize([6, 3])).toBeGreaterThan(iconGridSize([6, 2]));
+    expect(iconGridSize([6, 4])).toBeGreaterThan(iconGridSize([6, 3]));
+  });
+
+  it("stops growing with height once the tile runs out of width", () => {
+    // Height alone used to decide, which was fine while every tile was wider
+    // than it was tall. Square sizes broke that: three rows of height asks for
+    // a 52px icon, and three columns is about 220px on a narrow board, which
+    // fits two of them. Two icons per row in a nine-cell tile is not a grid.
+    expect(iconGridSize([3, 3])).toBeLessThan(iconGridSize([6, 3]));
+    expect(iconGridSize([4, 4])).toBeLessThan(iconGridSize([6, 4]));
+  });
+
+  it("leaves every size that existed before the cap alone", () => {
+    // The cap is a ceiling, so it can only take size away. Calibrated to bind
+    // on the new squares and nothing else — if a value here changes, a size
+    // users already had just got smaller.
+    const before = { "2x2": 42, "3x2": 42, "4x2": 42, "5x2": 42, "6x2": 42, "4x3": 52, "6x3": 52 };
+    for (const [size, want] of Object.entries(before)) {
+      expect(iconGridSize(size.split("x").map(Number)), size).toBe(want);
+    }
   });
 
   it("gives the icon the label's space when labels are off", () => {

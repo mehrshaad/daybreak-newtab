@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { hasOrigin, MONO, useWidgetLocal } from "@daybreak/sdk";
+import { Appear, hasOrigin, MONO, useWidgetLocal } from "@daybreak/sdk";
 import { emojiFor, symbolFor } from "./currencies";
 import { crossToBase, ERAPI_URL, parseErApi, parseTgju, TGJU_ORIGIN, TGJU_URL } from "./irr";
 import { formatRate, parseRates, ratesUrl } from "./rates";
@@ -194,7 +194,8 @@ function Currency({ id, options, config }) {
               {/* The sign leads the number and is set quieter than it, the way
                   a price is written: the figure is what is being read and the
                   sign only says what it is denominated in. */}
-              {showSymbols ? (
+              {/* Appear, so hiding the symbol eases. */}
+              <Appear open={!!showSymbols} style={{ display: "flex", flex: "none" }}>
                 <span
                   style={{
                     fontSize: type.sign,
@@ -205,7 +206,7 @@ function Currency({ id, options, config }) {
                 >
                   {symbolFor(p.code)}
                 </span>
-              ) : null}
+              </Appear>
               <span style={{ fontSize: type.rate, transition: TYPE_TRANSITION }}>
                 {formatRate(p.rate, decimals)}
               </span>

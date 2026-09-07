@@ -12,7 +12,7 @@
         "moon",
         "calendar",
         "tasks",
-        "news",
+        "bookmarks",
         "links",
         "habits",
         "quote"
@@ -42,7 +42,7 @@
           5,
           3
         ],
-        "news": [
+        "bookmarks": [
           3,
           3
         ],
@@ -67,7 +67,7 @@
         "moon",
         "calendar",
         "tasks",
-        "news",
+        "bookmarks",
         "links",
         "habits",
         "quote"
@@ -185,7 +185,7 @@
           ]
         }
       },
-      "news": {
+      "bookmarks": {
         "options": {},
         "rate": "Live",
         "config": {}
@@ -264,26 +264,26 @@
   "buckets": {
     "habits:history": {
       "h1": {
-        "2026-08-24": true,
-        "2026-08-23": true,
-        "2026-08-22": true,
-        "2026-08-20": true,
-        "2026-08-19": true,
-        "2026-08-17": true,
-        "2026-08-16": true
+        "2026-09-07": true,
+        "2026-09-06": true,
+        "2026-09-05": true,
+        "2026-09-03": true,
+        "2026-09-02": true,
+        "2026-08-31": true,
+        "2026-08-30": true
       },
       "h2": {
-        "2026-08-24": true,
-        "2026-08-23": true,
-        "2026-08-21": true,
-        "2026-08-20": true,
-        "2026-08-19": true,
-        "2026-08-18": true
+        "2026-09-07": true,
+        "2026-09-06": true,
+        "2026-09-04": true,
+        "2026-09-03": true,
+        "2026-09-02": true,
+        "2026-09-01": true
       },
       "h3": {
-        "2026-08-23": true,
-        "2026-08-22": true,
-        "2026-08-19": true
+        "2026-09-06": true,
+        "2026-09-05": true,
+        "2026-09-02": true
       }
     },
     "scratchpad:text": "Lisbon\n- Tuesday, early flight\n- the blue tile place by the station\n- pastries, obviously"

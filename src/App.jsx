@@ -26,12 +26,16 @@ import { background, baseColor, tokens } from "./core/tokens";
 import { boardShift, useColumns, useViewportWidth } from "./core/useColumns";
 import { useKeyboard, useScrolled } from "./core/useKeyboard";
 import { resolveTheme, useSystemTheme } from "./core/useSystemTheme";
+import { useSunTheme } from "./core/useSunTheme";
 import { animateExit, clearBucket, hasPermissionsApi, moveItem, requestAllPermissions, usePresence } from "@daybreak/sdk";
 import {
   getWidget,
   knownIds,
   nextInstanceId,
+  actionsFor,
+  resolveOptions,
   resolveSize,
+  sizesFor,
   typeOf,
 } from "./widgets/registry";
 
@@ -42,10 +46,13 @@ function App() {
     useSettings();
   const { appearance, behavior, board, widgets, profile } = settings;
   const { accent, wall } = appearance;
-  // The stored preference may be "system"; resolve it once here so every token
-  // lookup and every child sees a concrete theme.
+  // The stored preference may be "system" or "sun"; resolve it once here so
+  // every token lookup and every child sees a concrete theme.
   const fromSystem = useSystemTheme();
-  const theme = resolveTheme(appearance.theme, fromSystem);
+  // Reads a city from whichever widget has one in the local timezone, which is
+  // why it is given the widget records — see sunLocation.
+  const fromSun = useSunTheme(appearance.theme === "sun", widgets);
+  const theme = resolveTheme(appearance.theme, fromSystem, fromSun);
 
   // Everything below the app gets the *resolved* theme. Passing the raw
   // preference down meant tileStyle saw "system" and, since it treats anything
@@ -63,6 +70,11 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
   const [manualRefresh, setManualRefresh] = useState({});
+  // Which widget was last asked to do something from its right-click menu,
+  // and how many times. Shaped like manualRefresh above and for the same
+  // reason: a per-instance counter is the only thing a widget can react to
+  // without the host having to clear it afterwards.
+  const [widgetAction, setWidgetAction] = useState({});
 
   const searchRef = useRef(null);
   const boardRef = useRef(null);
@@ -434,6 +446,100 @@ function App() {
     [board.ids, board.sizes, update, toast]
   );
 
+  // Turn one tile into several, each with its own starting config.
+  //
+  // For Bookmarks' "a card per folder": eight folders in one card become eight
+  // cards, each holding one, arranged and resized independently from then on.
+  // Instance ids already carry per-tile size and config, so this is the board
+  // machinery that already existed — what was missing was any way for a
+  // widget's own settings to ask for it.
+  //
+  // The first config lands on the tile that asked, so nothing is orphaned if
+  // the rest fail, and the copies go in immediately after it rather than at
+  // the end of the board, where they would be nowhere near the thing they came
+  // from.
+  const spawnInstances = useCallback(
+    (fromId, configs, options) => {
+      const list = Array.isArray(configs) ? configs.filter(Boolean) : [];
+      if (!list.length) return [];
+      const type = typeOf(fromId);
+      const ids = [...board.ids];
+      const sizes = { ...board.sizes };
+      const base = resolveSize(fromId, board.sizes);
+      const [first, ...rest] = list;
+
+      let at = ids.indexOf(fromId);
+      const made = [];
+      for (const config of rest) {
+        // nextInstanceId reads the array it is given, and this one grows as we
+        // go — so each copy sees the ones before it and no two collide.
+        const id = nextInstanceId(ids, type);
+        at += 1;
+        ids.splice(at, 0, id);
+        sizes[id] = base;
+        made.push([id, config]);
+      }
+
+      update("board", { ids, sizes, layoutName: "Custom" });
+      setWidgetConfig(fromId, first);
+      if (options) setWidgetOptions(fromId, options);
+      // The copies inherit the original's options as well as its size. Eight
+      // cards split out of one that differed from it — and from each other —
+      // in layout and icon size would not read as eight of the same thing.
+      //
+      // `options` is what the caller is setting in this same tick, laid over
+      // what is already stored. Reading the store alone was the bug: a widget
+      // that calls setOptions and then onSpawn in one handler has not had its
+      // state updated yet, so the copies inherited the value it was moving
+      // away from — the folder cards came out with `separate: false` while the
+      // card they came from had `true`, which then gave them a different set
+      // of sizes.
+      const inherited = { ...(widgets[fromId]?.options || {}), ...(options || {}) };
+      for (const [id, config] of made) {
+        setWidgetConfig(id, config);
+        setWidgetOptions(id, inherited);
+      }
+      return [fromId, ...made.map(([id]) => id)];
+    },
+    [board.ids, board.sizes, widgets, update, setWidgetConfig, setWidgetOptions]
+  );
+
+  // The other way: several cards of one widget back into this one.
+  //
+  // The counterpart of spawnInstances, and it needs to exist for the same
+  // reason — a widget that can be split has to be un-splittable, or the person
+  // who tried it once has eight cards and no way back. Splitting partitions
+  // the content, so putting it back is a merge and only the widget knows how
+  // to do that: the host finds the siblings, hands their configs over, and
+  // takes whatever comes back.
+  //
+  // One board write, not one per removed tile, so the grid reflows once.
+  const rejoinInstances = useCallback(
+    (intoId, merge) => {
+      const type = typeOf(intoId);
+      const siblings = board.ids.filter((id) => id !== intoId && typeOf(id) === type);
+      // The merge runs even with nobody to merge — a card that was split and
+      // then had its siblings removed by hand is still pinned to one folder,
+      // and putting it back is exactly what has to happen. Returning early
+      // here left it pinned and showing one folder with no way out.
+      const merged = merge?.(
+        widgets[intoId]?.config || {},
+        siblings.map((id) => widgets[id]?.config || {})
+      );
+      if (merged) setWidgetConfig(intoId, merged);
+      if (!siblings.length) return [];
+      update("board", {
+        ids: board.ids.filter((id) => !siblings.includes(id)),
+        layoutName: "Custom",
+      });
+      // Their synced buckets go with them, or a re-added widget inherits the
+      // content of a tile that no longer exists.
+      for (const id of siblings) clearBucket(id);
+      return siblings;
+    },
+    [board.ids, widgets, update, setWidgetConfig]
+  );
+
   const moveToTop = useCallback(
     (id) => {
       update("board", {
@@ -443,6 +549,14 @@ function App() {
     },
     [board.ids, update]
   );
+
+  // Route a declared action to the widget itself. Widget settings are opened
+  // first for the ones whose add form lives there, so the menu item lands the
+  // person in front of the form either way.
+  const runWidgetAction = useCallback((id, name, { panel: inPanel } = {}) => {
+    if (inPanel) setPanel(id);
+    setWidgetAction((m) => ({ ...m, [id]: { name, nonce: (m[id]?.nonce || 0) + 1 } }));
+  }, []);
 
   const refreshNow = useCallback(
     (id) => {
@@ -531,6 +645,15 @@ function App() {
     if (!manifest) return null;
     return widgetMenu({
       manifest,
+      sizes: sizesFor(
+        menu.id,
+        resolveOptions(menu.id, widgets[menu.id]?.options),
+        widgets[menu.id]?.config
+      ),
+      actions: actionsFor(menu.id, {
+        options: resolveOptions(menu.id, widgets[menu.id]?.options),
+        config: widgets[menu.id]?.config,
+      }),
       currentSize: resolveSize(menu.id, board.sizes),
       zoomMode,
       onFocus: () => focusTile(menu.id),
@@ -540,13 +663,20 @@ function App() {
       onDuplicate: () => duplicateTile(menu.id),
       onMoveTop: () => moveToTop(menu.id),
       onRemove: () => removeTile(menu.id),
-      onAction: (action) =>
-        action.run?.({
-          toast,
-          openSettings: () => setPanel(menu.id),
-          setOptions: (patch) => setWidgetOptions(menu.id, patch),
-          options: widgets[menu.id]?.options || {},
-        }),
+      onAction: (action) => {
+        // A manifest may still handle its own action outright. Anything without
+        // a `run` is for the widget, which answers it through useWidgetAction.
+        if (action.run) {
+          action.run({
+            toast,
+            openSettings: () => setPanel(menu.id),
+            setOptions: (patch) => setWidgetOptions(menu.id, patch),
+            options: widgets[menu.id]?.options || {},
+          });
+          return;
+        }
+        runWidgetAction(menu.id, action.id, { panel: action.panel });
+      },
     });
   }, [
     menu,
@@ -566,6 +696,7 @@ function App() {
     focusTile,
     setSize,
     refreshNow,
+    runWidgetAction,
     duplicateTile,
     moveToTop,
     removeTile,
@@ -678,7 +809,6 @@ function App() {
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
         onOpenSettings={openSettings}
-        inset={openDrawerWidth}
         onManageProfiles={() => revealInSettings("settings-profiles")}
         onContextMenu={openBoardMenu}
         searchRef={searchRef}
@@ -711,6 +841,9 @@ function App() {
         panelId={panel}
         menu={menu}
         manualRefresh={manualRefresh}
+        widgetAction={widgetAction}
+        onSpawn={spawnInstances}
+        onRejoin={rejoinInstances}
         boardRef={boardRef}
         registerTile={registerTile}
         onEnterEditing={enterEditing}
@@ -813,6 +946,8 @@ function App() {
           theme={theme}
           appearance={appearance}
           keepInteractive={panel ? panelTileEl : null}
+          action={widgetAction?.[panelId]}
+          onSpawn={(configs, options) => spawnInstances(panelId, configs, options)}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />

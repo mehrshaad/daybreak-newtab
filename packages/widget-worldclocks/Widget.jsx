@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { LuGripVertical, LuPlus, LuX } from "react-icons/lu";
-import { Appear, Button, CitySearch, EditableText, LIST_ROW_HIGHLIGHT, MONO, listRow, moveItem, useFlip, useMinutes, usePointerReorder } from "@daybreak/sdk";
+import { Appear, Button, CitySearch, EditableText, LIST_ROW_HIGHLIGHT, MONO, listRow, moveItem, useFlip, useMinutes, usePointerReorder, useWidgetAction } from "@daybreak/sdk";
 import { MAX_ZONES, zoneParts } from "./zones";
 
 const DEFAULT_ZONES = [
@@ -12,11 +12,13 @@ const DEFAULT_ZONES = [
 // change under a reorder and the drag needs a stable id.
 const keyFor = (zone) => `${zone.tz}|${zone.city}`;
 
-function WorldClocks({ options, config, setConfig, size, editing }) {
+function WorldClocks({ options, config, setConfig, size, editing, action }) {
   const { hour24, showZone, textSize } = options;
   const now = useMinutes();
   const [adding, setAdding] = useState(false);
   const listRef = useRef(null);
+
+  useWidgetAction(action, "add", () => setAdding(true));
 
   const zones =
     Array.isArray(config.zones) && config.zones.length
@@ -208,7 +210,9 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                   }}
                   inputStyle={{ fontSize: type.city, minWidth: 60 }}
                 />
-                {showZone && p.zoneLabel ? (
+                {/* Appear, so showing the offsets eases in rather than
+                    appearing between two frames. */}
+                <Appear open={!!(showZone && p.zoneLabel)} style={{ display: "flex", flex: "none" }}>
                   <span
                     style={{
                       fontFamily: MONO,
@@ -219,7 +223,7 @@ function WorldClocks({ options, config, setConfig, size, editing }) {
                   >
                     {p.zoneLabel}
                   </span>
-                ) : null}
+                </Appear>
               </div>
 
               <div

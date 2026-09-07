@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Appear,
   CitySearch,
+  CrossfadeFill,
   MONO,
   dayLengthDelta,
   dayProgress,
   sunPosition,
   sunTimes,
 } from "@daybreak/sdk";
-import { arcPoint, deltaLabel, lengthLabel, rgb, skyAt } from "./sky";
+import { arcControlY, arcPoint, deltaLabel, lengthLabel, rgb, skyAt } from "./sky";
 
 // The sun moves a quarter of a degree a minute, so a redraw every half minute
 // is already finer than the arc can show. Cheap enough to leave running.
@@ -138,18 +140,37 @@ function Sun({ config, setConfig, options, size }) {
           // and pushed the times clean out of the bottom.
           flex: "1 1 auto",
           minHeight: 54,
-          // The sky itself. Transitioned, so the colour walks through dawn
-          // rather than stepping between presets on each redraw.
-          background: plain
-            ? "var(--panel)"
-            : `linear-gradient(to bottom, ${rgb(palette.top)}, ${rgb(palette.bottom)})`,
-          transition: "background 1.2s linear",
         }}
       >
+        {/* The sky, as a crossfading layer rather than this box's own
+            background.
+ 
+            A gradient cannot be transitioned, so `transition: background` did
+            nothing whenever the two stops changed shape — and switching Sky
+            between Coloured and Plain is a gradient against a flat colour,
+            which snapped. CrossfadeFill fades one over the other, which also
+            means the walk through dawn is a fade rather than a step on each
+            redraw. */}
+        <CrossfadeFill
+          css={
+            plain
+              ? "var(--panel)"
+              : `linear-gradient(to bottom, ${rgb(palette.top)}, ${rgb(palette.bottom)})`
+          }
+          ms={900}
+        />
         <svg
           viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
           preserveAspectRatio="none"
-          style={{ display: "block", width: "100%", height: "100%" }}
+          // Positioned, so the sky's crossfade layers cannot cover it.
+          //
+          // This is the whole sun and its arc disappearing behind a flat
+          // rectangle of sky. CrossfadeFill's layers are position:absolute,
+          // and an absolutely-positioned element paints above a
+          // static-positioned sibling whatever the DOM order — so coming
+          // *before* this in the markup was not enough. A position of its own
+          // puts them both in the positioned layer, where DOM order decides.
+          style={{ position: "relative", display: "block", width: "100%", height: "100%" }}
           aria-hidden="true"
         >
           <defs>
@@ -164,7 +185,7 @@ function Sun({ config, setConfig, options, size }) {
               journey rather than a dot floating on a gradient. */}
           <path
             d={`M ${arcPoint(0, VIEW).x} ${arcPoint(0, VIEW).y}
-                Q ${VIEW.width / 2} ${arcPoint(0.5, VIEW).y - 26}
+                Q ${VIEW.width / 2} ${arcControlY(VIEW)}
                   ${arcPoint(1, VIEW).x} ${arcPoint(1, VIEW).y}`}
             fill="none"
             stroke={plain ? "var(--line)" : "rgba(255,255,255,.35)"}
@@ -252,15 +273,19 @@ function Sun({ config, setConfig, options, size }) {
                   ? "All day"
                   : "None"
                 : lengthLabel(times.dayLength)}
-              {showDelta && delta != null ? (
+              {/* Appear rather than a ternary, so turning the comparison on
+                  and off eases like everything else in the drawer. */}
+              <Appear open={!!(showDelta && delta != null)} style={{ display: "inline-flex" }}>
                 <span style={{ color: "var(--faint)", fontSize: 10, marginLeft: 6 }}>
-                  {deltaLabel(delta, true)}
+                  {delta != null ? deltaLabel(delta, true) : ""}
                 </span>
-              ) : null}
+              </Appear>
             </>
           }
         />
-        {showAzimuth ? <Row label="Bearing" value={`${Math.round(position.azimuth)}°`} /> : null}
+        <Appear open={!!showAzimuth}>
+          <Row label="Bearing" value={`${Math.round(position.azimuth)}°`} />
+        </Appear>
       </div>
 
     </div>

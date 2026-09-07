@@ -13,7 +13,7 @@ import {
 } from "@daybreak/sdk";
 import { TILE_HEADER } from "../core/tokens";
 import { tileStyle } from "../core/tileStyle";
-import { getWidget, typeOf } from "../widgets/registry";
+import { getWidget, subtitleFor, typeOf } from "../widgets/registry";
 import ErrorBoundary from "./ErrorBoundary";
 
 // The board's own drag start used to live on the tile's root — which is why a
@@ -188,6 +188,9 @@ function Tile({
   dragging = false,
   rate,
   manualRefresh = 0,
+  action,
+  onSpawn,
+  onRejoin,
   tileRef,
   onOpen,
   onMenu,
@@ -226,6 +229,7 @@ function Tile({
     return () => clearTimeout(done);
   }, [stagger]);
   const manifest = getWidget(instanceId);
+  const subtitle = subtitleFor(instanceId, config);
   // Each tile polls on its own configured rate; `manualRefresh` lets the
   // context menu's "Refresh now" force one immediately.
   const tick = useRefresh(rate);
@@ -364,7 +368,9 @@ function Tile({
         }
       }}
       role="group"
-      aria-label={manifest.name}
+      // With the subtitle, or two Bookmarks cards are the same tile to a
+      // screen reader.
+      aria-label={subtitle ? `${manifest.name}, ${subtitle}` : manifest.name}
     >
       <div
         style={{
@@ -406,6 +412,13 @@ function Tile({
               }}
             >
               {manifest.name}
+              {/* What a widget adds after its own name, from its manifest —
+                  a Bookmarks card holding one folder says which. Dimmer than
+                  the name, because the name is what the tile is and this is
+                  which one of them. */}
+              {subtitle ? (
+                <span style={{ opacity: 0.62 }}>{` · ${subtitle}`}</span>
+              ) : null}
             </span>
           </Appear>
         </div>
@@ -520,6 +533,13 @@ function Tile({
             // rather than sitting inside it.
             bare={headerHidden}
             refreshKey={refreshKey}
+            // The right-click menu's "Add …" arriving as a counter. See
+            // useWidgetAction in the SDK.
+            action={action}
+            // Lets a widget turn its own tile into several from its menu, the
+            // way its settings panel already can — see spawnInstances.
+            onSpawn={onSpawn}
+            onRejoin={onRejoin}
             setConfig={setConfig}
             setOptions={setOptions}
             toast={toast}

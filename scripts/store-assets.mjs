@@ -48,19 +48,19 @@ const CARDS = [
   {
     file: "1.jpg",
     title: "A new tab worth opening",
-    sub: "Your day, laid out the moment you need it — the time, the weather, what's next, and the places you actually go.",
+    sub: "Your day, laid out the moment you need it — the time, the weather, what's next, your own bookmarks, and the places you actually go.",
   },
   {
     file: "2.jpg",
     // The count is checked against packages/widget-* by a test, because it
     // said "seventeen" for two releases after it stopped being seventeen.
-    title: "Twenty-two widgets, all offline-first",
+    title: "Twenty-three widgets, all offline-first",
     sub: "Weather, prayer times, the moon, habits, a focus timer, the news. Browse by category, see what each one can access, add it in a click.",
   },
   {
     file: "3.jpg",
     title: "Give every widget its own colour",
-    sub: "Fifteen accents, twelve generated backgrounds, and a colour per tile — so a full board reads at a glance instead of being searched.",
+    sub: "Sixteen accents, twelve generated backgrounds, and a colour per tile — so a full board reads at a glance instead of being searched.",
   },
   {
     file: "4.jpg",
@@ -73,7 +73,7 @@ const CARDS = [
     // arrangement, same moment, under both themes.
     split: ["5-dark.jpg", "5-light.jpg"],
     title: "Dark or light, and yours either way",
-    sub: "Follow your system or pick a side. Corners, opacity, zoom, frosted glass or flat — every dial is where you can find it.",
+    sub: "Follow your system, follow the sun, or pick a side. Corners, opacity, zoom, frosted glass or flat — every dial is where you can find it.",
   },
 ];
 

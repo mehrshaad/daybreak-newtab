@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LuMessageSquare } from "react-icons/lu";
-import { hasOrigin, MONO, originOf, useWidgetLocal } from "@daybreak/sdk";
+import { Appear, hasOrigin, MONO, originOf, useWidgetLocal } from "@daybreak/sdk";
 import { parseFeed } from "./feed";
 import { HN_TOP_STORIES, hnItemUrl, parseHnItem } from "./hn";
 
@@ -151,7 +151,8 @@ function News({ id, options, config, refreshKey, size }) {
           >
             {item.title}
           </span>
-          {showMeta && (item.points != null || item.comments != null) ? (
+          {/* Appear, so the meta row eases in and out with the setting. */}
+          <Appear open={!!(showMeta && (item.points != null || item.comments != null))}>
             <span
               style={{
                 display: "flex",
@@ -170,7 +171,7 @@ function News({ id, options, config, refreshKey, size }) {
                 </span>
               ) : null}
             </span>
-          ) : null}
+          </Appear>
         </a>
       ))}
       {status === "error" || status === "blocked" ? (

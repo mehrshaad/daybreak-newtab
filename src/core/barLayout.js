@@ -38,6 +38,37 @@ export function searchWidth(viewportWidth, { active, scrolled }) {
   return Math.max(180, Math.min(wanted, viewportWidth - reserved));
 }
 
+// The bar's own padding and the gap between its three columns, so the width
+// arithmetic below is derived from the layout rather than repeating it.
+export const BAR_PAD_X = 28;
+export const BAR_GAP = 20;
+
+// What each end column actually gets, given the bar's own width and how much
+// the search field is asking for. The columns are minmax(0, 1fr), so they take
+// what is left after the field and split it.
+export function endColumnWidth(barWidth, searchPx) {
+  const usable = barWidth - 2 * BAR_PAD_X - 2 * BAR_GAP;
+  return Math.max(0, Math.round((usable - searchPx) / 2));
+}
+
+// Measured, not guessed: the labelled right-hand group is 253px of "Edit
+// layout", "Store" and two round controls. Under this it does not clip -- it is
+// right-aligned inside a column that may shrink to nothing, so it overflows
+// leftwards and draws on top of the search field, which is exactly what was
+// reported. 270 leaves a little room for a longer label.
+export const BAR_LABELS_MIN = 270;
+
+// Whether the two action buttons may spell themselves out.
+//
+// Two conditions, and the second is the one that was missing. The tier says
+// whether the window is wide enough to bother; the column width says whether
+// the group will actually fit where it is being put. They come apart whenever
+// something else has taken width away from the bar -- an open drawer -- and it
+// was the second that the collision needed.
+export function barLabels(barWidth, searchPx, tier) {
+  return !!tier?.labels && endColumnWidth(barWidth, searchPx) >= BAR_LABELS_MIN;
+}
+
 // The hint block in the hero — "Custom layout · 9 widgets", and the line about
 // right-clicking. It sits opposite the greeting in a wrapping flex row, so when
 // the room runs out it does not shrink, it drops onto its own line and sits
@@ -63,14 +94,14 @@ export const showHeroHints = (width) => width >= HERO_HINTS_MIN;
 // stub where a label used to be. Below this, the chip drops to its emoji, which
 // still says which board you are on and asks for a third of the room.
 //
-// Measured from what the group holds at that point: the chip with a short name
-// is about 90px, the gap 10, and the clock beside it 40.
-export const PROFILE_NAME_MIN = 150;
+// Measured: the chip with a short name and the clock beside it come to 111px
+// together. 140 leaves room for a name longer than "Main" before the ellipsis
+// does the work instead.
+export const PROFILE_NAME_MIN = 140;
 
-// `available` is the measured width of the group, which is knowable and does not
-// depend on what the chip decides to render — the column is a share of the free
-// space, not a fit to its contents. Before the first measurement the bar tier is
-// the best guess there is.
+// `available` is the end column's width, which is a share of the free space
+// rather than a fit to the chip's contents — so this cannot feed back into
+// itself. Before the first measurement the bar tier is the best guess there is.
 export function profileShowsName(available, { labels }) {
   if (!labels) return false;
   if (available == null) return true;

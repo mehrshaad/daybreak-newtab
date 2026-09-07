@@ -4,7 +4,7 @@ export default {
   glyph: "sun",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.4.0",
   tagline: "Where the sun is, and how long it stays.",
   description:
     "Sunrise, sunset, solar noon and golden hour for a city you pick, with " +
@@ -16,6 +16,7 @@ export default {
   sizes: [
     [3, 2],
     [4, 2],
+    [3, 3],
     [4, 3],
   ],
   defaultSize: [4, 2],

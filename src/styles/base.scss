@@ -268,6 +268,19 @@ button {
 // than a transform. Animating only `translate` leaves `transform` untouched,
 // so it can never clobber a layout transform the way db-in's `transform: none`
 // does.
+// A notice leaving: the reverse of db-rise-in, and shorter. Arriving wants to
+// be noticed; leaving wants to be out of the way.
+@keyframes db-sink-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
 @keyframes db-rise-in {
   from {
     opacity: 0;

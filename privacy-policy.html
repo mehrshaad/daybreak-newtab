@@ -82,7 +82,8 @@
     <main>
       <h1>Privacy Policy</h1>
       <p class="updated">
-        <strong>Daybreak - New Tab</strong> · Last updated: August 23, 2026
+        <strong>Daybreak - New Tab</strong> · Last updated: September 7, 2026 ·
+        reviewed for version 2.3.0
       </p>
 
       <p>
@@ -140,10 +141,21 @@
           titles and addresses of matches are read, only while you are typing.
         </li>
         <li>
-          <strong>Search suggestions from bookmarks — <code>bookmarks</code>.</strong>
-          Matches what you type against your saved bookmarks. Read-only: the
-          extension never creates, edits or deletes a bookmark, and it reads them
-          only while you are typing.
+          <strong>Bookmarks — <code>bookmarks</code>.</strong>
+          Two features use this permission.
+          <em>Search suggestions</em> match what you type against your saved
+          bookmarks, reading only the titles and addresses of matches and only
+          while you are typing.
+          The <em>Bookmarks widget</em> shows your bookmark folders on the new
+          tab page, and lets you add, rename, move and delete bookmarks and
+          folders from the widget’s own settings. Those edits are made in
+          Chrome’s bookmarks — that is the point of the widget: it
+          shows and edits the one list your browser already keeps rather than a
+          private copy of it, so nothing can drift out of step. Deleting
+          anything asks for a second confirming tap, and deleting a folder
+          tells you how many bookmarks go with it. Your bookmarks are read and
+          written on this device only. None of them is uploaded, sent anywhere,
+          or seen by anyone but you.
         </li>
         <li>
           <strong>Top Sites widget — <code>topSites</code>.</strong> Shows the
@@ -153,6 +165,18 @@
           read at most once per new tab, it never leaves your browser, and
           hiding a site from the widget is remembered locally rather than
           changing anything in Chrome.
+        </li>
+        <li>
+          <strong>Pasting a copied link — <code>clipboardRead</code>.</strong>
+          When you add a Quick Link, the address you have just copied is offered
+          in the address field so you do not have to paste it by hand. The
+          clipboard is read only while that add form is open, and only to fill
+          in that one field. Nothing from your clipboard is stored, kept after
+          the form closes, or sent anywhere. This is requested the first time
+          you press “Paste what I copied” inside the widget, never
+          at install, and you can withdraw it at any time from Chrome’s
+          own permission list — the field simply goes back to being typed
+          in by hand.
         </li>
         <li>
           <strong>Site icons — <code>favicon</code>.</strong> Lets search
@@ -270,8 +294,8 @@
         turn on the feature that needs one:
         <strong>sessions</strong>, <strong>tabs</strong>,
         <strong>history</strong>, <strong>bookmarks</strong>,
-        <strong>topSites</strong> and <strong>favicon</strong>, each described
-        above.
+        <strong>topSites</strong>, <strong>clipboardRead</strong> and
+        <strong>favicon</strong>, each described above.
       </p>
       <p>
         The extension declares no host permissions up front, so it starts with

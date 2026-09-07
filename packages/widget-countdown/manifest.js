@@ -4,12 +4,15 @@ export default {
   glyph: "calendarDays",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.5.0",
   tagline: "The dates you are counting toward.",
   description:
     "Deadlines, trips, birthdays, a launch. Counts down in days, and in hours " +
     "and minutes once it is close. Anything marked yearly rolls to next year " +
     "on its own, so a birthday is added once and never again.",
+  // Countdown's add form lives in its settings panel, so `panel` opens the
+  // drawer on the way through and the panel focuses the field.
+  actions: [{ id: "add", label: "Add a date", panel: true }],
   sizes: [
     [2, 2],
     [3, 2],

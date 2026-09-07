@@ -373,6 +373,25 @@ export function Section({ title, children, style, ...rest }) {
     // ...rest so a caller can hang a data-* handle on a section — the tour uses
     // them to point at one, and threading a prop per section would be worse.
     <div style={style} {...rest}>
+      {/* Deliberately NOT sticky.
+ 
+          It was, and it looked wrong at every attempt. A sticky heading has to
+          hide the content scrolling under it, which means painting a band —
+          and this drawer is frosted glass over the board, so its effective
+          colour is the sheet tint plus whatever wallpaper and accent happen to
+          be behind it at that moment. --sheet over the drawer's own --sheet
+          doubles into a grey stripe; an opaque --sheetSolid is lighter than
+          the surroundings and reads as a stripe the other way; and a
+          backdrop-filter smears the text it is meant to be hiding.
+
+          There is no fixed colour that matches a translucent surface whose
+          backdrop varies, so there is no band that can look right. A heading
+          that scrolls away with its section is worth more than one that stays
+          put inside a bar that does not belong.
+
+          The folder headings inside Quick Links and Bookmarks hit exactly the
+          same wall and are not sticky either — a tile is translucent too, so
+          its own fill painted on itself doubles into a lighter patch. */}
       <div className="db-label" style={{ marginBottom: "10px" }}>
         {title}
       </div>

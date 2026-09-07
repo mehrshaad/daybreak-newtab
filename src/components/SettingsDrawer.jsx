@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { LuMonitor, LuMoon, LuSun, LuSunrise } from "react-icons/lu";
 import {
   backupFilename,
   download,
@@ -6,8 +7,9 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { dropPermission, MONO, requestAllPermissions } from "@daybreak/sdk";
+import { CrossfadeFill, dropPermission, MONO, requestAllPermissions, sunTimes } from "@daybreak/sdk";
 import {
+  ACCENT_COLUMNS,
   ACCENT_NAMES,
   ACCENTS,
   PAGE_ZOOM_MAX,
@@ -16,10 +18,10 @@ import {
   backgroundSwatch,
 } from "../core/tokens";
 import { CATEGORIES, CATEGORY_LABELS } from "../core/notices";
-import { versionLabel } from "../core/version";
 import { SOURCES } from "../core/suggest";
 import { boardWidthChoices, useViewportWidth } from "../core/useColumns";
 import { systemTheme } from "../core/useSystemTheme";
+import { sunLocation } from "../core/sunTheme";
 import {
   Button,
   Collapse,
@@ -30,59 +32,35 @@ import {
   Slider,
   Toggle,
 } from "./primitives";
+import AboutSection from "./AboutSection";
 import ProfilesSection from "./ProfilesSection";
 
 const BOARD_WIDTH_LABELS = { comfortable: "Comfortable", wide: "Wide", full: "Full" };
 
-
-const SWATCH_FADE = 320;
-
-// The swatch's own fill, crossfaded rather than swapped.
+// What the sunrise theme is actually going to use, said out loud.
 //
-// Gradients do not interpolate, so `transition: background` does nothing for
-// these — picking a new accent repainted all twelve swatches on the same frame
-// the page behind them was smoothly crossfading, which read as the picker
-// glitching. Backdrop solves this at full size the same way: keep the outgoing
-// fill underneath and fade the incoming one over it.
-function SwatchFill({ css }) {
-  const [layers, setLayers] = useState(() => [{ key: 0, css }]);
-  const shown = useRef(css);
-
-  useEffect(() => {
-    if (shown.current === css) return;
-    shown.current = css;
-    setLayers((prev) => {
-      const last = prev[prev.length - 1];
-      // Only ever one layer underneath, so dragging across the accent row
-      // cannot stack up a dozen gradients per swatch.
-      return [last, { key: last.key + 1, css }];
-    });
-  }, [css]);
-
-  // A timer, not animationend: an occluded tab never fires it and the spent
-  // layer would sit there for the life of the page.
-  useEffect(() => {
-    if (layers.length < 2) return undefined;
-    const t = setTimeout(() => setLayers((prev) => prev.slice(-1)), SWATCH_FADE + 60);
-    return () => clearTimeout(t);
-  }, [layers]);
-
-  return layers.map((layer, i) => (
-    <span
-      key={layer.key}
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        inset: 0,
-        borderRadius: "inherit",
-        background: layer.css,
-        ...(layers.length > 1 && i === layers.length - 1
-          ? { animation: `db-fade ${SWATCH_FADE}ms ease both` }
-          : null),
-      }}
-    />
-  ));
+// Because the answer changes with the board, and a setting whose behaviour
+// depends on another widget's configuration has to say so — otherwise "it
+// switched at the wrong time" has no explanation anywhere in the app. It also
+// tells somebody exactly how to make it exact, which is the only thing they
+// can do about it.
+function sunThemeNote(widgets) {
+  const place = sunLocation(widgets);
+  if (!place) {
+    return "Your browser is not telling us your timezone, so this follows your system setting. Set a city in the Weather widget to fix it.";
+  }
+  const marks = sunTimes(new Date(), place.latitude, place.longitude);
+  const at = (t) =>
+    t ? t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "—";
+  if (!marks.sunrise || !marks.sunset) {
+    return "The sun neither rises nor sets where you are today, so this follows your system setting until it does.";
+  }
+  const today = `Light from ${at(marks.sunrise)} to ${at(marks.sunset)} today.`;
+  return place.exact
+    ? `${today} Using ${place.name}, from your weather widget.`
+    : `${today} Estimated from your timezone — set a city in the Weather widget to make it exact.`;
 }
+
 
 function SettingsDrawer({
   open,
@@ -95,7 +73,7 @@ function SettingsDrawer({
   onTour,
   toast,
 }) {
-  const { appearance, behavior, profile } = settings;
+  const { appearance, behavior, profile, widgets } = settings;
   const viewport = useViewportWidth();
   const widthChoices = boardWidthChoices(viewport, appearance.boardWidth || "comfortable");
   const suggest = behavior.suggest || { links: true };
@@ -127,18 +105,39 @@ function SettingsDrawer({
     >
 
       <Section title="Appearance" data-tour="settings-appearance" style={{ marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: 6 }}>
+        {/* Four now, so they wrap two by two rather than being squeezed into
+            one row of quarter-width pills. */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: 6,
+          }}
+        >
+          {/* The same four marks the toolbar's theme button cycles through,
+              so the row and the button cannot disagree about which state is
+              which. Sunrise is a sun over a horizon rather than the plain sun
+              that means Light: two states both mean daylight, and one glyph
+              for both would make the pair unreadable. */}
           {[
-            ["system", "System"],
-            ["dark", "Dark"],
-            ["light", "Light"],
-          ].map(([value, label]) => (
+            ["system", "System", LuMonitor],
+            ["sun", "Sunrise", LuSunrise],
+            ["light", "Light", LuSun],
+            ["dark", "Dark", LuMoon],
+          ].map(([value, label, Icon]) => (
             <Pill
               key={value}
               active={(appearance.theme || "system") === value}
               onClick={() => update("appearance", { theme: value })}
-              style={{ flex: 1, textAlign: "center", padding: 10 }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 7,
+                padding: 10,
+              }}
             >
+              <Icon size={14} aria-hidden />
               {label}
             </Pill>
           ))}
@@ -148,19 +147,41 @@ function SettingsDrawer({
             Following your {systemTheme()} browser setting.
           </div>
         </Collapse>
+        <Collapse open={(appearance.theme || "system") === "sun"}>
+          <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 8, lineHeight: 1.5 }}>
+            {sunThemeNote(widgets)}
+          </div>
+        </Collapse>
       </Section>
 
       <Section title="Accent" data-tour="settings-accent" style={{ marginBottom: 22 }}>
-        {/* Five to a row, as a grid rather than a wrapping flex row: a wrapping
-            row of 30px swatches broke into a ragged seven, seven and two, where
-            even rows read as a palette. Five because there are fifteen since
-            slate went (see ACCENTS), which is three whole rows. The swatches
-            size themselves from the column, so the rows stay whole if the
-            drawer width ever changes. */}
+        {/* Fifteen swatches, and the row length is chosen so they come out the
+            size of a swatch rather than the size of a button.
+            
+            This was five to a row for one release, which is three clean rows of
+            fifteen — and at a 400px drawer that made each one 60px across.
+            Reported, fairly, as "the accent colours are huge in settings": a
+            colour swatch is a sample, and a 60px circle reads as something you
+            are meant to press rather than something you are meant to compare.
+            
+            Eight and seven is one cell short of even, which is why it was
+            changed away from — but a nearly-even pair of rows of 30px samples
+            looks far more like a palette than three rows of discs. auto-fit
+            with a max keeps them sample-sized whatever the drawer does. */}
         <div
           role="group"
           aria-label="Accent colour"
-          style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}
+          // Eight fixed columns against sixteen accents, so it is always two
+          // full rows. `auto-fit` asked the browser how many fitted and
+          // answered eight for a palette of fifteen, which left the second row
+          // seven long with a hole on the end — and the answer changed with the
+          // drawer's width, so the hole moved about.
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${ACCENT_COLUMNS}, 1fr)`,
+            justifyItems: "center",
+            gap: 8,
+          }}
         >
           {ACCENTS.map((c) => (
             <button
@@ -238,7 +259,7 @@ function SettingsDrawer({
                 boxShadow: "0 4px 14px rgba(0,0,0,.18)",
               }}
             >
-              <SwatchFill css={backgroundSwatch(theme, appearance.accent, w)} />
+              <CrossfadeFill css={backgroundSwatch(theme, appearance.accent, w)} />
               <span
                 style={{
                   // Above the fill layers, which are positioned.
@@ -510,20 +531,7 @@ function SettingsDrawer({
       </Section>
 
       <Section title="About" style={{ marginBottom: 22 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            gap: 10,
-            fontSize: 13,
-          }}
-        >
-          <span style={{ color: "var(--dim)" }}>Version</span>
-          <span style={{ fontFamily: MONO, fontSize: 12, color: "var(--fg)" }}>
-            {versionLabel() || "—"}
-          </span>
-        </div>
+        <AboutSection toast={toast} />
       </Section>
 
       <Section title="Backup" data-tour="settings-backup">

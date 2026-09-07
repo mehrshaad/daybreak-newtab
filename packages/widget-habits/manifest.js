@@ -6,7 +6,7 @@ export default {
   glyph: "calendar",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.6.0",
   tagline: "Weekly targets, tracked a day at a time.",
   description:
     "Tick a day when you do the thing. Each habit carries its own weekly " +
@@ -14,9 +14,11 @@ export default {
     "begins — so a slow start never breaks a run. Weeks that hit the target " +
     "stack up into a streak. History syncs across your signed-in browsers " +
     "when it's small enough to, and otherwise stays on this device.",
+  actions: [{ id: "add", label: "Add a habit" }],
   sizes: [
     [3, 2],
     [4, 2],
+    [3, 3],
     [4, 3],
   ],
   defaultSize: [4, 2],
@@ -29,6 +31,11 @@ export default {
       label: "Week begins on",
       type: "enum",
       of: WEEKDAYS,
+      // Three letters each. The choices are full day names, so the drawer's
+      // fallback would render them readably — but "Wednesday" in a row of
+      // seven pills is a row that wraps, and every other enum here spells its
+      // labels out rather than relying on that fallback.
+      labels: Object.fromEntries(WEEKDAYS.map((day) => [day, day.slice(0, 3)])),
       default: "Monday",
     },
     { key: "showStreaks", label: "Show streaks", type: "boolean", default: true },

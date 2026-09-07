@@ -4,7 +4,7 @@ export default {
   glyph: "moon",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "Tonight's moon, drawn as it looks.",
   description:
     "The moon's phase and how much of it is lit, drawn as the real terminator " +

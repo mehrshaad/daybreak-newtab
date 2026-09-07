@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { LuX } from "react-icons/lu";
-import { ICON_GRID_PAD, iconCellSize } from "../iconCellSize";
+import { ICON_GRID_PAD, iconCellSize, iconListSize } from "../iconCellSize";
 import { useFlip } from "../useFlip";
 import { usePointerReorder } from "../usePointerReorder";
 import { useHover } from "../useHover";
@@ -24,13 +24,27 @@ function IconGridItem({
   onPointerDown,
   editing,
   onRemove,
+  onItemMenu,
   hoverCard,
+  // What hovering an icon reveals: "card", "tip" or "none".
+  //
+  // Three states, because two were not enough. Turning the card off fell back
+  // to a tooltip of the address, so "off" still popped something up over the
+  // grid — which is not what off means to anybody who just switched it off.
+  // Widgets whose items have no detail worth a card (Google Apps, Bookmarks)
+  // do want the tooltip, so it stays the default.
+  hover = "tip",
+  list = false,
 }) {
   const ref = useRef(null);
   const wrapRef = useRef(null);
   // Every measurement of the cell from one place, so this button and the
   // callers that predict its size cannot drift apart.
   const { pad, labelGap, fontSize } = iconCellSize(iconSize, showLabels);
+  // A row's own measurements, which are not the cell's scaled down — see
+  // iconListSize. Computed unconditionally: a hook cannot be conditional and
+  // these are cheap arithmetic, not work.
+  const row = iconListSize(iconSize);
   // Hover as state rather than a background written straight onto the node.
   // The imperative form could not be undone once its mouseleave went missing,
   // and in a grid that reorders under the pointer it went missing often: an
@@ -40,7 +54,7 @@ function IconGridItem({
   const [hovered, bind] = useHover();
   // The hover card already covers this, so the tooltip only applies where
   // there is no card to duplicate.
-  const tip = useTooltip(hoverCard ? null : item.title || item.name);
+  const tip = useTooltip(hover === "tip" ? item.title || item.name : null);
   // A card is a deliberate reveal, so it stays out of the way of the two
   // things that are not one: a grid mid-drag, and the icon being carried.
   const cardOpen = hovered && !anyDragging && !held;
@@ -64,6 +78,17 @@ function IconGridItem({
         zIndex: held ? 5 : undefined,
         filter: held ? "drop-shadow(0 12px 22px rgba(0,0,0,.4))" : "none",
       }}
+      // Stopped rather than allowed to bubble: the tile behind this would
+      // otherwise open its own menu over the top of the item's.
+      onContextMenu={
+        onItemMenu
+          ? (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onItemMenu(item, wrapRef.current);
+            }
+          : undefined
+      }
     >
       <button
         ref={(el) => {
@@ -82,11 +107,15 @@ function IconGridItem({
         onClick={() => !held && onOpen?.(item)}
         style={{
           display: "flex",
-          flexDirection: "column",
+          flexDirection: list ? "row" : "column",
           alignItems: "center",
-          gap: labelGap,
-          padding: `${pad}px 2px`,
-          borderRadius: 12,
+          // A row is read left to right, so its name starts at the icon
+          // rather than being centred in whatever width is left over.
+          justifyContent: list ? "flex-start" : "center",
+          textAlign: list ? "left" : "center",
+          gap: list ? row.gap : labelGap,
+          padding: list ? `${row.pad}px ${row.gap}px` : `${pad}px 2px`,
+          borderRadius: list ? 10 : 12,
           border: 0,
           cursor: held ? "grabbing" : "pointer",
           width: "100%",
@@ -111,17 +140,28 @@ function IconGridItem({
         <IconTile
           name={item.iconName || item.key || item.name}
           url={item.iconUrl}
-          size={iconSize}
+          size={list ? row.icon : iconSize}
+          color={item.color}
+          ink={item.ink}
         />
-        {showLabels ? (
+        {/* A list is names with marks beside them, so the name is not
+            optional there the way a caption under an icon is — a list of
+            unlabelled rows is a column of icons with the width wasted. */}
+        {showLabels || list ? (
           <span
             style={{
-              fontSize,
-              color: "var(--dim)",
+              fontSize: list ? row.fontSize : fontSize,
+              // In a row the name is the content, so it gets the reading
+              // colour. Under an icon it is a caption for a mark that already
+              // says which site it is, so it stays quiet.
+              color: list ? "var(--fg)" : "var(--dim)",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               maxWidth: "100%",
+              // Or a long name pushes the remove badge off the row instead of
+              // truncating under it.
+              ...(list ? { flex: 1, minWidth: 0 } : null),
             }}
           >
             {item.name}
@@ -131,12 +171,21 @@ function IconGridItem({
       <Tooltip {...tip} />
 
       {onRemove ? (
-        <Appear open={!!editing} style={{ position: "absolute", top: -2, right: -2 }}>
+        <Appear
+          open={!!editing}
+          // On a row the badge belongs at the end of the row, vertically
+          // centred; over the corner of a 24px icon it covers the icon.
+          style={
+            list
+              ? { position: "absolute", top: "50%", right: 4, transform: "translateY(-50%)" }
+              : { position: "absolute", top: -2, right: -2 }
+          }
+        >
           <RemoveBadge label={`Remove ${item.name}`} onRemove={() => onRemove(item)} />
         </Appear>
       ) : null}
 
-      {hoverCard && !editing ? (
+      {hover === "card" && hoverCard && !editing ? (
         <Popover
           open={cardOpen}
           anchorRef={ref}
@@ -174,7 +223,17 @@ function RemoveBadge({ label, onRemove }) {
           padding: 0,
           borderRadius: 999,
           cursor: "pointer",
-          background: "var(--sheet)",
+          // Frosted when the board is, solid when it is not.
+          //
+          // --sheet is translucent and this badge sits directly on top of an
+          // app icon, so with blur switched off the icon read straight through
+          // an 18px circle carrying a cross. The tile publishes a chip surface
+          // for exactly this — see tileStyle — which is stronger than the tile
+          // itself, because a control that matches its background is a control
+          // you cannot see.
+          background: "var(--tile-chip-bg, var(--sheet))",
+          backdropFilter: "var(--tile-chip-blur, none)",
+          WebkitBackdropFilter: "var(--tile-chip-blur, none)",
           border: "1px solid var(--line)",
           color: "var(--danger)",
           boxShadow: "0 4px 10px rgba(0,0,0,.3)",
@@ -186,7 +245,9 @@ function RemoveBadge({ label, onRemove }) {
         }}
         onMouseLeave={(e) => {
           tip.anchorProps.onMouseLeave?.();
-          e.currentTarget.style.background = "var(--sheet)";
+          // Back to the same pair, not to --sheet, or leaving the badge
+          // makes it translucent again on performance mode.
+          e.currentTarget.style.background = "var(--tile-chip-bg, var(--sheet))";
         }}
         onFocus={tip.anchorProps.onFocus}
         onBlur={tip.anchorProps.onBlur}
@@ -214,9 +275,17 @@ function IconGrid({
   editing = false,
   onRemove,
   onRemoveByDrag,
+  onItemMenu,
   hoverCard,
+  hover,
   scroll = false,
   trailing = null,
+  list = false,
+  // "center" is right for a grid that is the whole tile — the board centres a
+  // short row on purpose. Under a left-aligned folder heading it is wrong: a
+  // group of two icons floated in the middle of the tile reads as unrelated to
+  // the heading above it.
+  align = "center",
 }) {
   const gridRef = useRef(null);
   const ids = items.map((i) => i.key);
@@ -247,7 +316,7 @@ function IconGrid({
     containerRef: gridRef,
   });
 
-  useFlip(gridRef, [ids.join("|"), cols, iconSize, showLabels], { skipId: draggingId });
+  useFlip(gridRef, [ids.join("|"), cols, iconSize, showLabels, list], { skipId: draggingId });
 
   return (
     <div
@@ -269,15 +338,21 @@ function IconGrid({
         // trailing tracks to zero width (unlike `auto-fill`), which is what
         // lets `justifyContent` center a short row instead of centering
         // within a row's worth of empty columns.
-        gridTemplateColumns: `repeat(auto-fit, ${cellWidth}px)`,
-        justifyContent: "center",
-        gap: gridGap,
+        // One full-width track for a list, so a row is as wide as the tile
+        // and its name has the whole of it. `stretch` rather than `center`
+        // for the same reason.
+        gridTemplateColumns: list ? "minmax(0, 1fr)" : `repeat(auto-fit, ${cellWidth}px)`,
+        justifyContent: list ? "stretch" : align,
+        gap: list ? iconListSize(iconSize).rowGap : gridGap,
         flex: 1,
         // `safe center` rather than plain `center` once this can scroll: a
         // centred grid that overflows spills equally in both directions, and
         // the part above the top edge cannot be scrolled back to. `safe` falls
         // back to start exactly when centring would do that.
-        alignContent: scroll ? "safe center" : "center",
+        // A list starts at the top. Centring a short list in a tall tile
+        // leaves it floating with equal space above and below, which reads as
+        // a layout that has not finished loading.
+        alignContent: list ? "start" : scroll ? "safe center" : "center",
         minWidth: 0,
         ...(scroll
           ? {
@@ -319,7 +394,12 @@ function IconGrid({
           onPointerDown={onPointerDown}
           editing={editing}
           onRemove={onRemove}
+          onItemMenu={onItemMenu}
           hoverCard={hoverCard}
+          // A card needs something to draw, so without one the tooltip is the
+          // most this can offer.
+          hover={hover ?? (hoverCard ? "card" : "tip")}
+          list={list}
         />
       ))}
       {trailing}

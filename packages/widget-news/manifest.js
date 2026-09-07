@@ -4,7 +4,7 @@ export default {
   glyph: "news",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.1.0",
+  version: "2.2.0",
   tagline: "Hacker News by default, or your own feed.",
   description:
     "Hacker News' top stories, keyless and no account. Swap in your own " +

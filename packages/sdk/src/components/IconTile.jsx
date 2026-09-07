@@ -1,6 +1,8 @@
 import googleMark from "../assets/brand/google-favicon-2025.webp";
 import { brandForLink, hashHue, inkSafeGradient } from "../brands";
+import { DARK_INK, defaultInk, gradientFor } from "../tilePalette";
 import { useSiteIcon } from "../useSiteIcon";
+import CrossfadeFill from "./CrossfadeFill";
 
 // Google's current favicon, supplied as artwork rather than a monochrome path,
 // so it is used directly instead of being tinted like the glyph brands.
@@ -10,20 +12,30 @@ const ARTWORK = { google: googleMark };
 // hashed-hue gradient so any name renders something recognizable. Pass `url`
 // wherever the thing has an address — it identifies the site far more reliably
 // than whatever the user chose to call it.
-function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
+// `color` and `ink` are a chosen colour, which replaces the tile's background
+// and nothing else. The brand's mark still gets drawn on it: somebody who
+// wanted GitHub in orange wanted GitHub in orange, not a letter G.
+//
+// What it does replace is the two treatments that have no background to swap —
+// full-colour artwork and a fetched site icon are pictures, not a glyph on a
+// gradient, so a chosen colour falls back to the brand mark or the monogram.
+// It also makes the ink choice mean something, which it could not under a
+// favicon.
+function IconTile({ name = "", url = "", size = 40, radius, bare = false, color, ink }) {
   const key = String(name).toLowerCase().trim();
+  const chosen = gradientFor(color);
   const brand = brandForLink(url, name);
   const hue = hashHue(key || "?");
   const Glyph = brand?.Glyph;
   const letter = String(name).trim()[0]?.toUpperCase() || "?";
 
   // Full-colour artwork wins over a tinted glyph where we have it.
-  const artwork = ARTWORK[key];
+  const artwork = chosen ? null : ARTWORK[key];
   // Only asked for where nothing better is already known, and only worth
   // drawing once confirmed to be the site's own icon rather than Chrome's
   // stand-in globe — see siteIcon.js. Hooks cannot sit below the early
   // returns, so the conditions are in the argument instead.
-  const siteIcon = useSiteIcon(!brand && !artwork && !bare ? url : null);
+  const siteIcon = useSiteIcon(!chosen && !brand && !artwork && !bare ? url : null);
   if (artwork) {
     return (
       <img
@@ -46,13 +58,13 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
 
   // "bare" = just the coloured glyph, no tile (used in the search box).
   if (bare) {
-    const color = brand ? brand.to : `hsl(${hue} 70% 52%)`;
+    const bareColor = chosen ? chosen.to : brand ? brand.to : `hsl(${hue} 70% 52%)`;
     return Glyph ? (
-      <Glyph size={size} color={color} aria-hidden="true" />
+      <Glyph size={size} color={bareColor} aria-hidden="true" />
     ) : (
       <span
         aria-hidden="true"
-        style={{ fontSize: size, color, fontWeight: 600, lineHeight: 1 }}
+        style={{ fontSize: size, color: bareColor, fontWeight: 600, lineHeight: 1 }}
       >
         {letter}
       </span>
@@ -107,35 +119,54 @@ function IconTile({ name = "", url = "", size = 40, radius, bare = false }) {
   // so every tile in a grid carries the same colour of mark. See
   // inkSafeGradient: the alternative was three black glyphs in a row of white
   // ones, which read as three different kinds of thing.
-  const safe = brand ? inkSafeGradient(brand.from, brand.to) : null;
+  // Dark ink wants the colour it was chosen against, so the darkening that
+  // exists to keep a white mark legible is skipped for it — darkening a pale
+  // tile under a dark glyph makes both harder to read, not easier.
+  // The ink the colour asks for, unless the person has said otherwise. Keeps
+  // the tile and the picker's own buttons agreeing about what is in use.
+  const darkInk = (ink || defaultInk(color)) === "dark";
+  const pair = chosen || brand;
+  const safe = pair && !darkInk ? inkSafeGradient(pair.from, pair.to) : pair;
   const gradient = safe
     ? `linear-gradient(160deg, ${safe.from}, ${safe.to})`
     : `linear-gradient(160deg, hsl(${hue} 72% 64%), hsl(${(hue + 28) % 360} 68% 48%))`;
-  const ink = "#fff";
+  const glyphColor = darkInk ? DARK_INK : "#fff";
 
   return (
     <div
       aria-hidden="true"
       style={{
+        position: "relative",
+        overflow: "hidden",
         width: size,
         height: size,
         borderRadius: radius ?? size * 0.28,
-        background: gradient,
         display: "grid",
         placeItems: "center",
         flex: "none",
         boxShadow: "0 1px 2px rgba(0,0,0,.18)",
       }}
     >
+      {/* The fill is a layer rather than this element's own background, so
+          changing colour fades instead of snapping — a gradient cannot be
+          transitioned. See CrossfadeFill. */}
+      <CrossfadeFill css={gradient} />
       {Glyph ? (
-        <Glyph size={Math.round(size * 0.5)} color={ink} />
+        <Glyph
+          size={Math.round(size * 0.5)}
+          color={glyphColor}
+          // A plain colour does interpolate, so the ink can just ease.
+          style={{ position: "relative", transition: "color .3s ease" }}
+        />
       ) : (
         <span
           style={{
+            position: "relative",
             fontSize: size * 0.42,
-            color: ink,
+            color: glyphColor,
             fontWeight: 600,
             lineHeight: 1,
+            transition: "color .3s ease",
           }}
         >
           {letter}

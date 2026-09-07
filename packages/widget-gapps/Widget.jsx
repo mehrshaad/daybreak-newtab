@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, IconGrid, MONO, iconCellSize, iconGridSize, moveItem } from "@daybreak/sdk";
+import { Button, IconGrid, MONO, iconCellSize, iconGridSize, iconListSize, moveItem } from "@daybreak/sdk";
 import { gridFor, orderedApps } from "./apps";
 
 function GoogleApps({ options, config, setConfig, size, editing, columns }) {
-  const { hideLabels, newTab, iconScale } = options;
+  const { hideLabels, newTab, iconScale, layout } = options;
+  const list = layout === "list";
   const [showAll, setShowAll] = useState(false);
   const wrapRef = useRef(null);
   // Real pixel box of the tile, not the board-grid-unit estimate gridFor
@@ -40,7 +41,14 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
   // the caption's row is part of choosing the size, and doing it here kept the
   // rounding in two places.
   const iconSize = iconGridSize(size, { hideLabels, step: iconScale });
-  const cell = iconCellSize(iconSize, !hideLabels);
+  // A row and a cell are measured differently — see iconListSize. The capacity
+  // maths below is the whole reason these numbers live in the SDK rather than
+  // in the component: this widget has to know how many fit before it draws
+  // them, and a list's answer is a different shape from a grid's.
+  const row = iconListSize(iconSize);
+  const cell = list
+    ? { width: Infinity, height: row.height, gap: row.rowGap }
+    : iconCellSize(iconSize, !hideLabels);
   const gap = cell.gap;
 
   // The "+N more" row shares this same flex column with the grid, so once it
@@ -59,7 +67,13 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
   // rather than showing nothing. Once real dimensions are in, they are what
   // auto-fit will actually do with this width, so capacity always matches
   // what gets rendered.
-  const fitCols = box ? Math.max(1, Math.floor((box.width + gap) / (cell.width + gap))) : cols;
+  // A list is one app per row whatever the tile's width, so its column count
+  // is 1 and not a division that would come out 0 on an infinite cell width.
+  const fitCols = list
+    ? 1
+    : box
+      ? Math.max(1, Math.floor((box.width + gap) / (cell.width + gap)))
+      : cols;
   const rowsFor = (height) => Math.max(1, Math.floor((height + gap) / (cell.height + gap)));
   const fitRowsFull = box ? rowsFor(box.height) : rows;
   const fitRows =
@@ -98,6 +112,20 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
         overflow: showAll ? "auto" : "hidden",
       }}
     >
+      {/* The grid inside a box that can shrink, rather than directly in this
+          column.
+ 
+          IconGrid is `flex: 1`, which in a flex column means it takes every
+          spare pixel — including the row the "+N more" button needs. The
+          button was drawn 11px below the bottom of a 4x2 tile and clipped:
+          the one control whose whole job is keeping the rest of the list
+          inside the tile was itself outside it, with nothing to scroll it into
+          view because this widget caps its content instead of scrolling.
+ 
+          A wrapper with minHeight 0 lets the column give the button its row
+          first and the grid whatever is left, which is the height the capacity
+          maths above already assumed. */}
+      <div style={{ display: "flex", flex: 1, minHeight: 0, minWidth: 0 }}>
       <IconGrid
         items={visible}
         cols={cols}
@@ -106,12 +134,14 @@ function GoogleApps({ options, config, setConfig, size, editing, columns }) {
         // vertical rhythm read as the same spacing scaled by icon size.
         gap={gap}
         showLabels={!hideLabels}
+        list={list}
         onOpen={open}
         onReorder={(from, to) =>
           setConfig({ order: moveItem(apps.map((a) => a.key), from, to) })
         }
         onRemoveByDrag={(app) => setConfig({ hidden: [...hiddenKeys, app.key] })}
       />
+      </div>
 
       {hidden > 0 || showAll ? (
         <Button

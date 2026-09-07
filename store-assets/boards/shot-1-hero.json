@@ -10,7 +10,7 @@
         "weather",
         "links",
         "tasks",
-        "habits",
+        "bookmarks",
         "scratchpad",
         "worldclocks",
         "timer",
@@ -34,7 +34,7 @@
           4,
           3
         ],
-        "habits": [
+        "bookmarks": [
           4,
           3
         ],
@@ -65,7 +65,7 @@
         "weather",
         "links",
         "tasks",
-        "habits",
+        "bookmarks",
         "scratchpad",
         "worldclocks",
         "timer",
@@ -200,31 +200,10 @@
           ]
         }
       },
-      "habits": {
+      "bookmarks": {
         "options": {},
         "rate": "Live",
-        "config": {
-          "habits": [
-            {
-              "id": "h1",
-              "name": "Read 20 pages",
-              "target": 5,
-              "targetWeeks": 0
-            },
-            {
-              "id": "h2",
-              "name": "Walk outside",
-              "target": 6,
-              "targetWeeks": 0
-            },
-            {
-              "id": "h3",
-              "name": "Practise piano",
-              "target": 4,
-              "targetWeeks": 0
-            }
-          ]
-        }
+        "config": {}
       },
       "scratchpad": {
         "options": {},
@@ -275,26 +254,26 @@
   "buckets": {
     "habits:history": {
       "h1": {
-        "2026-08-24": true,
-        "2026-08-23": true,
-        "2026-08-22": true,
-        "2026-08-20": true,
-        "2026-08-19": true,
-        "2026-08-17": true,
-        "2026-08-16": true
+        "2026-09-07": true,
+        "2026-09-06": true,
+        "2026-09-05": true,
+        "2026-09-03": true,
+        "2026-09-02": true,
+        "2026-08-31": true,
+        "2026-08-30": true
       },
       "h2": {
-        "2026-08-24": true,
-        "2026-08-23": true,
-        "2026-08-21": true,
-        "2026-08-20": true,
-        "2026-08-19": true,
-        "2026-08-18": true
+        "2026-09-07": true,
+        "2026-09-06": true,
+        "2026-09-04": true,
+        "2026-09-03": true,
+        "2026-09-02": true,
+        "2026-09-01": true
       },
       "h3": {
-        "2026-08-23": true,
-        "2026-08-22": true,
-        "2026-08-19": true
+        "2026-09-06": true,
+        "2026-09-05": true,
+        "2026-09-02": true
       }
     },
     "scratchpad:text": "Lisbon\n- Tuesday, early flight\n- the blue tile place by the station\n- pastries, obviously"

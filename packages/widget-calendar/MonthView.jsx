@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Button, JALALI_MONTHS, MONO, formatDate, monthGrid, toHijri, toJalali, weekdayLabels } from "@daybreak/sdk";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { Appear, Button, JALALI_MONTHS, MONO, formatDate, monthGrid, toHijri, toJalali, weekdayLabels } from "@daybreak/sdk";
 import { holidaysOn } from "./holidays";
 
 // The month grid.
@@ -157,6 +158,11 @@ function MonthView({
   const today = formatDate(new Date());
   const labels = weekdayLabels(weekStart);
   const altHeader = alternateHeader(year, month, alternate);
+  // Whether the grid is showing the month we are actually in, which is what
+  // decides if "back to today" has anywhere to go.
+  const now = new Date();
+  const onCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+
   const monthLabel = new Date(year, month, 1).toLocaleDateString(undefined, {
     month: "long",
     year: "numeric",
@@ -200,12 +206,51 @@ function MonthView({
             </div>
           ) : null}
         </div>
-        <div style={{ display: "flex", gap: 2, flex: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 2, flex: "none" }}>
+          {/* "Back to today", which used to be a middot between the arrows.
+              A middot says nothing — and on the current month the button did
+              nothing either, so it was an unlabelled control that sometimes
+              worked. It is a word now, and it only appears when there is
+              somewhere to go back from. */}
+          <Appear open={!onCurrentMonth} style={{ display: "flex" }}>
+            <Button
+              aria-label="Back to today"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMove(0);
+              }}
+              hover={{ background: "var(--sheetHover)", color: "var(--fg)" }}
+              style={{
+                height: 20,
+                display: "grid",
+                placeItems: "center",
+                padding: "0 7px",
+                marginRight: 2,
+                border: 0,
+                borderRadius: 6,
+                background: "var(--tile-chip-bg, var(--panel))",
+                backdropFilter: "var(--tile-chip-blur, none)",
+                WebkitBackdropFilter: "var(--tile-chip-blur, none)",
+                color: "var(--dim)",
+                cursor: "pointer",
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: ".08em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              Today
+            </Button>
+          </Appear>
+
+          {/* Real icons rather than the ‹ › glyphs, which rendered at whatever
+              weight the font felt like and did not match any other control in
+              the app. */}
           {[
-            ["‹", -1, "Previous month"],
-            ["·", 0, "Back to today"],
-            ["›", 1, "Next month"],
-          ].map(([glyph, delta, label]) => (
+            [LuChevronLeft, -1, "Previous month"],
+            [LuChevronRight, 1, "Next month"],
+          ].map(([Icon, delta, label]) => (
             <Button
               key={label}
               aria-label={label}
@@ -222,14 +267,20 @@ function MonthView({
                 padding: 0,
                 border: 0,
                 borderRadius: 6,
-                background: "transparent",
-                color: "var(--faint)",
+                // The tile's chip surface, not transparent: these sit over the
+                // month grid, and a bare glyph on a translucent tile has the
+                // dates behind it running through the arrow. Frosted with blur
+                // on, opaque without it — the same treatment the remove badge
+                // gets, and for the same reason. See tileStyle.
+                background: "var(--tile-chip-bg, var(--panel))",
+                backdropFilter: "var(--tile-chip-blur, none)",
+                WebkitBackdropFilter: "var(--tile-chip-blur, none)",
+                color: "var(--dim)",
                 cursor: "pointer",
-                fontSize: delta === 0 ? 16 : 13,
-                lineHeight: 1,
+                transition: "background .15s ease, color .15s ease",
               }}
             >
-              {glyph}
+              <Icon size={13} />
             </Button>
           ))}
         </div>

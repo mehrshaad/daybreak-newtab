@@ -82,21 +82,46 @@ function ProfileSwitcher({ compact, onManage }) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
+          display: compact ? "grid" : "flex",
+          placeItems: compact ? "center" : undefined,
+          alignItems: compact ? undefined : "center",
+          gap: compact ? 0 : 7,
           minWidth: 0,
-          padding: compact ? "5px 7px" : "5px 11px 5px 8px",
+          // Compact is a round control, the same 36px as the theme and settings
+          // buttons at the other end of the bar, with the emoji centred in it
+          // by the grid. It used to be the full chip with its padding cut down,
+          // which left an emoji sitting on a text baseline inside a squashed
+          // pill — reported as the icon being neither contained nor centred.
+          width: compact ? 36 : undefined,
+          height: compact ? 36 : undefined,
+          padding: compact ? 0 : "5px 11px 5px 8px",
           borderRadius: 999,
           cursor: "pointer",
           background: open || hovered ? "var(--panel2)" : "var(--panel)",
           border: "1px solid var(--line)",
           color: "var(--fg)",
+          // Frosted with the rest of the chrome when blur is on; `none` when it
+          // is off. See FROSTED in the SDK's styles.
+          backdropFilter: "var(--blur-tile)",
+          WebkitBackdropFilter: "var(--blur-tile)",
           transition: "background .18s ease, border-color .18s ease",
         }}
         {...tip.anchorProps}
       >
-        <span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1, flex: "none" }}>
+        <span
+          aria-hidden="true"
+          style={{
+            // Bigger when it is the only thing in the button, and laid out as a
+            // grid cell of its own so it centres on the box rather than on a
+            // baseline.
+            display: "grid",
+            placeItems: "center",
+            fontSize: compact ? 16 : 13,
+            lineHeight: 1,
+            flex: "none",
+            transition: "font-size .18s ease",
+          }}
+        >
           {active.emoji}
         </span>
         {/* The name goes before the bar starts dropping anything else: at that

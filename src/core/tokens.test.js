@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ACCENT_NAMES,
   ACCENTS,
+  ACCENT_COLUMNS,
+  TINT_COLUMNS,
   TINTS,
   TINT_EXTRAS,
   TINT_NAMES,
@@ -268,14 +270,58 @@ describe("every accent, in both themes", () => {
     expect(new Set(Object.values(ACCENT_NAMES)).size).toBe(ACCENTS.length);
   });
 
-  it("has fifteen of them, all distinct, all valid hex", () => {
-    // Fifteen since slate went: it and steel were the closest pair in the
-    // palette, so one of them was doing no work. Five to a row in the picker,
-    // which makes fifteen three whole rows.
-    expect(ACCENTS).toHaveLength(15);
-    expect(new Set(ACCENTS).size).toBe(15);
+  it("has sixteen of them, all distinct, all valid hex", () => {
+    // Sixteen so the picker is two whole rows of eight. At fifteen it came out
+    // eight and then seven, with a hole on the end of the second row — which
+    // is the thing this number exists to prevent, so it is asserted against
+    // the grid's own column count rather than written down twice.
+    expect(ACCENTS).toHaveLength(16);
+    expect(new Set(ACCENTS).size).toBe(16);
     expect(ACCENTS).not.toContain("#adb8c6");
     for (const a of ACCENTS) expect(a).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("divides exactly into the rows the picker lays out", () => {
+    // ACCENT_COLUMNS is what SettingsDrawer's grid uses. Whichever of the two
+    // moves, this fails rather than a row quietly coming out short.
+    expect(ACCENTS.length % ACCENT_COLUMNS).toBe(0);
+  });
+
+  it("keeps every swatch further apart than the closest pair already shipping", () => {
+    // The rule the sixteenth was picked by. Perceptual distance in CIE Lab,
+    // not hex arithmetic: an "orchid" candidate measured 9.9 from violet once
+    // and was dropped for it, and ash, chartreuse, rose and slate were all
+    // dropped the same way. Periwinkle came in at 19.9, where the tightest
+    // pair in the palette (mint against green) is 12.2.
+    const f = (v) => (v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116);
+    const lab = (hex) => {
+      const [r, g, b] = [1, 3, 5]
+        .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+        .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      const x = f((0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047);
+      const y = f(0.2126 * r + 0.7152 * g + 0.0722 * b);
+      const z = f((0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883);
+      return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+    };
+    const distance = (a, b) => {
+      const [A, B] = [lab(a), lab(b)];
+      return Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]);
+    };
+
+    let tightest = Infinity;
+    let pair = null;
+    for (let i = 0; i < ACCENTS.length; i += 1) {
+      for (let j = i + 1; j < ACCENTS.length; j += 1) {
+        const d = distance(ACCENTS[i], ACCENTS[j]);
+        if (d < tightest) {
+          tightest = d;
+          pair = [ACCENTS[i], ACCENTS[j]];
+        }
+      }
+    }
+    // Ten is the floor: below it two swatches read as the same colour, which
+    // is what "remove the duplicated colours" was about.
+    expect(tightest, `closest pair ${pair?.join(" and ")}`).toBeGreaterThan(10);
   });
 
   it("keeps the original six first and unmoved, so no stored accent shifts", () => {
@@ -377,15 +423,22 @@ describe("the tint palette", () => {
   // Local: the one in the tileFill block below is scoped to it.
   const rgb = (css) => css.match(/[\d.]+/g).map(Number);
 
-  it("is the accents plus two, so its picker fills two whole rows", () => {
-    // Nine to a row with "none" in the first cell, so eighteen cells.
-    expect(TINTS).toHaveLength(17);
+  it("is the accents plus three, so its picker fills two whole rows", () => {
+    // Ten to a row with "none" in the first cell, so twenty cells. The third
+    // extra exists for exactly this: at two it was nineteen and left a hole.
+    expect(TINTS).toHaveLength(19);
     expect(TINTS.slice(0, ACCENTS.length)).toEqual(ACCENTS);
-    expect((1 + TINTS.length) % 9).toBe(0);
+    expect((1 + TINTS.length) % TINT_COLUMNS).toBe(0);
   });
 
-  it("leaves the accent picker three whole rows of five", () => {
-    expect(ACCENTS.length % 5).toBe(0);
+  it("is few enough that the picker can keep them sample-sized", () => {
+    // Fifteen was once laid out five to a row because that divides evenly, and
+    // at a 400px drawer that made each swatch 62px — reported as the accent
+    // colours being huge. A swatch is a sample, not a button. Eight columns
+    // keeps them at sample size, so the cap here is on how many rows of
+    // samples the drawer can carry.
+    expect(ACCENTS.length).toBeLessThanOrEqual(2 * ACCENT_COLUMNS);
+    expect(ACCENTS.length).toBeGreaterThanOrEqual(12);
   });
 
   it("lets a tint be deeper than an accent, but not without limit", () => {

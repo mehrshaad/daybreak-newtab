@@ -3,8 +3,11 @@ import { NoticeContext } from "./noticeContext";
 import { useSettings } from "./settingsContext";
 import {
   addNotice,
+  EXIT_MS,
   freezeNotice,
   isSilenced,
+  leaveNotice,
+  leavingIds,
   makeNotice,
   removeNotice,
   tickNotices,
@@ -27,8 +30,11 @@ export function NoticeProvider({ children }) {
   const silenced = useRef(settings);
   silenced.current = settings;
 
+  // Dismissing marks the card as leaving; the removal comes after the fade.
+  // See EXIT_MS: a notice cut straight out of the list cannot animate, and the
+  // two below it jumping up into the gap is what made it look like a glitch.
   const dismiss = useCallback((id) => {
-    setNotices((list) => removeNotice(list, id));
+    setNotices((list) => leaveNotice(list, id));
   }, []);
 
   const notify = useCallback((input) => {
@@ -45,18 +51,34 @@ export function NoticeProvider({ children }) {
   // A single interval for the whole stack rather than a timer per notice: with
   // one timer each, freezing one meant cancelling and re-creating it, and the
   // remaining time had to be reconstructed from when it started.
+  //
+  // A notice whose countdown runs out is marked leaving rather than dropped, so
+  // it fades the same way a dismissed one does.
   useEffect(() => {
     if (!notices.length) return undefined;
     const id = setInterval(() => {
       setNotices((list) => {
         const { list: next, expired } = tickNotices(list, TICK);
-        return expired.length ? next.filter((n) => !expired.includes(n.id)) : next;
+        return expired.reduce((acc, noticeId) => leaveNotice(acc, noticeId), next);
       });
     }, TICK);
     return () => clearInterval(id);
     // Only whether the stack is empty matters — restarting the interval on
     // every tick would reset the countdown forever.
   }, [notices.length]);
+
+  // Whatever is leaving gets taken out once its fade has played. Keyed on the
+  // ids rather than the list, so an unrelated re-render does not restart a
+  // timer that is already counting one of them out.
+  const leaving = leavingIds(notices).join(",");
+  useEffect(() => {
+    if (!leaving) return undefined;
+    const ids = leaving.split(",").map(Number);
+    const timer = setTimeout(() => {
+      setNotices((list) => ids.reduce((acc, id) => removeNotice(acc, id), list));
+    }, EXIT_MS);
+    return () => clearTimeout(timer);
+  }, [leaving]);
 
   // A way to raise a notice from the console while the dev server is running.
   // Half these categories only fire when something has actually gone wrong —

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LuX } from "react-icons/lu";
-import { Button, HOVER_SOFT, IconTile, Tooltip, dropOrigin, hasPermissionsApi, originOf, requestOrigin, uid, useTooltip } from "@daybreak/sdk";
+import { Button, HOVER_SOFT, IconTile, Tooltip, dropOrigin, hasPermissionsApi, originOf, requestOrigin, uid, useTooltip, useWidgetAction } from "@daybreak/sdk";
 import { PROVIDER_ICON_NAME, PROVIDER_LABEL, providerFor, resolveCalendars } from "./calendars";
 
 // Its own component so each row's remove-button tooltip gets its own hover
@@ -64,10 +64,13 @@ function CalendarRow({ label, provider, onRemove }) {
   );
 }
 
-function CalendarSettings({ config, setConfig, toast }) {
+function CalendarSettings({ config, setConfig, toast, action }) {
   const calendars = resolveCalendars(config);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const draftRef = useRef(null);
+
+  useWidgetAction(action, "add", () => draftRef.current?.focus());
 
   const add = async (e) => {
     e.preventDefault();
@@ -136,6 +139,7 @@ function CalendarSettings({ config, setConfig, toast }) {
 
       <form onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <input
+          ref={draftRef}
           type="url"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
