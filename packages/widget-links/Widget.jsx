@@ -171,7 +171,8 @@ function nameFromUrl(href) {
 }
 
 function Links({ options, config, setConfig, size, editing, columns, action }) {
-  const { hideLabels, newTab, iconScale, hoverCard } = options;
+  const { hideLabels, newTab, iconScale, hoverCard, layout } = options;
+  const list = layout === "list";
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
   const [adding, setAdding] = useState(false);
   const [draftUrl, setDraftUrl] = useState("");
@@ -320,6 +321,7 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
         // Matches the icon-to-label gap inside each item, so horizontal and
         // vertical rhythm read as the same spacing scaled by icon size.
         showLabels={!hideLabels}
+        list={list}
         // The links are the user's own, so none of them may be hidden the way
         // Google Apps hides its long tail. If they do not fit, they scroll.
         scroll

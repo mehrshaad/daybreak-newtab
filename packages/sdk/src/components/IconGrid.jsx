@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { LuX } from "react-icons/lu";
-import { ICON_GRID_PAD, iconCellSize } from "../iconCellSize";
+import { ICON_GRID_PAD, iconCellSize, iconListSize } from "../iconCellSize";
 import { useFlip } from "../useFlip";
 import { usePointerReorder } from "../usePointerReorder";
 import { useHover } from "../useHover";
@@ -26,12 +26,17 @@ function IconGridItem({
   onRemove,
   onItemMenu,
   hoverCard,
+  list = false,
 }) {
   const ref = useRef(null);
   const wrapRef = useRef(null);
   // Every measurement of the cell from one place, so this button and the
   // callers that predict its size cannot drift apart.
   const { pad, labelGap, fontSize } = iconCellSize(iconSize, showLabels);
+  // A row's own measurements, which are not the cell's scaled down — see
+  // iconListSize. Computed unconditionally: a hook cannot be conditional and
+  // these are cheap arithmetic, not work.
+  const row = iconListSize(iconSize);
   // Hover as state rather than a background written straight onto the node.
   // The imperative form could not be undone once its mouseleave went missing,
   // and in a grid that reorders under the pointer it went missing often: an
@@ -94,11 +99,15 @@ function IconGridItem({
         onClick={() => !held && onOpen?.(item)}
         style={{
           display: "flex",
-          flexDirection: "column",
+          flexDirection: list ? "row" : "column",
           alignItems: "center",
-          gap: labelGap,
-          padding: `${pad}px 2px`,
-          borderRadius: 12,
+          // A row is read left to right, so its name starts at the icon
+          // rather than being centred in whatever width is left over.
+          justifyContent: list ? "flex-start" : "center",
+          textAlign: list ? "left" : "center",
+          gap: list ? row.gap : labelGap,
+          padding: list ? `${row.pad}px ${row.gap}px` : `${pad}px 2px`,
+          borderRadius: list ? 10 : 12,
           border: 0,
           cursor: held ? "grabbing" : "pointer",
           width: "100%",
@@ -123,19 +132,28 @@ function IconGridItem({
         <IconTile
           name={item.iconName || item.key || item.name}
           url={item.iconUrl}
-          size={iconSize}
+          size={list ? row.icon : iconSize}
           color={item.color}
           ink={item.ink}
         />
-        {showLabels ? (
+        {/* A list is names with marks beside them, so the name is not
+            optional there the way a caption under an icon is — a list of
+            unlabelled rows is a column of icons with the width wasted. */}
+        {showLabels || list ? (
           <span
             style={{
-              fontSize,
-              color: "var(--dim)",
+              fontSize: list ? row.fontSize : fontSize,
+              // In a row the name is the content, so it gets the reading
+              // colour. Under an icon it is a caption for a mark that already
+              // says which site it is, so it stays quiet.
+              color: list ? "var(--fg)" : "var(--dim)",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               maxWidth: "100%",
+              // Or a long name pushes the remove badge off the row instead of
+              // truncating under it.
+              ...(list ? { flex: 1, minWidth: 0 } : null),
             }}
           >
             {item.name}
@@ -145,7 +163,16 @@ function IconGridItem({
       <Tooltip {...tip} />
 
       {onRemove ? (
-        <Appear open={!!editing} style={{ position: "absolute", top: -2, right: -2 }}>
+        <Appear
+          open={!!editing}
+          // On a row the badge belongs at the end of the row, vertically
+          // centred; over the corner of a 24px icon it covers the icon.
+          style={
+            list
+              ? { position: "absolute", top: "50%", right: 4, transform: "translateY(-50%)" }
+              : { position: "absolute", top: -2, right: -2 }
+          }
+        >
           <RemoveBadge label={`Remove ${item.name}`} onRemove={() => onRemove(item)} />
         </Appear>
       ) : null}
@@ -232,6 +259,7 @@ function IconGrid({
   hoverCard,
   scroll = false,
   trailing = null,
+  list = false,
 }) {
   const gridRef = useRef(null);
   const ids = items.map((i) => i.key);
@@ -262,7 +290,7 @@ function IconGrid({
     containerRef: gridRef,
   });
 
-  useFlip(gridRef, [ids.join("|"), cols, iconSize, showLabels], { skipId: draggingId });
+  useFlip(gridRef, [ids.join("|"), cols, iconSize, showLabels, list], { skipId: draggingId });
 
   return (
     <div
@@ -284,15 +312,21 @@ function IconGrid({
         // trailing tracks to zero width (unlike `auto-fill`), which is what
         // lets `justifyContent` center a short row instead of centering
         // within a row's worth of empty columns.
-        gridTemplateColumns: `repeat(auto-fit, ${cellWidth}px)`,
-        justifyContent: "center",
-        gap: gridGap,
+        // One full-width track for a list, so a row is as wide as the tile
+        // and its name has the whole of it. `stretch` rather than `center`
+        // for the same reason.
+        gridTemplateColumns: list ? "minmax(0, 1fr)" : `repeat(auto-fit, ${cellWidth}px)`,
+        justifyContent: list ? "stretch" : "center",
+        gap: list ? iconListSize(iconSize).rowGap : gridGap,
         flex: 1,
         // `safe center` rather than plain `center` once this can scroll: a
         // centred grid that overflows spills equally in both directions, and
         // the part above the top edge cannot be scrolled back to. `safe` falls
         // back to start exactly when centring would do that.
-        alignContent: scroll ? "safe center" : "center",
+        // A list starts at the top. Centring a short list in a tall tile
+        // leaves it floating with equal space above and below, which reads as
+        // a layout that has not finished loading.
+        alignContent: list ? "start" : scroll ? "safe center" : "center",
         minWidth: 0,
         ...(scroll
           ? {
@@ -336,6 +370,7 @@ function IconGrid({
           onRemove={onRemove}
           onItemMenu={onItemMenu}
           hoverCard={hoverCard}
+          list={list}
         />
       ))}
       {trailing}

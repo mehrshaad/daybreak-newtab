@@ -58,6 +58,37 @@ export function iconCellSize(iconSize, showLabels) {
   return { width, height, pad, labelGap, fontSize, gap };
 }
 
+// The same cell, laid out as a row instead.
+//
+// A list is what an icon grid is for when the names matter more than the marks
+// — a dozen links whose titles you read rather than eight whose logos you
+// recognise. The icon shrinks because a row's height is the icon's height and
+// a 62px row fits three of them in a tile, and the caption grows because in a
+// row it is the content and not a label under a picture.
+//
+// Here rather than in the component for the same reason everything else is:
+// Google Apps has to predict how many rows fit a measured tile, and a second
+// copy of these numbers is a second copy to keep in step.
+const LIST_ICON = 0.62;
+const LIST_ICON_MIN = 20;
+const LIST_PAD = 0.18;
+const LIST_GAP = 0.34;
+const LIST_FONT = 0.46;
+const LIST_FONT_RANGE = [11, 14];
+
+export function iconListSize(iconSize) {
+  const icon = Math.max(LIST_ICON_MIN, Math.round(iconSize * LIST_ICON));
+  const pad = Math.max(4, Math.round(icon * LIST_PAD));
+  const gap = Math.max(8, Math.round(icon * LIST_GAP));
+  const fontSize = Math.max(
+    LIST_FONT_RANGE[0],
+    Math.min(LIST_FONT_RANGE[1], Math.round(icon * LIST_FONT))
+  );
+  // The icon sets the row height; the caption sits centred beside it, so its
+  // line box never exceeds the icon at any of these sizes.
+  return { icon, pad, gap, fontSize, height: 2 * pad + icon, rowGap: Math.max(2, pad - 2) };
+}
+
 // The three sizes the icon widgets offer, smallest first.
 export const ICON_STEPS = ["s", "m", "l"];
 

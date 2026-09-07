@@ -138,7 +138,7 @@ export { useLongPress } from "./useLongPress";
 export { useWidgetAction } from "./useWidgetAction";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
-export { ICON_GRID_PAD, ICON_STEPS, iconCellSize, iconGridSize } from "./iconCellSize";
+export { ICON_GRID_PAD, ICON_STEPS, iconCellSize, iconGridSize, iconListSize } from "./iconCellSize";
 export { addMonths, monthGrid, weekdayLabels, WEEKDAY_LABELS } from "./monthGrid";
 
 // Small utilities.
