@@ -78,18 +78,19 @@ function Task({ task, showDates, editing, held, onToggle, onRemove, onEdit, onPo
           inputStyle={{ display: "block", width: "100%", fontSize: 13 }}
         />
       </div>
-      {showDates && task.due ? (
+      {/* Appear, so turning due dates off eases rather than blinking. */}
+      <Appear open={!!(showDates && task.due)} style={{ display: "flex", flex: "none" }}>
         <span
           style={{
             fontFamily: MONO,
             fontSize: 10,
-            flex: "none",
             color: isOverdue(task.due) && !task.done ? "var(--danger)" : "var(--faint)",
+            transition: "color .25s ease",
           }}
         >
-          {task.due.slice(5)}
+          {task.due?.slice(5)}
         </span>
-      ) : null}
+      </Appear>
       {/* Always in the layout, only ever faded. Mounting it on hover took its
           width with it, so a row's due date jumped sideways the moment the
           pointer arrived or left — the fade was animated, the reflow was not. */}
@@ -258,7 +259,9 @@ function Tasks({ options, config, setConfig, editing, action }) {
             color: "var(--fg)",
           }}
         />
-        {showDates ? <DatePicker value={due} onChange={setDue} /> : null}
+        <Appear open={!!showDates} style={{ display: "flex", flex: "none" }}>
+          <DatePicker value={due} onChange={setDue} />
+        </Appear>
         <button
           type="submit"
           aria-label="Add task"

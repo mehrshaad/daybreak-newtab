@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { formatJalali, LIST_BLEED, listRow, MONO, useMeasuredWidth } from "@daybreak/sdk";
+import { Appear, formatJalali, LIST_BLEED, listRow, MONO, useMeasuredWidth } from "@daybreak/sdk";
 import { formatRemaining, visibleEntries, yearsAt } from "./countdown";
 
 // Once a minute. A countdown inside the last hour shows minutes, and a tab left
@@ -78,11 +78,12 @@ function Countdown({ config, options, size }) {
         const years = yearsAt(entry, occurrence);
         return (
           <div key={entry.id} style={listRow({ opacity: past ? 0.55 : 1, gap: 8 })}>
-            {showEmoji && entry.emoji ? (
-              <span style={{ fontSize: 15, flex: "none", lineHeight: 1 }} aria-hidden="true">
+            {/* Appear, so turning the emoji off eases rather than blinking. */}
+            <Appear open={!!(showEmoji && entry.emoji)} style={{ display: "flex", flex: "none" }}>
+              <span style={{ fontSize: 15, lineHeight: 1 }} aria-hidden="true">
                 {entry.emoji}
               </span>
-            ) : null}
+            </Appear>
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <div

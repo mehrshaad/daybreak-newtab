@@ -4,7 +4,7 @@ export default {
   glyph: "clock",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.5.0",
   tagline: "Two to four cities, side by side.",
   description:
     "Track the time in the places you care about. Add a city and Daybreak " +

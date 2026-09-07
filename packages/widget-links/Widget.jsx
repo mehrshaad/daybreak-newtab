@@ -567,9 +567,9 @@ function Links({
                 >
                   <LuPlus size={Math.max(12, Math.round(iconSize * 0.4))} />
                 </span>
-                {hideLabels ? null : (
+                <Appear open={!hideLabels}>
                   <span style={{ fontSize: cell.fontSize }}>Add</span>
-                )}
+                </Appear>
               </button>
               </Appear>
             )}

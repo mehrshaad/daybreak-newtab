@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MONO, useWidgetLocal } from "@daybreak/sdk";
+import { Appear, MONO, useWidgetLocal } from "@daybreak/sdk";
 import { onThisDayUrl, parseEvents, todayKey } from "./onthisday";
 
 function OnThisDay({ id, options, size }) {
@@ -78,11 +78,12 @@ function OnThisDay({ id, options, size }) {
     >
       {events.slice(0, limit).map((e, i) => (
         <div key={i} style={{ display: "flex", gap: 8, minWidth: 0 }}>
-          {showYear ? (
-            <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--faint)", flex: "none" }}>
+          {/* Appear, so hiding the year eases rather than snapping. */}
+          <Appear open={!!showYear} style={{ display: "flex", flex: "none" }}>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--faint)" }}>
               {e.year}
             </span>
-          ) : null}
+          </Appear>
           <span
             style={{
               fontSize: 13,

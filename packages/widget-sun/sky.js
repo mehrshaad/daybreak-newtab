@@ -55,17 +55,37 @@ export function skyAt(altitude) {
 
 // Where on the arc the sun sits, as a point on a half circle. `progress` is 0
 // at sunrise and 1 at sunset, so the sun travels left to right over the top.
-export function arcPoint(progress, { width, height, padding = 16 }) {
+// Where the sun sits on its arc, in the sky box's own coordinates.
+//
+// The two axes are measured from different things on purpose, and getting that
+// wrong is what cropped the sun in half at midday. The horizontal spread comes
+// from the width; the vertical amplitude has to come from the *height*, or the
+// apex is a function of how wide the tile is and eventually leaves the box.
+// It did: with a 300x96 view the old form put the sun's centre at y -0.5 at
+// solar noon, so the top half of the disc was outside the box at every tile
+// size — worst exactly at the moment the widget is most worth looking at.
+//
+// `headroom` is where the apex lands measured from the top, so the disc and
+// most of its glow stay inside whatever shape the tile is.
+export function arcPoint(progress, { width, height, padding = 16, headroom = 14 }) {
   const radius = (width - padding * 2) / 2;
   const cx = width / 2;
-  const cy = height;
   const angle = Math.PI * clamp(progress, 0, 1);
   return {
     x: cx - radius * Math.cos(angle),
-    // Squashed a little: a true semicircle in a wide short tile puts the sun
-    // absurdly high at noon relative to how far it has travelled.
-    y: cy - radius * Math.sin(angle) * 0.72,
+    y: height - Math.max(0, height - headroom) * Math.sin(angle),
   };
+}
+
+// The control point for a quadratic that passes through the arc's own apex.
+//
+// Both ends sit on the horizon, so a quadratic's midpoint is (end + control)/2
+// — the control has to be twice the apex minus the baseline, not the apex with
+// a constant taken off it. The old form subtracted 26 and drew a curve the sun
+// did not travel along.
+export function arcControlY({ height, headroom = 14 }) {
+  const apex = arcPoint(0.5, { width: 0, height, headroom }).y;
+  return 2 * apex - height;
 }
 
 // How much of the day is gone, phrased the way a person would say it.

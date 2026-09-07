@@ -4,7 +4,7 @@ export default {
   glyph: "list",
   category: "Productivity",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.4.0",
   tagline: "A short list you actually finish.",
   description:
     "A to-do list that lives on your new tab. Double-click a task to rename " +

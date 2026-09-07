@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CitySearch, MONO, useMeasuredWidth, useWidgetLocal } from "@daybreak/sdk";
+import { Appear, CitySearch, MONO, useMeasuredWidth, useWidgetLocal } from "@daybreak/sdk";
 import { aqiBand, aqiUrl, parseAirQuality, readingFor, SCALES } from "./aqi";
 
 function Air({ id, options, config, setConfig, refreshKey, size }) {
@@ -168,7 +168,8 @@ function Air({ id, options, config, setConfig, refreshKey, size }) {
         ) : null}
       </div>
 
-      {showPollutants && wide && (data.pm25 != null || data.pm10 != null) ? (
+      {/* Appear, so the pollutant row eases in and out with the setting. */}
+      <Appear open={!!(showPollutants && wide && (data.pm25 != null || data.pm10 != null))}>
         <div
           style={{
             display: "flex",
@@ -189,7 +190,7 @@ function Air({ id, options, config, setConfig, refreshKey, size }) {
             </span>
           ) : null}
         </div>
-      ) : null}
+      </Appear>
     </div>
   );
 }

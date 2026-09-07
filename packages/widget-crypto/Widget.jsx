@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MONO, useWidgetLocal } from "@daybreak/sdk";
+import { Appear, MONO, useWidgetLocal } from "@daybreak/sdk";
 import { symbolFor } from "./coins";
 import { formatChange, formatPrice, parsePrices, priceUrl } from "./prices";
 import { sparkPath } from "./spark";
@@ -74,7 +74,9 @@ function CoinRow({ coin, fiat, showSparkline, showChange, showLogos }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-      {showLogos ? <CoinLogo src={coin.image} symbol={symbolFor(coin.id)} /> : null}
+      <Appear open={!!showLogos} style={{ display: "flex", flex: "none" }}>
+        <CoinLogo src={coin.image} symbol={symbolFor(coin.id)} />
+      </Appear>
       <span
         style={{
           fontFamily: MONO,
@@ -89,7 +91,9 @@ function CoinRow({ coin, fiat, showSparkline, showChange, showLogos }) {
       >
         {symbolFor(coin.id)}
       </span>
-      {showSparkline ? <Sparkline points={coin.sparkline} up={sparkUp} /> : null}
+      <Appear open={!!showSparkline} style={{ display: "flex", flex: "none" }}>
+        <Sparkline points={coin.sparkline} up={sparkUp} />
+      </Appear>
       <div
         style={{
           display: "flex",

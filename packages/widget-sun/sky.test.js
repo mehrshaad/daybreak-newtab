@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arcPoint, deltaLabel, lengthLabel, rgb, skyAt } from "./sky";
+import { arcControlY, arcPoint, deltaLabel, lengthLabel, rgb, skyAt } from "./sky";
 
 describe("skyAt", () => {
   it("is dark at night and bright at noon", () => {
@@ -71,6 +71,46 @@ describe("arcPoint", () => {
   it("clamps outside the day rather than flying off the tile", () => {
     expect(arcPoint(-3, box)).toEqual(arcPoint(0, box));
     expect(arcPoint(9, box)).toEqual(arcPoint(1, box));
+  });
+
+  // The bug this geometry was rewritten for: the sun was cropped in half at
+  // solar noon, at every tile size, because the vertical amplitude came from
+  // the box's *width*. With a 300x96 view it put the centre at y -0.5.
+  const SUN_R = 7;
+
+  it("keeps the whole sun inside the box, at every shape a tile can be", () => {
+    // The sky box is a fixed viewBox stretched to fit, so what varies is its
+    // height: about 54 at its shortest (the widget's own minHeight) up to a
+    // tall tile's share.
+    for (const height of [54, 70, 96, 120, 150, 200]) {
+      const shape = { width: 300, height };
+      for (let p = 0; p <= 1; p += 0.02) {
+        const { y } = arcPoint(p, shape);
+        expect(y - SUN_R, `height ${height} at progress ${p.toFixed(2)}`).toBeGreaterThanOrEqual(0);
+        expect(y, `height ${height} at progress ${p.toFixed(2)}`).toBeLessThanOrEqual(height);
+      }
+    }
+  });
+
+  it("puts the apex where the headroom says, whatever the width", () => {
+    // Which is the whole point: the apex must not move when the tile gets
+    // wider, because that is how it left the box in the first place.
+    for (const width of [120, 300, 900]) {
+      expect(arcPoint(0.5, { width, height: 96 }).y).toBeCloseTo(14, 5);
+    }
+  });
+});
+
+describe("arcControlY", () => {
+  it("puts the drawn curve through the apex the sun travels to", () => {
+    // A quadratic's midpoint is (end + control) / 2 and both ends sit on the
+    // horizon, so the control is twice the apex minus the baseline. The old
+    // form took a constant 26 off the apex and drew a curve the sun was never
+    // on.
+    const box = { width: 300, height: 96 };
+    const control = arcControlY(box);
+    const drawnApex = 0.25 * box.height + 0.5 * control + 0.25 * box.height;
+    expect(drawnApex).toBeCloseTo(arcPoint(0.5, box).y, 5);
   });
 });
 

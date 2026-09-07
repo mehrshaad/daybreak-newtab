@@ -4,7 +4,7 @@ export default {
   glyph: "calendarDays",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.2.0",
+  version: "2.3.0",
   tagline: "A moment from history, changed daily.",
   description:
     "One event from Wikipedia's on-this-day feed — no API key, no account. " +

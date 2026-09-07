@@ -210,7 +210,9 @@ function WorldClocks({ options, config, setConfig, size, editing, action }) {
                   }}
                   inputStyle={{ fontSize: type.city, minWidth: 60 }}
                 />
-                {showZone && p.zoneLabel ? (
+                {/* Appear, so showing the offsets eases in rather than
+                    appearing between two frames. */}
+                <Appear open={!!(showZone && p.zoneLabel)} style={{ display: "flex", flex: "none" }}>
                   <span
                     style={{
                       fontFamily: MONO,
@@ -221,7 +223,7 @@ function WorldClocks({ options, config, setConfig, size, editing, action }) {
                   >
                     {p.zoneLabel}
                   </span>
-                ) : null}
+                </Appear>
               </div>
 
               <div

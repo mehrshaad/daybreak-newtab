@@ -4,7 +4,7 @@ export default {
   glyph: "crypto",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.5.0",
   tagline: "A short watchlist, no key required.",
   description:
     "Prices, 24-hour change, logos and a 7-day sparkline from CoinGecko's " +

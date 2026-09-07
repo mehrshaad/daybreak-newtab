@@ -4,7 +4,7 @@ export default {
   glyph: "air",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.4.0",
   tagline: "How's the air outside.",
   description:
     "US AQI and PM2.5/PM10 from Open-Meteo — the same keyless, no-account " +

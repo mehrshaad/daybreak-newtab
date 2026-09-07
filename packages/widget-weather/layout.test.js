@@ -24,7 +24,7 @@ describe("layoutFor", () => {
     const v = layoutFor([3, 2]);
     expect(v).toMatchObject({
       tall: false,
-      stats: false,
+      summary: false,
       details: false,
       hourIcons: false,
     });
@@ -32,7 +32,11 @@ describe("layoutFor", () => {
   });
 
   it("spends extra width on the high/low/feels line", () => {
-    expect(layoutFor([4, 2]).stats).toBe(true);
+    // `summary` is that line. `stats` is the extras row (rain, wind, humidity,
+    // UV) and is a different thing entirely — it was renamed when the extras
+    // arrived, because one name for both is how a layout ends up showing the
+    // wrong one.
+    expect(layoutFor([4, 2]).summary).toBe(true);
     expect(layoutFor([4, 2]).details).toBe(false);
   });
 
@@ -42,8 +46,8 @@ describe("layoutFor", () => {
     expect(v.hours).toBe(6);
   });
 
-  // The widget shows the one-line version only when stats is on and details is
-  // off, so a size that asks for the grid must also ask for the numbers.
+  // The widget shows the one-line version only when summary is on and details
+  // is off, so a size that asks for the grid must also ask for the numbers.
   it("asks for the numbers whenever it asks for the grid", () => {
     for (const size of [
       [3, 2],
@@ -52,8 +56,42 @@ describe("layoutFor", () => {
       [3, 3],
     ]) {
       const v = layoutFor(size);
-      if (v.details) expect(v.stats, String(size)).toBe(true);
+      if (v.details) expect(v.summary, String(size)).toBe(true);
     }
+  });
+
+  describe("the room the extras need", () => {
+    it("gives the day-by-day strip only a tall tile", () => {
+      // Seven columns of icon and two temperatures in a two-row tile would be
+      // drawn on top of the hourly strip. The setting stays offered — the tile
+      // is too small, which is not the same as the setting being wrong.
+      expect(layoutFor([4, 2], { daily: true }).daily).toBe(false);
+      expect(layoutFor([4, 3], { daily: true }).daily).toBe(true);
+    });
+
+    it("shows the labelled grid or the day strip, never both", () => {
+      // They occupy the same band, and a 4x3 has the height for one of them.
+      const v = layoutFor([4, 3], { daily: true });
+      expect(v.daily).toBe(true);
+      expect(v.details).toBe(false);
+    });
+
+    it("keeps the extras row off a two-column tile", () => {
+      expect(layoutFor([2, 2], { stats: true }).stats).toBe(false);
+      expect(layoutFor([4, 2], { stats: true }).stats).toBe(true);
+    });
+
+    it("only widens to seven days where there is width for seven", () => {
+      expect(layoutFor([4, 3], { daily: true }).days).toBe(5);
+      expect(layoutFor([6, 3], { daily: true }).days).toBe(7);
+    });
+
+    it("lets the hourly strip be turned off", () => {
+      expect(layoutFor([4, 3], { hourly: false }).hourly).toBe(false);
+      // And defaults to on for a caller that says nothing, which is what the
+      // widget did before any of this was configurable.
+      expect(layoutFor([4, 3]).hourly).toBe(true);
+    });
   });
 
   it("falls back to the baseline for a missing size", () => {
