@@ -127,6 +127,25 @@ describe("the permissions the docs list", () => {
     expect(readFileSync(LISTING, "utf8")).not.toContain("Read-only");
   });
 
+  it("has been read again for the version being shipped", () => {
+    // The policy carried "Last updated: August 23, 2026" on the day it was
+    // rewritten to cover the Bookmarks widget, which writes to a person's
+    // bookmarks. A policy that gained a whole new disclosure without moving
+    // its own revision date is telling the reader the disclosure was already
+    // there, and its closing paragraph promises "an updated revision date".
+    //
+    // The date alone cannot be checked without asking git when the file last
+    // changed, and in CI's shallow clone git cannot answer. The version can:
+    // stamping the release the policy was reviewed against means a bump
+    // fails here until somebody opens the policy and looks at it, which is
+    // the only thing that actually keeps it true.
+    const version = JSON.parse(readFileSync("package.json", "utf8")).version;
+    const src = readFileSync(POLICY, "utf8");
+    expect(src, `privacy-policy.html is not stamped for ${version}`).toContain(
+      `reviewed for version ${version}`
+    );
+  });
+
   it("are every one the manifest asks for, in the listing's justifications", () => {
     // The Store makes you write one box per permission, and a missing box is a
     // rejected upload rather than a note from the reviewer.
