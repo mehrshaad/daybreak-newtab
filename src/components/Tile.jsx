@@ -189,6 +189,8 @@ function Tile({
   rate,
   manualRefresh = 0,
   action,
+  onSpawn,
+  onRejoin,
   tileRef,
   onOpen,
   onMenu,
@@ -534,6 +536,10 @@ function Tile({
             // The right-click menu's "Add …" arriving as a counter. See
             // useWidgetAction in the SDK.
             action={action}
+            // Lets a widget turn its own tile into several from its menu, the
+            // way its settings panel already can — see spawnInstances.
+            onSpawn={onSpawn}
+            onRejoin={onRejoin}
             setConfig={setConfig}
             setOptions={setOptions}
             toast={toast}

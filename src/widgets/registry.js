@@ -126,6 +126,21 @@ export function sizesFor(id, options) {
   return Array.isArray(narrowed) && narrowed.length ? narrowed : w.sizes;
 }
 
+// Which of a widget's actions are worth offering right now.
+//
+// Mirrors sizesFor, and for the same reason: an action whose effect depends on
+// the widget's own contents cannot be decided from a static list. "Give each
+// folder a card" on a widget with no folders is a menu row that does nothing,
+// which this codebase treats as worse than a missing one.
+export function actionsFor(id, { options, config } = {}) {
+  const w = getWidget(id);
+  if (!w) return [];
+  const declared = w.actions || [];
+  if (typeof w.actionsFor !== "function") return declared;
+  const narrowed = w.actionsFor(declared, options || {}, config || {});
+  return Array.isArray(narrowed) ? narrowed : declared;
+}
+
 // A widget's declared size, honouring a user override only if the manifest
 // still offers that size. Overrides are keyed by instance id so two copies of
 // the same widget can be different sizes.

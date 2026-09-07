@@ -260,6 +260,11 @@ function IconGrid({
   scroll = false,
   trailing = null,
   list = false,
+  // "center" is right for a grid that is the whole tile — the board centres a
+  // short row on purpose. Under a left-aligned folder heading it is wrong: a
+  // group of two icons floated in the middle of the tile reads as unrelated to
+  // the heading above it.
+  align = "center",
 }) {
   const gridRef = useRef(null);
   const ids = items.map((i) => i.key);
@@ -316,7 +321,7 @@ function IconGrid({
         // and its name has the whole of it. `stretch` rather than `center`
         // for the same reason.
         gridTemplateColumns: list ? "minmax(0, 1fr)" : `repeat(auto-fit, ${cellWidth}px)`,
-        justifyContent: list ? "stretch" : "center",
+        justifyContent: list ? "stretch" : align,
         gap: list ? iconListSize(iconSize).rowGap : gridGap,
         flex: 1,
         // `safe center` rather than plain `center` once this can scroll: a

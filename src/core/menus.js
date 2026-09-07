@@ -81,6 +81,9 @@ export function boardMenu({
 
 export function widgetMenu({
   manifest,
+  // The actions to offer, which a manifest may narrow from its own options and
+  // config — see actionsFor. Defaults to everything it declares.
+  actions,
   // The sizes to offer, which a manifest may narrow from its own options — see
   // sizesFor. Defaults to everything it declares, so a caller that does not
   // care need not pass it.
@@ -98,7 +101,8 @@ export function widgetMenu({
 }) {
   const items = [];
 
-  for (const action of manifest.actions || []) {
+  const offeredActions = actions || manifest.actions || [];
+  for (const action of offeredActions) {
     items.push({
       label: action.label,
       // A manifest may name its own; every action so far is an add.
@@ -107,18 +111,18 @@ export function widgetMenu({
       run: () => onAction(action),
     });
   }
-  if (manifest.actions?.length) items.push(separator);
+  if (offeredActions.length) items.push(separator);
 
   if (zoomMode !== "None") {
     items.push({ label: "Focus widget", icon: "focus", hint: "↵", run: onFocus });
   }
   items.push({ label: "Widget settings", icon: "settings", hint: hint("Alt,"), run: onSettings });
 
-  const offered = sizes?.length ? sizes : manifest.sizes;
-  if (offered.length > 1) {
+  const offeredSizes = sizes?.length ? sizes : manifest.sizes;
+  if (offeredSizes.length > 1) {
     items.push({
       type: "sizes",
-      sizes: offered,
+      sizes: offeredSizes,
       current: currentSize,
       onPick: onSize,
     });

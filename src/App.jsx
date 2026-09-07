@@ -32,6 +32,7 @@ import {
   getWidget,
   knownIds,
   nextInstanceId,
+  actionsFor,
   resolveOptions,
   resolveSize,
   sizesFor,
@@ -494,6 +495,42 @@ function App() {
     [board.ids, board.sizes, widgets, update, setWidgetConfig, setWidgetOptions]
   );
 
+  // The other way: several cards of one widget back into this one.
+  //
+  // The counterpart of spawnInstances, and it needs to exist for the same
+  // reason — a widget that can be split has to be un-splittable, or the person
+  // who tried it once has eight cards and no way back. Splitting partitions
+  // the content, so putting it back is a merge and only the widget knows how
+  // to do that: the host finds the siblings, hands their configs over, and
+  // takes whatever comes back.
+  //
+  // One board write, not one per removed tile, so the grid reflows once.
+  const rejoinInstances = useCallback(
+    (intoId, merge) => {
+      const type = typeOf(intoId);
+      const siblings = board.ids.filter((id) => id !== intoId && typeOf(id) === type);
+      // The merge runs even with nobody to merge — a card that was split and
+      // then had its siblings removed by hand is still pinned to one folder,
+      // and putting it back is exactly what has to happen. Returning early
+      // here left it pinned and showing one folder with no way out.
+      const merged = merge?.(
+        widgets[intoId]?.config || {},
+        siblings.map((id) => widgets[id]?.config || {})
+      );
+      if (merged) setWidgetConfig(intoId, merged);
+      if (!siblings.length) return [];
+      update("board", {
+        ids: board.ids.filter((id) => !siblings.includes(id)),
+        layoutName: "Custom",
+      });
+      // Their synced buckets go with them, or a re-added widget inherits the
+      // content of a tile that no longer exists.
+      for (const id of siblings) clearBucket(id);
+      return siblings;
+    },
+    [board.ids, widgets, update, setWidgetConfig]
+  );
+
   const moveToTop = useCallback(
     (id) => {
       update("board", {
@@ -600,6 +637,10 @@ function App() {
     return widgetMenu({
       manifest,
       sizes: sizesFor(menu.id, resolveOptions(menu.id, widgets[menu.id]?.options)),
+      actions: actionsFor(menu.id, {
+        options: resolveOptions(menu.id, widgets[menu.id]?.options),
+        config: widgets[menu.id]?.config,
+      }),
       currentSize: resolveSize(menu.id, board.sizes),
       zoomMode,
       onFocus: () => focusTile(menu.id),
@@ -788,6 +829,8 @@ function App() {
         menu={menu}
         manualRefresh={manualRefresh}
         widgetAction={widgetAction}
+        onSpawn={spawnInstances}
+        onRejoin={rejoinInstances}
         boardRef={boardRef}
         registerTile={registerTile}
         onEnterEditing={enterEditing}

@@ -95,7 +95,18 @@ function nameFromUrl(href) {
   }
 }
 
-function Links({ options, config, setConfig, size, editing, columns, action }) {
+function Links({
+  options,
+  config,
+  setConfig,
+  setOptions,
+  size,
+  editing,
+  columns,
+  action,
+  onSpawn,
+  onRejoin,
+}) {
   const { hideLabels, newTab, iconScale, hoverCard, layout, folderHeadings } = options;
   const list = layout === "list";
   const items = Array.isArray(config.items) ? config.items : DEFAULTS;
@@ -127,6 +138,52 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
   // "Add a link" from the tile's right-click menu, which is where people
   // look for it before they find the button that only exists in edit mode.
   useWidgetAction(action, "add", () => setAdding(true));
+
+  // Splitting, straight from the menu. The same partition the settings panel
+  // does — see the note there on why each card takes its own links rather than
+  // a copy of all of them.
+  useWidgetAction(action, "separate", () => {
+    const filled = groupLinks(items).filter((g) => g.links.length);
+    if (filled.length < 2) return;
+    setOptions({ separate: true });
+    onSpawn?.(filled.map((g) => ({ items: g.links, folder: g.name || LOOSE })));
+  });
+
+  // And the way back: one card again, with every link from the cards it was
+  // split into brought home. The host finds the siblings and removes them;
+  // deciding what "merged" means is this widget's job, since splitting
+  // partitioned the list rather than copying it.
+  useWidgetAction(action, "rejoin", () => {
+    onRejoin?.((own, others) => {
+      const seen = new Set();
+      const all = [];
+      for (const list of [own.items, ...others.map((c) => c.items)]) {
+        for (const link of Array.isArray(list) ? list : []) {
+          // A link cannot be in two cards at once, but a board restored from
+          // an older backup could disagree — and a duplicate id would collide
+          // as a React key and in the editor's lookup.
+          if (!link?.id || seen.has(link.id)) continue;
+          seen.add(link.id);
+          all.push(link);
+        }
+      }
+      return { items: all, folder: null };
+    });
+    setOptions({ separate: false });
+  });
+
+  // Separation stops being a mode the moment there is nothing to separate.
+  //
+  // Emptying the last folder used to leave the switch on, so the settings
+  // panel still offered to split a widget into one card and the size picker
+  // was still narrowed for a mode that had no folders in it. Reset here rather
+  // than in the panel, because the folders are emptied from the tile.
+  useEffect(() => {
+    if (!options.separate) return;
+    if (config.folder != null) return;
+    if (folderNames(items).length) return;
+    setOptions({ separate: false });
+  }, [options.separate, config.folder, items, setOptions]);
 
   const closeAdd = () => {
     setAdding(false);
@@ -326,7 +383,7 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: plain ? 0 : 8,
+          gap: plain ? 0 : 14,
           flex: 1,
           minWidth: 0,
           minHeight: 0,
@@ -355,17 +412,48 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
               {group.name && folderHeadings && !config.folder ? (
                 <div
                   style={{
-                    fontSize: 10,
-                    letterSpacing: ".14em",
-                    textTransform: "uppercase",
-                    color: "var(--faint)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    paddingLeft: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    // Sticky inside the column's scroller, so scrolling a long
+                    // board of folders never leaves you looking at a row of
+                    // icons with no idea which folder they are in.
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 1,
+                    // Its own backing, or the icons scroll up through the text.
+                    background: "var(--tile-bg, var(--panel))",
+                    paddingBottom: 3,
                   }}
                 >
-                  {group.name}
+                  <span
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: ".14em",
+                      textTransform: "uppercase",
+                      // The reading colour, not --faint. A heading you have to
+                      // look for is not organising anything, and this is the
+                      // only label in the tile.
+                      color: "var(--dim)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      flex: "none",
+                      maxWidth: "70%",
+                    }}
+                  >
+                    {group.name}
+                  </span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: "var(--faint)", flex: "none" }}>
+                    {group.links.length}
+                  </span>
+                  {/* A rule out to the edge, which is what actually separates
+                      one group from the next — a gap alone reads as a wide row
+                      of icons rather than as two folders. */}
+                  <span
+                    aria-hidden
+                    style={{ flex: 1, height: 1, background: "var(--line)", minWidth: 8 }}
+                  />
                 </div>
               ) : null}
           <IconGrid
@@ -376,6 +464,9 @@ function Links({ options, config, setConfig, size, editing, columns, action }) {
             // vertical rhythm read as the same spacing scaled by icon size.
             showLabels={!hideLabels}
             list={list}
+            // Under a heading the icons line up with it; a single grid that is
+            // the whole tile stays centred the way it always was.
+            align={plain ? "center" : "start"}
             // The links are the user's own, so none of them may be hidden the way
             // Google Apps hides its long tail. If they do not fit, they scroll —
             // on the grid itself when it is the only one, and on the column

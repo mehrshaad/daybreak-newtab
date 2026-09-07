@@ -6,7 +6,7 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "3.0.0",
+  version: "3.1.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
@@ -15,7 +15,28 @@ export default {
     "address and site icon. Remove one with the badge that appears in edit " +
     "mode, or drag it out of the grid.",
   // Answered by the widget, not here: see useWidgetAction.
-  actions: [{ id: "add", label: "Add a link" }],
+  actions: [
+    { id: "add", label: "Add a link" },
+    // Offered from the tile's own menu, not only from the settings panel: the
+    // moment somebody has just made a folder is the moment they want to see
+    // what a folder can do, and sending them to a drawer to find a switch is
+    // a worse answer than a row in the menu that is already open.
+    { id: "separate", label: "Give each folder a card", icon: "layers" },
+    { id: "rejoin", label: "Put the folders back in one card", icon: "layers" },
+  ],
+  // Neither of the two is worth showing all the time. "Give each folder a
+  // card" on a widget with no folders is a row that does nothing, and the way
+  // back is only meaningful once there is something to come back from.
+  actionsFor: (actions, options, config) => {
+    const items = Array.isArray(config?.items) ? config.items : [];
+    const hasFolders = items.some((l) => String(l?.folder || "").trim());
+    const split = config?.folder != null;
+    return actions.filter((a) => {
+      if (a.id === "separate") return hasFolders && !split;
+      if (a.id === "rejoin") return split;
+      return true;
+    });
+  },
   // A card holding one folder says which — "QUICK LINKS · AI". The loose links
   // get the sentinel rather than an empty title, or the card would look like
   // it had failed to name itself.

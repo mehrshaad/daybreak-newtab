@@ -48,6 +48,11 @@ export function tileStyle({
     padding: `${TILE_PAD.y}px ${TILE_PAD.x}px`,
     borderRadius: `${radius}px`,
     background: fill,
+    // The same fill as a custom property, so a widget can back a sticky
+    // heading with whatever its own tile happens to be. Widgets cannot compute
+    // this — it is the theme, the tint and the opacity slider combined — and a
+    // heading over --panel is visibly the wrong colour on a tinted tile.
+    "--tile-bg": fill,
     // Frosted glass when blur is on, plain translucency when it is off.
     backdropFilter: blur ? "var(--blur-tile)" : "none",
     WebkitBackdropFilter: blur ? "var(--blur-tile)" : "none",

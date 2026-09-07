@@ -30,7 +30,10 @@ function readManifest(dir) {
   return {
     id: src.match(/^ {2}id: "(.+?)"/m)?.[1],
     name: src.match(/^ {2}name: "(.+?)"/m)?.[1],
-    addAction: /actions: \[\{ id: "add"/.test(src.replace(/\n\s+/g, " ")),
+    // Anywhere in the list, not only first: Quick Links declares three
+    // actions now. The character class stops at the end of the array, so
+    // this cannot reach an "add" somewhere else in the file.
+    addAction: /actions:\s*\[[^\]]*id: "add"/.test(src.replace(/\s+/g, " ")),
   };
 }
 

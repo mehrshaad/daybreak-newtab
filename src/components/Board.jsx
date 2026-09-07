@@ -28,6 +28,8 @@ function Board({
   menu,
   manualRefresh,
   widgetAction,
+  onSpawn,
+  onRejoin,
   boardRef,
   registerTile,
   onEnterEditing,
@@ -199,6 +201,8 @@ function Board({
               rate={resolveRate(instanceId, widgets[instanceId]?.rate)}
               manualRefresh={manualRefresh[instanceId] || 0}
               action={widgetAction?.[instanceId]}
+              onSpawn={(configs) => onSpawn?.(instanceId, configs)}
+              onRejoin={(merge) => onRejoin?.(instanceId, merge)}
               tileRef={(el) => registerTile(instanceId, el)}
               onEnterEditing={onEnterEditing}
               onOpen={() => onOpenTile(instanceId)}
