@@ -87,17 +87,30 @@ function WidgetSettingsDrawer({
 
   if (!manifest) return null;
 
-  // What a manifest may ask about the board, as opposed to about its own
-  // options. Deliberately a short, fixed list: an option should almost always
-  // depend on the widget's own state, and anything here is a coupling between
-  // a widget and the app's settings that has to be worth its keep.
+  const currentSize = resolveSize(instanceId, board.sizes);
+
+  // What a manifest may ask about the board and the tile, as opposed to about
+  // its own options. Deliberately a short, fixed list: an option should almost
+  // always depend on the widget's own state, and anything here is a coupling
+  // between a widget and the app that has to be worth its keep.
   const environment = {
     // Whether tiles show a header at all. A widget that bleeds into the header
     // row when it is gone can render quite differently without it.
     tileHeader: (appearance.tileLabels || "both") !== "none",
+    // The shape of this tile.
+    //
+    // Because an option that only does something at one size is, at every
+    // other size, a control that does nothing — and the drawer had eight of
+    // them on a 2x2 weather tile, four of which had nowhere to draw. The names
+    // match what the widgets' own layout modules already call these, so a
+    // manifest and its layout cannot disagree about what "wide" means.
+    cols: currentSize[0],
+    rows: currentSize[1],
+    tall: currentSize[1] >= 3,
+    wide: currentSize[0] >= 4,
+    narrow: currentSize[0] <= 2,
+    roomy: currentSize[0] >= 4 && currentSize[1] >= 3,
   };
-
-  const currentSize = resolveSize(instanceId, board.sizes);
   // Which sizes are worth offering for the options as they stand — see
   // sizesFor. The tile keeps whatever it is on; this is the shortlist.
   const offeredSizes = sizesFor(instanceId, options);

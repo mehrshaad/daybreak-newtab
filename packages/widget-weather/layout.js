@@ -23,11 +23,16 @@ export function layoutFor(size, want = {}) {
   const narrow = cols <= 2;
   const roomy = rows >= 3 && cols >= 4;
 
-  // Rows are the scarce axis: an hourly strip is about 34px, a daily strip
-  // about 46, and a stat row about 26. A three-row tile has room for the big
-  // readout and two of the three; four rows fits all of them.
-  const hourly = want.hourly !== false;
-  const daily = !!want.daily && tall;
+  // One forecast strip, never two.
+  //
+  // They occupy the same band and drawing both filled the tile edge to edge
+  // with numbers — which is what a pair of independent switches allowed and an
+  // enum cannot express. Day by day also needs the height for an icon and two
+  // temperatures per column, so asking for it on a short tile falls back to
+  // the hours rather than showing nothing.
+  const asked = want.forecast ?? "hourly";
+  const daily = asked === "daily" && tall;
+  const hourly = asked === "hourly" || (asked === "daily" && !tall);
   const stats = !!want.stats && !narrow;
 
   return {
@@ -36,7 +41,8 @@ export function layoutFor(size, want = {}) {
     roomy,
     stats,
     // The high/low/feels line, or the labelled grid on a tile with the height
-    // for it. The grid replaces the one-line version rather than joining it.
+    // for it. The grid replaces the one-line version rather than joining it,
+    // and gives its band up to the day strip where that is showing.
     summary: cols >= 4 || tall,
     details: tall && !narrow && !daily,
     hourly,

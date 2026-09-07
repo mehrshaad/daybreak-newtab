@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Appear, CitySearch, MONO, useWidgetLocal } from "@daybreak/sdk";
+import { useEffect, useRef, useState } from "react";
+import { Appear, CitySearch, MONO, useFlip, useWidgetLocal } from "@daybreak/sdk";
 import ConditionIcon from "./ConditionIcon";
 import { forecastUrl, parseForecast } from "./forecast";
 import { layoutFor, statsToShow } from "./layout";
@@ -129,14 +129,18 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
     align,
     fahrenheit,
     hour24,
-    showHourly,
-    showDaily,
+    forecast,
     showRain,
     showWind,
     showHumidity,
     showUv,
   } = options;
   const centred = align === "center";
+  // The readout's lines slide when the alignment changes. Above the early
+  // returns below, because a hook cannot be called conditionally — and keyed
+  // on the alignment alone, so a refresh or a new reading never animates.
+  const readoutRef = useRef(null);
+  useFlip(readoutRef, [centred]);
   const city = config.city;
   // Cache the last good reading so a refresh (or being offline) shows the
   // previous numbers instead of a spinner.
@@ -208,8 +212,7 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
 
   const deg = fahrenheit ? "°F" : "°C";
   const view = layoutFor(size, {
-    hourly: showHourly,
-    daily: showDaily,
+    forecast,
     stats: showRain || showWind || showHumidity || showUv,
   });
   const hours = data.hours?.slice(0, view.hours) || [];
@@ -233,12 +236,27 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
         minWidth: 0,
       }}
     >
-      <div style={{ textAlign: centred ? "center" : "left" }}>
+      {/* A flex column whose alignment moves, rather than a block whose text
+          alignment changes — so each line is a box that slides, and useFlip
+          can animate the move. Switching Left to Centre used to teleport
+          everything on one frame, which is the one change in this widget big
+          enough to be jarring. Each child carries a data-flip-id; the hook
+          only looks at direct children. */}
+      <div
+        ref={readoutRef}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: centred ? "center" : "flex-start",
+          textAlign: centred ? "center" : "left",
+          minWidth: 0,
+        }}
+      >
         <div
+          data-flip-id="readout-temp"
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: centred ? "center" : "flex-start",
             gap: 10,
           }}
         >
@@ -265,10 +283,12 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
           />
         </div>
         <div
+          data-flip-id="readout-place"
           style={{
             fontSize: 13,
             color: "var(--dim)",
             marginTop: 6,
+            maxWidth: "100%",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -277,7 +297,10 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
           {view.narrow ? city?.name || data.city : `${data.label} · ${city?.name || data.city}`}
         </div>
         {view.summary && !view.details ? (
-          <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 8 }}>
+          <div
+            data-flip-id="readout-summary"
+            style={{ fontSize: 13, color: "var(--faint)", marginTop: 8 }}
+          >
             H {data.high}
             {deg} · L {data.low}
             {deg} · feels {data.feels}
@@ -285,24 +308,31 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
           </div>
         ) : null}
 
-        {/* The extras, on one line. Appear so switching one on eases. */}
-        <Appear open={!!(view.stats && stats.length)}>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 12,
-              marginTop: 8,
-              justifyContent: centred ? "center" : "flex-start",
-            }}
-          >
-            {stats.map((kind) => (
-              <Stat key={kind} kind={kind} value={data[kind]} windUnit={windUnit} />
-            ))}
-          </div>
-        </Appear>
+        {/* The extras, on one line. The wrapper carries the flip id because
+            Appear does not forward arbitrary props, and Appear itself is what
+            eases a stat being switched on. */}
+        <div data-flip-id="readout-stats" style={{ maxWidth: "100%" }}>
+          <Appear open={!!(view.stats && stats.length)}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 12,
+                marginTop: 8,
+                justifyContent: centred ? "center" : "flex-start",
+              }}
+            >
+              {stats.map((kind) => (
+                <Stat key={kind} kind={kind} value={data[kind]} windUnit={windUnit} />
+              ))}
+            </div>
+          </Appear>
+        </div>
         {status === "error" ? (
-          <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 6 }}>
+          <div
+            data-flip-id="readout-error"
+            style={{ fontSize: 11, color: "var(--faint)", marginTop: 6 }}
+          >
             Showing the last reading — refresh failed.
           </div>
         ) : null}
@@ -345,22 +375,28 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
         <div
           style={{
             display: "flex",
-            gap: view.hourIcons ? 10 : 14,
+            gap: 6,
             justifyContent: "space-between",
             fontFamily: MONO,
             fontSize: 11,
             color: "var(--faint)",
-            flexWrap: "wrap",
           }}
         >
           {hours.map((h) => (
             <div
               key={h.t}
+              // Even columns, like the day strip — the hours used to be their
+              // own widths with the space pushed between them, so five of them
+              // sat in a ragged row under a row of seven that was regular.
+              // No wrap either: a strip that wraps is a strip that does not
+              // fit, and the count comes from layoutFor for that reason.
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: 4,
                 alignItems: "center",
+                flex: 1,
+                minWidth: 0,
               }}
             >
               <span>{h.t}</span>

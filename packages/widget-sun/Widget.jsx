@@ -162,7 +162,15 @@ function Sun({ config, setConfig, options, size }) {
         <svg
           viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
           preserveAspectRatio="none"
-          style={{ display: "block", width: "100%", height: "100%" }}
+          // Positioned, so the sky's crossfade layers cannot cover it.
+          //
+          // This is the whole sun and its arc disappearing behind a flat
+          // rectangle of sky. CrossfadeFill's layers are position:absolute,
+          // and an absolutely-positioned element paints above a
+          // static-positioned sibling whatever the DOM order — so coming
+          // *before* this in the markup was not enough. A position of its own
+          // puts them both in the positioned layer, where DOM order decides.
+          style={{ position: "relative", display: "block", width: "100%", height: "100%" }}
           aria-hidden="true"
         >
           <defs>

@@ -373,30 +373,26 @@ export function Section({ title, children, style, ...rest }) {
     // ...rest so a caller can hang a data-* handle on a section — the tour uses
     // them to point at one, and threading a prop per section would be worse.
     <div style={style} {...rest}>
-      {/* Sticky to the top of the drawer's scroller while its own section is
-          on screen, so a long section — Background's twelve wallpapers, the
-          folder list in a widget's settings — never leaves you looking at
-          controls with no idea which heading they belong to. The next
-          section's heading pushes this one out as it arrives, which is what
-          makes it read as a position in the list rather than as a fixed bar.
+      {/* Deliberately NOT sticky.
+ 
+          It was, and it looked wrong at every attempt. A sticky heading has to
+          hide the content scrolling under it, which means painting a band —
+          and this drawer is frosted glass over the board, so its effective
+          colour is the sheet tint plus whatever wallpaper and accent happen to
+          be behind it at that moment. --sheet over the drawer's own --sheet
+          doubles into a grey stripe; an opaque --sheetSolid is lighter than
+          the surroundings and reads as a stripe the other way; and a
+          backdrop-filter smears the text it is meant to be hiding.
 
-          The negative margin and matching padding are what let it cover the
-          content sliding under it: the drawer's own 24px side padding is on
-          the scroller, so a heading inset from it would leave two gutters of
-          unpainted column either side with text passing through them. */}
-      <div
-        className="db-label"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 2,
-          margin: "0 -24px 10px",
-          padding: "6px 24px 6px",
-          background: "var(--sheet)",
-          backdropFilter: "var(--blur-panel)",
-          WebkitBackdropFilter: "var(--blur-panel)",
-        }}
-      >
+          There is no fixed colour that matches a translucent surface whose
+          backdrop varies, so there is no band that can look right. A heading
+          that scrolls away with its section is worth more than one that stays
+          put inside a bar that does not belong.
+
+          The sticky headings inside widget tiles are a different case and do
+          work: a tile publishes its own computed fill as --tile-sticky-bg, so
+          those bands are painted in exactly the colour their tile is. */}
+      <div className="db-label" style={{ marginBottom: "10px" }}>
         {title}
       </div>
       {children}

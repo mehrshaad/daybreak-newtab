@@ -38,20 +38,26 @@ export default {
     },
     { key: "fahrenheit", label: "Fahrenheit", type: "boolean", default: false },
     { key: "hour24", label: "24-hour times", type: "boolean", default: false },
-    { key: "showHourly", label: "Hourly strip", type: "boolean", default: true },
     {
-      key: "showDaily",
-      label: "Day by day",
-      type: "boolean",
-      // Off, because it needs a tall tile and turning it on where it does not
-      // fit would be a setting that appears to do nothing. The description
-      // says where it shows.
-      default: false,
+      key: "forecast",
+      label: "Forecast",
+      type: "enum",
+      of: ["hourly", "daily", "none"],
+      labels: { hourly: "Next hours", daily: "Day by day", none: "Neither" },
+      // One control, not two switches, because they cannot both be on: the two
+      // strips are the same band of the tile and drawing them together filled
+      // it edge to edge with numbers. A pair of booleans lets somebody ask for
+      // that; an enum cannot express it.
+      //
+      // "hourly" is what the widget has always shown, so no board changes by
+      // updating.
+      default: "hourly",
     },
-    { key: "showRain", label: "Chance of rain", type: "boolean", default: false },
-    { key: "showWind", label: "Wind", type: "boolean", default: false },
-    { key: "showHumidity", label: "Humidity", type: "boolean", default: false },
-    { key: "showUv", label: "UV index", type: "boolean", default: false },
+    // Day by day needs the height for an icon and two temperatures per column.
+    { key: "showRain", label: "Chance of rain", type: "boolean", default: false, showIf: { wide: true } },
+    { key: "showWind", label: "Wind", type: "boolean", default: false, showIf: { wide: true } },
+    { key: "showHumidity", label: "Humidity", type: "boolean", default: false, showIf: { wide: true } },
+    { key: "showUv", label: "UV index", type: "boolean", default: false, showIf: { wide: true } },
   ],
   refresh: ["Live", "5 min", "1 hr"],
   permissions: { chrome: [], hosts: ["api.open-meteo.com", "geocoding-api.open-meteo.com"] },

@@ -62,16 +62,35 @@ describe("layoutFor", () => {
 
   describe("the room the extras need", () => {
     it("gives the day-by-day strip only a tall tile", () => {
-      // Seven columns of icon and two temperatures in a two-row tile would be
-      // drawn on top of the hourly strip. The setting stays offered — the tile
-      // is too small, which is not the same as the setting being wrong.
-      expect(layoutFor([4, 2], { daily: true }).daily).toBe(false);
-      expect(layoutFor([4, 3], { daily: true }).daily).toBe(true);
+      // Seven columns of icon and two temperatures need the height. Asking for
+      // it on a short tile falls back to the hours rather than showing an
+      // empty band — the setting is not wrong, the tile is small.
+      const short = layoutFor([4, 2], { forecast: "daily" });
+      expect(short.daily).toBe(false);
+      expect(short.hourly).toBe(true);
+      expect(layoutFor([4, 3], { forecast: "daily" }).daily).toBe(true);
+    });
+
+    it("never shows both strips at once", () => {
+      // The reason this is an enum and not two switches: they are the same
+      // band, and drawing both filled the tile edge to edge with numbers.
+      for (const size of [
+        [3, 2],
+        [4, 2],
+        [4, 3],
+        [6, 3],
+        [2, 2],
+      ]) {
+        for (const forecast of ["hourly", "daily", "none"]) {
+          const v = layoutFor(size, { forecast });
+          expect(v.daily && v.hourly, `${size} ${forecast}`).toBe(false);
+        }
+      }
     });
 
     it("shows the labelled grid or the day strip, never both", () => {
       // They occupy the same band, and a 4x3 has the height for one of them.
-      const v = layoutFor([4, 3], { daily: true });
+      const v = layoutFor([4, 3], { forecast: "daily" });
       expect(v.daily).toBe(true);
       expect(v.details).toBe(false);
     });
@@ -82,14 +101,16 @@ describe("layoutFor", () => {
     });
 
     it("only widens to seven days where there is width for seven", () => {
-      expect(layoutFor([4, 3], { daily: true }).days).toBe(5);
-      expect(layoutFor([6, 3], { daily: true }).days).toBe(7);
+      expect(layoutFor([4, 3], { forecast: "daily" }).days).toBe(5);
+      expect(layoutFor([6, 3], { forecast: "daily" }).days).toBe(7);
     });
 
-    it("lets the hourly strip be turned off", () => {
-      expect(layoutFor([4, 3], { hourly: false }).hourly).toBe(false);
-      // And defaults to on for a caller that says nothing, which is what the
-      // widget did before any of this was configurable.
+    it("lets both strips be turned off", () => {
+      const none = layoutFor([4, 3], { forecast: "none" });
+      expect(none.hourly).toBe(false);
+      expect(none.daily).toBe(false);
+      // And defaults to the hours for a caller that says nothing, which is
+      // what the widget showed before any of this was configurable.
       expect(layoutFor([4, 3]).hourly).toBe(true);
     });
   });

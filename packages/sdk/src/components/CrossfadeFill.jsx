@@ -16,6 +16,15 @@ import { useEffect, useRef, useState } from "react";
 //
 // Render it inside a `position: relative` box with `overflow: hidden` and give
 // that box the border radius; the layers inherit it.
+//
+// One trap, and it cost the Sun widget its sun. These layers are
+// position:absolute, and an absolutely-positioned element paints above a
+// static-positioned sibling *whatever the DOM order* — so putting this first
+// in the markup is not enough to keep it behind the content. Anything that has
+// to sit on top needs a position of its own (`position: relative` is enough),
+// which puts them both in the positioned layer where DOM order decides. The
+// sun's whole arc vanished behind a flat rectangle of sky until its svg got
+// one.
 export const FILL_FADE = 320;
 
 function CrossfadeFill({ css, ms = FILL_FADE }) {
