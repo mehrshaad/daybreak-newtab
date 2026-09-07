@@ -23,6 +23,16 @@ import { labelStyle } from "../styles";
 
 const SWATCH = 22;
 
+// The automatic swatch's own fill.
+//
+// Not a colour — automatic means the brand's colour, or a hue hashed from the
+// name, and there is no single sample for that. A neutral sweep in the theme's
+// own surface tones says "something, decided for you" and, unlike the empty
+// dashed box this replaced, it looks like a swatch rather than a gap in the
+// row. The dashed border is what still marks it apart from the ten.
+const AUTO_FILL =
+  "linear-gradient(160deg, var(--panel2), var(--line) 55%, var(--panel2))";
+
 // The "any colour" swatch, before one has been chosen.
 //
 // A conic rainbow was the obvious thing and the wrong thing: it is the only
@@ -53,10 +63,11 @@ function Swatch({ label, selected, onPick, background, dashed = false, children 
         // `borderColor` in a selected state leaves the swatch with no border at
         // all once React removes the longhand. See shorthandStyles.test.js.
         //
-        // Dashed marks the automatic swatch, which is not a colour: it used to
-        // draw the tile it would produce, at 20px inside a 22px box, and never
-        // quite looked centred however it was aligned. A dashed outline says
-        // "no colour chosen" without needing to be centred at all.
+        // Dashed marks the automatic swatch, which is not a colour of its
+        // own. It used to draw the tile it would produce, at 20px inside a
+        // 22px box, and never quite looked centred however it was aligned —
+        // and then it was an empty dashed box, which read as a missing
+        // swatch rather than as a choice. It has a fill now: see AUTO_FILL.
         border: `${selected ? 2 : 1}px ${dashed ? "dashed" : "solid"} ${
           selected ? "var(--fg)" : "var(--line)"
         }`,
@@ -136,7 +147,7 @@ function ColorField({
             label="Colour: automatic"
             selected={!color}
             onPick={() => onColor(null)}
-            background="transparent"
+            background={AUTO_FILL}
             dashed
           />
 
@@ -174,19 +185,23 @@ function ColorField({
               transition: "border-color .15s ease",
             }}
           >
-            {custom ? null : (
-              // White, like the mark on every other saturated tile in the
-              // grid, with the same soft shadow the tiles carry.
-              <LuPipette
-                size={11}
-                aria-hidden
-                style={{
-                  color: "#fff",
-                  pointerEvents: "none",
-                  filter: "drop-shadow(0 1px 1px rgba(0,0,0,.35))",
-                }}
-              />
-            )}
+            {/* Always, not only before a colour has been picked.
+ 
+                It is the only cell in the grid that opens a picker rather than
+                choosing a value, and hiding the pipette once a colour was in
+                it left a swatch that looked exactly like the ten presets — so
+                there was nothing to say you could still change it. White with
+                the same soft shadow the tiles carry, which reads on both the
+                rainbow sweep and any colour somebody picks. */}
+            <LuPipette
+              size={11}
+              aria-hidden
+              style={{
+                color: "#fff",
+                pointerEvents: "none",
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,.55))",
+              }}
+            />
             <input
               ref={pickerRef}
               type="color"
@@ -228,11 +243,7 @@ function ColorField({
             </InkButton>
           ))}
         </div>
-        {!ink ? (
-          <span style={{ fontSize: 10, color: "var(--faint)", textTransform: "none", letterSpacing: "normal" }}>
-            {`Chosen for this colour — tap to fix it`}
-          </span>
-        ) : null}
+
       </div>
     </>
   );

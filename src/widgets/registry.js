@@ -116,11 +116,11 @@ export function resolveRate(id, storedRate) {
 // A recommendation, not a constraint — see resolveSize. A tile already on a
 // size that has just stopped being offered keeps it and still renders; the
 // picker simply stops suggesting it.
-export function sizesFor(id, options) {
+export function sizesFor(id, options, config) {
   const w = getWidget(id);
   if (!w) return [[4, 2]];
   if (typeof w.sizesFor !== "function") return w.sizes;
-  const narrowed = w.sizesFor(w.sizes, options || {});
+  const narrowed = w.sizesFor(w.sizes, options || {}, config || {});
   // Never down to nothing, whatever a manifest computes: a widget with no
   // sizes cannot be rendered at all.
   return Array.isArray(narrowed) && narrowed.length ? narrowed : w.sizes;

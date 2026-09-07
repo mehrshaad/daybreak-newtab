@@ -145,8 +145,12 @@ function Links({
   useWidgetAction(action, "separate", () => {
     const filled = groupLinks(items).filter((g) => g.links.length);
     if (filled.length < 2) return;
-    setOptions({ separate: true });
-    onSpawn?.(filled.map((g) => ({ items: g.links, folder: g.name || LOOSE })));
+    // Handed over rather than set and hoped for: spawnInstances cannot read
+    // an option this handler is setting in the same tick.
+    onSpawn?.(
+      filled.map((g) => ({ items: g.links, folder: g.name || LOOSE })),
+      { separate: true }
+    );
   });
 
   // And the way back: one card again, with every link from the cards it was

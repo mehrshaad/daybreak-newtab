@@ -147,7 +147,7 @@ function LinksSettings({ config, setConfig, options, setOptions, action, onSpawn
     // eight copies of the same links drifting apart as they were edited.
     // Splitting partitions; the cards are separate lists from then on.
     const configs = groups.map((g) => ({ items: g.links, folder: g.name || LOOSE }));
-    const made = onSpawn?.(configs) || [];
+    const made = onSpawn?.(configs, { separate: true }) || [];
     toast?.(made.length > 1 ? `${made.length} folder cards on the board` : "One folder on this card");
   };
 

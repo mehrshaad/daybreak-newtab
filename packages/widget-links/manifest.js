@@ -52,10 +52,32 @@ export default {
   // it had failed to name itself.
   subtitle: (config) =>
     config?.folder == null ? "" : config.folder === LOOSE ? "Ungrouped" : config.folder,
-  // Several folders in one card needs room for their headings and links, the
-  // same as the Bookmarks widget. One folder to a card does not.
-  sizesFor: (sizes, options) =>
-    options?.separate ? sizes : sizes.filter(([w, h]) => w >= 3 || h >= 3),
+  // Narrowed only when the card is actually showing more than one group.
+  //
+  // Several folders stacked in one card need room for their headings and their
+  // links; a card holding one group does not, and a card with no folders at
+  // all never did — so the first version of this, which keyed off the
+  // `separate` option, took 2x2 away from a plain Quick Links that had never
+  // heard of folders.
+  //
+  // Config and not options, for the reason the folder display already learned:
+  // a card split out of another is created and given its config in the same
+  // tick that the original sets `separate`, so an option read at that moment
+  // is the old value. The result was folder cards missing 2x2 while the card
+  // they came from had it.
+  sizesFor: (sizes, options, config) => {
+    if (config?.folder != null) return sizes;
+    const items = Array.isArray(config?.items) ? config.items : [];
+    const folders = new Set();
+    let loose = 0;
+    for (const link of items) {
+      const name = String(link?.folder || "").trim();
+      if (name) folders.add(name);
+      else loose += 1;
+    }
+    const groups = folders.size + (loose ? 1 : 0);
+    return groups > 1 ? sizes.filter(([w, h]) => w >= 3 || h >= 3) : sizes;
+  },
   sizes: [
     [2, 2],
     [3, 2],

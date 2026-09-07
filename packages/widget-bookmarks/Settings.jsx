@@ -582,7 +582,7 @@ function BookmarksSettings({ config, setConfig, options, setOptions, action, onS
       // config during render.
       folderTitle: f.title,
     }));
-    const made = onSpawn?.(configs) || [];
+    const made = onSpawn?.(configs, { separate: true }) || [];
     toast?.(
       made.length > 1
         ? `${made.length} folder cards on the board`

@@ -113,7 +113,7 @@ function WidgetSettingsDrawer({
   };
   // Which sizes are worth offering for the options as they stand — see
   // sizesFor. The tile keeps whatever it is on; this is the shortlist.
-  const offeredSizes = sizesFor(instanceId, options);
+  const offeredSizes = sizesFor(instanceId, options, record.config);
   const rate = resolveRate(instanceId, record.rate);
   const Panel = panelFor(manifest);
 

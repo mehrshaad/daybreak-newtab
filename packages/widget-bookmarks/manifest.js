@@ -31,8 +31,13 @@ export default {
   // under them, so the sizes that cannot hold two groups are not offered in
   // that mode. One folder to a card has no such problem, which is half the
   // reason the mode exists — and a 2x2 holding four links is a good tile.
-  sizesFor: (sizes, options) =>
-    options?.separate ? sizes : sizes.filter(([w, h]) => w >= 4 && h >= 3),
+  sizesFor: (sizes, options, config) =>
+    // A card pinned to one folder can be any size. Only the card showing all
+    // of them needs room for several headings — and this reads the config
+    // rather than the `separate` option because a card split out of another
+    // is given its config in the same tick the original flips that option,
+    // so the option is stale exactly when it matters.
+    config?.folderId != null ? sizes : sizes.filter(([w, h]) => w >= 4 && h >= 3),
   actions: [
     { id: "add", label: "Add a bookmark", panel: true },
     // Same pair as Quick Links, and offered from the tile's own menu for the

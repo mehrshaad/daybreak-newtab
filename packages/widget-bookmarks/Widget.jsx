@@ -195,9 +195,9 @@ function Bookmarks({
       );
       return;
     }
-    setOptions({ separate: true });
     onSpawn?.(
-      chosen.map((f) => ({ folders: [], folderId: f.id, folderTitle: f.title }))
+      chosen.map((f) => ({ folders: [], folderId: f.id, folderTitle: f.title })),
+      { separate: true }
     );
   });
 

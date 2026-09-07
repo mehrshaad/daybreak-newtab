@@ -459,7 +459,7 @@ function App() {
   // the end of the board, where they would be nowhere near the thing they came
   // from.
   const spawnInstances = useCallback(
-    (fromId, configs) => {
+    (fromId, configs, options) => {
       const list = Array.isArray(configs) ? configs.filter(Boolean) : [];
       if (!list.length) return [];
       const type = typeOf(fromId);
@@ -482,13 +482,22 @@ function App() {
 
       update("board", { ids, sizes, layoutName: "Custom" });
       setWidgetConfig(fromId, first);
+      if (options) setWidgetOptions(fromId, options);
       // The copies inherit the original's options as well as its size. Eight
       // cards split out of one that differed from it — and from each other —
       // in layout and icon size would not read as eight of the same thing.
-      const inherited = widgets[fromId]?.options;
+      //
+      // `options` is what the caller is setting in this same tick, laid over
+      // what is already stored. Reading the store alone was the bug: a widget
+      // that calls setOptions and then onSpawn in one handler has not had its
+      // state updated yet, so the copies inherited the value it was moving
+      // away from — the folder cards came out with `separate: false` while the
+      // card they came from had `true`, which then gave them a different set
+      // of sizes.
+      const inherited = { ...(widgets[fromId]?.options || {}), ...(options || {}) };
       for (const [id, config] of made) {
         setWidgetConfig(id, config);
-        if (inherited) setWidgetOptions(id, inherited);
+        setWidgetOptions(id, inherited);
       }
       return [fromId, ...made.map(([id]) => id)];
     },
@@ -636,7 +645,11 @@ function App() {
     if (!manifest) return null;
     return widgetMenu({
       manifest,
-      sizes: sizesFor(menu.id, resolveOptions(menu.id, widgets[menu.id]?.options)),
+      sizes: sizesFor(
+        menu.id,
+        resolveOptions(menu.id, widgets[menu.id]?.options),
+        widgets[menu.id]?.config
+      ),
       actions: actionsFor(menu.id, {
         options: resolveOptions(menu.id, widgets[menu.id]?.options),
         config: widgets[menu.id]?.config,
@@ -934,7 +947,7 @@ function App() {
           appearance={appearance}
           keepInteractive={panel ? panelTileEl : null}
           action={widgetAction?.[panelId]}
-          onSpawn={(configs) => spawnInstances(panelId, configs)}
+          onSpawn={(configs, options) => spawnInstances(panelId, configs, options)}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />
