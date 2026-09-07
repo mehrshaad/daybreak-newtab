@@ -4,7 +4,7 @@ export default {
   glyph: "grid",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.3.0",
+  version: "2.4.0",
   tagline: "The places you actually go.",
   description:
     "Chrome's own most-visited list, the tiles the default new tab page shows " +
@@ -23,7 +23,11 @@ export default {
   options: [
     {
       key: "hoverCard",
-      label: "Card on hover",
+      // "Card on hover" asked people to know what a card is. It is the panel
+      // with the name and the address in it, and now that switching this off
+      // means nothing pops up at all, "details" is what it actually controls.
+      // The key is unchanged, so nobody's setting resets.
+      label: "Details on hover",
       type: "boolean",
       // Off. The card is a deliberate reveal and it was appearing on the way
       // past: crossing a row of icons to reach the one you wanted popped a

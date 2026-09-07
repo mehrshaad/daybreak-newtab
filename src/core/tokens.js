@@ -409,6 +409,20 @@ export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent, bl
     : dark
     ? "rgb(20,21,26)"
     : "rgb(250,250,249)";
+  // The same surface with nothing showing through it, for a floating card
+  // that has to be readable rather than atmospheric.
+  //
+  // Used by the tour card. That card was --sheet plus a 28px backdrop blur,
+  // and the blur was doing nothing at all: its wrapper fades in with an
+  // opacity animation, and an ancestor whose opacity is under 1 starts a new
+  // backdrop root — so there was nothing behind the card for the filter to
+  // reach and the board read straight through 66% white. A paragraph of
+  // onboarding text over somebody's Quick Links.
+  //
+  // Opaque rather than chasing the backdrop root, because a modal card over a
+  // dimmed board wants to be solid anyway: frosted glass there is decoration
+  // paid for in legibility.
+  const sheetSolid = blur ? (dark ? "rgb(26,27,33)" : "rgb(252,252,251)") : sheet;
   return {
     "--blur-tile": blur ? `blur(${BLUR.tile}px)` : "none",
     "--blur-panel": blur ? `blur(${BLUR.panel}px)` : "none",
@@ -426,6 +440,7 @@ export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent, bl
     "--panel": dark ? "rgba(255,255,255,.05)" : "rgba(255,255,255,.62)",
     "--panel2": dark ? "rgba(255,255,255,.10)" : "rgba(255,255,255,.92)",
     "--sheet": sheet,
+    "--sheetSolid": sheetSolid,
     // A row highlight for things sitting *on* a sheet — menus, dropdowns,
     // popovers. --panel2 cannot do this job: it lifts a surface off the board
     // by whitening it, which in light mode is near-opaque white, and a sheet

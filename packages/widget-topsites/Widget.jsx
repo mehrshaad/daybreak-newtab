@@ -168,6 +168,7 @@ function TopSites({ config, setConfig, options, refreshKey, size, columns, editi
       // written to, and nothing about the user's history is changed.
       onRemove={(item) => setConfig({ hidden: [...hidden, item.key] })}
       onRemoveByDrag={(item) => setConfig({ hidden: [...hidden, item.key] })}
+      hover={hoverCard ? "card" : "none"}
       hoverCard={!hoverCard ? undefined : (item) => {
         const site = visible.find((s) => s.url === item.key);
         if (!site) return null;

@@ -481,6 +481,9 @@ function Links({
             onRemove={remove}
             onRemoveByDrag={remove}
             onItemMenu={openItemMenu}
+            // Off means nothing on hover, not a tooltip instead of a
+            // card — see IconGrid's `hover`.
+            hover={hoverCard ? "card" : "none"}
             hoverCard={!hoverCard ? undefined : (gridItem) => {
               const link = items.find((l) => l.id === gridItem.key);
               if (!link) return null;

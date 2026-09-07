@@ -6,7 +6,7 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "3.1.0",
+  version: "3.2.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
@@ -61,7 +61,11 @@ export default {
   options: [
     {
       key: "hoverCard",
-      label: "Card on hover",
+      // "Card on hover" asked people to know what a card is. It is the panel
+      // with the name and the address in it, and now that switching this off
+      // means nothing pops up at all, "details" is what it actually controls.
+      // The key is unchanged, so nobody's setting resets.
+      label: "Details on hover",
       type: "boolean",
       // Off. The card is a deliberate reveal and it was appearing on the way
       // past: crossing a row of icons to reach the one you wanted popped a

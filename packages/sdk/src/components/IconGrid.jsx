@@ -26,6 +26,14 @@ function IconGridItem({
   onRemove,
   onItemMenu,
   hoverCard,
+  // What hovering an icon reveals: "card", "tip" or "none".
+  //
+  // Three states, because two were not enough. Turning the card off fell back
+  // to a tooltip of the address, so "off" still popped something up over the
+  // grid — which is not what off means to anybody who just switched it off.
+  // Widgets whose items have no detail worth a card (Google Apps, Bookmarks)
+  // do want the tooltip, so it stays the default.
+  hover = "tip",
   list = false,
 }) {
   const ref = useRef(null);
@@ -46,7 +54,7 @@ function IconGridItem({
   const [hovered, bind] = useHover();
   // The hover card already covers this, so the tooltip only applies where
   // there is no card to duplicate.
-  const tip = useTooltip(hoverCard ? null : item.title || item.name);
+  const tip = useTooltip(hover === "tip" ? item.title || item.name : null);
   // A card is a deliberate reveal, so it stays out of the way of the two
   // things that are not one: a grid mid-drag, and the icon being carried.
   const cardOpen = hovered && !anyDragging && !held;
@@ -177,7 +185,7 @@ function IconGridItem({
         </Appear>
       ) : null}
 
-      {hoverCard && !editing ? (
+      {hover === "card" && hoverCard && !editing ? (
         <Popover
           open={cardOpen}
           anchorRef={ref}
@@ -257,6 +265,7 @@ function IconGrid({
   onRemoveByDrag,
   onItemMenu,
   hoverCard,
+  hover,
   scroll = false,
   trailing = null,
   list = false,
@@ -375,6 +384,9 @@ function IconGrid({
           onRemove={onRemove}
           onItemMenu={onItemMenu}
           hoverCard={hoverCard}
+          // A card needs something to draw, so without one the tooltip is the
+          // most this can offer.
+          hover={hover ?? (hoverCard ? "card" : "tip")}
           list={list}
         />
       ))}
