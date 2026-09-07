@@ -53,19 +53,21 @@ export function tileStyle({
     // this — it is the theme, the tint and the opacity slider combined — and a
     // heading over --panel is visibly the wrong colour on a tinted tile.
     "--tile-bg": fill,
-    // And the pair a sticky overlay actually needs.
+    // A small control that sits on top of the widget's own content and has to
+    // read as raised: the remove badge over an app icon, a month arrow over a
+    // calendar grid.
     //
-    // --tile-bg is translucent: the opacity slider is the whole point of it,
-    // and a sticky heading painted with it has the widget's own content
-    // scrolling visibly through the words. Reported as a folder heading with a
-    // link's label showing through it.
+    // Deliberately *stronger* than the tile rather than the same as it. The
+    // first attempt was the tile's own fill, on the theory that an overlay
+    // should match its surface — which is exactly wrong twice over. Painted on
+    // the tile it doubles (0.55 white over 0.55 white reads as 0.80, a
+    // visibly lighter patch), and a control that matches its background is a
+    // control you cannot see. A chip wants to stand out.
     //
-    // So: with blur on, the same translucent fill plus a backdrop blur, which
-    // is how every other floating surface here stays legible without going
-    // opaque. With blur off there is nothing to blur, and the only honest
-    // answer is a solid fill.
-    "--tile-sticky-bg": blur ? fill : tileFill(theme, 100, tint),
-    "--tile-sticky-blur": blur ? "var(--blur-tile)" : "none",
+    // Opaque when there is no blur, because then there is nothing to soften it
+    // and a translucent disc simply shows the icon through the cross.
+    "--tile-chip-bg": tileFill(theme, blur ? 78 : 100, tint),
+    "--tile-chip-blur": blur ? "var(--blur-tile)" : "none",
     // Frosted glass when blur is on, plain translucency when it is off.
     backdropFilter: blur ? "var(--blur-tile)" : "none",
     WebkitBackdropFilter: blur ? "var(--blur-tile)" : "none",

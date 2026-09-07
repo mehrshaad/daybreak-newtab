@@ -389,9 +389,9 @@ export function Section({ title, children, style, ...rest }) {
           that scrolls away with its section is worth more than one that stays
           put inside a bar that does not belong.
 
-          The sticky headings inside widget tiles are a different case and do
-          work: a tile publishes its own computed fill as --tile-sticky-bg, so
-          those bands are painted in exactly the colour their tile is. */}
+          The folder headings inside Quick Links and Bookmarks hit exactly the
+          same wall and are not sticky either — a tile is translucent too, so
+          its own fill painted on itself doubles into a lighter patch. */}
       <div className="db-label" style={{ marginBottom: "10px" }}>
         {title}
       </div>

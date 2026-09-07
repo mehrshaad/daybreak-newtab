@@ -4,7 +4,7 @@ export default {
   glyph: "bookmark",
   category: "Essentials",
   author: "Daybreak",
-  version: "1.2.0",
+  version: "1.3.0",
   tagline: "The folders you already keep.",
   description:
     "Your browser's own bookmarks, by folder. Read live from Chrome on this " +

@@ -228,7 +228,9 @@ function MonthView({
                 marginRight: 2,
                 border: 0,
                 borderRadius: 6,
-                background: "var(--panel)",
+                background: "var(--tile-chip-bg, var(--panel))",
+                backdropFilter: "var(--tile-chip-blur, none)",
+                WebkitBackdropFilter: "var(--tile-chip-blur, none)",
                 color: "var(--dim)",
                 cursor: "pointer",
                 fontFamily: MONO,
@@ -265,9 +267,17 @@ function MonthView({
                 padding: 0,
                 border: 0,
                 borderRadius: 6,
-                background: "transparent",
-                color: "var(--faint)",
+                // The tile's chip surface, not transparent: these sit over the
+                // month grid, and a bare glyph on a translucent tile has the
+                // dates behind it running through the arrow. Frosted with blur
+                // on, opaque without it — the same treatment the remove badge
+                // gets, and for the same reason. See tileStyle.
+                background: "var(--tile-chip-bg, var(--panel))",
+                backdropFilter: "var(--tile-chip-blur, none)",
+                WebkitBackdropFilter: "var(--tile-chip-blur, none)",
+                color: "var(--dim)",
                 cursor: "pointer",
+                transition: "background .15s ease, color .15s ease",
               }}
             >
               <Icon size={13} />

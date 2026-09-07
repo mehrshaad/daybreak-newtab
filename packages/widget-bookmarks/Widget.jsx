@@ -50,15 +50,9 @@ function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing })
             display: "flex",
             alignItems: "center",
             gap: 8,
-            // Sticky in the card's scroller, so a long list of folders never
-            // leaves you looking at links with no idea which folder they are
-            // in. --tile-bg is the tile's own computed fill; see tileStyle.
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-            background: "var(--tile-sticky-bg, var(--panel))",
-            backdropFilter: "var(--tile-sticky-blur, none)",
-            WebkitBackdropFilter: "var(--tile-sticky-blur, none)",
+            // Not sticky — see the note on the same heading in the Quick
+            // Links widget. A band cannot be painted to match a translucent
+            // tile, so the heading scrolls with its own group.
             paddingBottom: 3,
           }}
         >

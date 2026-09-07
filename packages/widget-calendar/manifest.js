@@ -4,7 +4,7 @@ export default {
   glyph: "calendarRange",
   category: "Productivity",
   author: "Daybreak",
-  version: "3.3.0",
+  version: "3.4.0",
   tagline: "A real month grid, with your events on it.",
   description:
     "A month you can actually read: today marked, a dot on any day with " +

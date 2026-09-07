@@ -415,16 +415,22 @@ function Links({
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
-                    // Sticky inside the column's scroller, so scrolling a long
-                    // board of folders never leaves you looking at a row of
-                    // icons with no idea which folder they are in.
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
-                    // Its own backing, or the icons scroll up through the text.
-                    background: "var(--tile-sticky-bg, var(--panel))",
-                    backdropFilter: "var(--tile-sticky-blur, none)",
-                    WebkitBackdropFilter: "var(--tile-sticky-blur, none)",
+                    // Deliberately not sticky.
+                    //
+                    // It was, and it could not be made to look right. A sticky
+                    // heading has to hide the links scrolling under it, which
+                    // means painting a band — and the tile is translucent, so
+                    // the tile's own fill painted on the tile doubles (0.55
+                    // white over 0.55 reads as 0.80, a visibly lighter patch)
+                    // while an opaque band is lighter still against a 55%
+                    // tile. There is no fixed colour that matches a
+                    // translucent surface, which is the same wall the settings
+                    // drawer's section headings hit.
+                    //
+                    // A heading that scrolls away with its own group is worth
+                    // more than one that stays put inside a bar that does not
+                    // belong. The rule and the count are what separate the
+                    // groups; they do not need to be pinned to do that.
                     paddingBottom: 3,
                   }}
                 >
