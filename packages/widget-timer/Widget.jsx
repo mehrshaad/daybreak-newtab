@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { LuPause, LuPlay, LuRotateCcw } from "react-icons/lu";
 import { Button, MONO, Tooltip, useMeasuredWidth, useTooltip, useWidgetLocal } from "@daybreak/sdk";
 import { formatClock, IDLE, nextPhase, phaseLength, remainingOf, resumeFrom } from "./phases";
+import { claimTitle, releaseTitle, titleFor, writeTitle } from "./tabTitle";
 
 // The run lives in storage, not in this component.
 //
@@ -14,7 +15,7 @@ import { formatClock, IDLE, nextPhase, phaseLength, remainingOf, resumeFrom } fr
 // Local rather than synced: a countdown running on this machine is not
 // something the laptop in the other room should join halfway through.
 function Timer({ id, options, toast }) {
-  const { longFocus, autoStart } = options;
+  const { longFocus, autoStart, tabTitle } = options;
   const resetTip = useTooltip("Start over");
   const [saved, setSaved] = useWidgetLocal(id, "run", IDLE);
 
@@ -67,6 +68,27 @@ function Timer({ id, options, toast }) {
     const t = setInterval(tick, 250);
     return () => clearInterval(t);
   }, [running, saved, phase, round, longFocus, autoStart, setSaved]);
+
+  // The countdown in the tab's own title. See tabTitle.js for why one
+  // instance owns it.
+  //
+  // Written from an effect rather than during render, because it is a document
+  // side effect, and released on the way out so a paused timer, a removed tile
+  // or a closed settings panel does not leave "12:04 · Focus" on a tab with
+  // nothing running in it.
+  useEffect(() => {
+    if (!tabTitle || !running) return undefined;
+    if (!claimTitle(id)) return undefined;
+    return () => releaseTitle(id);
+  }, [tabTitle, running, id]);
+
+  useEffect(() => {
+    if (!tabTitle || !running) return;
+    // A backgrounded tab throttles this interval to about once a minute, which
+    // is the resolution a tab strip is read at anyway — and coming back to the
+    // tab runs the tick immediately.
+    writeTitle(id, titleFor({ running, clock: formatClock(left), phase }));
+  }, [tabTitle, running, left, phase, id]);
 
   const start = () => {
     if (running) {
