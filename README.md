@@ -14,7 +14,7 @@ Vite.
 - 🔍 **Click to focus** — click a tile to zoom into it. Four behaviours to
   choose from, including a camera zoom that scales the whole board toward the
   tile you picked.
-- 🎨 **Themed end to end** — dark and light (or follow your system), fifteen
+- 🎨 **Themed end to end** — dark and light (follow your system, or the sun), fifteen
   accent colours, twelve generated backgrounds, a colour per widget, and sliders
   for corner radius, tile opacity and page zoom. Frosted glass on, or solid
   surfaces off.
@@ -31,7 +31,7 @@ Vite.
 
 ### The widgets
 
-Twenty-two of them. Counted from `packages/widget-*`, which is the only place
+Twenty-three of them. Counted from `packages/widget-*`, which is the only place
 the number is actually true.
 
 | Widget | What it does |
@@ -49,6 +49,7 @@ the number is actually true.
 | Countdown | The dates you are counting toward, in days |
 | Scratchpad | One text field that saves as you type, syncing up to 6KB |
 | Quick Links | The places you actually go, wearing their own brand marks — 233 built in, and the site's own favicon for the rest |
+| Bookmarks | Your browser's own bookmark folders, read and edited live in Chrome (optional permission) |
 | Google Apps | The launcher grid, without the extra click |
 | Most visited | The sites you open most, from Chrome's own list (optional permission) |
 | Recent Tabs | Reopen what you closed by accident (optional permission) |

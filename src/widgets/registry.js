@@ -106,9 +106,37 @@ export function resolveRate(id, storedRate) {
   return choices?.[0] || "Live";
 }
 
+// The sizes a widget is offering right now.
+//
+// Usually all of them. A manifest may narrow the list from its own options,
+// for the case where a setting genuinely changes which sizes are worth
+// choosing: Bookmarks showing every folder in one card needs room for several
+// headings, and a 2x2 there is a scroller two links tall.
+//
+// A recommendation, not a constraint — see resolveSize. A tile already on a
+// size that has just stopped being offered keeps it and still renders; the
+// picker simply stops suggesting it.
+export function sizesFor(id, options) {
+  const w = getWidget(id);
+  if (!w) return [[4, 2]];
+  if (typeof w.sizesFor !== "function") return w.sizes;
+  const narrowed = w.sizesFor(w.sizes, options || {});
+  // Never down to nothing, whatever a manifest computes: a widget with no
+  // sizes cannot be rendered at all.
+  return Array.isArray(narrowed) && narrowed.length ? narrowed : w.sizes;
+}
+
 // A widget's declared size, honouring a user override only if the manifest
 // still offers that size. Overrides are keyed by instance id so two copies of
 // the same widget can be different sizes.
+//
+// Validated against the full `sizes` list and deliberately not against the
+// narrowed one from sizesFor. Narrowing decides what a picker *offers*;
+// clamping what the board *renders* would mean this function needs the
+// widget's options, and it is called from autoArrange — which has the sizes
+// map and nothing else. Two callers computing different widths for one tile is
+// overlapping tiles, so the narrowing stays on the offer side only, and a
+// widget is expected to cope with any size it declares.
 export function resolveSize(id, storedSizes) {
   const w = getWidget(id);
   if (!w) return [4, 2];
@@ -120,4 +148,16 @@ export function resolveSize(id, storedSizes) {
     return stored;
   }
   return w.defaultSize;
+}
+
+// What the tile's header adds after the widget's name. A card holding one
+// bookmark folder says which one: "BOOKMARKS · AI TOOLS".
+export function subtitleFor(id, config) {
+  const w = getWidget(id);
+  if (typeof w?.subtitle !== "function") return "";
+  try {
+    return String(w.subtitle(config || {}) || "");
+  } catch {
+    return "";
+  }
 }

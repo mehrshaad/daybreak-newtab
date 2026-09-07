@@ -62,7 +62,7 @@ describe("the add action", () => {
     expect(missing).toEqual([]);
   });
 
-  it("covers the eight this was written for", () => {
+  it("covers the nine this was written for", () => {
     // Named rather than counted, so dropping one is a failure and not a
     // quietly smaller number.
     const declared = DIRS.filter((d) => readManifest(d).addAction).map((d) =>
@@ -70,6 +70,7 @@ describe("the add action", () => {
     );
     expect(declared.sort()).toEqual(
       [
+        "bookmarks",
         "calendar",
         "countdown",
         "crypto",

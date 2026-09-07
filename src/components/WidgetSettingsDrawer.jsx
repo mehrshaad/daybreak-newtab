@@ -2,7 +2,7 @@ import { Suspense, lazy, useMemo } from "react";
 import { LuBan } from "react-icons/lu";
 import { MONO, pill } from "@daybreak/sdk";
 import { TINT_NAMES, TINTS, tileFill } from "../core/tokens";
-import { getWidget, resolveOptions, resolveRate, resolveSize } from "../widgets/registry";
+import { getWidget, resolveOptions, resolveRate, resolveSize, sizesFor } from "../widgets/registry";
 import { Button, Drawer, DrawerHeader, Pill, Section, Slider, Toggle } from "./primitives";
 
 const panelCache = new Map();
@@ -74,6 +74,7 @@ function WidgetSettingsDrawer({
   theme,
   appearance,
   action,
+  onSpawn,
   keepInteractive,
   toast,
 }) {
@@ -97,6 +98,9 @@ function WidgetSettingsDrawer({
   };
 
   const currentSize = resolveSize(instanceId, board.sizes);
+  // Which sizes are worth offering for the options as they stand — see
+  // sizesFor. The tile keeps whatever it is on; this is the shortlist.
+  const offeredSizes = sizesFor(instanceId, options);
   const rate = resolveRate(instanceId, record.rate);
   const Panel = panelFor(manifest);
 
@@ -121,10 +125,10 @@ function WidgetSettingsDrawer({
       }
     >
       <div data-tour="panel" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {manifest.sizes.length > 1 ? (
+        {offeredSizes.length > 1 ? (
           <Section title="Size">
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {manifest.sizes.map((s) => (
+              {offeredSizes.map((s) => (
                 <Pill
                   key={s.join("x")}
                   active={currentSize[0] === s[0] && currentSize[1] === s[1]}
@@ -180,6 +184,9 @@ function WidgetSettingsDrawer({
                 // For the widgets whose add form lives in here rather than in
                 // the tile: the menu opens this drawer and signals in one go.
                 action={action}
+                // Lets a panel turn its one tile into several — see
+                // spawnInstances. Only Bookmarks uses it.
+                onSpawn={onSpawn}
                 toast={toast}
               />
             </Suspense>

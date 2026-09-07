@@ -70,6 +70,10 @@ export function boardMenu({
 
 export function widgetMenu({
   manifest,
+  // The sizes to offer, which a manifest may narrow from its own options — see
+  // sizesFor. Defaults to everything it declares, so a caller that does not
+  // care need not pass it.
+  sizes,
   currentSize,
   zoomMode,
   onFocus,
@@ -97,10 +101,11 @@ export function widgetMenu({
   }
   items.push({ label: "Widget settings", hint: hint("Alt,"), run: onSettings });
 
-  if (manifest.sizes.length > 1) {
+  const offered = sizes?.length ? sizes : manifest.sizes;
+  if (offered.length > 1) {
     items.push({
       type: "sizes",
-      sizes: manifest.sizes,
+      sizes: offered,
       current: currentSize,
       onPick: onSize,
     });

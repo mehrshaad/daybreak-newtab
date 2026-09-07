@@ -98,14 +98,14 @@ not match the manifest is a common rejection.
 > want them. Drag tiles around, cycle their sizes, and keep only what you use —
 > or start from one of four layout presets and save your own.
 >
-> TWENTY-TWO WIDGETS
+> TWENTY-THREE WIDGETS
 > Clock (digital or analog) · World Clocks · Weather · Air quality · Tasks ·
 > Quick Links · Google Apps · Most visited · Scratchpad · Focus Timer · Habits ·
 > Countdown · Currency · Crypto · On this day · News · Calendar · Prayer times ·
-> Moon phase · Sun & daylight · Quote of the day · Recent Tabs
+> Moon phase · Sun & daylight · Quote of the day · Recent Tabs · Bookmarks
 >
 > MADE YOURS
-> Dark and light themes, or follow your system. Fifteen accent colours, twelve
+> Dark and light themes, follow your system, or follow the sun. Fifteen accent colours, twelve
 > generated backgrounds, a colour per widget, adjustable tile opacity, corner
 > radius and page zoom. Frosted glass, or solid surfaces if you prefer.
 >
@@ -198,10 +198,15 @@ dashboard of widgets.
 - **history** (optional) — Lets the search box suggest pages the user has visited
   before, matched against what they type. Requested only when that suggestion
   source is switched on.
-- **bookmarks** (optional) — Lets the search box suggest the user's saved
-  bookmarks, matched against what they type. Read-only; the extension never
-  creates, edits or deletes a bookmark. Requested only when that suggestion
-  source is switched on.
+- **bookmarks** (optional) — Two features use it. The search box suggests the
+  user's saved bookmarks, matched against what they type. The Bookmarks widget
+  shows their bookmark folders on the new tab page, and lets them add, rename,
+  move and delete bookmarks and folders from the widget's own settings — those
+  edits are made in Chrome's bookmarks, which is the point: the widget shows
+  and edits the one list the browser already keeps rather than a private copy
+  of it. Deleting anything asks for a second confirming tap. Nothing is
+  uploaded or sent anywhere. Requested only when the widget is added or the
+  suggestion source is switched on, never at install.
 - **favicon** (optional) — Shows a page's real icon next to a search
   suggestion, reading Chrome's own already-cached favicon store rather than
   making a request to the site. Requested the first time the user turns on

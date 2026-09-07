@@ -54,7 +54,7 @@ const CARDS = [
     file: "2.jpg",
     // The count is checked against packages/widget-* by a test, because it
     // said "seventeen" for two releases after it stopped being seventeen.
-    title: "Twenty-two widgets, all offline-first",
+    title: "Twenty-three widgets, all offline-first",
     sub: "Weather, prayer times, the moon, habits, a focus timer, the news. Browse by category, see what each one can access, add it in a click.",
   },
   {

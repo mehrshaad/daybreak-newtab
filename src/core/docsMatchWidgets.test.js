@@ -81,9 +81,10 @@ describe("the store listing", () => {
 
   it("gets the count right in its heading", () => {
     const src = readFileSync(LISTING, "utf8");
-    expect(src).toContain("TWENTY-TWO WIDGETS");
-    // The number this replaced, so a stale heading cannot come back quietly.
+    expect(src).toContain("TWENTY-THREE WIDGETS");
+    // The numbers this replaced, so a stale heading cannot come back quietly.
     expect(src).not.toContain("SEVENTEEN WIDGETS");
+    expect(src).not.toContain("TWENTY-TWO WIDGETS");
   });
 });
 
@@ -120,7 +121,7 @@ describe("the screenshot captions", () => {
     // These are drawn onto the store cards, so a wrong number there is a wrong
     // number on the listing itself.
     const src = readFileSync(CAPTIONS, "utf8").toLowerCase();
-    expect(src).toContain("twenty-two widgets");
+    expect(src).toContain("twenty-three widgets");
     expect(src).not.toContain("seventeen widgets");
   });
 

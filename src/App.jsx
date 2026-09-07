@@ -32,7 +32,9 @@ import {
   getWidget,
   knownIds,
   nextInstanceId,
+  resolveOptions,
   resolveSize,
+  sizesFor,
   typeOf,
 } from "./widgets/registry";
 
@@ -443,6 +445,55 @@ function App() {
     [board.ids, board.sizes, update, toast]
   );
 
+  // Turn one tile into several, each with its own starting config.
+  //
+  // For Bookmarks' "a card per folder": eight folders in one card become eight
+  // cards, each holding one, arranged and resized independently from then on.
+  // Instance ids already carry per-tile size and config, so this is the board
+  // machinery that already existed — what was missing was any way for a
+  // widget's own settings to ask for it.
+  //
+  // The first config lands on the tile that asked, so nothing is orphaned if
+  // the rest fail, and the copies go in immediately after it rather than at
+  // the end of the board, where they would be nowhere near the thing they came
+  // from.
+  const spawnInstances = useCallback(
+    (fromId, configs) => {
+      const list = Array.isArray(configs) ? configs.filter(Boolean) : [];
+      if (!list.length) return [];
+      const type = typeOf(fromId);
+      const ids = [...board.ids];
+      const sizes = { ...board.sizes };
+      const base = resolveSize(fromId, board.sizes);
+      const [first, ...rest] = list;
+
+      let at = ids.indexOf(fromId);
+      const made = [];
+      for (const config of rest) {
+        // nextInstanceId reads the array it is given, and this one grows as we
+        // go — so each copy sees the ones before it and no two collide.
+        const id = nextInstanceId(ids, type);
+        at += 1;
+        ids.splice(at, 0, id);
+        sizes[id] = base;
+        made.push([id, config]);
+      }
+
+      update("board", { ids, sizes, layoutName: "Custom" });
+      setWidgetConfig(fromId, first);
+      // The copies inherit the original's options as well as its size. Eight
+      // cards split out of one that differed from it — and from each other —
+      // in layout and icon size would not read as eight of the same thing.
+      const inherited = widgets[fromId]?.options;
+      for (const [id, config] of made) {
+        setWidgetConfig(id, config);
+        if (inherited) setWidgetOptions(id, inherited);
+      }
+      return [fromId, ...made.map(([id]) => id)];
+    },
+    [board.ids, board.sizes, widgets, update, setWidgetConfig, setWidgetOptions]
+  );
+
   const moveToTop = useCallback(
     (id) => {
       update("board", {
@@ -548,6 +599,7 @@ function App() {
     if (!manifest) return null;
     return widgetMenu({
       manifest,
+      sizes: sizesFor(menu.id, resolveOptions(menu.id, widgets[menu.id]?.options)),
       currentSize: resolveSize(menu.id, board.sizes),
       zoomMode,
       onFocus: () => focusTile(menu.id),
@@ -839,6 +891,7 @@ function App() {
           appearance={appearance}
           keepInteractive={panel ? panelTileEl : null}
           action={widgetAction?.[panelId]}
+          onSpawn={(configs) => spawnInstances(panelId, configs)}
           onRemove={() => removeTile(panelId)}
           toast={toast}
         />
