@@ -53,9 +53,14 @@ function Notice({ notice, onDismiss, onFreeze }) {
         border: "1px solid var(--line)",
         boxShadow: "0 16px 44px rgba(0,0,0,.4)",
         backdropFilter: "var(--blur-panel)",
-        animation: "db-rise-in .22s ease both",
+        animation: notice.leaving
+          ? "db-sink-out .18s ease both"
+          : "db-rise-in .22s ease both",
+        // The stack closes the gap as the card goes rather than after it, so
+        // the two below it slide up with the fade instead of snapping when it
+        // is finally unmounted.
+        pointerEvents: notice.leaving ? "none" : "auto",
         maxWidth: "min(520px, 92vw)",
-        pointerEvents: "auto",
         overflow: "hidden",
       }}
     >

@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  addNotice,
   CATEGORY_DURATION,
+  EXIT_MS,
+  MAX_VISIBLE,
+  addNotice,
   freezeNotice,
   isSilenced,
+  leaveNotice,
+  leavingIds,
   makeNotice,
-  MAX_VISIBLE,
   removeNotice,
   tickNotices,
 } from "./notices";
@@ -140,5 +143,59 @@ describe("freezeNotice", () => {
     expect(frozen[0].frozen).toBe(true);
     expect(frozen[1].frozen).toBe(false);
     expect(freezeNotice(frozen, a.id, false)[0].frozen).toBe(false);
+  });
+});
+
+describe("leaving, so a notice can fade out", () => {
+  it("marks rather than removes", () => {
+    // A notice spliced straight out of the array cannot animate: it is simply
+    // gone on the next paint, and the cards below it jump up into the gap.
+    const list = [make("a"), make("b")];
+    const next = leaveNotice(list, list[0].id);
+    expect(next).toHaveLength(2);
+    expect(next[0].leaving).toBe(true);
+    expect(next[1].leaving).toBeUndefined();
+  });
+
+  it("does not mark the same one twice", () => {
+    // The removal is scheduled off the set of leaving ids, so re-marking would
+    // hand the effect a new identity and restart the timer.
+    const one = make("a");
+    const list = leaveNotice([one], one.id);
+    const again = leaveNotice(list, one.id);
+    expect(again[0]).toBe(list[0]);
+  });
+
+  it("stops counting a leaving notice down", () => {
+    // Otherwise it expires a second time and schedules a second removal.
+    let list = [make("a", { duration: 1000 })];
+    list = leaveNotice(list, list[0].id);
+    const { expired } = tickNotices(list, 5000);
+    expect(expired).toEqual([]);
+  });
+
+  it("reports which ones are on their way out", () => {
+    const [a, b] = [make("a"), make("b")];
+    const list = leaveNotice([a, b], a.id);
+    expect(leavingIds(list)).toEqual([a.id]);
+  });
+
+  it("lets the same message come back while the old one is still fading", () => {
+    // Without this the repeat refreshes the card that is already leaving, and
+    // the notice never reappears.
+    const first = make("Saved");
+    let list = leaveNotice(addNotice([], first), first.id);
+    list = addNotice(list, make("Saved"));
+    expect(list).toHaveLength(2);
+    expect(list[1].leaving).toBeUndefined();
+  });
+
+  it("removes it once the fade has had time to play", () => {
+    const one = make("a");
+    const list = leaveNotice([one], one.id);
+    expect(removeNotice(list, one.id)).toEqual([]);
+    // The wait is short enough not to hold the stack open.
+    expect(EXIT_MS).toBeGreaterThan(0);
+    expect(EXIT_MS).toBeLessThan(400);
   });
 });

@@ -384,8 +384,15 @@ describe("the tint palette", () => {
     expect((1 + TINTS.length) % 9).toBe(0);
   });
 
-  it("leaves the accent picker three whole rows of five", () => {
-    expect(ACCENTS.length % 5).toBe(0);
+  it("is few enough that the picker can keep them sample-sized", () => {
+    // Not a row-length assertion any more. Fifteen was laid out five to a row
+    // because that divides evenly, and at a 400px drawer that made each swatch
+    // 62px — reported as the accent colours being huge. A swatch is a sample,
+    // not a button. The picker uses auto-fit with a 34px cap now and comes out
+    // eight and seven, so what matters here is only that the palette stays
+    // small enough for two rows of samples.
+    expect(ACCENTS.length).toBeLessThanOrEqual(16);
+    expect(ACCENTS.length).toBeGreaterThanOrEqual(12);
   });
 
   it("lets a tint be deeper than an accent, but not without limit", () => {

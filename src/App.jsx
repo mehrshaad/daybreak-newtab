@@ -678,7 +678,6 @@ function App() {
         onToggleEdit={toggleEdit}
         onOpenStore={openStore}
         onOpenSettings={openSettings}
-        inset={openDrawerWidth}
         onManageProfiles={() => revealInSettings("settings-profiles")}
         onContextMenu={openBoardMenu}
         searchRef={searchRef}

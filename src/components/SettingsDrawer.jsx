@@ -151,16 +151,28 @@ function SettingsDrawer({
       </Section>
 
       <Section title="Accent" data-tour="settings-accent" style={{ marginBottom: 22 }}>
-        {/* Five to a row, as a grid rather than a wrapping flex row: a wrapping
-            row of 30px swatches broke into a ragged seven, seven and two, where
-            even rows read as a palette. Five because there are fifteen since
-            slate went (see ACCENTS), which is three whole rows. The swatches
-            size themselves from the column, so the rows stay whole if the
-            drawer width ever changes. */}
+        {/* Fifteen swatches, and the row length is chosen so they come out the
+            size of a swatch rather than the size of a button.
+            
+            This was five to a row for one release, which is three clean rows of
+            fifteen — and at a 400px drawer that made each one 60px across.
+            Reported, fairly, as "the accent colours are huge in settings": a
+            colour swatch is a sample, and a 60px circle reads as something you
+            are meant to press rather than something you are meant to compare.
+            
+            Eight and seven is one cell short of even, which is why it was
+            changed away from — but a nearly-even pair of rows of 30px samples
+            looks far more like a palette than three rows of discs. auto-fit
+            with a max keeps them sample-sized whatever the drawer does. */}
         <div
           role="group"
           aria-label="Accent colour"
-          style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(30px, 34px))",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
         >
           {ACCENTS.map((c) => (
             <button

@@ -133,9 +133,24 @@ export function listRow(extra) {
   };
 }
 
+// A control's fill is translucent, so with blur on it wants frosting like every
+// other surface. Without it the toolbar buttons were the one thing on the page
+// showing the raw wallpaper through them while the panels beside them were
+// frosted, which is what "buttons have no blur on the blur toggle" is about.
+//
+// Resolves to `none` when blur is off, so this costs nothing on the default
+// setting. Worth having only where the control sits on the wallpaper rather
+// than inside an already-blurred sheet: backdrop-filter samples whatever is
+// behind it, and behind a control in a blurred drawer is that drawer.
+const FROSTED = {
+  backdropFilter: "var(--blur-tile)",
+  WebkitBackdropFilter: "var(--blur-tile)",
+};
+
 // The round 36px header controls.
 export function roundControl(extra) {
   return {
+    ...FROSTED,
     width: "36px",
     height: "36px",
     borderRadius: "999px",
@@ -154,6 +169,7 @@ export function roundControl(extra) {
 // Pill-shaped secondary button (Store, Add widget, ...).
 export function softButton(extra) {
   return {
+    ...FROSTED,
     padding: "9px 14px",
     borderRadius: "999px",
     fontSize: "13px",

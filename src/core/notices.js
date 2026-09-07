@@ -69,7 +69,7 @@ export function addNotice(list, notice) {
   // duplicate — a widget retrying a failing fetch every 30s should not build a
   // tower of identical warnings.
   const duplicate = list.findIndex(
-    (n) => n.message === notice.message && n.category === notice.category
+    (n) => n.message === notice.message && n.category === notice.category && !n.leaving
   );
   if (duplicate !== -1) {
     const next = list.slice();
@@ -80,9 +80,25 @@ export function addNotice(list, notice) {
   return next.length > MAX_VISIBLE ? next.slice(next.length - MAX_VISIBLE) : next;
 }
 
+// How long a notice takes to leave. It stays mounted for this, which is the
+// only way it can animate out at all: a notice spliced straight out of the
+// array simply disappears, and one of three stacked cards vanishing mid-blink
+// while the other two jump up to fill the gap reads as a glitch.
+export const EXIT_MS = 180;
+
+// Start it leaving. The card is still in the list, marked, so the component can
+// fade it and the stack can hold its place until it is gone.
+export function leaveNotice(list, id) {
+  return list.map((n) => (n.id === id && !n.leaving ? { ...n, leaving: true } : n));
+}
+
 export function removeNotice(list, id) {
   return list.filter((n) => n.id !== id);
 }
+
+// Ones already on their way out, so a caller can schedule their removal without
+// scheduling the same one twice.
+export const leavingIds = (list) => list.filter((n) => n.leaving).map((n) => n.id);
 
 export function freezeNotice(list, id, frozen) {
   return list.map((n) => (n.id === id ? { ...n, frozen } : n));
@@ -93,7 +109,9 @@ export function freezeNotice(list, id, frozen) {
 export function tickNotices(list, elapsed) {
   const expired = [];
   const next = list.map((n) => {
-    if (n.frozen || !n.duration) return n;
+    // A card on its way out has already expired once; ticking it again would
+    // report it a second time and schedule a second removal.
+    if (n.leaving || n.frozen || !n.duration) return n;
     const remaining = n.remaining - elapsed / n.duration;
     if (remaining <= 0) {
       expired.push(n.id);
