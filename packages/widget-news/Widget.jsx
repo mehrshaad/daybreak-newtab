@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LuMessageSquare } from "react-icons/lu";
 import {
   Appear,
@@ -7,6 +7,7 @@ import {
   LIST_ROW_HIGHLIGHT,
   MONO,
   originOf,
+  Popover,
   useWidgetLocal,
 } from "@daybreak/sdk";
 import { parseFeed } from "./feed";
@@ -31,8 +32,168 @@ async function loadCustomFeed(feedUrl) {
   return { status: "ok", items };
 }
 
+// How long a pointer has to rest on a story before its preview opens.
+//
+// A second, and deliberately much longer than a tooltip's 400ms. A tooltip
+// names the thing under the cursor; this is a paragraph that covers the rows
+// below it, so it has to be something you asked for by stopping rather than
+// something that happens on the way past.
+const PREVIEW_DELAY = 1000;
+
+// The domain a story came from, for the preview's byline.
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+// One story: a row, and the preview it opens when the pointer stays on it.
+function Story({ item, showMeta, preview, thumbnails, newTab }) {
+  const [hovered, setHovered] = useState(false);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const timer = useRef(null);
+
+  // The timer is cleared on leave *and* on unmount: a refresh replaces the
+  // list while a pointer is resting on it, and a preview that opened for a row
+  // that no longer exists would be anchored to nothing.
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const enter = () => {
+    setHovered(true);
+    if (!preview) return;
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setOpen(true), PREVIEW_DELAY);
+  };
+  const leave = () => {
+    setHovered(false);
+    clearTimeout(timer.current);
+    setOpen(false);
+  };
+
+  const host = hostOf(item.url);
+  const picture = thumbnails && item.image ? item.image : "";
+
+  return (
+    <>
+      <a
+        ref={ref}
+        href={item.url}
+        target={newTab ? "_blank" : undefined}
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        onMouseEnter={enter}
+        onMouseLeave={leave}
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 9,
+          textDecoration: "none",
+          color: "inherit",
+          // A story is a link you are about to click, and nothing said so.
+          // Same highlight every other list in the app uses.
+          padding: `5px ${LIST_BLEED}px`,
+          margin: `0 -${LIST_BLEED}px`,
+          borderRadius: 8,
+          background: hovered ? LIST_ROW_HIGHLIGHT : "transparent",
+          transition: "background .15s ease",
+        }}
+      >
+        {picture ? (
+          <img
+            src={picture}
+            alt=""
+            loading="lazy"
+            // A publisher's image is a request to their server, so it is told
+            // as little as possible about where it came from.
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+            style={{
+              width: 44,
+              height: 44,
+              flex: "none",
+              objectFit: "cover",
+              borderRadius: 7,
+              background: "var(--panel2)",
+            }}
+          />
+        ) : null}
+        <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 }}>
+          <span
+            style={{
+              fontSize: 13,
+              color: "var(--fg)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {item.title}
+          </span>
+          {/* Appear, so the meta row eases in and out with the setting. */}
+          <Appear open={!!(showMeta && (item.points != null || item.comments != null))}>
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontFamily: MONO,
+                fontSize: 10,
+                color: "var(--faint)",
+              }}
+            >
+              {item.points != null ? <span>{item.points} pts</span> : null}
+              {item.comments != null ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  <LuMessageSquare size={10} />
+                  {item.comments}
+                </span>
+              ) : null}
+            </span>
+          </Appear>
+        </span>
+      </a>
+
+      {/* Nothing is fetched to show this: the summary came with the feed. A
+          story with neither a summary nor a recognisable host has nothing to
+          preview, so it does not open one. */}
+      <Popover
+        open={open && !!(item.summary || host)}
+        anchorRef={ref}
+        onClose={() => setOpen(false)}
+        placement="bottom-start"
+        width={260}
+      >
+        <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {host ? (
+            <span style={{ fontFamily: MONO, fontSize: 9, color: "var(--faint)" }}>{host}</span>
+          ) : null}
+          <span style={{ fontSize: 12.5, color: "var(--fg)", lineHeight: 1.35 }}>
+            {item.title}
+          </span>
+          {item.summary ? (
+            <span style={{ fontSize: 11.5, color: "var(--dim)", lineHeight: 1.5 }}>
+              {item.summary}
+            </span>
+          ) : (
+            <span style={{ fontSize: 11, color: "var(--faint)" }}>
+              This feed gives no summary. Click to read it.
+            </span>
+          )}
+        </div>
+      </Popover>
+    </>
+  );
+}
+
 function News({ id, options, config, refreshKey, size }) {
-  const { count, showMeta, newTab } = options;
+  const { count, showMeta, newTab, preview, thumbnails } = options;
   const source = config.source || "hn";
   const feedUrl = config.feedUrl;
   // The count is the user's, not the tile height's. The list already scrolls,
@@ -46,9 +207,6 @@ function News({ id, options, config, refreshKey, size }) {
   const [cached, setCached] = useWidgetLocal(id, "last", null);
   const [status, setStatus] = useState("loading");
   const [live, setLive] = useState(null);
-  // Which story the pointer is on. One key for the list rather than a hook
-  // per row, because the rows are re-created on every refresh.
-  const [hovered, setHovered] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -140,65 +298,14 @@ function News({ id, options, config, refreshKey, size }) {
       }}
     >
       {data.items.slice(0, limit).map((item, i) => (
-        <a
+        <Story
           key={item.id ?? item.url ?? i}
-          href={item.url}
-          target={newTab ? "_blank" : undefined}
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          onMouseEnter={() => setHovered(item.id ?? item.url ?? i)}
-          onMouseLeave={() => setHovered(null)}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            textDecoration: "none",
-            color: "inherit",
-            // A story is a link you are about to click, and nothing said so.
-            // Same highlight every other list in the app uses.
-            padding: `5px ${LIST_BLEED}px`,
-            margin: `0 -${LIST_BLEED}px`,
-            borderRadius: 8,
-            background:
-              hovered === (item.id ?? item.url ?? i) ? LIST_ROW_HIGHLIGHT : "transparent",
-            transition: "background .15s ease",
-          }}
-        >
-          <span
-            style={{
-              fontSize: 13,
-              color: "var(--fg)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-            }}
-          >
-            {item.title}
-          </span>
-          {/* Appear, so the meta row eases in and out with the setting. */}
-          <Appear open={!!(showMeta && (item.points != null || item.comments != null))}>
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontFamily: MONO,
-                fontSize: 10,
-                color: "var(--faint)",
-              }}
-            >
-              {item.points != null ? <span>{item.points} pts</span> : null}
-              {item.comments != null ? (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                  <LuMessageSquare size={10} />
-                  {item.comments}
-                </span>
-              ) : null}
-            </span>
-          </Appear>
-        </a>
+          item={item}
+          showMeta={showMeta}
+          preview={preview}
+          thumbnails={thumbnails}
+          newTab={newTab}
+        />
       ))}
       {status === "error" || status === "blocked" ? (
         <div style={{ fontSize: 11, color: "var(--faint)" }}>

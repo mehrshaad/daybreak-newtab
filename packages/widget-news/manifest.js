@@ -30,6 +30,29 @@ export default {
       default: 8,
     },
     { key: "showMeta", label: "Show points and comments", type: "boolean", default: true },
+    {
+      key: "preview",
+      label: "Preview on hover",
+      type: "boolean",
+      // On. It costs nothing — the summary is already in the feed this widget
+      // has fetched, so hovering fetches nothing and tells nobody.
+      default: true,
+    },
+    {
+      key: "thumbnails",
+      label: "Show pictures",
+      type: "boolean",
+      // Off, and this is the one default in the widget that is a privacy
+      // decision rather than a taste one. A thumbnail is an image fetched from
+      // the publisher's own server, so switching this on means every new tab
+      // tells a handful of news sites that a tab was opened. The extension
+      // says it does no tracking; it should not arrange somebody else's
+      // without being asked.
+      //
+      // Hacker News carries no pictures at all, so for the default source this
+      // switch has nothing to turn on anyway.
+      default: false,
+    },
     { key: "newTab", label: "Open in a new tab", type: "boolean", default: true },
   ],
   // Listed low to high for display; defaultRate (not list order) is what
