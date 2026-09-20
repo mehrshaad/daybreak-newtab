@@ -9,6 +9,7 @@
 // belongs in the per-widget local bucket.
 export { clearBucket, flushBucket, readBucket, useWidgetLocal, writeBucket } from "./bucket";
 export { FLOATING_ATTR, isFloating } from "./floating";
+export { findIcon } from "./findIcon";
 
 // Widget content synced across signed-in Chrome profiles, capped so one
 // widget's content cannot break the 8KB-per-item sync limit.

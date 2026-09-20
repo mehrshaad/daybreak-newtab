@@ -18,11 +18,11 @@ import {
   requestPermission,
   Select,
   uid,
+  findIcon,
   useLiveRef,
   useWidgetAction,
 } from "@daybreak/sdk";
 import { LOOSE, folderNames, groupLinks, selectGroup } from "./folders";
-import { findIcon } from "./findIcon";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.

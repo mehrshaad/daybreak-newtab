@@ -1,14 +1,27 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { LuTrash2 } from "react-icons/lu";
 import {
   Button,
+  ColorField,
   IconGrid,
   MONO,
+  Popover,
   hasPermission,
   iconGridSize,
   requestPermission,
+  findIcon,
+  useLiveRef,
   useWidgetAction,
 } from "@daybreak/sdk";
-import { cap, hasBookmarksApi, readFolders, selectFolders, watchBookmarks } from "./tree";
+import {
+  cap,
+  editBookmark,
+  hasBookmarksApi,
+  readFolders,
+  removeBookmark,
+  selectFolders,
+  watchBookmarks,
+} from "./tree";
 
 // The browser's own bookmarks, by folder.
 //
@@ -37,8 +50,144 @@ function Empty({ children }) {
   );
 }
 
+const FIELD_LABEL = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+  fontFamily: MONO,
+  fontSize: 9,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
+  color: "var(--faint)",
+};
+
+const FIELD_INPUT = {
+  padding: "7px 9px",
+  borderRadius: 9,
+  background: "var(--panel2)",
+  border: "1px solid var(--line)",
+  outline: "none",
+  fontSize: 12,
+  color: "var(--fg)",
+  fontFamily: "inherit",
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+// One bookmark's own settings.
+//
+// Two halves with two different owners, and the UI does not make a point of
+// it: the name and the address are Chrome's and are written back to Chrome, so
+// a rename here is a rename in the bookmark manager; the colour is not
+// something Chrome's model has, so it lives in this widget's config.
+//
+// Writes go on blur rather than on every keystroke. chrome.bookmarks.update
+// fires a change event that reloads the whole tree, so per-keystroke writes
+// would re-render the grid under the cursor on every letter.
+function BookmarkEditor({ link, style, onStyle, onSaved, toast }) {
+  const [title, setTitle] = useState(link.title || "");
+  const [url, setUrl] = useState(link.url || "");
+  const [confirming, setConfirming] = useState(false);
+
+  const commit = async (next) => {
+    const wanted = { title: title.trim() || link.title, url: url.trim() || link.url, ...next };
+    if (wanted.title === link.title && wanted.url === link.url) return;
+    try {
+      await editBookmark(link.id, wanted);
+    } catch {
+      toast?.("Chrome would not save that change");
+      setTitle(link.title || "");
+      setUrl(link.url || "");
+    }
+  };
+
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: 8, padding: "10px 12px" }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <label style={FIELD_LABEL}>
+        Name
+        <input
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={() => commit()}
+          aria-label="Bookmark name"
+          style={FIELD_INPUT}
+        />
+      </label>
+      <label style={FIELD_LABEL}>
+        Link
+        <input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onBlur={() => commit()}
+          aria-label="Bookmark address"
+          style={FIELD_INPUT}
+        />
+      </label>
+
+      <ColorField
+        color={style?.color}
+        ink={style?.ink}
+        onColor={(color) => onStyle({ color })}
+        onInk={(ink) => onStyle({ ink })}
+      />
+
+      {/* Two taps, because this one is not undoable from here: the bookmark
+          goes out of Chrome, not just off the board. */}
+      <button
+        type="button"
+        onClick={async () => {
+          if (!confirming) {
+            setConfirming(true);
+            return;
+          }
+          try {
+            await removeBookmark(link.id);
+            onSaved?.();
+          } catch {
+            toast?.("Chrome would not delete that bookmark");
+          }
+        }}
+        onMouseLeave={() => setConfirming(false)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          padding: "7px 9px",
+          borderRadius: 9,
+          border: "1px solid var(--line)",
+          background: confirming ? "var(--dangerSoft, var(--panel))" : "transparent",
+          color: "var(--danger)",
+          fontSize: 12,
+          fontFamily: "inherit",
+          cursor: "pointer",
+          transition: "background .15s ease",
+        }}
+      >
+        <LuTrash2 size={12} aria-hidden />
+        {confirming ? "Delete from Chrome?" : "Delete bookmark"}
+      </button>
+    </div>
+  );
+}
+
 // One folder: its name, then its links, then what it is holding back.
-function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing }) {
+function Folder({
+  folder,
+  limit,
+  showHeading,
+  iconSize,
+  list,
+  onOpen,
+  editing,
+  styles,
+  onItemMenu,
+  activeKey,
+}) {
   const [all, setAll] = useState(false);
   const { shown, more } = cap(folder.links, all ? 0 : limit);
 
@@ -88,6 +237,9 @@ function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing })
           title: link.url,
           iconUrl: link.url,
           iconName: link.title,
+          // A bookmark is Chrome's, so its colour cannot live on it. Kept in
+          // this widget's own config, keyed by the bookmark's id.
+          ...(styles?.[link.id] || null),
         }))}
         cols={4}
         iconSize={iconSize}
@@ -95,6 +247,8 @@ function Folder({ folder, limit, showHeading, iconSize, list, onOpen, editing })
         list={list}
         onOpen={onOpen}
         editing={editing}
+        onItemMenu={onItemMenu}
+        activeKey={activeKey}
         // Lined up under the heading rather than centred beneath it.
         align={showHeading ? "start" : "center"}
         // Bookmarks are Chrome's, and their order is Chrome's. Dragging one
@@ -156,6 +310,13 @@ function Bookmarks({
   const { layout, iconScale, perFolder, showHeadings, newTab } = options;
   const [granted, setGranted] = useState(null);
   const [folders, setFolders] = useState([]);
+  // Which bookmark's editor is open, and the icon it hangs off. useLiveRef
+  // because the grid re-renders whenever Chrome's tree changes underneath it,
+  // and a plain ref would be pointing at a node React had already replaced.
+  const [edited, setEdited] = useState(null);
+  const rootRef = useRef(null);
+  const editAnchor = useLiveRef(() => (edited ? findIcon(rootRef.current, edited) : null));
+  const styles = config.styles || {};
 
   const load = useCallback(() => {
     readFolders().then(setFolders);
@@ -316,9 +477,28 @@ function Bookmarks({
   // One folder to a card carries no heading — the tile's own title says which
   // folder it is, from the manifest's `subtitle`.
   const headings = config.folderId ? false : showHeadings && visible.length > 1;
+  // Every link this card is showing, flattened, so the open editor can find
+  // its bookmark again after Chrome's tree reloads underneath it.
+  const flatLinks = visible.flatMap((f) => f.links);
+
+  // One bookmark's own settings, from a right-click on its icon — the same
+  // gesture Quick Links uses, because from the board they are the same kind of
+  // thing.
+  //
+  // The split is the interesting part. The name and the address belong to
+  // Chrome and are written straight back to it, so a rename here is a rename
+  // in the bookmark manager. The colour does not exist in Chrome's model at
+  // all, so it is kept in this widget's config keyed by the bookmark's id —
+  // which also means it survives the bookmark being renamed or moved, and goes
+  // away with the widget rather than leaving anything behind in the browser.
+  const editTarget = edited ? flatLinks.find((l) => l.id === edited) : null;
+  const patchStyle = (next) =>
+    setConfig({ styles: { ...styles, [edited]: { ...(styles[edited] || null), ...next } } });
 
   return (
-    <div
+    <>
+      <div
+      ref={rootRef}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -343,9 +523,31 @@ function Bookmarks({
           list={layout !== "grid"}
           onOpen={open}
           editing={editing}
+          styles={styles}
+          activeKey={edited}
+          onItemMenu={(item) => setEdited(item.key)}
         />
       ))}
-    </div>
+      </div>
+
+      <Popover
+        open={!!editTarget}
+        anchorRef={editAnchor}
+        onClose={() => setEdited(null)}
+        placement="bottom-center"
+        width={228}
+      >
+        {editTarget ? (
+          <BookmarkEditor
+            link={editTarget}
+            style={styles[editTarget.id]}
+            onStyle={patchStyle}
+            onSaved={() => setEdited(null)}
+            toast={toast}
+          />
+        ) : null}
+      </Popover>
+    </>
   );
 }
 
