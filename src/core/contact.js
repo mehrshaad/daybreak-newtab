@@ -15,9 +15,35 @@ import { browserLabel, ISSUES_URL } from "./report";
 // to say "the clock could be bigger" loses the message.
 
 export const AUTHOR = "Ali";
+// The full name, for the byline where there is room for it. AUTHOR stays short
+// because it appears mid-sentence.
+export const AUTHOR_FULL = "Ali Dadashzadeh";
+// A sunrise, for a thing called Daybreak. One character, and it does at a
+// glance what a photo does without needing a photo to have loaded.
+export const AUTHOR_EMOJI = "\u{1F305}";
 export const WEBSITE = "https://ali-dadashzadeh.ir/";
 export const FEEDBACK_EMAIL = "ali.m.dadashzadeh@gmail.com";
 export { ISSUES_URL };
+
+// A portrait, served from the extension's own package rather than hotlinked:
+// a new tab page that fetches an image on every open is a request per tab and
+// a thing that can go missing. Optional — drop a square image at
+// public/author.jpg and it appears; until then the byline uses the emoji,
+// which is why nothing here waits on a file.
+export const AUTHOR_PHOTO = "author.jpg";
+
+// Where else to find them. An entry with no URL is not offered, so adding one
+// is a single line here and nothing else changes.
+export const PROFILES = [
+  { key: "github", label: "GitHub", url: "https://github.com/mehrshaad" },
+  // Paste the profile URL in and the pill appears.
+  { key: "linkedin", label: "LinkedIn", url: "" },
+];
+
+// Only the ones that actually go somewhere.
+export function profileLinks(list = PROFILES) {
+  return list.filter((p) => typeof p.url === "string" && /^https?:\/\//.test(p.url));
+}
 
 // mailto: has no standard length limit and clients disagree — some Windows
 // handlers cut off around 2000 characters, and a message that arrives with its

@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { LuBug, LuGlobe, LuMail, LuSend } from "react-icons/lu";
+import { SiGithub, SiLinkedin } from "react-icons/si";
 import { MONO, pill, useHover } from "@daybreak/sdk";
 import {
   AUTHOR,
+  AUTHOR_EMOJI,
+  AUTHOR_FULL,
+  AUTHOR_PHOTO,
   FEEDBACK_EMAIL,
   MESSAGE_MAX,
   bugUrl,
   feedbackMailto,
+  profileLinks,
   WEBSITE,
 } from "../core/contact";
 import { versionLabel } from "../core/version";
@@ -145,11 +150,125 @@ function FeedbackPanel({ open, onSent }) {
   );
 }
 
+// The face of the thing, with a fallback that is not a broken image.
+//
+// The photo is optional and ships in the package, so there is no request and
+// no third party — but there is also no guarantee the file is there. onError
+// switches to the emoji rather than leaving the browser's torn-page icon in a
+// settings panel, and the emoji is what shows until the image decodes, so
+// there is never an empty square either.
+function Portrait({ size = 44 }) {
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const showPhoto = !failed;
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "relative",
+        width: size,
+        height: size,
+        flex: "none",
+        borderRadius: "50%",
+        overflow: "hidden",
+        display: "grid",
+        placeItems: "center",
+        fontSize: Math.round(size * 0.5),
+        lineHeight: 1,
+        background: "var(--panel2)",
+        border: "1px solid var(--line)",
+      }}
+    >
+      <span style={{ opacity: loaded ? 0 : 1, transition: "opacity .25s ease" }}>
+        {AUTHOR_EMOJI}
+      </span>
+      {showPhoto ? (
+        <img
+          src={AUTHOR_PHOTO}
+          alt=""
+          width={size}
+          height={size}
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            opacity: loaded ? 1 : 0,
+            transition: "opacity .25s ease",
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+// Name, face and the places to find them, as one block rather than a sentence
+// in the small print. The extension is the most-opened page somebody has and
+// it said almost nothing about where it came from.
+function Byline() {
+  const profiles = profileLinks();
+  const ICONS = { github: SiGithub, linkedin: SiLinkedin };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <Portrait />
+      <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+        <div style={{ fontSize: 14, color: "var(--fg)", fontWeight: 500 }}>{AUTHOR_FULL}</div>
+        <div style={{ fontSize: 12, color: "var(--dim)" }}>Made Daybreak</div>
+      </div>
+      <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+        {profiles.map((p) => {
+          const Icon = ICONS[p.key] || LuGlobe;
+          return (
+            <IconLink key={p.key} href={p.url} label={p.label}>
+              <Icon size={15} aria-hidden />
+            </IconLink>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// A square link for a mark with no words next to it, so a row of them reads as
+// a row rather than as three pills of different widths.
+function IconLink({ href, label, children }) {
+  const [hovered, bind] = useHover();
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
+      style={{
+        display: "grid",
+        placeItems: "center",
+        width: 32,
+        height: 32,
+        borderRadius: 10,
+        color: hovered ? "var(--fg)" : "var(--dim)",
+        background: hovered ? "var(--panel2)" : "transparent",
+        border: "1px solid var(--line)",
+        textDecoration: "none",
+        transition: "background .18s ease, color .18s ease",
+      }}
+      {...bind}
+    >
+      {children}
+    </a>
+  );
+}
+
 function AboutSection({ toast }) {
   const [feedback, setFeedback] = useState(false);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <Byline />
+
       <div
         style={{
           display: "flex",
@@ -166,8 +285,8 @@ function AboutSection({ toast }) {
       </div>
 
       <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5 }}>
-        Made by {AUTHOR}. Bugs are best in the tracker, where they can be
-        followed; anything else, mail is fine.
+        Bugs are best in the tracker, where they can be followed. Anything
+        else, mail {AUTHOR} directly.
       </div>
 
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

@@ -306,10 +306,34 @@ function App() {
     searchRef.current?.select();
   }, []);
 
+  // Typing anywhere on the board goes to the search field, the way it does on
+  // Chrome's own new tab.
+  //
+  // The character is written in rather than left to arrive on its own. The
+  // field is a controlled React input, so setting `value` directly would be
+  // overwritten on the next render — React has to be told, and the way to tell
+  // it is the native setter plus an input event, which is what its own
+  // onChange listens for. Ugly, and the alternative is losing the first letter
+  // of a search whenever the fall-through does not happen.
+  const typeIntoSearch = useCallback((char) => {
+    const el = searchRef.current;
+    if (!el) return;
+    el.focus();
+    const setValue = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    setValue?.call(el, el.value + char);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    const end = el.value.length;
+    el.setSelectionRange?.(end, end);
+  }, []);
+
   useKeyboard({
     enabled: behavior.shortcuts,
     onEscape: closeEverything,
     onSearch: focusSearch,
+    onType: typeIntoSearch,
     onToggleEdit: toggleEdit,
     onStore: openStore,
   });
