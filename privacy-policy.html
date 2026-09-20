@@ -256,6 +256,15 @@
           is sent, only a request for the current top stories. If you switch
           to your own RSS or Atom feed instead, only that address you pasted
           in is fetched, using the one-time permission described above.
+          The story summary shown when you rest the pointer on a headline
+          comes from that same feed and fetches nothing further.
+          <strong>&ldquo;Show pictures&rdquo; is off by default</strong>, and
+          it is the one setting in this extension that adds requests to
+          servers other than the feed&rsquo;s: a thumbnail is loaded from
+          whichever host the feed names for it, usually the publisher&rsquo;s
+          own, which tells that host a tab was opened. Turn it on and those
+          requests are made on every new tab; leave it off and none are. When
+          on, they are sent without a referrer.
         </li>
         <li>
           <strong>Calendar — the address you paste in.</strong> Fetches only
