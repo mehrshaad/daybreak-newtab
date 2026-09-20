@@ -109,3 +109,37 @@ export function deltaLabel(seconds, short = false) {
   const amount = minutes ? `${minutes}m ${String(rest).padStart(2, "0")}s` : `${rest}s`;
   return short ? `${sign}${amount}` : `${sign}${amount} on yesterday`;
 }
+
+// The viewBox for a box of a given shape.
+//
+// The SVG used to be a fixed 300x96 with preserveAspectRatio="none", so it
+// stretched to whatever the tile was. That made the arc span the full width at
+// any tile shape, and sheared everything else by the same amount: the sun came
+// out wider than tall in a short tile and taller than wide in a roomy one.
+// Nothing drawn in a stretched viewBox can be round.
+//
+// Keeping the width at 300 and giving the height the box's own aspect ratio
+// gets both: the drawing still spans the full width, and the scale is uniform
+// so a circle is a circle. Without it — a fixed viewBox and no stretching —
+// the arc would be letterboxed inside a tile it should reach the edges of.
+//
+// Clamped because a tile mid-resize can report a hairline, and a viewBox height
+// near zero puts the arc's control point somewhere absurd.
+export const VIEW_WIDTH = 300;
+const MIN_RATIO = 0.12;
+const MAX_RATIO = 1.2;
+const FALLBACK_RATIO = 96 / VIEW_WIDTH;
+
+export function viewBoxFor(box) {
+  const ratio =
+    box && box.width > 0 && box.height > 0 ? box.height / box.width : FALLBACK_RATIO;
+  return {
+    width: VIEW_WIDTH,
+    // Two decimals, not whole units. Rounding the height to an integer leaves
+    // up to half a unit of mismatch between the two scales, which is a visible
+    // half-percent of squash on the one thing this exists to keep round. Two
+    // decimals is exact enough and still a stable attribute string, so the SVG
+    // is not rewritten on every sub-pixel of a resize.
+    height: Math.round(VIEW_WIDTH * clamp(ratio, MIN_RATIO, MAX_RATIO) * 100) / 100,
+  };
+}

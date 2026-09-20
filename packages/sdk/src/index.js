@@ -140,7 +140,7 @@ export {
   tileColor,
 } from "./tilePalette";
 export { useLiveRef } from "./useLiveRef";
-export { useLongPress } from "./useLongPress";
+export { isScrollbarPress, useLongPress } from "./useLongPress";
 export { useWidgetAction } from "./useWidgetAction";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";
