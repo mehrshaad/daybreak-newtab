@@ -2,6 +2,7 @@ import { isMac } from "@daybreak/sdk";
 import { essentialsFirst } from "./essentials";
 import { DEFAULTS as VISUAL_DEFAULTS } from "./tokens";
 import { knownIds } from "../widgets/registry";
+import { migrateWidgetOptions } from "./migrateOptions";
 
 export const SCHEMA_VERSION = 2;
 
@@ -165,6 +166,9 @@ export function hydrate(saved) {
   // it and should not suddenly see a first-run card, so only a genuinely
   // fresh install (the !saved branch above) leaves it at the false default.
   if (saved.behavior?.tourDone === undefined) out.behavior.tourDone = true;
+  // An option that changed shape since the board was written, said again in
+  // the vocabulary the widget uses now. See migrateOptions.js.
+  out.widgets = migrateWidgetOptions(out.widgets);
   // `installed` must always cover what is on the board.
   const ids = Array.isArray(out.board.ids) ? out.board.ids : [];
   const installed = Array.isArray(out.board.installed) ? out.board.installed : [];

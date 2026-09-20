@@ -66,6 +66,7 @@ describe("world clock rows", () => {
     // If this set ever empties the scroller can go; if it grows, something got
     // taller without anyone noticing.
     expect(overflowing.map(where)).toEqual([
+      "2x2 header:y large 4 cities (needs 154, has 146)",
       "3x2 header:y large 4 cities (needs 154, has 146)",
       "4x2 header:y large 4 cities (needs 154, has 146)",
     ]);

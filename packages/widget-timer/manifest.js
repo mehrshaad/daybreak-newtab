@@ -26,7 +26,42 @@ export default {
       // title is the only part of this page a backgrounded tab still shows.
       default: true,
     },
-    { key: "longFocus", label: "50-minute rounds", type: "boolean", default: false },
+    // Minutes, not a single "50-minute rounds" switch. That switch offered two
+    // lengths out of the range people actually work in, and a round is the one
+    // thing about a pomodoro timer everybody has an opinion on. A stored
+    // longFocus: true becomes fifty here — see migrateWidgetOptions.
+    {
+      key: "focusMinutes",
+      label: "Focus round",
+      type: "number",
+      min: 5,
+      max: 60,
+      step: 5,
+      suffix: "min",
+      default: 25,
+    },
+    {
+      key: "breakMinutes",
+      label: "Break",
+      type: "number",
+      min: 1,
+      max: 30,
+      step: 1,
+      suffix: "min",
+      default: 5,
+    },
+    {
+      key: "longBreakMinutes",
+      label: "Long break",
+      type: "number",
+      min: 5,
+      max: 60,
+      step: 5,
+      suffix: "min",
+      // Every fourth round, which is what makes it worth its own setting
+      // rather than following the short one.
+      default: 15,
+    },
     { key: "autoStart", label: "Auto-start breaks", type: "boolean", default: false },
   ],
   refresh: null,
