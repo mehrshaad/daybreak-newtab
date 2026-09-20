@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
-import { clipboardLink, readClipboardLink } from "./clipboardLink";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  clipboardAsked,
+  clipboardLink,
+  markClipboardAsked,
+  readClipboardLink,
+} from "./clipboardLink";
 
 describe("clipboardLink", () => {
   it("takes a full address as it is", () => {
@@ -90,5 +95,51 @@ describe("readClipboardLink", () => {
     vi.stubGlobal("navigator", {});
     await expect(readClipboardLink()).resolves.toBe("");
     vi.unstubAllGlobals();
+  });
+});
+
+describe("remembering that we asked", () => {
+  beforeEach(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      // no-op
+    }
+  });
+
+  it("starts out not asked", () => {
+    expect(clipboardAsked()).toBe(false);
+  });
+
+  it("remembers across a reload, which is the whole point", () => {
+    // This was a ref in the widget, and a new tab page is a fresh page every
+    // single time — so somebody who declined was asked again on their next
+    // tab, and every tab after that. localStorage outlives the page.
+    markClipboardAsked();
+    expect(clipboardAsked()).toBe(true);
+  });
+
+  it("is idempotent", () => {
+    markClipboardAsked();
+    markClipboardAsked();
+    expect(clipboardAsked()).toBe(true);
+  });
+
+  it("says not-asked rather than throwing where storage is blocked", () => {
+    // Private windows and blocked site data. One extra prompt beats a crash,
+    // and beats silently never offering the feature.
+    const real = Object.getOwnPropertyDescriptor(window, "localStorage");
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get() {
+        throw new Error("blocked");
+      },
+    });
+    try {
+      expect(clipboardAsked()).toBe(false);
+      expect(() => markClipboardAsked()).not.toThrow();
+    } finally {
+      if (real) Object.defineProperty(window, "localStorage", real);
+    }
   });
 });

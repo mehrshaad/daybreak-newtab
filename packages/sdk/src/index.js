@@ -127,7 +127,13 @@ export { useHover } from "./useHover";
 export { useMeasuredBox, useMeasuredWidth } from "./useMeasuredWidth";
 export { usePointerExit } from "./usePointerExit";
 export { useRovingMenu } from "./useRovingMenu";
-export { clipboardLink, hasClipboardRead, readClipboardLink } from "./clipboardLink";
+export {
+  clipboardAsked,
+  clipboardLink,
+  hasClipboardRead,
+  markClipboardAsked,
+  readClipboardLink,
+} from "./clipboardLink";
 export { layoutRect, pageZoomFactor } from "./zoom";
 export {
   DARK_INK,

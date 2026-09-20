@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { LuLayoutGrid, LuMousePointerClick, LuStore } from "react-icons/lu";
-import { hasPermissionsApi, requestAllPermissions, usePresence } from "@daybreak/sdk";
+import {
+  hasPermissionsApi,
+  markClipboardAsked,
+  requestAllPermissions,
+  requestPermission,
+  usePresence,
+} from "@daybreak/sdk";
 import { Button, Pill } from "./primitives";
 
 // Requested together so the results (open tabs, bookmarks, history) come with
@@ -50,6 +56,7 @@ function WelcomeCard({
   const inputRef = useRef(null);
   // idle: not yet asked (or dev has nothing to ask for) | granted | denied.
   const [searchState, setSearchState] = useState(hasPermissionsApi() ? "idle" : "denied");
+  const [pasteState, setPasteState] = useState(hasPermissionsApi() ? "idle" : "denied");
 
   const enableSearch = async () => {
     const granted = await requestAllPermissions(SEARCH_PERMISSIONS);
@@ -59,6 +66,18 @@ function WelcomeCard({
     } else {
       setSearchState("denied");
     }
+  };
+
+  // Offered here as well as at the moment it is first needed, because the two
+  // suit different people: somebody who reads this card would rather answer
+  // every permission question now than be interrupted later, and somebody who
+  // skips it gets asked once, when they add their first link.
+  //
+  // Either way the answer is recorded, so nobody is asked twice.
+  const enablePaste = async () => {
+    markClipboardAsked();
+    const granted = await requestPermission("clipboardRead");
+    setPasteState(granted ? "granted" : "denied");
   };
 
   useEffect(() => {
@@ -200,6 +219,32 @@ function WelcomeCard({
             </>
           ) : searchState === "granted" ? (
             <span style={{ fontSize: 12, color: "var(--ok)" }}>Smarter search enabled.</span>
+          ) : (
+            <span style={{ fontSize: 11, color: "var(--faint)", lineHeight: 1.5 }}>
+              You can turn this on any time from Settings.
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 12, color: "var(--dim)" }}>Adding links</span>
+          {pasteState === "idle" ? (
+            <>
+              <Pill
+                onClick={enablePaste}
+                style={{ alignSelf: "flex-start", padding: "8px 14px", fontSize: 13 }}
+              >
+                Offer the link I copied
+              </Pill>
+              <span style={{ fontSize: 11, color: "var(--faint)", lineHeight: 1.5 }}>
+                Fills the address in for you when you add a Quick Link. Read
+                only while that form is open, and never stored.
+              </span>
+            </>
+          ) : pasteState === "granted" ? (
+            <span style={{ fontSize: 12, color: "var(--ok)" }}>
+              Copied links will be offered.
+            </span>
           ) : (
             <span style={{ fontSize: 11, color: "var(--faint)", lineHeight: 1.5 }}>
               You can turn this on any time from Settings.

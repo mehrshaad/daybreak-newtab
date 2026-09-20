@@ -12,6 +12,8 @@ import {
   MONO,
   moveItem,
   Popover,
+  clipboardAsked,
+  markClipboardAsked,
   readClipboardLink,
   requestPermission,
   Select,
@@ -226,7 +228,6 @@ function Links({
   // a button was needed, and a click on Add is a user gesture, which is all
   // Chrome requires — so it is asked for here, once, and never again either
   // way. Declined, the field is simply typed into.
-  const askedPaste = useRef(false);
   const openAdd = (e) => {
     e.stopPropagation();
     if (adding) {
@@ -234,8 +235,11 @@ function Links({
       return;
     }
     setAdding(true);
-    if (canPaste !== false || askedPaste.current) return;
-    askedPaste.current = true;
+    // Once ever, not once per page. This was a ref, and a new tab page is a
+    // fresh page every time, so somebody who declined got asked again on their
+    // next tab and every tab after that. clipboardAsked() remembers.
+    if (canPaste !== false || clipboardAsked()) return;
+    markClipboardAsked();
     // Nothing may be awaited before this or the gesture is already spent.
     requestPermission("clipboardRead").then(async (granted) => {
       setCanPaste(granted);

@@ -66,3 +66,34 @@ export async function readClipboardLink() {
     return "";
   }
 }
+
+// Whether the clipboard question has already been put to this person.
+//
+// The widget used to keep this in a ref, which meant "ask once" asked once per
+// page — and a new tab page is a fresh page every single time, so somebody who
+// said no got the dialog again on their next tab, and the one after that.
+//
+// Device-local on purpose. The permission itself is per-profile-per-device, so
+// syncing the fact that we asked would suppress the question on a machine that
+// never granted anything. localStorage rather than chrome.storage because the
+// answer is needed synchronously, before a click handler can await anything
+// and lose its user gesture.
+const ASKED_KEY = "daybreak2pasteAsked";
+
+export function clipboardAsked() {
+  try {
+    return localStorage.getItem(ASKED_KEY) === "1";
+  } catch {
+    // Private windows and blocked site data. Treat it as not asked: the worst
+    // case is one extra prompt, which beats silently never offering it.
+    return false;
+  }
+}
+
+export function markClipboardAsked() {
+  try {
+    localStorage.setItem(ASKED_KEY, "1");
+  } catch {
+    // Nothing to do. See above.
+  }
+}
