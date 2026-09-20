@@ -8,6 +8,7 @@ import {
   HOVER_LIFT,
   isMac,
   MenuRow,
+  Popover,
   MONO,
   roundControl,
   SEARCH_ENGINES,
@@ -99,27 +100,18 @@ function EnginePicker({ engine, onPick }) {
         <EngineMark engine={engine} size={15} />
       </button>
       <Tooltip {...tip} />
-      {open ? (
-        <div
-          role="menu"
-          ref={menuRef}
-          onKeyDown={onMenuKeyDown}
-          aria-label="Search engine"
-          style={{
-            position: "absolute",
-            top: "calc(100% + 10px)",
-            left: "-8px",
-            zIndex: 60,
-            width: 168,
-            padding: "5px 0",
-            borderRadius: 12,
-            background: "var(--sheet)",
-            border: "1px solid var(--line)",
-            backdropFilter: "var(--blur-panel)",
-            boxShadow: "0 20px 50px rgba(0,0,0,.4)",
-            animation: "db-menu .12s ease both",
-          }}
-        >
+      {/* Portalled, via the shared Popover, and that is the fix rather than a
+          tidy-up. This was an absolutely-positioned panel inside the search
+          field, and the field carries a backdrop-filter of its own — which
+          starts a new backdrop root and makes a descendant's backdrop-filter
+          inert. So the menu's blur did nothing and its 66%-translucent surface
+          let the board read straight through the engine names.
+
+          The same trap as the tour card, and the reason every other floating
+          surface in the app portals to <body>: outside every backdrop root,
+          there is nothing to be inert against. */}
+      <Popover open={open} anchorRef={buttonRef} onClose={close} width={180}>
+        <div role="menu" ref={menuRef} onKeyDown={onMenuKeyDown} aria-label="Search engine" style={{ padding: "5px 0" }}>
           {Object.entries(SEARCH_ENGINES).map(([key, e]) => (
             <MenuRow
               key={key}
@@ -137,7 +129,7 @@ function EnginePicker({ engine, onPick }) {
             </MenuRow>
           ))}
         </div>
-      ) : null}
+      </Popover>
     </div>
   );
 }
