@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { LuMessageSquare } from "react-icons/lu";
-import { Appear, hasOrigin, MONO, originOf, useWidgetLocal } from "@daybreak/sdk";
+import {
+  Appear,
+  hasOrigin,
+  LIST_BLEED,
+  LIST_ROW_HIGHLIGHT,
+  MONO,
+  originOf,
+  useWidgetLocal,
+} from "@daybreak/sdk";
 import { parseFeed } from "./feed";
 import { HN_TOP_STORIES, hnItemUrl, parseHnItem } from "./hn";
 
@@ -38,6 +46,9 @@ function News({ id, options, config, refreshKey, size }) {
   const [cached, setCached] = useWidgetLocal(id, "last", null);
   const [status, setStatus] = useState("loading");
   const [live, setLive] = useState(null);
+  // Which story the pointer is on. One key for the list rather than a hook
+  // per row, because the rows are re-created on every refresh.
+  const [hovered, setHovered] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -121,6 +132,11 @@ function News({ id, options, config, refreshKey, size }) {
         minHeight: 0,
         overflowY: "auto",
         overflowX: "hidden",
+        // Room for each row's highlight to bleed past the text column, taken
+        // inside the scroller so the extra width is not scrollable. See
+        // LIST_BLEED.
+        padding: `0 ${LIST_BLEED}px`,
+        margin: `0 -${LIST_BLEED}px`,
       }}
     >
       {data.items.slice(0, limit).map((item, i) => (
@@ -130,12 +146,22 @@ function News({ id, options, config, refreshKey, size }) {
           target={newTab ? "_blank" : undefined}
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => setHovered(item.id ?? item.url ?? i)}
+          onMouseLeave={() => setHovered(null)}
           style={{
             display: "flex",
             flexDirection: "column",
             gap: 2,
             textDecoration: "none",
             color: "inherit",
+            // A story is a link you are about to click, and nothing said so.
+            // Same highlight every other list in the app uses.
+            padding: `5px ${LIST_BLEED}px`,
+            margin: `0 -${LIST_BLEED}px`,
+            borderRadius: 8,
+            background:
+              hovered === (item.id ?? item.url ?? i) ? LIST_ROW_HIGHLIGHT : "transparent",
+            transition: "background .15s ease",
           }}
         >
           <span

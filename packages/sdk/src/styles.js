@@ -56,7 +56,21 @@ export function mark(seed, size = 22) {
     height: `${size}px`,
     borderRadius: `${Math.round(size * 0.3)}px`,
     flex: "none",
-    background: `linear-gradient(140deg, oklch(0.72 0.14 ${h}), oklch(0.55 0.12 ${
+    // Lifted from 0.72/0.55 so the near-black glyph on top of it is legible.
+    //
+    // Measured rather than adjusted by eye: against #0a0b0e the old pair gave
+    // 7.4:1 on the light stop but only 3.8:1 on the dark one, and the glyph
+    // sits across both — which is why the marks in the store read as muddy
+    // shapes rather than icons. This pair is 5.9:1 at its worst.
+    //
+    // White ink was the other suggestion and it is the wrong way: on these
+    // chips white bottoms out at 2.27:1, worse than the black it would
+    // replace. The gradient was the problem, not the ink.
+    //
+    // The cost is that a chip stands off a white card at 1.84:1 instead of
+    // 2.27:1. Worth it: the chip is a coloured square either way, and nobody
+    // is trying to read its edge.
+    background: `linear-gradient(140deg, oklch(0.78 0.15 ${h}), oklch(0.66 0.14 ${
       (h + 45) % 360
     }))`,
     display: "grid",
@@ -104,9 +118,14 @@ export const HOVER_LIFT = {
 // stays the same size whatever it happens to contain.
 export const LIST_ROW_HEIGHT = 30;
 
-// `--panel`, not `--panel2`: the brighter token reads as a pressed state next
-// to a daytime World Clocks row.
-export const LIST_ROW_HIGHLIGHT = "var(--panel)";
+// A wash that goes the other way from the surface, not more of the surface.
+//
+// This was `--panel`, chosen over `--panel2` because the brighter one read as
+// a pressed state. Both were the wrong axis: in light mode --panel is white at
+// 62% over a tile already white at 55%, so hovering a row lightened it by a
+// margin nobody could see. --rowHover darkens in light and lightens in dark,
+// which is how a hover reads on either.
+export const LIST_ROW_HIGHLIGHT = "var(--rowHover)";
 
 // How far a row's highlight reaches past its text column on each side, out to
 // the tile's own padding edge, so it reads as a full-width row.

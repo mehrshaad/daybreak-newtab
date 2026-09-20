@@ -225,15 +225,29 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
   // same unit system as the temperature.
   const windUnit = fahrenheit ? "mph" : "km/h";
 
+  // Whether anything is drawn below the readout. Turning the forecast off and
+  // leaving the stat chips off leaves the readout alone in the tile, and
+  // `space-between` puts a lone child at the top — so the temperature sat in
+  // the top-left of an otherwise empty card. With nothing to space it against,
+  // it should be in the middle.
+  const hasBandBelow =
+    (view.stats && stats.length > 0) ||
+    view.details ||
+    (view.daily && days.length > 0) ||
+    (view.hourly && hours.length > 0);
+
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
+        justifyContent: hasBandBelow ? "space-between" : "center",
         flex: 1,
         gap: 12,
         minWidth: 0,
+        // The readout slides to the middle rather than jumping there when the
+        // last strip is switched off.
+        transition: "justify-content .28s cubic-bezier(.2,.8,.2,1)",
       }}
     >
       {/* A flex column whose alignment moves, rather than a block whose text
