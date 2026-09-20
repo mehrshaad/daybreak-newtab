@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { clampToViewport } from "../clamp";
 import { layoutRect, pageZoomFactor } from "../zoom";
 import { usePresence } from "../usePresence";
+import { FLOATING_ATTR } from "../floating";
 
 const GAP = 6;
 const EXIT_MS = 140;
@@ -113,6 +114,10 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
     <div
       ref={panelRef}
       role="dialog"
+      // Belongs to whatever opened it, however far from it this ends up in the
+      // DOM. See floating.js: without this the settings drawer reads a click
+      // in here as a click on the page behind it and closes.
+      {...{ [FLOATING_ATTR]: "popover" }}
       style={{
         position: "fixed",
         // Until the first measurement lands, render off-screen rather than at

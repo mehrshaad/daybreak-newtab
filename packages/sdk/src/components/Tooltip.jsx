@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { clampToViewport } from "../clamp";
 import { layoutRect, pageZoomFactor } from "../zoom";
 import { usePresence } from "../usePresence";
+import { FLOATING_ATTR } from "../floating";
 
 const GAP = 6;
 const EXIT_MS = 120;
@@ -72,6 +73,7 @@ function Tooltip({ anchorRef, open, label, placement = "bottom-center" }) {
       ref={panelRef}
       role="presentation"
       aria-hidden="true"
+      {...{ [FLOATING_ATTR]: "tooltip" }}
       style={{
         position: "fixed",
         left: pos?.left ?? -9999,
