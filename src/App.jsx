@@ -42,8 +42,16 @@ import {
 const HEADER_HEIGHT = 78;
 
 function App() {
-  const { settings, update, updateWidget, replaceSettings, resetSettings } =
-    useSettings();
+  const {
+    settings,
+    update,
+    updateWidget,
+    replaceSettings,
+    resetSettings,
+    inTourProfile,
+    startTourReplay,
+    endTourReplay,
+  } = useSettings();
   const { appearance, behavior, board, widgets, profile } = settings;
   const { accent, wall } = appearance;
   // The stored preference may be "system" or "sun"; resolve it once here so
@@ -293,6 +301,13 @@ function App() {
     },
     [ids]
   );
+
+  // A replay is switched to its own profile, and switching reloads — so the
+  // tour has to open itself on the way back up rather than being opened by the
+  // click that asked for it.
+  useEffect(() => {
+    if (inTourProfile) setTourOpen(true);
+  }, [inTourProfile]);
 
   const startTour = useCallback(() => {
     // Taking the tour is being shown around, so the welcome card has done its
@@ -978,9 +993,15 @@ function App() {
       ) : null}
 
       <SettingsDrawer
+        // A replay, not a rerun over their own board. The tour opens drawers,
+        // enters edit mode and recolours a tile, and five of its fifteen steps
+        // need a widget to point at — doing that to a board somebody has
+        // arranged is an edit rather than a demonstration, and on a board
+        // cleared down to a clock half the steps have nothing to say. So it
+        // gets a profile and a board of its own. See tourProfile.js.
         onTour={() => {
           setSettingsOpen(false);
-          startTour();
+          startTourReplay();
         }}
         open={settingsOpen}
         settings={settings}
@@ -1032,7 +1053,16 @@ function App() {
 
       <Tour
         open={tourOpen}
-        onClose={() => setTourOpen(false)}
+        // Closing a replay takes the board with it: back to the profile they
+        // came from, and the tour's own board is deleted. Closing the first-run
+        // tour just closes it — that one runs on their real board.
+        onClose={() => {
+          if (inTourProfile) {
+            endTourReplay();
+            return;
+          }
+          setTourOpen(false);
+        }}
         onScene={showScene}
         hasWidgets={ids.length > 0}
       />

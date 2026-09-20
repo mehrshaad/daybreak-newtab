@@ -120,8 +120,9 @@ export function removeProfile(profiles, id) {
 // the home one — syncing this would have every device follow the last one to
 // switch. Falls back to the primary whenever the stored id names a profile that
 // no longer exists, which is what happens on the device that did not delete it.
-export function resolveActive(profiles, storedId) {
+export function resolveActive(profiles, storedId, { allow = [] } = {}) {
   const list = profiles.list || [];
+  if (allow.includes(storedId)) return storedId;
   return list.some((p) => p.id === storedId) ? storedId : PRIMARY_PROFILE;
 }
 

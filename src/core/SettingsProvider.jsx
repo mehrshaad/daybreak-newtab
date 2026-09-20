@@ -10,6 +10,15 @@ import {
   seedForNewProfile,
 } from "./profiles";
 import { defaultSettings, hydrate, widgetState } from "./schema";
+import {
+  TOUR_PROFILE,
+  endTourSession,
+  isTourProfile,
+  seedForTour,
+  startTourSession,
+  strandedInTour,
+  tourReturnTo,
+} from "./tourProfile";
 import { SettingsContext } from "./settingsContext";
 import {
   debounceWriter,
@@ -81,7 +90,17 @@ export function SettingsProvider({ children }) {
       // The stored id was taken on trust before the first paint. If it names a
       // profile that has since been deleted elsewhere, this page is showing a
       // board nobody owns: land on the primary and start again.
-      const resolved = resolveActive(roster, profileId.current);
+      // Stranded in the tour profile: a reload landed here after the marker was
+      // cleared, or the page went down mid-tour. Without this the person is on
+      // a board that is not theirs with no way back they would think to look
+      // for, so it takes them home and tidies up.
+      if (strandedInTour(profileId.current)) {
+        writeActiveProfile(PRIMARY_PROFILE);
+        forgetProfileStorage(TOUR_PROFILE);
+        window.location.reload();
+        return;
+      }
+      const resolved = resolveActive(roster, profileId.current, { allow: [TOUR_PROFILE] });
       if (resolved !== profileId.current) {
         writeActiveProfile(resolved);
         window.location.reload();
@@ -248,6 +267,33 @@ export function SettingsProvider({ children }) {
     [profiles, saveRoster]
   );
 
+  // Replaying the tour on a board built for it. See tourProfile.js.
+  //
+  // The profile is seeded and switched to in one go, the same way createProfile
+  // does it, but it never enters the roster — so it costs nobody one of their
+  // three, and the switcher does not offer a board that is about to be thrown
+  // away.
+  const startTourReplay = useCallback(() => {
+    if (isTourProfile(profileId.current)) return;
+    startTourSession(profileId.current);
+    const seed = seedForTour(defaultSettings(), settings);
+    syncAreaFor(TOUR_PROFILE).set(seed);
+    writeSyncMirror(seed, TOUR_PROFILE);
+    switchProfile(TOUR_PROFILE);
+  }, [settings, switchProfile]);
+
+  // Back to the board they came from, and the tour's board goes in the bin.
+  //
+  // Deleted rather than kept: it was never in the roster, so leaving it would
+  // leave a board in storage that nothing can reach and nothing can remove.
+  const endTourReplay = useCallback(() => {
+    const back = tourReturnTo() || PRIMARY_PROFILE;
+    endTourSession();
+    forgetProfileStorage(TOUR_PROFILE);
+    writeActiveProfile(back);
+    window.location.reload();
+  }, []);
+
   const deleteProfile = useCallback(
     async (id) => {
       const before = profiles || hydrateProfiles(null);
@@ -278,6 +324,9 @@ export function SettingsProvider({ children }) {
       createProfile,
       editProfile,
       deleteProfile,
+      startTourReplay,
+      endTourReplay,
+      inTourProfile: isTourProfile(profileId.current),
     }),
     [
       settings,
@@ -291,6 +340,8 @@ export function SettingsProvider({ children }) {
       createProfile,
       editProfile,
       deleteProfile,
+      startTourReplay,
+      endTourReplay,
     ]
   );
 
