@@ -117,6 +117,33 @@ function WidgetSettingsDrawer({
   const rate = resolveRate(instanceId, record.rate);
   const Panel = panelFor(manifest);
 
+  // Where the widget's own panel goes. Before the options for a short fixed
+  // one — Weather's city is the first thing anybody sets — and after them for
+  // a list that grows with the board, which on a real board pushed every
+  // option below the fold. The manifest decides, because only the widget knows
+  // which shape its panel is.
+  const panelSection = Panel ? (
+    <Section title={manifest.settingsPanel.title || "Configure"}>
+              <Suspense fallback={<div style={{ height: 40 }} />}>
+                <Panel
+                  config={record.config || {}}
+                  setConfig={onConfig}
+                  options={options}
+                  setOptions={onOptions}
+                  // For the widgets whose add form lives in here rather than in
+                  // the tile: the menu opens this drawer and signals in one go.
+                  action={action}
+                  // Lets a panel turn its one tile into several — see
+                  // spawnInstances. Only Bookmarks uses it.
+                  onSpawn={onSpawn}
+                  toast={toast}
+                />
+              </Suspense>
+            </Section>
+  ) : null;
+  const panelFirst = manifest.settingsPanel?.last ? null : panelSection;
+  const panelLast = manifest.settingsPanel?.last ? panelSection : null;
+
   return (
     <Drawer
       open={open}
@@ -189,25 +216,7 @@ function WidgetSettingsDrawer({
           </div>
         </Section>
 
-        {Panel ? (
-          <Section title={manifest.settingsPanel.title || "Configure"}>
-            <Suspense fallback={<div style={{ height: 40 }} />}>
-              <Panel
-                config={record.config || {}}
-                setConfig={onConfig}
-                options={options}
-                setOptions={onOptions}
-                // For the widgets whose add form lives in here rather than in
-                // the tile: the menu opens this drawer and signals in one go.
-                action={action}
-                // Lets a panel turn its one tile into several — see
-                // spawnInstances. Only Bookmarks uses it.
-                onSpawn={onSpawn}
-                toast={toast}
-              />
-            </Suspense>
-          </Section>
-        ) : null}
+        {panelFirst}
 
         {manifest.options.length ? (
           <Section title="Options">
@@ -299,6 +308,8 @@ function WidgetSettingsDrawer({
             </div>
           </Section>
         ) : null}
+
+        {panelLast}
 
         {manifest.permissions.chrome.length || manifest.permissions.hosts.length ? (
           <Section title="Access">

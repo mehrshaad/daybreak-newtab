@@ -491,6 +491,8 @@ function Links({
             onRemove={remove}
             onRemoveByDrag={remove}
             onItemMenu={openItemMenu}
+            // Which icon the editor is about, so it lifts while it is open.
+            activeKey={editId}
             // Off means nothing on hover, not a tooltip instead of a
             // card — see IconGrid's `hover`.
             hover={hoverCard ? "card" : "none"}
