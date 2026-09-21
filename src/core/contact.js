@@ -36,8 +36,7 @@ export const AUTHOR_PHOTO = "author.jpg";
 // is a single line here and nothing else changes.
 export const PROFILES = [
   { key: "github", label: "GitHub", url: "https://github.com/mehrshaad" },
-  // Paste the profile URL in and the pill appears.
-  { key: "linkedin", label: "LinkedIn", url: "" },
+  { key: "linkedin", label: "LinkedIn", url: "https://www.linkedin.com/in/dadashzadeh-ali/" },
 ];
 
 // Only the ones that actually go somewhere.

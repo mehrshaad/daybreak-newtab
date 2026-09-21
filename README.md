@@ -24,12 +24,16 @@ Vite.
 - 👥 **Up to three boards** — keep work and home apart. Each profile has its own
   layout, its own look and its own widget settings, and each syncs on its own.
 - 🧭 **A tour on the first run** — fifteen steps that open each drawer for real
-  as they explain it, and never appear again once you have had it.
+  as they explain it, and never appear again once you have had it. Replay it
+  later and it runs on a board of its own, so it never rearranges yours.
 - 🛍️ **A widget browser** — search the catalog by name or category, read what
   each widget does and what it can access, and add or remove it in a click.
 - ⌨️ **Right-click anything** — per-widget menus with sizes and actions, a board
   menu on empty space, and keyboard shortcuts for search, layout mode and the
-  widget list.
+  widget list. Right-click a single link or bookmark to rename it, change where
+  it goes, or give it its own colour.
+- 🔤 **Start typing anywhere** — the search box takes it, the way Chrome's own
+  new tab does.
 - 💾 **Yours to keep** — export your whole setup to a file and import it back.
 
 ### The widgets
@@ -41,7 +45,7 @@ the number is actually true.
 | --- | --- |
 | Clock | Time and today's date, digital or as an analog face, in five sizes |
 | World Clocks | Two to four cities side by side, reorderable, with UTC offsets and a day marker |
-| Weather | Current conditions and the hours ahead; bigger sizes show more, not just larger |
+| Weather | Up to five cities, one or two side by side; conditions, the hours ahead or the week |
 | Air quality | US AQI and PM2.5/PM10 for a city you pick |
 | Sun & daylight | Sunrise, sunset, and how the day's length is changing |
 | Moon phase | Tonight's moon, drawn as it actually looks |
@@ -59,7 +63,7 @@ the number is actually true.
 | Calendar | A real month grid — your events, holidays, and the Jalali and Hijri dates |
 | Currency | Exchange rates for a base currency and up to five others, no key required |
 | Crypto | A short price watchlist with 24-hour change, no key required |
-| News | Hacker News' top stories by default, or your own RSS/Atom feed |
+| News | Hacker News' top stories by default, or your own RSS/Atom feed, with a preview when you rest on a headline |
 | On this day | A moment from history, changed daily, more on a taller tile |
 | Quote of the day | One line, changed daily |
 

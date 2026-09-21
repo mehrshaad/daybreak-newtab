@@ -160,6 +160,17 @@ function FeedbackPanel({ open, onSent }) {
 function Portrait({ size = 44 }) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef(null);
+  // A cached image has already fired `load` by the time React attaches the
+  // handler, so onLoad never runs and the portrait stays at opacity 0 behind
+  // the emoji. Which is every tab after the first — the one case that matters
+  // most on a new tab page. `complete` is the only way to catch it.
+  useEffect(() => {
+    const el = imgRef.current;
+    if (!el || !el.complete) return;
+    if (el.naturalWidth > 0) setLoaded(true);
+    else setFailed(true);
+  }, []);
   const showPhoto = !failed;
   return (
     <div
@@ -184,6 +195,7 @@ function Portrait({ size = 44 }) {
       </span>
       {showPhoto ? (
         <img
+          ref={imgRef}
           src={AUTHOR_PHOTO}
           alt=""
           width={size}

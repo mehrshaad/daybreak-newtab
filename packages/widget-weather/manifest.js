@@ -4,7 +4,7 @@ export default {
   glyph: "weather",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.4.0",
+  version: "2.5.0",
   tagline: "Current conditions and the next few hours.",
   description:
     "Weather from Open-Meteo — no API key, no account, no tracking. Only the " +
