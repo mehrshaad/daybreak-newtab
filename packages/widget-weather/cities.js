@@ -33,13 +33,18 @@ export function citiesOf(config) {
 
 // How many readouts fit side by side.
 //
-// Width only. Two readouts each need room for a temperature at display size
-// plus a place name, and a tall narrow tile has no more room across than a
-// short one. Six columns is where a second one stops being cramped — measured
-// against the same clamp the temperature already uses.
+// Width only. Two readouts each need room for a temperature and a place name,
+// and a tall narrow tile has no more room across than a short one.
+//
+// Four columns, measured rather than guessed: a four-column tile is 511px, so
+// each half is about 245px, and a half renders at the narrow scale — a 26 to
+// 32px temperature, the place name, and three hours. Checked on the board at
+// 4x2 and 4x3 with two cities: no horizontal overflow at either, and 4x2 has
+// no vertical overflow either. Six was the first guess and it was one size too
+// cautious.
 export function slotsFor(size) {
   const cols = Array.isArray(size) ? size[0] || 4 : 4;
-  return cols >= 6 ? 2 : 1;
+  return cols >= 4 ? 2 : 1;
 }
 
 // The cities actually on screen, and never more than fit.

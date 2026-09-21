@@ -44,6 +44,7 @@ describe("a board written before this existed", () => {
   });
 
   it("is still shown once migrated", () => {
+    // One city fills one slot however many there are room for.
     expect(shownCities({ city: LISBON }, [4, 2]).map((c) => c.name)).toEqual(["Lisbon"]);
   });
 
@@ -59,9 +60,15 @@ describe("a board written before this existed", () => {
 
 describe("how many fit", () => {
   it("is two only once there is width for two", () => {
-    expect(slotsFor([4, 2])).toBe(1);
-    expect(slotsFor([4, 3])).toBe(1);
-    expect(slotsFor([6, 2])).toBe(2);
+    // Four columns is 511px, so each half is about 245 — measured on the
+    // board at 4x2 and 4x3 with two cities and neither overflows. Three is
+    // 379px, where a half would be under 190 and the temperature alone runs
+    // most of that.
+    expect(slotsFor([2, 2])).toBe(1);
+    expect(slotsFor([3, 2])).toBe(1);
+    expect(slotsFor([3, 3])).toBe(1);
+    expect(slotsFor([4, 2])).toBe(2);
+    expect(slotsFor([4, 3])).toBe(2);
     expect(slotsFor([6, 3])).toBe(2);
   });
 
@@ -79,7 +86,7 @@ describe("which cities are on screen", () => {
   });
 
   it("is never more than fit", () => {
-    expect(shownCities({ ...config, shown: [cityKey(LISBON), cityKey(KYOTO)] }, [4, 2])).toHaveLength(1);
+    expect(shownCities({ ...config, shown: [cityKey(LISBON), cityKey(KYOTO)] }, [3, 2])).toHaveLength(1);
   });
 
   it("honours the ticks", () => {
@@ -92,7 +99,7 @@ describe("which cities are on screen", () => {
     // leave the widget blank because the only tick is now dead.
     const shown = [cityKey(OSLO)];
     const left = { cities: [LISBON, KYOTO], shown };
-    expect(shownCities(left, [4, 2]).map((c) => c.name)).toEqual(["Lisbon"]);
+    expect(shownCities(left, [3, 2]).map((c) => c.name)).toEqual(["Lisbon"]);
   });
 
   it("is empty only when there are no cities at all", () => {
@@ -117,7 +124,7 @@ describe("ticking a city", () => {
   it("refuses to untick the last one", () => {
     // An empty weather widget is not a state anybody is asking for.
     const one = { cities: [LISBON, KYOTO], shown: [cityKey(LISBON)] };
-    expect(toggleShown(one, [4, 2], cityKey(LISBON))).toEqual([cityKey(LISBON)]);
+    expect(toggleShown(one, [3, 2], cityKey(LISBON))).toEqual([cityKey(LISBON)]);
   });
 });
 

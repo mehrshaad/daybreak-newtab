@@ -687,7 +687,8 @@ function App() {
       sizes: sizesFor(
         menu.id,
         resolveOptions(menu.id, widgets[menu.id]?.options),
-        widgets[menu.id]?.config
+        widgets[menu.id]?.config,
+        resolveSize(menu.id, board.sizes)
       ),
       actions: actionsFor(menu.id, {
         options: resolveOptions(menu.id, widgets[menu.id]?.options),

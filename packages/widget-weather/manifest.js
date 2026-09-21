@@ -26,6 +26,23 @@ export default {
     [6, 3],
   ],
   defaultSize: [3, 2],
+  // Six-wide is only worth offering when there is something to put in it.
+  //
+  // It is the two-city size — six columns is where two readouts each get real
+  // room — and on one city it is a lot of empty width. The one exception is
+  // the day-by-day strip: seven columns of icon and two temperatures need six
+  // board columns to read, and layoutFor only widens to a full week there, so
+  // withdrawing this size from a single-city widget showing the week would
+  // take away the only size that can show it.
+  //
+  // Config for the cities and options for the forecast, and the current size
+  // is never withdrawn — see sizesFor in the registry.
+  sizesFor: (sizes, options, config) => {
+    const many = (Array.isArray(config?.cities) ? config.cities.length : 0) > 1;
+    const week = (options?.forecast ?? "hourly") === "daily";
+    if (many || week) return sizes;
+    return sizes.filter(([w, h]) => !(w >= 6 && h >= 3));
+  },
   options: [
     {
       key: "align",
