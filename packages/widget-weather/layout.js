@@ -66,3 +66,63 @@ export const STAT_KEYS = ["rain", "wind", "humidity", "uv"];
 export function statsToShow(want, data) {
   return STAT_KEYS.filter((key) => want[key] && data?.[key] != null);
 }
+
+// How big the temperature is drawn.
+//
+// It used to branch on the tile's shape alone, which meant a 2x2 with the
+// forecast and the stats both switched off drew a 32px number in the middle of
+// an empty card — the readout had the whole tile to itself and was still
+// sized for sharing it with a strip of five hours.
+//
+// So the tile's shape is only half the question. The other half is how many
+// bands are actually below the readout, which is what decides how much room it
+// has. Nothing below means the number is the widget, and it should look like
+// it.
+//
+// `bands` is counted from what renders, not from what is switched on: a stat
+// row with no data in it and an hourly strip on a reading that has no hours
+// both take no room, and the readout should get it.
+const HEADLINE = {
+  // [bands >= 2, bands === 1, bands === 0]
+  wide: {
+    short: [
+      { temp: "clamp(30px, 3.4vw, 40px)", icon: 30 },
+      { temp: "clamp(36px, 4.2vw, 50px)", icon: 36 },
+      { temp: "clamp(44px, 5.4vw, 66px)", icon: 44 },
+    ],
+    tall: [
+      { temp: "clamp(38px, 4.4vw, 54px)", icon: 38 },
+      { temp: "clamp(46px, 5.6vw, 72px)", icon: 46 },
+      { temp: "clamp(58px, 7.4vw, 96px)", icon: 56 },
+    ],
+  },
+  // Two columns is about 210px of usable width, so this scale is held back by
+  // the width rather than by the height — a number that fits a three-row tile
+  // vertically can still run off the side of a narrow one.
+  narrow: {
+    short: [
+      { temp: "clamp(26px, 2.4vw, 32px)", icon: 24 },
+      { temp: "clamp(30px, 3vw, 40px)", icon: 28 },
+      { temp: "clamp(36px, 4vw, 50px)", icon: 34 },
+    ],
+    tall: [
+      { temp: "clamp(26px, 2.4vw, 32px)", icon: 24 },
+      { temp: "clamp(34px, 3.6vw, 46px)", icon: 32 },
+      { temp: "clamp(42px, 5vw, 60px)", icon: 40 },
+    ],
+  },
+};
+
+export function headlineFor(size, { bands = 2 } = {}) {
+  const cols = size?.[0] ?? 3;
+  const rows = size?.[1] ?? 2;
+  const column = cols <= 2 ? HEADLINE.narrow : HEADLINE.wide;
+  const row = rows >= 3 ? column.tall : column.short;
+  // Clamped rather than indexed blindly: `bands` is counted by the caller from
+  // live data, and a surprising count should land on a sane size rather than
+  // on undefined. NaN is checked rather than clamped — every comparison with
+  // it is false, so Math.max and Math.min both pass it straight through and it
+  // would index the array with NaN.
+  const count = Number.isFinite(bands) ? Math.max(0, Math.round(bands)) : 2;
+  return row[Math.max(0, Math.min(2, 2 - count))];
+}

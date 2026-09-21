@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { layoutFor } from "./layout";
+import { headlineFor, layoutFor } from "./layout";
 
 describe("layoutFor", () => {
   it("cuts the strip down for a two-column tile", () => {
@@ -117,5 +117,68 @@ describe("layoutFor", () => {
 
   it("falls back to the baseline for a missing size", () => {
     expect(layoutFor(undefined).hours).toBe(5);
+  });
+});
+
+describe("how big the temperature is drawn", () => {
+  // It used to branch on the tile's shape alone, so a 2x2 with the forecast
+  // and the stats both off drew a 32px number in the middle of an empty card:
+  // the readout had the whole tile and was still sized for sharing it with a
+  // strip of five hours.
+
+  // The floor of a clamp is the size that actually applies on a normal window,
+  // so it is what these compare.
+  const floorOf = (size, bands) =>
+    Number(headlineFor(size, { bands }).temp.match(/clamp\((\d+)px/)[1]);
+
+  it("grows as the bands below it go away", () => {
+    // The whole point, at the size that prompted it.
+    expect(floorOf([2, 2], 0)).toBeGreaterThan(floorOf([2, 2], 1));
+    expect(floorOf([2, 2], 1)).toBeGreaterThan(floorOf([2, 2], 2));
+  });
+
+  it("grows at every tile size, not just the small one", () => {
+    for (const size of [[2, 2], [4, 2], [4, 3], [6, 3]]) {
+      expect(floorOf(size, 0), String(size)).toBeGreaterThan(floorOf(size, 2));
+    }
+  });
+
+  it("leaves a full tile exactly as it was", () => {
+    // The common case must not move. These are the sizes the widget shipped
+    // with, and a board full of weather widgets should look unchanged.
+    expect(headlineFor([2, 2], { bands: 2 }).temp).toBe("clamp(26px, 2.4vw, 32px)");
+    expect(headlineFor([4, 2], { bands: 2 }).temp).toBe("clamp(30px, 3.4vw, 40px)");
+    expect(headlineFor([4, 3], { bands: 2 }).temp).toBe("clamp(38px, 4.4vw, 54px)");
+  });
+
+  it("holds a narrow tile back, because two columns runs out of width first", () => {
+    // A number that fits a three-row tile vertically can still run off the
+    // side of a narrow one.
+    expect(floorOf([2, 3], 0)).toBeLessThan(floorOf([4, 3], 0));
+    expect(floorOf([2, 2], 0)).toBeLessThan(floorOf([4, 2], 0));
+  });
+
+  it("gives a taller tile a bigger number than a short one", () => {
+    expect(floorOf([4, 3], 0)).toBeGreaterThan(floorOf([4, 2], 0));
+  });
+
+  it("scales the condition icon with it", () => {
+    // An icon that stayed put while the number doubled would read as a bug.
+    expect(headlineFor([4, 3], { bands: 0 }).icon).toBeGreaterThan(
+      headlineFor([4, 3], { bands: 2 }).icon
+    );
+  });
+
+  it("lands somewhere sane on a count it did not expect", () => {
+    // `bands` is counted by the caller from live data, so a surprising value
+    // should pick a size rather than return undefined.
+    for (const bands of [-1, 0.5, 7, NaN, undefined]) {
+      const out = headlineFor([4, 2], { bands });
+      expect(out?.temp, String(bands)).toMatch(/^clamp\(/);
+    }
+  });
+
+  it("defaults to the crowded size when asked nothing", () => {
+    expect(headlineFor([4, 2])).toEqual(headlineFor([4, 2], { bands: 2 }));
   });
 });

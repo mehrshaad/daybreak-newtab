@@ -12,7 +12,7 @@ import {
 import ConditionIcon from "./ConditionIcon";
 import { citiesOf, cityKey, shownCities, toggleShown } from "./cities";
 import { forecastUrl, parseForecast } from "./forecast";
-import { layoutFor, statsToShow } from "./layout";
+import { headlineFor, layoutFor, statsToShow } from "./layout";
 
 // One number from the extras row: rain, wind, humidity, UV.
 //
@@ -238,11 +238,15 @@ function CityPanel({ id, options, city, size, refreshKey }) {
   // `space-between` puts a lone child at the top — so the temperature sat in
   // the top-left of an otherwise empty card. With nothing to space it against,
   // it should be in the middle.
-  const hasBandBelow =
-    (view.stats && stats.length > 0) ||
-    view.details ||
-    (view.daily && days.length > 0) ||
-    (view.hourly && hours.length > 0);
+  // Counted from what actually renders, not from what is switched on: a stat
+  // row with no data in it and an hourly strip on a reading with no hours both
+  // take no room, and the readout should get it.
+  const bands =
+    (view.stats && stats.length > 0 ? 1 : 0) +
+    (view.details ? 1 : 0) +
+    ((view.daily && days.length > 0) || (view.hourly && hours.length > 0) ? 1 : 0);
+  const hasBandBelow = bands > 0;
+  const headline = headlineFor(size, { bands });
 
   return (
     <div
@@ -284,25 +288,21 @@ function CityPanel({ id, options, city, size, refreshKey }) {
         >
           <div
             style={{
-              fontSize: view.narrow
-                ? "clamp(26px, 2.4vw, 32px)"
-                : view.tall
-                  ? "clamp(38px, 4.4vw, 54px)"
-                  : "clamp(30px, 3.4vw, 40px)",
+              fontSize: headline.temp,
               fontWeight: 500,
               letterSpacing: "-.03em",
               lineHeight: 1,
+              // The number grows and shrinks with what else is in the tile, so
+              // switching the forecast off is a change of scale rather than a
+              // jump.
+              transition: "font-size .28s cubic-bezier(.2,.8,.2,1)",
             }}
           >
             {data.temp}°
           </div>
           {/* Day/night decided from the location's own clock, not the
               browser's — the point of the widget is somewhere else. */}
-          <ConditionIcon
-            condition={data.condition}
-            day={data.isDay}
-            size={view.narrow ? 24 : view.tall ? 38 : 30}
-          />
+          <ConditionIcon condition={data.condition} day={data.isDay} size={headline.icon} />
         </div>
         <div
           data-flip-id="readout-place"
