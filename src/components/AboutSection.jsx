@@ -198,6 +198,8 @@ function Portrait({ size = 44 }) {
           ref={imgRef}
           src={AUTHOR_PHOTO}
           alt=""
+          // Dragging it out of the panel serves nobody and looks like a bug.
+          draggable={false}
           width={size}
           height={size}
           onLoad={() => setLoaded(true)}
@@ -208,6 +210,8 @@ function Portrait({ size = 44 }) {
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            WebkitUserDrag: "none",
+            userSelect: "none",
             opacity: loaded ? 1 : 0,
             transition: "opacity .25s ease",
           }}
