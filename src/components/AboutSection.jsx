@@ -3,7 +3,6 @@ import { LuBug, LuGlobe, LuMail, LuSend } from "react-icons/lu";
 import { SiGithub, SiLinkedin } from "react-icons/si";
 import { MONO, pill, useHover } from "@daybreak/sdk";
 import {
-  AUTHOR,
   AUTHOR_EMOJI,
   AUTHOR_FULL,
   AUTHOR_PHOTO,
@@ -69,7 +68,14 @@ function FeedbackPanel({ open, onSent }) {
 
   return (
     <Collapse open={open}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          paddingTop: 10,
+        }}
+      >
         <textarea
           ref={boxRef}
           value={text}
@@ -116,7 +122,9 @@ function FeedbackPanel({ open, onSent }) {
               opacity: trimmed ? 1 : 0.65,
             }}
           >
-            {left < 120 ? `${left} characters left` : `Opens your mail app to ${FEEDBACK_EMAIL}`}
+            {left < 120
+              ? `${left} characters left`
+              : `Opens your mail app to ${FEEDBACK_EMAIL}`}
           </span>
           <Pill
             onClick={() => {
@@ -190,7 +198,9 @@ function Portrait({ size = 44 }) {
         border: "1px solid var(--line)",
       }}
     >
-      <span style={{ opacity: loaded ? 0 : 1, transition: "opacity .25s ease" }}>
+      <span
+        style={{ opacity: loaded ? 0 : 1, transition: "opacity .25s ease" }}
+      >
         {AUTHOR_EMOJI}
       </span>
       {showPhoto ? (
@@ -230,8 +240,17 @@ function Byline() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       <Portrait />
-      <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
-        <div style={{ fontSize: 14, color: "var(--fg)", fontWeight: 500 }}>{AUTHOR_FULL}</div>
+      <div
+        style={{
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+        }}
+      >
+        <div style={{ fontSize: 14, color: "var(--fg)", fontWeight: 500 }}>
+          {AUTHOR_FULL}
+        </div>
         <div style={{ fontSize: 12, color: "var(--dim)" }}>Made Daybreak</div>
       </div>
       <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
@@ -301,8 +320,11 @@ function AboutSection({ toast }) {
       </div>
 
       <div style={{ fontSize: 12, color: "var(--dim)", lineHeight: 1.5 }}>
-        Bugs are best in the tracker, where they can be followed. Anything
-        else, mail {AUTHOR} directly.
+        <b>Thanks for giving Daybreak a try!</b> 💚
+        <br />
+        Found a bug? Please report it through GitHub Issues so it can be tracked
+        and fixed. Have feedback, an idea, or just want to say hi? Feel free to
+        email me directly!
       </div>
 
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
