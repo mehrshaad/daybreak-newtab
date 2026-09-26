@@ -6,7 +6,7 @@ export default {
   glyph: "calendar",
   category: "Lifestyle",
   author: "Daybreak",
-  version: "2.6.0",
+  version: "2.7.0",
   tagline: "Weekly targets, tracked a day at a time.",
   description:
     "Tick a day when you do the thing. Each habit carries its own weekly " +
