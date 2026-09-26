@@ -233,19 +233,14 @@ function CityPanel({ id, options, city, size, refreshKey }) {
   // same unit system as the temperature.
   const windUnit = fahrenheit ? "mph" : "km/h";
 
-  // Whether anything is drawn below the readout. Turning the forecast off and
-  // leaving the stat chips off leaves the readout alone in the tile, and
-  // `space-between` puts a lone child at the top — so the temperature sat in
-  // the top-left of an otherwise empty card. With nothing to space it against,
-  // it should be in the middle.
-  // Counted from what actually renders, not from what is switched on: a stat
-  // row with no data in it and an hourly strip on a reading with no hours both
-  // take no room, and the readout should get it.
+  // How many strips are drawn below the readout, which decides how big the
+  // number is. Counted from what actually renders, not from what is switched
+  // on: a stat row with no data in it and an hourly strip on a reading with no
+  // hours both take no room, and the readout should get it.
   const bands =
     (view.stats && stats.length > 0 ? 1 : 0) +
     (view.details ? 1 : 0) +
     ((view.daily && days.length > 0) || (view.hourly && hours.length > 0) ? 1 : 0);
-  const hasBandBelow = bands > 0;
   const headline = headlineFor(size, { bands });
 
   return (
@@ -253,13 +248,9 @@ function CityPanel({ id, options, city, size, refreshKey }) {
       style={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: hasBandBelow ? "space-between" : "center",
         flex: 1,
         gap: 12,
         minWidth: 0,
-        // The readout slides to the middle rather than jumping there when the
-        // last strip is switched off.
-        transition: "justify-content .28s cubic-bezier(.2,.8,.2,1)",
       }}
     >
       {/* A flex column whose alignment moves, rather than a block whose text
@@ -273,6 +264,13 @@ function CityPanel({ id, options, city, size, refreshKey }) {
         style={{
           display: "flex",
           flexDirection: "column",
+          // All the height the strips below leave, with the readout in the
+          // middle of it. It used to sit at the top with the strips pushed to
+          // the bottom by `space-between`, which left the temperature hard
+          // against the header and a gap under it. With no strips at all it
+          // is the whole tile, so the lone readout is centred the same way.
+          flex: 1,
+          justifyContent: "center",
           alignItems: centred ? "center" : "flex-start",
           textAlign: centred ? "center" : "left",
           minWidth: 0,
