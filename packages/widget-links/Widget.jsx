@@ -288,6 +288,14 @@ function Links({
     [items]
   );
 
+  // A folder made from the add form exists only in the draft until the link
+  // is saved, so it is offered here too, or the field would read "None" while
+  // the link was about to be filed into it.
+  const addFolderOptions =
+    draftFolder && !folderOptions.some((o) => o.value === draftFolder)
+      ? [...folderOptions, { value: draftFolder, label: draftFolder }]
+      : folderOptions;
+
   const toGridItem = (l) => ({
     key: l.id,
     name: l.name,
@@ -412,6 +420,11 @@ function Links({
                 // The one grid in the plain case keeps the tile's whole height,
                 // the way it did before this. Grouped ones take what they need.
                 flex: plain ? 1 : "none",
+                // And may shrink below its icons, or the grid inside can never
+                // be shorter than its rows: it grew to fit them, the tile
+                // clipped the last one in half, and there was nothing to
+                // scroll.
+                minHeight: 0,
               }}
             >
               {/* No heading on the loose group and none on a card holding a
@@ -645,7 +658,7 @@ function Links({
             Folder
             <Select
               value={draftFolder ?? cardFolder ?? ""}
-              options={folderOptions}
+              options={addFolderOptions}
               onChange={setDraftFolder}
               onCreate={(name) => setDraftFolder(name)}
               createLabel="New folder…"

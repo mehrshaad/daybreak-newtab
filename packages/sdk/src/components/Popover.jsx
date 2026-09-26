@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { clampToViewport } from "../clamp";
 import { layoutRect, pageZoomFactor } from "../zoom";
@@ -7,6 +7,16 @@ import { FLOATING_ATTR } from "../floating";
 
 const GAP = 6;
 const EXIT_MS = 140;
+
+// The popover this one was opened from, if any.
+//
+// A Select inside the Quick Links add form is a popover inside a popover, and
+// both portal to <body>, so the inner panel is outside the outer one as far as
+// the DOM can tell. The outer one read every click on a folder as a click on
+// the board and closed the form. The relationship survives in React's tree,
+// where a portal keeps its context, so each popover tells its parent it is
+// open and the parent treats clicks in it as its own.
+const ParentPopover = createContext(null);
 
 // An anchored floating panel, portalled to <body>.
 //
@@ -27,6 +37,24 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
   const [present, closing] = usePresence(open, EXIT_MS);
   const panelRef = useRef(null);
   const [pos, setPos] = useState(null);
+  const parent = useContext(ParentPopover);
+  // Popovers opened from inside this one, while they are open.
+  const nested = useRef(new Set());
+  // What this popover counts as inside: its own panel and every open popover
+  // opened from it, however deep. A ref so the parent always asks the current
+  // one.
+  const self = useRef(null);
+  self.current = {
+    contains: (target) =>
+      !!panelRef.current?.contains(target) ||
+      [...nested.current].some((child) => child.current.contains(target)),
+  };
+
+  useEffect(() => {
+    if (!open || !parent) return undefined;
+    parent.add(self);
+    return () => parent.delete(self);
+  }, [open, parent]);
 
   const reposition = () => {
     const anchor = anchorRef.current;
@@ -91,12 +119,13 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
   useEffect(() => {
     if (!open) return undefined;
     const onPointerDown = (e) => {
-      if (panelRef.current?.contains(e.target)) return;
+      if (self.current.contains(e.target)) return;
       if (anchorRef.current?.contains(e.target)) return;
       onClose();
     };
     const onKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
+      // One Escape closes one popover, the innermost.
+      if (e.key === "Escape" && !nested.current.size) onClose();
     };
     // Capture so a click on something that itself stops propagation (a tile,
     // say) still closes the popover first.
@@ -149,7 +178,7 @@ function Popover({ open, anchorRef, onClose, placement = "bottom-start", width, 
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      {children}
+      <ParentPopover.Provider value={nested.current}>{children}</ParentPopover.Provider>
     </div>,
     document.body
   );
