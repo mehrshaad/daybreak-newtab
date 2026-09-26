@@ -42,8 +42,16 @@ import {
 const HEADER_HEIGHT = 78;
 
 function App() {
-  const { settings, update, updateWidget, replaceSettings, resetSettings } =
-    useSettings();
+  const {
+    settings,
+    update,
+    updateWidget,
+    replaceSettings,
+    resetSettings,
+    inTourProfile,
+    startTourReplay,
+    endTourReplay,
+  } = useSettings();
   const { appearance, behavior, board, widgets, profile } = settings;
   const { accent, wall } = appearance;
   // The stored preference may be "system" or "sun"; resolve it once here so
@@ -294,6 +302,13 @@ function App() {
     [ids]
   );
 
+  // A replay is switched to its own profile, and switching reloads — so the
+  // tour has to open itself on the way back up rather than being opened by the
+  // click that asked for it.
+  useEffect(() => {
+    if (inTourProfile) setTourOpen(true);
+  }, [inTourProfile]);
+
   const startTour = useCallback(() => {
     // Taking the tour is being shown around, so the welcome card has done its
     // job whether or not it was ever dismissed.
@@ -306,10 +321,34 @@ function App() {
     searchRef.current?.select();
   }, []);
 
+  // Typing anywhere on the board goes to the search field, the way it does on
+  // Chrome's own new tab.
+  //
+  // The character is written in rather than left to arrive on its own. The
+  // field is a controlled React input, so setting `value` directly would be
+  // overwritten on the next render — React has to be told, and the way to tell
+  // it is the native setter plus an input event, which is what its own
+  // onChange listens for. Ugly, and the alternative is losing the first letter
+  // of a search whenever the fall-through does not happen.
+  const typeIntoSearch = useCallback((char) => {
+    const el = searchRef.current;
+    if (!el) return;
+    el.focus();
+    const setValue = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    setValue?.call(el, el.value + char);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    const end = el.value.length;
+    el.setSelectionRange?.(end, end);
+  }, []);
+
   useKeyboard({
     enabled: behavior.shortcuts,
     onEscape: closeEverything,
     onSearch: focusSearch,
+    onType: typeIntoSearch,
     onToggleEdit: toggleEdit,
     onStore: openStore,
   });
@@ -648,7 +687,8 @@ function App() {
       sizes: sizesFor(
         menu.id,
         resolveOptions(menu.id, widgets[menu.id]?.options),
-        widgets[menu.id]?.config
+        widgets[menu.id]?.config,
+        resolveSize(menu.id, board.sizes)
       ),
       actions: actionsFor(menu.id, {
         options: resolveOptions(menu.id, widgets[menu.id]?.options),
@@ -954,9 +994,15 @@ function App() {
       ) : null}
 
       <SettingsDrawer
+        // A replay, not a rerun over their own board. The tour opens drawers,
+        // enters edit mode and recolours a tile, and five of its fifteen steps
+        // need a widget to point at — doing that to a board somebody has
+        // arranged is an edit rather than a demonstration, and on a board
+        // cleared down to a clock half the steps have nothing to say. So it
+        // gets a profile and a board of its own. See tourProfile.js.
         onTour={() => {
           setSettingsOpen(false);
-          startTour();
+          startTourReplay();
         }}
         open={settingsOpen}
         settings={settings}
@@ -1008,7 +1054,16 @@ function App() {
 
       <Tour
         open={tourOpen}
-        onClose={() => setTourOpen(false)}
+        // Closing a replay takes the board with it: back to the profile they
+        // came from, and the tour's own board is deleted. Closing the first-run
+        // tour just closes it — that one runs on their real board.
+        onClose={() => {
+          if (inTourProfile) {
+            endTourReplay();
+            return;
+          }
+          setTourOpen(false);
+        }}
         onScene={showScene}
         hasWidgets={ids.length > 0}
       />

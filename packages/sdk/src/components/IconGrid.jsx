@@ -23,6 +23,7 @@ function IconGridItem({
   onOpen,
   onPointerDown,
   editing,
+  active,
   onRemove,
   onItemMenu,
   hoverCard,
@@ -137,13 +138,35 @@ function IconGridItem({
           bind.onMouseLeave();
         }}
       >
-        <IconTile
-          name={item.iconName || item.key || item.name}
-          url={item.iconUrl}
-          size={list ? row.icon : iconSize}
-          color={item.color}
-          ink={item.ink}
-        />
+        {/* The mark lifts, not the cell. Scaling the whole button would move
+            the label with it and shove the neighbours around on a tight grid;
+            the mark has room to grow into its own padding.
+
+            Two states, and the difference between them is the point. Hover is
+            a small acknowledgement that this is a thing you can press. Being
+            edited is a bigger lift held for as long as the editor is open, so
+            that on a grid of sixteen identical-sized icons it is obvious which
+            one the panel is about. */}
+        <span
+          style={{
+            display: "flex",
+            transition: "transform .18s cubic-bezier(.2,.8,.2,1), filter .18s ease",
+            transform: active
+              ? "translateY(-3px) scale(1.14)"
+              : hovered && !held
+              ? "scale(1.06)"
+              : "none",
+            filter: active ? "drop-shadow(0 6px 12px rgba(0,0,0,.28))" : "none",
+          }}
+        >
+          <IconTile
+            name={item.iconName || item.key || item.name}
+            url={item.iconUrl}
+            size={list ? row.icon : iconSize}
+            color={item.color}
+            ink={item.ink}
+          />
+        </span>
         {/* A list is names with marks beside them, so the name is not
             optional there the way a caption under an icon is — a list of
             unlabelled rows is a column of icons with the width wasted. */}
@@ -273,6 +296,8 @@ function IconGrid({
   onReorder,
   reorderable = true,
   editing = false,
+  // The item whose editor is open, so the grid can say which one that is.
+  activeKey = null,
   onRemove,
   onRemoveByDrag,
   onItemMenu,
@@ -393,6 +418,7 @@ function IconGrid({
           onOpen={onOpen}
           onPointerDown={onPointerDown}
           editing={editing}
+          active={activeKey != null && activeKey === item.key}
           onRemove={onRemove}
           onItemMenu={onItemMenu}
           hoverCard={hoverCard}

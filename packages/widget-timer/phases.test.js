@@ -3,8 +3,11 @@ import { formatClock, IDLE, nextPhase, phaseLength } from "./phases";
 
 describe("phaseLength", () => {
   it("uses 25 or 50 minutes for focus", () => {
-    expect(phaseLength({ phase: "Focus", longFocus: false })).toBe(1500);
-    expect(phaseLength({ phase: "Focus", longFocus: true })).toBe(3000);
+    expect(phaseLength({ phase: "Focus" })).toBe(1500);
+    expect(phaseLength({ phase: "Focus", focus: 50 })).toBe(3000);
+    expect(phaseLength({ phase: "Focus", focus: 5 })).toBe(300);
+    expect(phaseLength({ phase: "Break", brk: 12 })).toBe(720);
+    expect(phaseLength({ phase: "Long break", longBreak: 45 })).toBe(2700);
   });
 
   it("uses 5 for short breaks and 15 for long", () => {
@@ -84,7 +87,7 @@ describe("getting back to a known state", () => {
     const seen = new Set();
     for (let i = 0; i < 12; i += 1) {
       seen.add(phase);
-      expect({ ...IDLE, left: phaseLength({ phase: IDLE.phase, longFocus: false }) }).toMatchObject({
+      expect({ ...IDLE, left: phaseLength({ phase: IDLE.phase }) }).toMatchObject({
         phase: "Focus",
         round: 1,
       });
@@ -96,7 +99,7 @@ describe("getting back to a known state", () => {
   });
 
   it("starts over with a full focus round on the clock, at either length", () => {
-    expect(phaseLength({ phase: IDLE.phase, longFocus: false })).toBe(25 * 60);
-    expect(phaseLength({ phase: IDLE.phase, longFocus: true })).toBe(50 * 60);
+    expect(phaseLength({ phase: IDLE.phase })).toBe(25 * 60);
+    expect(phaseLength({ phase: IDLE.phase, focus: 50 })).toBe(50 * 60);
   });
 });

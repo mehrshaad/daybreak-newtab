@@ -6,8 +6,11 @@
 // jsdom, so the escaping path would be the one the tests never take. Comparing
 // dataset values needs no escaping and cannot be quoted wrong.
 //
-// Scoped to the widget's own root so two Quick Links cards cannot answer for
-// each other.
+// Scoped to the widget's own root so two cards cannot answer for each other.
+//
+// In the SDK rather than next to one widget because Quick Links and Bookmarks
+// both anchor a per-item editor this way, and a widget may not import from
+// another widget's package.
 export function findIcon(root, key) {
   if (!root || !key) return null;
   for (const el of root.querySelectorAll("[data-flip-id]")) {

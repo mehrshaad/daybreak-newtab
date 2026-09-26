@@ -4,7 +4,7 @@ export default {
   glyph: "clock",
   category: "Essentials",
   author: "Daybreak",
-  version: "2.5.0",
+  version: "2.6.0",
   tagline: "Two to four cities, side by side.",
   description:
     "Track the time in the places you care about. Add a city and Daybreak " +
@@ -16,6 +16,10 @@ export default {
   // comfortably and each row can carry its timezone.
   actions: [{ id: "add", label: "Add a city" }],
   sizes: [
+    // Two columns is tight for "Lisbon UTC+1 ... 6:37 pm", but the rows still
+    // fit and a pair of cities in a small square is a reasonable tile. The fit
+    // test covers it at both text sizes and at four zones.
+    [2, 2],
     [3, 2],
     [4, 2],
     [3, 3],

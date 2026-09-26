@@ -159,6 +159,10 @@ function TopSites({ config, setConfig, options, refreshKey, size, columns, editi
       iconSize={iconSize}
       gap={Math.max(4, Math.round(iconSize * 0.16))}
       showLabels={!hideLabels}
+      // "How many" goes up to twenty, which a small tile cannot show at once.
+      // Without this the rows that did not fit were cut off by the tile with
+      // nothing to scroll to.
+      scroll
       onOpen={(item) => {
         window.location.href = item.key;
       }}

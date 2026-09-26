@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arcControlY, arcPoint, deltaLabel, lengthLabel, rgb, skyAt } from "./sky";
+import { arcControlY, arcPoint, deltaLabel, lengthLabel, rgb, skyAt, viewBoxFor } from "./sky";
 
 describe("skyAt", () => {
   it("is dark at night and bright at noon", () => {
@@ -146,5 +146,61 @@ describe("deltaLabel, short", () => {
   it("drops the trailing words where the row already implies them", () => {
     expect(deltaLabel(134, true)).toBe("+2m 14s");
     expect(deltaLabel(-42, true)).toBe("−42s");
+  });
+});
+
+describe("the viewBox the arc is drawn in", () => {
+  // The sun was an ellipse at most tile sizes. A fixed 300x96 viewBox with
+  // preserveAspectRatio="none" stretched to fill whatever shape the tile was,
+  // and everything in it stretched with the arc — wider than tall in a short
+  // tile, taller than wide in a roomy one.
+  //
+  // Shaping the viewBox like the box instead means the scale is uniform, so a
+  // circle stays a circle, while the width is still 300 units and the arc
+  // still reaches both edges.
+
+  const square = (box) => {
+    // What a circle of radius r renders as, in px, given a box and its viewBox.
+    const view = viewBoxFor(box);
+    const scaleX = box.width / view.width;
+    const scaleY = box.height / view.height;
+    return Math.round((scaleX / scaleY) * 100) / 100;
+  };
+
+  it("makes the scale uniform for a short wide tile", () => {
+    // 3x2: the shape where the old sun came out widest.
+    expect(square({ width: 341, height: 80 })).toBe(1);
+  });
+
+  it("makes the scale uniform for a tall tile", () => {
+    expect(square({ width: 342, height: 130 })).toBe(1);
+  });
+
+  it("makes the scale uniform for the widest tile offered", () => {
+    expect(square({ width: 473, height: 130 })).toBe(1);
+  });
+
+  it("keeps the width at 300 so the arc always spans the tile", () => {
+    // The reason the old code stretched in the first place. Losing this would
+    // letterbox the drawing inside the tile.
+    for (const box of [{ width: 200, height: 300 }, { width: 900, height: 60 }]) {
+      expect(viewBoxFor(box).width).toBe(300);
+    }
+  });
+
+  it("falls back to the original shape before anything has been measured", () => {
+    // useMeasuredBox answers null until the first observation, and a first
+    // frame at some other shape would be a visible jump.
+    expect(viewBoxFor(null)).toEqual({ width: 300, height: 96 });
+    expect(viewBoxFor({ width: 0, height: 0 })).toEqual({ width: 300, height: 96 });
+  });
+
+  it("clamps a hairline box rather than collapsing the arc", () => {
+    // A tile mid-resize reports a few pixels. A viewBox height of 1 puts
+    // arcControlY off at -190 and the arc leaves the tile entirely.
+    const thin = viewBoxFor({ width: 400, height: 2 });
+    expect(thin.height).toBe(36);
+    const tall = viewBoxFor({ width: 100, height: 900 });
+    expect(tall.height).toBe(360);
   });
 });

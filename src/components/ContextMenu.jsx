@@ -16,7 +16,7 @@ import {
   LuSun,
   LuTrash2,
 } from "react-icons/lu";
-import { MenuRow, MONO, clampToViewport, pageZoomFactor } from "@daybreak/sdk";
+import { FLOATING_ATTR, MenuRow, MONO, clampToViewport, pageZoomFactor } from "@daybreak/sdk";
 import { Pill } from "./primitives";
 
 const MENU_WIDTH = 236;
@@ -150,6 +150,7 @@ function ContextMenu({ menu, title, items, closing, onClose, hintLabel }) {
         role="menu"
         data-tour="tile-menu"
         aria-label={title}
+        {...{ [FLOATING_ATTR]: "menu" }}
         style={{
           position: "fixed",
           left: pos.left,

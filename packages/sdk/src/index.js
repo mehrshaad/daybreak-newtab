@@ -8,6 +8,8 @@
 // Storage: small synced settings live in the host's settings object; content
 // belongs in the per-widget local bucket.
 export { clearBucket, flushBucket, readBucket, useWidgetLocal, writeBucket } from "./bucket";
+export { FLOATING_ATTR, isFloating } from "./floating";
+export { findIcon } from "./findIcon";
 
 // Widget content synced across signed-in Chrome profiles, capped so one
 // widget's content cannot break the 8KB-per-item sync limit.
@@ -126,7 +128,13 @@ export { useHover } from "./useHover";
 export { useMeasuredBox, useMeasuredWidth } from "./useMeasuredWidth";
 export { usePointerExit } from "./usePointerExit";
 export { useRovingMenu } from "./useRovingMenu";
-export { clipboardLink, hasClipboardRead, readClipboardLink } from "./clipboardLink";
+export {
+  clipboardAsked,
+  clipboardLink,
+  hasClipboardRead,
+  markClipboardAsked,
+  readClipboardLink,
+} from "./clipboardLink";
 export { layoutRect, pageZoomFactor } from "./zoom";
 export {
   DARK_INK,
@@ -139,7 +147,7 @@ export {
   tileColor,
 } from "./tilePalette";
 export { useLiveRef } from "./useLiveRef";
-export { useLongPress } from "./useLongPress";
+export { isScrollbarPress, useLongPress } from "./useLongPress";
 export { useWidgetAction } from "./useWidgetAction";
 export { usePresence } from "./usePresence";
 export { useTooltip } from "./useTooltip";

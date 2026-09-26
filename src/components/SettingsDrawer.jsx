@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LuMonitor, LuMoon, LuSun, LuSunrise } from "react-icons/lu";
 import {
   backupFilename,
@@ -7,7 +7,16 @@ import {
   parseBackup,
   restoreBuckets,
 } from "../core/backup";
-import { CrossfadeFill, dropPermission, MONO, requestAllPermissions, sunTimes } from "@daybreak/sdk";
+import {
+  CrossfadeFill,
+  dropPermission,
+  hasPermission,
+  markClipboardAsked,
+  MONO,
+  requestAllPermissions,
+  requestPermission,
+  sunTimes,
+} from "@daybreak/sdk";
 import {
   ACCENT_COLUMNS,
   ACCENT_NAMES,
@@ -80,6 +89,19 @@ function SettingsDrawer({
   const notices = behavior.notifications || { enabled: true, categories: {} };
   const fileRef = useRef(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Read from Chrome rather than stored, so the toggle cannot disagree with
+  // what is actually granted. Re-read whenever the drawer is opened, because
+  // the permission can be taken away from Chrome's own settings page.
+  const [canPaste, setCanPaste] = useState(false);
+  useEffect(() => {
+    let live = true;
+    hasPermission("clipboardRead").then((granted) => {
+      if (live) setCanPaste(granted);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const importFile = async (event) => {
     const file = event.target.files?.[0];
@@ -403,6 +425,30 @@ function SettingsDrawer({
             on={behavior.shortcuts}
             onChange={() => update("behavior", { shortcuts: !behavior.shortcuts })}
           />
+          {/* The permission is the setting. There is no stored flag behind this
+              one: it reads whether Chrome has granted clipboardRead and asks
+              for it or gives it back, so it can never disagree with what the
+              browser actually allows — which a mirrored boolean would, the
+              moment somebody revoked it from Chrome's own list. */}
+          <Toggle
+            label="Offer the link I copied"
+            on={canPaste}
+            onChange={async () => {
+              markClipboardAsked();
+              if (canPaste) {
+                await dropPermission("clipboardRead");
+                setCanPaste(false);
+                return;
+              }
+              const granted = await requestPermission("clipboardRead");
+              setCanPaste(granted);
+              if (!granted) toast("Chrome did not grant clipboard access");
+            }}
+          />
+        </div>
+        <div style={{ fontSize: 11, color: "var(--faint)", lineHeight: 1.5 }}>
+          Fills the address in when you add a Quick Link. Read only while that
+          form is open, and never stored.
         </div>
         <Pill
           onClick={() => update("behavior", { tourDone: false })}

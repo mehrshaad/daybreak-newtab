@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitForElementToBeRemoved,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NoticeContext } from "../core/noticeContext";
 import { defaultSettings } from "../core/schema";
@@ -154,12 +160,16 @@ describe("Header engine picker", () => {
     expect(document.activeElement).toBe(items[0]);
   });
 
-  it("closes on Escape and hands focus back", () => {
+  it("closes on Escape and hands focus back", async () => {
+    // The menu fades out rather than vanishing, the same as every other
+    // floating surface, so it is still in the DOM for the length of the exit.
+    // Focus comes back immediately, which is the part that matters for the
+    // keyboard.
     mount();
     const button = open();
     fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
-    expect(screen.queryByRole("menu")).toBeNull();
     expect(document.activeElement).toBe(button);
+    await waitForElementToBeRemoved(() => screen.queryByRole("menu"));
   });
 
   it("opens on the down arrow, the way a collapsed menu should", () => {
@@ -170,13 +180,13 @@ describe("Header engine picker", () => {
     expect(screen.getByRole("menu")).toBeTruthy();
   });
 
-  it("picks an engine and closes", () => {
+  it("picks an engine and closes", async () => {
     const { update } = mount();
     open();
     const items = within(screen.getByRole("menu")).getAllByRole("menuitemradio");
     const other = items.find((i) => i.getAttribute("aria-checked") === "false");
     fireEvent.click(other);
     expect(update).toHaveBeenCalledWith("behavior", expect.objectContaining({ searchEngine: expect.any(String) }));
-    expect(screen.queryByRole("menu")).toBeNull();
+    await waitForElementToBeRemoved(() => screen.queryByRole("menu"));
   });
 });

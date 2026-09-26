@@ -239,7 +239,7 @@ function ColorField({
               active={effective === name}
               onClick={() => onInk(ink === name ? null : name)}
             >
-              {name === "light" ? "Light" : "Dark"}
+              {name === "light" ? "White" : "Black"}
             </InkButton>
           ))}
         </div>

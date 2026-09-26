@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  AUTHOR,
+  AUTHOR_EMOJI,
+  AUTHOR_FULL,
   FEEDBACK_EMAIL,
   ISSUES_URL,
   MESSAGE_MAX,
@@ -7,6 +10,7 @@ import {
   feedbackBody,
   feedbackMailto,
   feedbackSubject,
+  profileLinks,
 } from "./contact";
 
 const FACTS = { version: "2.2.0", browser: "Chrome 141.0.0.0" };
@@ -79,5 +83,39 @@ describe("the bug link", () => {
     expect(body).toContain("What I expected");
     expect(body).toContain("How to make it happen again");
     expect(body).toContain("- Version: 2.2.0");
+  });
+});
+
+describe("who made it", () => {
+  it("offers only the profiles that have a URL", () => {
+    // The pill for an unset profile would go nowhere, which is worse than not
+    // offering it. Adding one is meant to be a single line in PROFILES.
+    const links = profileLinks([
+      { key: "github", label: "GitHub", url: "https://github.com/x" },
+      { key: "linkedin", label: "LinkedIn", url: "" },
+      { key: "mastodon", label: "Mastodon", url: undefined },
+    ]);
+    expect(links.map((p) => p.key)).toEqual(["github"]);
+  });
+
+  it("will not offer something that is not a web address", () => {
+    // A half-typed value in the table should not become a link.
+    const links = profileLinks([
+      { key: "a", url: "github.com/x" },
+      { key: "b", url: "javascript:alert(1)" },
+      { key: "c", url: "https://example.com" },
+    ]);
+    expect(links.map((p) => p.key)).toEqual(["c"]);
+  });
+
+  it("really does ship GitHub today", () => {
+    // A guard on the guard: if PROFILES were emptied the checks above would
+    // pass while the panel showed nothing.
+    expect(profileLinks().length).toBeGreaterThan(0);
+  });
+
+  it("has an emoji to fall back to when there is no photo", () => {
+    expect(AUTHOR_EMOJI.length).toBeGreaterThan(0);
+    expect(AUTHOR_FULL).toContain(AUTHOR);
   });
 });

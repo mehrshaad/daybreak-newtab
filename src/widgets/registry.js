@@ -116,14 +116,30 @@ export function resolveRate(id, storedRate) {
 // A recommendation, not a constraint — see resolveSize. A tile already on a
 // size that has just stopped being offered keeps it and still renders; the
 // picker simply stops suggesting it.
-export function sizesFor(id, options, config) {
+export function sizesFor(id, options, config, current) {
   const w = getWidget(id);
   if (!w) return [[4, 2]];
   if (typeof w.sizesFor !== "function") return w.sizes;
   const narrowed = w.sizesFor(w.sizes, options || {}, config || {});
   // Never down to nothing, whatever a manifest computes: a widget with no
   // sizes cannot be rendered at all.
-  return Array.isArray(narrowed) && narrowed.length ? narrowed : w.sizes;
+  const list = Array.isArray(narrowed) && narrowed.length ? narrowed : w.sizes;
+  // And never without the one it is on.
+  //
+  // A tile keeps its size when the shortlist changes — adding a second folder
+  // to Quick Links, or taking a city off Weather, narrows what is offered but
+  // does not resize anything. Dropping the current size from the list leaves a
+  // picker with nothing highlighted and no way to tell where you are, which
+  // reads as the widget having lost its size rather than as a size no longer
+  // being recommended.
+  if (!current) return list;
+  const [cw, ch] = current;
+  if (list.some(([x, y]) => x === cw && y === ch)) return list;
+  if (!w.sizes.some(([x, y]) => x === cw && y === ch)) return list;
+  // Back in the declared order, so the picker does not grow an odd tail.
+  return w.sizes.filter(
+    ([x, y]) => (x === cw && y === ch) || list.some(([a, b]) => a === x && b === y)
+  );
 }
 
 // Which of a widget's actions are worth offering right now.

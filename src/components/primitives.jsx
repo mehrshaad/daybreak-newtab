@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { CONTROL_TRANSITION, pill, toggleStyles, useHover, usePresence } from "@daybreak/sdk";
+import {
+  CONTROL_TRANSITION,
+  isFloating,
+  pill,
+  toggleStyles,
+  useHover,
+  usePresence,
+} from "@daybreak/sdk";
 
 // Height-animated show/hide for content in normal flow.
 //
@@ -170,7 +177,7 @@ export function Drawer({
     };
   }, [present, closing]);
 
-  // Closing on an outside click, with one element allowed to stay live.
+  // Closing on an outside click, with some things allowed to stay live.
   //
   // The catcher below is a single sheet over everything, which is the right
   // answer when nothing underneath may be touched. It cannot have a hole in it
@@ -182,11 +189,29 @@ export function Drawer({
   //
   // Preferred over raising the tile above the catcher, which would also raise
   // it above the sticky header and let a tile paint over the toolbar on scroll.
+  //
+  // The third exemption is the one this was missing, and it was not a small
+  // miss. Every popup in the app portals to <body> so no ancestor can clip it,
+  // which puts it outside both the panel and the tile however plainly it
+  // belongs to one of them — so clicking a city suggestion, a date, a folder
+  // or a link's colour closed the drawer, and where the popup belonged to the
+  // drawer it was unmounted mid-edit and the interaction could not be
+  // finished at all. Reproduced on World Clocks: the city was added and the
+  // drawer went with it.
+  //
+  // Capture phase is why the popups could not defend themselves. Popover calls
+  // stopPropagation, but React's handlers are attached at the root container,
+  // so this listener has already run by then. The surfaces mark themselves
+  // instead — see floating.js.
   useEffect(() => {
     if (!present || closing || !keepInteractive) return undefined;
     const outside = (e) => {
       if (panelRef.current?.contains(e.target)) return;
       if (keepInteractive()?.contains(e.target)) return;
+      // Before preventDefault, not after: preventing the default on mousedown
+      // is what stops focus landing in a popup's text input, so a popup has to
+      // be let through here rather than merely spared the close below.
+      if (isFloating(e.target)) return;
       e.preventDefault();
       e.stopPropagation();
       // One close per gesture: mousedown is where the decision is made, and

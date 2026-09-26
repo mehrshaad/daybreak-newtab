@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { Appear, CitySearch, MONO, useFlip, useWidgetLocal } from "@daybreak/sdk";
+import { LuCheck, LuChevronDown } from "react-icons/lu";
+import {
+  Appear,
+  CitySearch,
+  MenuRow,
+  MONO,
+  Popover,
+  useFlip,
+  useWidgetLocal,
+} from "@daybreak/sdk";
 import ConditionIcon from "./ConditionIcon";
+import { citiesOf, cityKey, shownCities, toggleShown } from "./cities";
 import { forecastUrl, parseForecast } from "./forecast";
-import { layoutFor, statsToShow } from "./layout";
+import { headlineFor, layoutFor, statsToShow } from "./layout";
 
 // One number from the extras row: rain, wind, humidity, UV.
 //
@@ -124,7 +134,13 @@ function Detail({ label, value }) {
   );
 }
 
-function Weather({ id, options, config, setConfig, refreshKey, size }) {
+// One city's readout, with its own fetch and its own cache.
+//
+// Split out of Weather when the widget learned to hold five. Each panel owns
+// its request and its cached reading — keyed by the city, so two cities on one
+// board cannot overwrite each other's numbers — and the outer component's only
+// job is deciding which of them are on screen.
+function CityPanel({ id, options, city, size, refreshKey }) {
   const {
     align,
     fahrenheit,
@@ -141,10 +157,11 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
   // on the alignment alone, so a refresh or a new reading never animates.
   const readoutRef = useRef(null);
   useFlip(readoutRef, [centred]);
-  const city = config.city;
   // Cache the last good reading so a refresh (or being offline) shows the
   // previous numbers instead of a spinner.
-  const [cached, setCached] = useWidgetLocal(id, "last", null);
+  // Keyed by the city. Two panels sharing "last" would overwrite each
+  // other's readings on every refresh and show Lisbon's numbers under Kyoto.
+  const [cached, setCached] = useWidgetLocal(id, `last:${cityKey(city)}`, null);
   const [status, setStatus] = useState(city ? "loading" : "nocity");
   const [live, setLive] = useState(null);
 
@@ -179,15 +196,6 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
     // setCached is stable per key; including it would refetch on every write.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city, fahrenheit, hour24, refreshKey]);
-
-  if (status === "nocity") {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-        <div style={{ fontSize: 13, color: "var(--dim)" }}>Pick a city to start.</div>
-        <CitySearch onPick={(c) => setConfig({ city: c })} />
-      </div>
-    );
-  }
 
   // Fall back to the cached reading while a refetch is in flight.
   const usableCache =
@@ -225,12 +233,21 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
   // same unit system as the temperature.
   const windUnit = fahrenheit ? "mph" : "km/h";
 
+  // How many strips are drawn below the readout, which decides how big the
+  // number is. Counted from what actually renders, not from what is switched
+  // on: a stat row with no data in it and an hourly strip on a reading with no
+  // hours both take no room, and the readout should get it.
+  const bands =
+    (view.stats && stats.length > 0 ? 1 : 0) +
+    (view.details ? 1 : 0) +
+    ((view.daily && days.length > 0) || (view.hourly && hours.length > 0) ? 1 : 0);
+  const headline = headlineFor(size, { bands });
+
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
         flex: 1,
         gap: 12,
         minWidth: 0,
@@ -247,6 +264,13 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
         style={{
           display: "flex",
           flexDirection: "column",
+          // All the height the strips below leave, with the readout in the
+          // middle of it. It used to sit at the top with the strips pushed to
+          // the bottom by `space-between`, which left the temperature hard
+          // against the header and a gap under it. With no strips at all it
+          // is the whole tile, so the lone readout is centred the same way.
+          flex: 1,
+          justifyContent: "center",
           alignItems: centred ? "center" : "flex-start",
           textAlign: centred ? "center" : "left",
           minWidth: 0,
@@ -262,25 +286,21 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
         >
           <div
             style={{
-              fontSize: view.narrow
-                ? "clamp(26px, 2.4vw, 32px)"
-                : view.tall
-                  ? "clamp(38px, 4.4vw, 54px)"
-                  : "clamp(30px, 3.4vw, 40px)",
+              fontSize: headline.temp,
               fontWeight: 500,
               letterSpacing: "-.03em",
               lineHeight: 1,
+              // The number grows and shrinks with what else is in the tile, so
+              // switching the forecast off is a change of scale rather than a
+              // jump.
+              transition: "font-size .28s cubic-bezier(.2,.8,.2,1)",
             }}
           >
             {data.temp}°
           </div>
           {/* Day/night decided from the location's own clock, not the
               browser's — the point of the widget is somewhere else. */}
-          <ConditionIcon
-            condition={data.condition}
-            day={data.isDay}
-            size={view.narrow ? 24 : view.tall ? 38 : 30}
-          />
+          <ConditionIcon condition={data.condition} day={data.isDay} size={headline.icon} />
         </div>
         <div
           data-flip-id="readout-place"
@@ -408,6 +428,128 @@ function Weather({ id, options, config, setConfig, refreshKey, size }) {
           ))}
         </div>
       </Appear>
+    </div>
+  );
+}
+
+// The widget: which cities it holds, which are on screen, and the picker.
+//
+// One readout below six columns, two above — see slotsFor. The rest sit behind
+// a button in the corner rather than being cycled through, because the point
+// of holding five is comparing two of them, not scrolling a list.
+function Weather({ id, options, config, setConfig, refreshKey, size }) {
+  const all = citiesOf(config);
+  const shown = shownCities(config, size);
+  const [picking, setPicking] = useState(false);
+  const pickRef = useRef(null);
+
+  if (!all.length) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+        <div style={{ fontSize: 13, color: "var(--dim)" }}>Pick a city to start.</div>
+        <CitySearch onPick={(c) => setConfig({ cities: [c] })} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: "relative", display: "flex", flex: 1, minWidth: 0, minHeight: 0 }}>
+      {shown.map((city, at) => (
+        <div
+          key={cityKey(city)}
+          style={{
+            display: "flex",
+            flex: 1,
+            minWidth: 0,
+            // A hairline between two readouts, so they read as two places
+            // rather than one wide one.
+            borderLeft: at ? "1px solid var(--line)" : "none",
+            paddingLeft: at ? 12 : 0,
+            marginLeft: at ? 12 : 0,
+          }}
+        >
+          <CityPanel
+            id={id}
+            options={options}
+            city={city}
+            refreshKey={refreshKey}
+            // Half the columns each when there are two, so a panel decides
+            // what it can fit from the room it actually has rather than from
+            // the whole tile's span.
+            size={shown.length > 1 ? [Math.max(2, Math.floor(size[0] / 2)), size[1]] : size}
+          />
+        </div>
+      ))}
+
+      {/* Only worth offering once there is something to switch to. */}
+      {all.length > shown.length ? (
+        <>
+          <button
+            ref={pickRef}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPicking((v) => !v);
+            }}
+            aria-label="Choose which cities to show"
+            aria-expanded={picking}
+            title="Choose which cities to show"
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              display: "grid",
+              placeItems: "center",
+              width: 22,
+              height: 22,
+              padding: 0,
+              borderRadius: 999,
+              border: 0,
+              background: picking ? "var(--tile-chip-bg, var(--sheet))" : "transparent",
+              backdropFilter: picking ? "var(--tile-chip-blur, none)" : "none",
+              color: "var(--dim)",
+              cursor: "pointer",
+              transition: "background .16s ease, color .16s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--fg)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--dim)";
+            }}
+          >
+            <LuChevronDown size={14} aria-hidden />
+          </button>
+          <Popover
+            open={picking}
+            anchorRef={pickRef}
+            onClose={() => setPicking(false)}
+            placement="bottom-start"
+            width={180}
+          >
+            <div role="group" aria-label="Cities" style={{ padding: "5px 0" }}>
+              {all.map((c) => {
+                const key = cityKey(c);
+                const on = shown.some((s) => cityKey(s) === key);
+                return (
+                  <MenuRow
+                    key={key}
+                    role="menuitemcheckbox"
+                    aria-checked={on}
+                    selected={on}
+                    onClick={() => setConfig({ shown: toggleShown(config, size, key) })}
+                  >
+                    <span style={{ width: 14, display: "inline-grid", placeItems: "center" }}>
+                      {on ? <LuCheck size={12} aria-hidden /> : null}
+                    </span>
+                    {c.name}
+                  </MenuRow>
+                );
+              })}
+            </div>
+          </Popover>
+        </>
+      ) : null}
     </div>
   );
 }

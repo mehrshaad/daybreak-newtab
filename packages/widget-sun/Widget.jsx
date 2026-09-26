@@ -8,8 +8,17 @@ import {
   dayProgress,
   sunPosition,
   sunTimes,
+  useMeasuredBox,
 } from "@daybreak/sdk";
-import { arcControlY, arcPoint, deltaLabel, lengthLabel, rgb, skyAt } from "./sky";
+import {
+  arcControlY,
+  arcPoint,
+  deltaLabel,
+  lengthLabel,
+  rgb,
+  skyAt,
+  viewBoxFor,
+} from "./sky";
 
 // The sun moves a quarter of a degree a minute, so a redraw every half minute
 // is already finer than the arc can show. Cheap enough to leave running.
@@ -92,6 +101,12 @@ function Sun({ config, setConfig, options, size }) {
     };
   }, [city, now, showDelta]);
 
+  // The drawing's own coordinate space, shaped like the box it is drawn into.
+  // See viewBoxFor: a fixed viewBox had to be stretched to span the tile, and
+  // a stretched viewBox cannot hold a round sun.
+  const [boxRef, box] = useMeasuredBox();
+  const VIEW = useMemo(() => viewBoxFor(box), [box]);
+
   if (!city?.latitude) {
     return (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 10 }}>
@@ -111,9 +126,6 @@ function Sun({ config, setConfig, options, size }) {
   const plain = arc === "plain";
   const daytime = position.altitude > -0.833;
 
-  // A fixed viewBox and a percentage width: the tile can be any shape, and the
-  // arc should keep its proportions rather than shearing with the tile.
-  const VIEW = { width: 300, height: 96 };
   // Below the horizon the sun has no place on the arc, so it is parked at the
   // nearest end rather than drawn hovering in the dark at a made-up spot.
   const point = arcPoint(progress ?? (position.altitude > 0 ? 0.5 : 0), VIEW);
@@ -131,6 +143,11 @@ function Sun({ config, setConfig, options, size }) {
       }}
     >
       <div
+        // The box the SVG fills, and the one that gets measured. Not the <svg>
+        // itself: ResizeObserver delivers nothing for an SVG element, so
+        // observing it left the viewBox stuck on its fallback shape and the
+        // arc letterboxed inside a tile it should have spanned.
+        ref={boxRef}
         style={{
           position: "relative",
           borderRadius: 12,
@@ -161,7 +178,13 @@ function Sun({ config, setConfig, options, size }) {
         />
         <svg
           viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
-          preserveAspectRatio="none"
+          // Stretched only until the box has been measured, which is what this
+          // did unconditionally before. A matched viewBox needs no stretching
+          // and must not have it — that is what keeps the sun round — but a
+          // fallback viewBox does, or the drawing is letterboxed inside a tile
+          // it should span. So the unmeasured frame looks exactly like the old
+          // behaviour rather than like a new bug.
+          preserveAspectRatio={box ? undefined : "none"}
           // Positioned, so the sky's crossfade layers cannot cover it.
           //
           // This is the whole sun and its arc disappearing behind a flat

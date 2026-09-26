@@ -1,13 +1,12 @@
-# Chrome Web Store — publishing Daybreak 2.3.0
+# Chrome Web Store — publishing Daybreak 2.4.0
 
-> **Submitted on 7 September 2026** and waiting on review. Everything below is
-> what went up, kept as the record of it and as the starting point for the next
-> one. Two numbers in the pasted text were wrong at the time and have been
-> corrected here — see "Corrections to the text that went up".
+> **Ready to upload.** 2.3.0 went up on 7 September 2026; this is the next one.
+> Everything below is ready to paste, and the checklist at the end is what is
+> left to do by hand.
 
-This went out as **a new version of the existing listing**, not a new item: the
-*Daybreak - New Tab* item was opened in the developer dashboard and a new
-package uploaded, so the item id, URL, installs, ratings and reviews all stay.
+This goes out as **a new version of the existing listing**, not a new item: open
+the *Daybreak - New Tab* item in the developer dashboard and upload a new
+package, so the item id, URL, installs, ratings and reviews all stay.
 
 The live listing:
 <https://chromewebstore.google.com/detail/daybreak-new-tab/dafdnkndnlfjbipbghigjibbpejfcnen>
@@ -24,7 +23,7 @@ Then zip the **contents** of `dist/` so `manifest.json` sits at the root of the
 archive:
 
 ```powershell
-Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-newtab-v2.3.0.zip -Force
+Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-newtab-v2.4.0.zip -Force
 ```
 
 The zip is git-ignored — rebuild it whenever `dist/` changes. The store rejects an
@@ -32,54 +31,63 @@ archive whose `manifest.json` is nested inside a folder.
 
 ## What the reviewer will see change
 
-| | 2.2.0 (live) | 2.3.0 (this upload) |
+| | 2.3.0 (live) | 2.4.0 (this upload) |
 | --- | --- | --- |
 | Name | Daybreak - New Tab | unchanged |
 | Required permissions | `storage` | unchanged |
-| Optional permissions | `sessions`, `tabs`, `history`, `bookmarks`, `favicon`, `topSites` | + **`clipboardRead`** |
+| Optional permissions | `sessions`, `tabs`, `history`, `bookmarks`, `favicon`, `topSites`, `clipboardRead` | unchanged |
 | Host permissions | none | none |
 | Optional host permissions | `https://*/*` | unchanged |
 | Remote code | none | none |
 | Minimum Chrome | 117 | unchanged |
 
-**Required permissions are unchanged**, so this update installs silently for
-existing users — no re-enable prompt. Two things are new for the reviewer to
-notice:
+**Nothing in the manifest changed at all** — verified with
+`git diff v2.3.0..v2 -- public/manifest.json`, which is empty. No new
+permission is requested, so this update installs silently for existing users
+and there is no re-enable prompt.
 
-- **`clipboardRead`** (optional) — when the user adds a Quick Link, the address
-  they have just copied is offered in the address field so they do not have to
-  paste it by hand. Read only while that add form is open, used only to fill
-  that one field, and never stored or sent. Requested the first time the user
-  presses "Paste what I copied" inside the widget, never at install, and
-  revocable in Chrome's own permission list. Covered in `privacy-policy.html`.
+One thing is new that a reviewer should know about even though it needs no
+permission:
 
-- **`bookmarks` is no longer read-only.** It was already an optional permission
-  for search suggestions. The new Bookmarks widget shows the user's bookmark
-  folders on the new tab page and lets them add, rename, move and delete
-  bookmarks and folders from the widget's settings — those edits are made in
-  Chrome's own bookmarks, deliberately: the widget shows and edits the one list
-  the browser already keeps rather than a private copy of it. Every delete
-  requires a second confirming tap, and a folder delete states how many
-  bookmarks go with it. Nothing is uploaded. The justification box below has
-  been rewritten to match, and `privacy-policy.html` carries the same change.
+- **The News widget can show thumbnails, and they are off by default.** A
+  thumbnail is an `<img>` pointing at whichever host the feed names for it,
+  usually the publisher's own CDN, which means turning the option on makes
+  requests to third-party servers on every new tab. No host permission is
+  involved — an extension page's default CSP does not restrict `img-src` — so
+  nothing in the manifest says this, which is exactly why it is called out
+  here. It ships off, the option's own copy says what it does, images are sent
+  with `referrerpolicy="no-referrer"`, and `privacy-policy.html` has a
+  paragraph on it.
 
 Carried over and unchanged, repeated here because the reviewer seeing this
 upload may not have seen the last one:
 
-- **`topSites`** (optional) — the Most visited widget shows the sites the user
-  visits most, from the list Chrome has already compiled for its own new tab
-  page. Requested only when that widget is added.
-
-- **`favicon`** (optional) — lets search suggestions show a page's real icon,
-  reading Chrome's own already-cached favicon store. Requested alongside
-  whichever suggestion source (tabs/history/bookmarks) the user turns on
-  first; never requested on its own.
-- **`optional_host_permissions: ["https://*/*"]`** — grants nothing by
-  itself. It is the pattern Chrome requires a per-origin
-  `chrome.permissions.request()` to fall within, used by the new Calendar and
-  News widgets to ask for access to exactly one address (an iCal link or a
-  feed URL) the user pastes in, at the moment they add it. No standing access
-  to any site.
+- **`bookmarks`** (optional) — the Bookmarks widget reads Chrome's own bookmark
+  tree and edits it: add, rename, move and delete, from the widget's settings
+  or by right-clicking a bookmark on the board. Those edits are made in
+  Chrome's bookmarks deliberately — the widget shows and edits the one list the
+  browser already keeps rather than a private copy. Deleting asks twice.
+  Nothing is uploaded. Also used for search suggestions.
+- **`clipboardRead`** (optional) — when the user adds a Quick Link, the address
+  they just copied is offered in the address field. Read only while that form
+  is open, used only to fill that field, never stored or sent. Asked once ever:
+  on the welcome card at setup, or on the first Quick Link added by somebody
+  who skipped it. Never at install. There is a switch for it in Settings.
+- **`topSites`** (optional) — the Most visited widget, from the list Chrome has
+  already compiled for its own new tab page. Requested only when that widget is
+  added.
+- **`favicon`** (optional) — a page's real icon next to a search suggestion,
+  read from Chrome's already-cached favicon store rather than by making a
+  request to the site. Requested alongside whichever suggestion source the user
+  turns on first; never on its own.
+- **`sessions`, `tabs`, `history`** (optional) — Recent Tabs, and the search
+  box's suggestion sources. Each requested only when switched on.
+- **`optional_host_permissions: ["https://*/*"]`** — grants nothing by itself.
+  It is the pattern Chrome requires a per-origin
+  `chrome.permissions.request()` to fall within, used by the Calendar and News
+  widgets to ask for access to exactly one address (an iCal link or a feed URL)
+  the user pastes in, at the moment they provide it. No standing access to any
+  site.
 
 `minimum_chrome_version: 117` is what the animated greeting collapse
 (`grid-template-rows` interpolation) and the OKLCH colour tokens need. Anyone on
@@ -143,77 +151,67 @@ the next bump cannot ship without somebody reading the policy again.
 
 ### What's new (release notes)
 
-> Your bookmarks on the new tab page, folders you can pull apart into their own
-> cards, a theme that follows the sun, and a positioning bug that had been
-> quietly moving every tooltip.
+> Weather in five cities, pictures and previews in the news, and a popup bug
+> that closed the settings drawer out from under whatever you were typing in.
 >
-> - New widget: Bookmarks. Your browser's own folders, read live from Chrome —
->   and edited there too. Add, rename, move and delete from the widget's
->   settings and the change is in Chrome's bookmark manager as well. Twenty-three
->   widgets now
+> - Weather holds up to five cities and shows one or two side by side, with the
+>   rest behind a button in the corner. Each has its own reading
+> - The temperature grows into the room it has: turn the forecast off on a
+>   small tile and the number fills it instead of sitting in an empty card
+> - News shows a picture and a summary, and resting on a headline for a second
+>   opens a preview. Pictures are off by default — they are loaded from the
+>   publisher's own server, so that is your choice to make
+> - Right-click a bookmark for its name, address and colour, the same way Quick
+>   Links already worked. Renaming here renames it in Chrome
+> - The focus timer takes real lengths now: the round from 5 to 60 minutes, the
+>   break from 1 to 30, and the long break separately
+> - Start typing anywhere on the board and it goes to the search box, the way
+>   Chrome's own new tab does
+> - Replaying the tour gets a board of its own, so it no longer rearranges the
+>   one you have set up
+> - There is a face and a name behind this now, in Settings, with a way to
+>   reach me
+> - World Clocks fits a 2x2. Icons lift when you hover them, and the one whose
+>   editor is open lifts further so you can see which it is
+> - Fixed: a popup opened from the settings drawer closed the drawer out from
+>   under it, so picking a city, a date or a colour meant starting again — and
+>   the link editor could not be typed into at all
+> - Fixed: reaching for a widget's scrollbar put the board into edit mode
+> - Fixed: the sun in Sun & daylight was an ellipse at most tile sizes
+> - Fixed: the search-engine menu was unreadable, with the board showing
+>   through the engine names
+> - Fixed: the folder list in Quick Links and Bookmarks pushed every other
+>   setting below the fold; it is at the bottom now
+> - Fixed: hovering a row in a list barely changed it in the light theme
+> - Adding a habit opens a small window, the same way adding a link does, with
+>   the name, times per week and goal all in it
+> - Fixed: picking a folder while adding a link closed the whole form, so a new
+>   link could not go into a new folder
+> - Fixed: the weather reading sat at the top of its tile. It is centred in the
+>   space above the forecast now
+> - Fixed: Quick Links and Most visited cut a row in half when it did not fit,
+>   with no way to scroll to it
+>
+> Everything below is from 2.3.0 and still true.
+>
+> Your bookmarks on the new tab page, folders you can pull apart into their own
+> cards, and a theme that follows the sun.
+>
+> - New widget: Bookmarks. Your browser's own folders, read live from Chrome
+>   and edited there too. Twenty-three widgets now
 > - Folders, for Bookmarks and for Quick Links, and either can be pulled apart
->   so each folder becomes its own card to arrange and resize — titled
->   "BOOKMARKS · AI TOOLS"
+>   so each folder becomes its own card to arrange and resize
 > - New theme: Sunrise. Light by day and dark after sunset, worked out on the
 >   device from a city you have already set in a widget, or from your timezone
-> - Right-click a Quick Link to edit it: name, address, tile colour from ten or
->   one you pick yourself, icon colour, remove. A brand keeps its own mark, so GitHub in orange is
->   still GitHub
+> - Right-click a Quick Link to edit it: name, address, tile colour, icon
+>   colour, remove
 > - Adding is in the right-click menu now, for all nine widgets you can add
->   something to. It used to be in nine different places and none of them was
->   the menu
-> - Quick Links offers the address you just copied when you add a link, asking
->   for the clipboard permission the first time and never at install
-> - Quick Links and Google Apps can be a list instead of a grid, for when the
->   names matter more than the marks
-> - The focus timer puts its countdown in the tab title while it runs, so a
->   round is visible from the tab you went off to work in
-> - Square sizes across fourteen widgets, and more of them per widget
-> - There is a way to reach me from inside the extension now: a website link,
->   a feedback box that composes an email, and a bug report that arrives with
->   the version and browser already filled in
-> - Hover cards on Quick Links and Most visited are off by default, and are an
->   option — they were appearing on the way past
+>   something to
+> - Quick Links and Google Apps can be a list instead of a grid
+> - The focus timer puts its countdown in the tab title while it runs
 > - Fixed: every floating surface was positioned in the wrong units under a
 >   page zoom, so tooltips, popovers and the context menu all landed off by the
->   zoom — further out the further across the page they were. Reported as a
->   tooltip sitting twenty pixels left of its icon on one machine
-> - Fixed: a tooltip measured before the font finished loading stayed centred on
->   a width it no longer had
->
-> Everything below is from 2.2.0 and still true.
->
-> A guided tour, up to three separate boards, and a lot of polish found by
-> measuring rather than by looking.
->
-> - New: a guided tour on first run — fifteen steps that open each drawer for
->   real as they explain it, and stay out of your way otherwise
-> - New: profiles. Up to three boards on one install, each with its own
->   layout, look and widget settings, each syncing on its own. A switcher
->   appears in the toolbar once you have more than one
-> - New widgets: Countdown, Prayer times, Moon phase, Sun & daylight and Most
->   visited, bringing it to twenty-two
-> - The calendar is a calendar now: a real month grid with the Jalali and
->   Hijri dates, holidays, and your events on the day they fall
-> - A colour per widget, so a full board can be read at a glance, and the
->   near-duplicate accent swatches are gone
-> - Size options: five for the digital clock, three for the icon grids, two for
->   World Clocks and Currency — and the icons themselves are larger, with the
->   padding around them cut back
-> - When a widget goes wrong it now says what went wrong, and offers a button
->   that opens a GitHub issue with the error, the version and the browser
->   already filled in. Nothing from your board, your settings or your widgets
->   goes with it
-> - Quick Links: 233 brand marks built in, and a link falling back to its own
->   favicon now sits on a gradient rather than a flat square
-> - Blur is off by default so the page opens instantly; the welcome card asks
->   which you would rather have, and macOS starts on the frosted look where it
->   is close to free
-> - Fixes: a date one day early between January and Nowruz in the Jalali
->   calendar, a tooltip that could stay behind after the pointer left the
->   window, the board not centring when a row was short, the toolbar drawing
->   over itself with a drawer open, and the analog clock swallowing its own
->   drag handle and right-click
+>   zoom
 
 ## Images
 
@@ -309,43 +307,41 @@ reaches the developer, who operates no server.
 
 ## Before you hit submit
 
-Done for 2.3.0 on 7 September 2026.
+Ticked by me, in the repo:
 
-- [x] the updated `privacy-policy.html` is live at the URL on the listing
-- [x] the zip's `manifest.json` is at the archive root
-- [x] `manifest.json` name reads `Daybreak - New Tab` and version `2.3.0`
-- [x] every widget renders with no stored options, which is what a board saved
-      by an older version looks like for every option added since. All
-      twenty-three, no console errors, nothing printing `undefined`.
-      `src/core/schema.js` is unchanged since the v2.2.0 tag, so hydration
-      behaves exactly as it did
-- [x] store icon, five screenshots, the small promo tile and the marquee
-      uploaded
-- [x] release notes filled in
-- [x] every permission justification filled in, including `favicon` and the
-      optional host permission
+- [x] `package.json` and `public/manifest.json` both read `2.4.0`, guarded by
+      a test
+- [x] every widget whose code changed has a bumped manifest version — seven of
+      them. Nothing forces this, and it had been missed for the whole of
+      2.3.0, so it is a line on this list now
+- [x] `privacy-policy.html` re-read rather than re-stamped. Two claims in it
+      had gone stale: it named a "Paste what I copied" button that no longer
+      exists, and said bookmarks are edited from the widget's settings when
+      they are now also edited from the board. Both corrected, and the news
+      thumbnail option is disclosed
+- [x] nothing in `public/manifest.json` changed — `git diff v2.3.0..v2 --
+      public/manifest.json` is empty — so no new permission and a silent
+      update for existing users
+- [x] lint, 1600+ tests and the build all pass
+- [x] the zip is built with `manifest.json` at the archive root, no source maps
 
-Not carried back into the repo: the five `store-assets/screenshot-*.png` here
-are still the 2026-08-09 files. Whatever was uploaded to the listing for 2.3.0
-is not mirrored in this folder, so re-capture from the boards below rather than
-assuming these are what a visitor sees.
+Left for you:
 
-## Corrections to the text that went up
-
-Two counts in the pasted text were out of date when it was submitted. They are
-fixed above, and the listing text can be edited in the dashboard without a new
-package — description and release notes are listing fields, not part of the
-upload.
-
-| Where | Said | Should say |
-| --- | --- | --- |
-| detailed description, the accent count | fifteen | sixteen |
-| release notes, the Quick Link tile palette | fifteen | ten, or one you pick yourself |
-
-The accent palette went to sixteen in this release and three documents kept
-saying fifteen, including a test that asserted the literal string. The count is
-now derived from `ACCENTS` in `src/core/docsMatchWidgets.test.js`, so adding a
-swatch fails every place that prints the number.
+- [ ] publish the updated `privacy-policy.html` to the URL on the listing
+      **before** uploading. The policy is stamped `reviewed for version 2.4.0`
+- [ ] load the built `dist/` unpacked once and check two things the dev server
+      cannot: that the **Bookmarks widget** reads and edits Chrome's real tree,
+      and that a **news thumbnail actually loads** with the option on. An
+      extension page's default CSP does not restrict `img-src`, so it should —
+      but that is reasoning, not a measurement, and it is thirty seconds to
+      confirm
+- [ ] store icon, five screenshots, the small promo tile and the marquee.
+      **The five in this folder are still the 2026-08-09 files** and have never
+      been re-captured; whatever went up for 2.3.0 was not mirrored back here.
+      See "Re-capturing the screenshots"
+- [ ] paste the release notes below into the dashboard
+- [ ] the listing's detailed description is a listing field, not part of the
+      package, so it can be edited any time
 
 ## Re-capturing the screenshots
 

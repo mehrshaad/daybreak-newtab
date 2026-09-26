@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isFloating } from "@daybreak/sdk";
 
 const isTypingTarget = (el) =>
   !!el &&
@@ -7,9 +8,37 @@ const isTypingTarget = (el) =>
     el.tagName === "SELECT" ||
     el.isContentEditable);
 
+// Whether a keystroke is somebody starting to type rather than reaching for a
+// shortcut.
+//
+// One printable character, no modifier. `key.length === 1` is the whole test
+// for printable and it is a better one than a character-class regex: it covers
+// every alphabet and no named key, since those are all "Enter", "ArrowUp",
+// "F5" and so on.
+//
+// Space is deliberately not included. With nothing focused, space is how you
+// scroll a page, and a search that begins with a space is not a search anybody
+// meant to start.
+export function startsTyping(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  if (e.key.length !== 1 || e.key === " ") return false;
+  if (isTypingTarget(e.target) || isTypingTarget(document.activeElement)) return false;
+  // A menu has its own keyboard, and typing into one is how you jump to an
+  // item in it. Stealing the keystroke would break that.
+  if (isFloating(document.activeElement)) return false;
+  return true;
+}
+
 // Global shortcuts. `enabled` mirrors the "Keyboard shortcuts" general toggle;
 // Escape stays active regardless so overlays can always be dismissed.
-export function useKeyboard({ enabled = true, onEscape, onSearch, onToggleEdit, onStore }) {
+export function useKeyboard({
+  enabled = true,
+  onEscape,
+  onSearch,
+  onType,
+  onToggleEdit,
+  onStore,
+}) {
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -35,12 +64,22 @@ export function useKeyboard({ enabled = true, onEscape, onSearch, onToggleEdit, 
           e.preventDefault();
           onStore?.();
         }
+        return;
+      }
+
+      // Just typing. The character is handed over explicitly rather than left
+      // to fall through to the newly focused field: moving focus during
+      // keydown usually does deliver it, but "usually" is the wrong guarantee
+      // for the first letter of every search somebody types.
+      if (onType && startsTyping(e)) {
+        e.preventDefault();
+        onType(e.key);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [enabled, onEscape, onSearch, onToggleEdit, onStore]);
+  }, [enabled, onEscape, onSearch, onType, onToggleEdit, onStore]);
 }
 
 // Decides whether the header should be condensed. Pure, so the flicker it

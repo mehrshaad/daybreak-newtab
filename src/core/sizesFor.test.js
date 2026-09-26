@@ -108,3 +108,76 @@ describe("every other widget", () => {
     expect(narrowing).toEqual([]);
   });
 });
+
+describe("Weather's sizes", () => {
+  const CITY = (name, latitude, longitude) => ({ name, latitude, longitude });
+  const LISBON = CITY("Lisbon", 38.7, -9.1);
+  const KYOTO = CITY("Kyoto", 35.0, 135.8);
+
+  it("withholds the six-wide size from a single city", () => {
+    // It is the two-city size, and on one city it is a lot of empty width.
+    expect(size(sizesFor("weather", {}, { cities: [LISBON] }))).not.toContain("6x3");
+  });
+
+  it("offers it once there are two", () => {
+    expect(size(sizesFor("weather", {}, { cities: [LISBON, KYOTO] }))).toContain("6x3");
+  });
+
+  it("offers it to one city showing the week", () => {
+    // The exception that has to survive: seven columns of icon and two
+    // temperatures need six board columns, and layoutFor only widens to a
+    // full week there — so withholding this would take away the only size
+    // that can show the thing the person asked for.
+    const week = { forecast: "daily" };
+    expect(size(sizesFor("weather", week, { cities: [LISBON] }))).toContain("6x3");
+  });
+
+  it("still offers every smaller size to a single city", () => {
+    const one = size(sizesFor("weather", {}, { cities: [LISBON] }));
+    expect(one).toEqual(["2x2", "3x2", "4x2", "3x3", "4x3"]);
+  });
+
+  it("reads a board written before cities were a list", () => {
+    // config.city, not config.cities. One city either way, so no 6x3.
+    expect(size(sizesFor("weather", {}, { city: LISBON }))).not.toContain("6x3");
+  });
+});
+
+describe("the size a widget is already on", () => {
+  // A tile keeps its size when the shortlist changes: adding a folder to
+  // Quick Links, or taking a city off Weather, narrows what is offered but
+  // resizes nothing. Dropping the current size from the list left a picker
+  // with nothing highlighted, which reads as the widget having lost its size
+  // rather than as a size no longer being recommended.
+
+  it("is offered even once it would be withdrawn", () => {
+    const one = { cities: [{ name: "Lisbon", latitude: 38.7, longitude: -9.1 }] };
+    expect(size(sizesFor("weather", {}, one))).not.toContain("6x3");
+    expect(size(sizesFor("weather", {}, one, [6, 3]))).toContain("6x3");
+  });
+
+  it("keeps the declared order rather than tacking it on the end", () => {
+    const one = { cities: [{ name: "Lisbon", latitude: 38.7, longitude: -9.1 }] };
+    expect(size(sizesFor("weather", {}, one, [6, 3])).at(-1)).toBe("6x3");
+    const links = { items: [{ id: "a", folder: "A" }, { id: "b" }] };
+    expect(size(sizesFor("links", {}, links, [2, 2]))[0]).toBe("2x2");
+  });
+
+  it("does the same for Quick Links, which had the identical problem", () => {
+    // A 2x2 card that gains a second folder would have lost 2x2 from its
+    // picker while sitting at it.
+    const twoGroups = { items: [{ id: "a", folder: "A" }, { id: "b" }] };
+    expect(size(sizesFor("links", {}, twoGroups))).not.toContain("2x2");
+    expect(size(sizesFor("links", {}, twoGroups, [2, 2]))).toContain("2x2");
+  });
+
+  it("does not invent a size the widget never declared", () => {
+    // The current size comes from stored board data, which can name anything.
+    expect(size(sizesFor("weather", {}, {}, [11, 9]))).not.toContain("11x9");
+  });
+
+  it("changes nothing when the current size was offered anyway", () => {
+    const two = { cities: [{ name: "a", latitude: 1, longitude: 1 }, { name: "b", latitude: 2, longitude: 2 }] };
+    expect(size(sizesFor("weather", {}, two, [4, 2]))).toEqual(size(sizesFor("weather", {}, two)));
+  });
+});

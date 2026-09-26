@@ -447,6 +447,14 @@ export function tokens(theme = DEFAULTS.theme, accentInput = DEFAULTS.accent, bl
     // is already near-white. Hovering a context-menu item painted white on
     // white and simply did not show.
     "--sheetHover": dark ? "rgba(255,255,255,.10)" : "rgba(20,22,28,.06)",
+    // A row highlight for lists inside a tile, and the direction is the point.
+    //
+    // Rows used --panel, which in light mode is white at 62% over a tile that
+    // is already white at 55% — more of the same, and barely a change. A hover
+    // on a light surface reads when it goes darker, not whiter, which is what
+    // --sheetHover already does for menus. Same idea, a touch stronger,
+    // because a tile is a busier backdrop than a menu sheet.
+    "--rowHover": dark ? "rgba(255,255,255,.07)" : "rgba(20,22,28,.055)",
     "--storeBg": dark ? "rgba(10,11,14,.97)" : "rgba(244,244,242,.98)",
     // With blur on, the store's own fill is deliberately thinner so the blurred
     // board reads through it as depth. With blur off it has to be opaque, or

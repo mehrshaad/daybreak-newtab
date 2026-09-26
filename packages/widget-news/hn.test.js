@@ -11,7 +11,7 @@ describe("parseHnItem", () => {
         score: 57,
         descendants: 3,
       })
-    ).toEqual({
+    ).toMatchObject({
       id: 1,
       title: "Y Combinator",
       url: "http://ycombinator.com",

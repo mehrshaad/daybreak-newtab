@@ -341,6 +341,7 @@ function Habits({ id, options, config, setConfig, size, editing, action }) {
   const [history, setHistory] = useWidgetSynced(id, "history", {}, { trim: trimHistory });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
+  const addBtnRef = useRef(null);
 
   useWidgetAction(action, "add", () => setAdding(true));
   // Target and goal are set here rather than only in the row's own settings
@@ -375,6 +376,13 @@ function Habits({ id, options, config, setConfig, size, editing, action }) {
       habits: habits.map((h) => (h.id === habitId ? { ...h, ...changes } : h)),
     });
 
+  const closeAdd = () => {
+    setAdding(false);
+    setDraft("");
+    setDraftTarget(5);
+    setDraftWeeks(0);
+  };
+
   const add = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -386,10 +394,7 @@ function Habits({ id, options, config, setConfig, size, editing, action }) {
         { id: uid(), name, target: draftTarget, targetWeeks: draftWeeks },
       ],
     });
-    setDraft("");
-    setDraftTarget(5);
-    setDraftWeeks(0);
-    setAdding(false);
+    closeAdd();
   };
 
   return (
@@ -446,24 +451,66 @@ function Habits({ id, options, config, setConfig, size, editing, action }) {
         );
       })}
 
-      {adding ? (
+      {/* Only while arranging the board. Adding a habit changes what the tile
+          contains rather than being something done at a glance, and a resting
+          tile reads better without a permanent invitation. Appear rather than
+          a ternary so it leaves the way it arrived and hands its space back.
+          Kept while the form is open too: it is what the form hangs from, and
+          "Add a habit" from the tile's menu opens it outside edit mode.
+          Tasks deliberately keeps its own input: typing a task is that
+          widget's whole purpose, not configuration. */}
+      <Appear open={!!editing || adding} style={{ alignSelf: "flex-start" }}>
+        <button
+          ref={addBtnRef}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (adding) closeAdd();
+            else setAdding(true);
+          }}
+          aria-expanded={adding}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            border: 0,
+            background: "transparent",
+            color: adding ? "var(--accent)" : "var(--faint)",
+            fontSize: 13,
+            cursor: "pointer",
+            padding: 0,
+            alignSelf: "flex-start",
+            transition: "color .15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--accent)";
+          }}
+          onMouseLeave={(e) => {
+            if (!adding) e.currentTarget.style.color = "var(--faint)";
+          }}
+        >
+          <LuPlus size={13} /> Add habit
+        </button>
+      </Appear>
+
+      {/* Floating, the way Quick Links adds a link. The form used to open in
+          the list itself, below the last habit, which pushed the rows around
+          and could land below the fold of a tile that scrolls. */}
+      <Popover
+        open={adding}
+        anchorRef={addBtnRef}
+        onClose={closeAdd}
+        placement="bottom-center"
+        width={220}
+      >
         <form
           onSubmit={add}
-          onClick={(e) => e.stopPropagation()}
-          style={{ animation: "db-menu .16s ease both" }}
+          style={{ display: "flex", flexDirection: "column", gap: 10, padding: "10px 12px" }}
         >
           <input
             autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            // Only closes if nothing has been typed *and* focus left the form
-            // altogether — reaching for a stepper used to dismiss the whole
-            // thing mid-edit.
-            onBlur={(e) => {
-              if (draft) return;
-              if (e.currentTarget.form?.contains(e.relatedTarget)) return;
-              setAdding(false);
-            }}
             placeholder="Habit name"
             aria-label="Habit name"
             style={{
@@ -477,74 +524,29 @@ function Habits({ id, options, config, setConfig, size, editing, action }) {
               color: "var(--fg)",
             }}
           />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              flexWrap: "wrap",
-              marginTop: 8,
-            }}
-          >
-            <Stepper
-              label="per week"
-              value={draftTarget}
-              min={1}
-              max={7}
-              onChange={setDraftTarget}
-            />
-            <Stepper
-              label="goal"
-              value={draftWeeks}
-              min={0}
-              max={52}
-              suffix="w"
-              onChange={setDraftWeeks}
-            />
-            {/* A form whose only control is a text field does not submit on
-                Enter once other controls join it — this restores that without
-                a visible button, the same trick the quick-links form uses. */}
-            <button type="submit" style={{ display: "none" }} aria-hidden="true" />
-          </div>
+          {/* Stacked, as in a habit's own settings, so the -/+ controls line
+              up under one another. */}
+          <Stepper
+            label="per week"
+            value={draftTarget}
+            min={1}
+            max={7}
+            onChange={setDraftTarget}
+          />
+          <Stepper
+            label="goal"
+            value={draftWeeks}
+            min={0}
+            max={52}
+            suffix="w"
+            onChange={setDraftWeeks}
+          />
+          {/* A form whose only control is a text field does not submit on
+              Enter once other controls join it — this restores that without
+              a visible button, the same trick the quick-links form uses. */}
+          <button type="submit" style={{ display: "none" }} aria-hidden="true" />
         </form>
-      ) : (
-        // Only while arranging the board. Adding a habit changes what the tile
-        // contains rather than being something done at a glance, and a resting
-        // tile reads better without a permanent invitation. Appear rather than a
-        // ternary so it leaves the way it arrived and hands its space back.
-        // Tasks deliberately keeps its own input: typing a task is that
-        // widget's whole purpose, not configuration.
-        <Appear open={!!editing} style={{ alignSelf: "flex-start" }}>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setAdding(true);
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            border: 0,
-            background: "transparent",
-            color: "var(--faint)",
-            fontSize: 13,
-            cursor: "pointer",
-            padding: 0,
-            alignSelf: "flex-start",
-            transition: "color .15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--accent)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--faint)";
-          }}
-        >
-          <LuPlus size={13} /> Add habit
-        </button>
-        </Appear>
-      )}
+      </Popover>
     </div>
   );
 }

@@ -12,15 +12,17 @@ import {
   MONO,
   moveItem,
   Popover,
+  clipboardAsked,
+  markClipboardAsked,
   readClipboardLink,
   requestPermission,
   Select,
   uid,
+  findIcon,
   useLiveRef,
   useWidgetAction,
 } from "@daybreak/sdk";
 import { LOOSE, folderNames, groupLinks, selectGroup } from "./folders";
-import { findIcon } from "./findIcon";
 
 // Add-form fields: a small eyebrow label above each input, matching the
 // settings drawer's field styling.
@@ -226,7 +228,6 @@ function Links({
   // a button was needed, and a click on Add is a user gesture, which is all
   // Chrome requires — so it is asked for here, once, and never again either
   // way. Declined, the field is simply typed into.
-  const askedPaste = useRef(false);
   const openAdd = (e) => {
     e.stopPropagation();
     if (adding) {
@@ -234,8 +235,11 @@ function Links({
       return;
     }
     setAdding(true);
-    if (canPaste !== false || askedPaste.current) return;
-    askedPaste.current = true;
+    // Once ever, not once per page. This was a ref, and a new tab page is a
+    // fresh page every time, so somebody who declined got asked again on their
+    // next tab and every tab after that. clipboardAsked() remembers.
+    if (canPaste !== false || clipboardAsked()) return;
+    markClipboardAsked();
     // Nothing may be awaited before this or the gesture is already spent.
     requestPermission("clipboardRead").then(async (granted) => {
       setCanPaste(granted);
@@ -283,6 +287,14 @@ function Links({
     ],
     [items]
   );
+
+  // A folder made from the add form exists only in the draft until the link
+  // is saved, so it is offered here too, or the field would read "None" while
+  // the link was about to be filed into it.
+  const addFolderOptions =
+    draftFolder && !folderOptions.some((o) => o.value === draftFolder)
+      ? [...folderOptions, { value: draftFolder, label: draftFolder }]
+      : folderOptions;
 
   const toGridItem = (l) => ({
     key: l.id,
@@ -408,6 +420,11 @@ function Links({
                 // The one grid in the plain case keeps the tile's whole height,
                 // the way it did before this. Grouped ones take what they need.
                 flex: plain ? 1 : "none",
+                // And may shrink below its icons, or the grid inside can never
+                // be shorter than its rows: it grew to fit them, the tile
+                // clipped the last one in half, and there was nothing to
+                // scroll.
+                minHeight: 0,
               }}
             >
               {/* No heading on the loose group and none on a card holding a
@@ -491,6 +508,8 @@ function Links({
             onRemove={remove}
             onRemoveByDrag={remove}
             onItemMenu={openItemMenu}
+            // Which icon the editor is about, so it lifts while it is open.
+            activeKey={editId}
             // Off means nothing on hover, not a tooltip instead of a
             // card — see IconGrid's `hover`.
             hover={hoverCard ? "card" : "none"}
@@ -639,7 +658,7 @@ function Links({
             Folder
             <Select
               value={draftFolder ?? cardFolder ?? ""}
-              options={folderOptions}
+              options={addFolderOptions}
               onChange={setDraftFolder}
               onCreate={(name) => setDraftFolder(name)}
               createLabel="New folder…"

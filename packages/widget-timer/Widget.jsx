@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LuPause, LuPlay, LuRotateCcw } from "react-icons/lu";
 import { Button, MONO, Tooltip, useMeasuredWidth, useTooltip, useWidgetLocal } from "@daybreak/sdk";
 import { formatClock, IDLE, nextPhase, phaseLength, remainingOf, resumeFrom } from "./phases";
@@ -15,13 +15,19 @@ import { claimTitle, releaseTitle, titleFor, writeTitle } from "./tabTitle";
 // Local rather than synced: a countdown running on this machine is not
 // something the laptop in the other room should join halfway through.
 function Timer({ id, options, toast }) {
-  const { longFocus, autoStart, tabTitle } = options;
+  const { focusMinutes, breakMinutes, longBreakMinutes, autoStart, tabTitle } = options;
+  // One object, passed wherever a phase length is worked out, so a changed
+  // slider reaches every one of them at once.
+  const lengths = useMemo(
+    () => ({ focus: focusMinutes, brk: breakMinutes, longBreak: longBreakMinutes }),
+    [focusMinutes, breakMinutes, longBreakMinutes]
+  );
   const resetTip = useTooltip("Start over");
   const [saved, setSaved] = useWidgetLocal(id, "run", IDLE);
 
   // Resolved from storage on every render, so a tab that was in the background
   // while the phase ended catches up the moment it is looked at again.
-  const resumed = resumeFrom(saved, Date.now(), { longFocus, autoStart });
+  const resumed = resumeFrom(saved, Date.now(), { ...lengths, autoStart });
   const [left, setLeft] = useState(() => resumed.left);
 
   const { phase, round } = resumed;
@@ -34,31 +40,31 @@ function Timer({ id, options, toast }) {
     const key = `${phase}-${round}`;
     if (announced.current === key) return;
     announced.current = key;
-    setSaved({ phase, round, endsAt: null, left: phaseLength({ phase, longFocus }) });
+    setSaved({ phase, round, endsAt: null, left: phaseLength({ phase, ...lengths }) });
     toast?.(`${phase === "Focus" ? "Break" : "Focus"} finished while you were away`);
-  }, [resumed.finishedWhileAway, phase, round, longFocus, setSaved, toast]);
+  }, [resumed.finishedWhileAway, phase, round, lengths, setSaved, toast]);
 
   // A changed round length only applies to a phase that is not already running,
   // the way it did before — moving the dial should not shorten the sprint you
   // are in the middle of.
   useEffect(() => {
     if (running) return;
-    setLeft(phaseLength({ phase, longFocus }));
-  }, [phase, longFocus, running]);
+    setLeft(phaseLength({ phase, ...lengths }));
+  }, [phase, lengths, running]);
 
   useEffect(() => {
     if (!running) return undefined;
     const tick = () => {
-      const remaining = remainingOf(saved, Date.now(), longFocus);
+      const remaining = remainingOf(saved, Date.now(), lengths);
       if (remaining <= 0) {
         const next = nextPhase(phase, round);
         setSaved({
           phase: next.phase,
           round: next.round,
           endsAt: autoStart
-            ? Date.now() + phaseLength({ phase: next.phase, longFocus }) * 1000
+            ? Date.now() + phaseLength({ phase: next.phase, ...lengths }) * 1000
             : null,
-          left: phaseLength({ phase: next.phase, longFocus }),
+          left: phaseLength({ phase: next.phase, ...lengths }),
         });
         return;
       }
@@ -67,7 +73,7 @@ function Timer({ id, options, toast }) {
     tick();
     const t = setInterval(tick, 250);
     return () => clearInterval(t);
-  }, [running, saved, phase, round, longFocus, autoStart, setSaved]);
+  }, [running, saved, phase, round, lengths, autoStart, setSaved]);
 
   // The countdown in the tab's own title. See tabTitle.js for why one
   // instance owns it.
@@ -94,10 +100,10 @@ function Timer({ id, options, toast }) {
     if (running) {
       // Pausing writes down what is left, so the deadline can be rebuilt from
       // it whenever the user comes back to it.
-      setSaved({ phase, round, endsAt: null, left: remainingOf(saved, Date.now(), longFocus) });
+      setSaved({ phase, round, endsAt: null, left: remainingOf(saved, Date.now(), lengths) });
       return;
     }
-    const seconds = left > 0 ? left : phaseLength({ phase, longFocus });
+    const seconds = left > 0 ? left : phaseLength({ phase, ...lengths });
     setSaved({ phase, round, endsAt: Date.now() + seconds * 1000, left: seconds });
   };
 
@@ -114,7 +120,7 @@ function Timer({ id, options, toast }) {
   // loss: on a focus round — where anyone would actually want it — the two are
   // the same act, and it only differs by forgetting a round count.
   const reset = () => {
-    const full = phaseLength({ phase: IDLE.phase, longFocus });
+    const full = phaseLength({ phase: IDLE.phase, ...lengths });
     setSaved({ ...IDLE, left: full });
     setLeft(full);
   };
@@ -131,7 +137,7 @@ function Timer({ id, options, toast }) {
   const [boxRef, measured] = useMeasuredWidth();
   const tight = measured != null && measured < 195;
 
-  const total = phaseLength({ phase, longFocus });
+  const total = phaseLength({ phase, ...lengths });
   const progress = Math.min(100, Math.max(0, ((total - left) / total) * 100));
 
   return (

@@ -6,7 +6,7 @@ export default {
   glyph: "link",
   category: "Essentials",
   author: "Daybreak",
-  version: "3.4.0",
+  version: "3.5.0",
   tagline: "The handful of places you actually go.",
   description:
     "Pinned shortcuts with generated app-style icons — a brand mark where one " +
@@ -151,6 +151,12 @@ export default {
   refresh: null,
   settingsPanel: {
     title: "Folders",
+    // After the options rather than before them. This panel is a list that
+    // grows with the board — every folder, every link — and sitting above
+    // Options it pushed Layout, Icon size and the rest below the fold on any
+    // board with real content in it. A setting you have to scroll past a
+    // hundred rows to reach is a setting nobody finds.
+    last: true,
     load: () => import("./Settings.jsx"),
   },
   permissions: { chrome: [], hosts: [] },

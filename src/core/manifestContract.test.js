@@ -117,3 +117,39 @@ describe("every widget's manifest", () => {
     });
   }
 });
+
+describe("a widget's own settings panel", () => {
+  // Where the panel sits in the drawer, and why it is a manifest decision.
+  //
+  // The panel used to render between Colour and Options for every widget. For
+  // Weather's city picker that is right — it is the first thing anybody sets.
+  // For the Quick Links and Bookmarks folder lists it was wrong: those grow
+  // with the board, and on any board with real content in it they pushed
+  // Layout, Icon size and the rest below the fold. A setting you have to
+  // scroll past a hundred rows to reach is a setting nobody finds.
+  const panels = WIDGETS.filter((w) => w.settingsPanel);
+
+  it("is worth checking", () => {
+    expect(panels.length).toBeGreaterThan(5);
+  });
+
+  it("is the growing lists that go last, and only those", () => {
+    // Named rather than counted, so adding a widget with a long panel is a
+    // decision somebody makes here rather than a default nobody noticed.
+    const last = panels.filter((w) => w.settingsPanel.last).map((w) => w.id).sort();
+    expect(last).toEqual(["bookmarks", "links"]);
+  });
+
+  it("gives every panel a title, wherever it sits", () => {
+    for (const w of panels) expect(w.settingsPanel.title, w.id).toBeTruthy();
+  });
+
+  it("keeps the short ones where they are", () => {
+    // The ones that answer "what is this widget even showing" stay above the
+    // options they configure.
+    for (const id of ["weather", "news", "prayer"]) {
+      const w = panels.find((p) => p.id === id);
+      expect(w?.settingsPanel.last, id).toBeFalsy();
+    }
+  });
+});

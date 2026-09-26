@@ -82,8 +82,8 @@
     <main>
       <h1>Privacy Policy</h1>
       <p class="updated">
-        <strong>Daybreak - New Tab</strong> · Last updated: September 7, 2026 ·
-        reviewed for version 2.3.0
+        <strong>Daybreak - New Tab</strong> · Last updated: September 21, 2026 ·
+        reviewed for version 2.4.0
       </p>
 
       <p>
@@ -148,7 +148,8 @@
           while you are typing.
           The <em>Bookmarks widget</em> shows your bookmark folders on the new
           tab page, and lets you add, rename, move and delete bookmarks and
-          folders from the widget’s own settings. Those edits are made in
+          folders — from the widget’s own settings, or by right-clicking
+          any bookmark on the board. Those edits are made in
           Chrome’s bookmarks — that is the point of the widget: it
           shows and edits the one list your browser already keeps rather than a
           private copy of it, so nothing can drift out of step. Deleting
@@ -172,11 +173,13 @@
           in the address field so you do not have to paste it by hand. The
           clipboard is read only while that add form is open, and only to fill
           in that one field. Nothing from your clipboard is stored, kept after
-          the form closes, or sent anywhere. This is requested the first time
-          you press “Paste what I copied” inside the widget, never
-          at install, and you can withdraw it at any time from Chrome’s
-          own permission list — the field simply goes back to being typed
-          in by hand.
+          the form closes, or sent anywhere. You are asked for it once and only
+          once: on the welcome card when the extension is first set up, or —
+          if you skipped that — the first time you add a Quick Link. Never at
+          install. There is a switch for it in Settings under General, and you
+          can withdraw it at any time from there or from Chrome’s own
+          permission list; the field simply goes back to being typed in by
+          hand.
         </li>
         <li>
           <strong>Site icons — <code>favicon</code>.</strong> Lets search
@@ -256,6 +259,15 @@
           is sent, only a request for the current top stories. If you switch
           to your own RSS or Atom feed instead, only that address you pasted
           in is fetched, using the one-time permission described above.
+          The story summary shown when you rest the pointer on a headline
+          comes from that same feed and fetches nothing further.
+          <strong>&ldquo;Show pictures&rdquo; is off by default</strong>, and
+          it is the one setting in this extension that adds requests to
+          servers other than the feed&rsquo;s: a thumbnail is loaded from
+          whichever host the feed names for it, usually the publisher&rsquo;s
+          own, which tells that host a tab was opened. Turn it on and those
+          requests are made on every new tab; leave it off and none are. When
+          on, they are sent without a referrer.
         </li>
         <li>
           <strong>Calendar — the address you paste in.</strong> Fetches only

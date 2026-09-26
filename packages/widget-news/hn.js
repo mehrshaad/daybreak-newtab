@@ -1,3 +1,5 @@
+import { plainSummary } from "./feed";
+
 // Hacker News' own Firebase-backed API — keyless, CORS-open, no rate limit
 // worth worrying about at this volume (ten items every refresh at most).
 export const HN_TOP_STORIES = "https://hacker-news.firebaseio.com/v0/topstories.json";
@@ -14,5 +16,9 @@ export function parseHnItem(item) {
     url: item.url || hnDiscussionUrl(item.id),
     points: item.score ?? 0,
     comments: item.descendants ?? 0,
+    // An Ask HN post is its own text. A link post has none, and Hacker News
+    // has no pictures at all, which is why the preview has to read well with
+    // nothing but a title and a domain.
+    summary: item.text ? plainSummary(item.text) : "",
   };
 }
