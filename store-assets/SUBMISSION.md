@@ -183,6 +183,14 @@ the next bump cannot ship without somebody reading the policy again.
 > - Fixed: the folder list in Quick Links and Bookmarks pushed every other
 >   setting below the fold; it is at the bottom now
 > - Fixed: hovering a row in a list barely changed it in the light theme
+> - Adding a habit opens a small window, the same way adding a link does, with
+>   the name, times per week and goal all in it
+> - Fixed: picking a folder while adding a link closed the whole form, so a new
+>   link could not go into a new folder
+> - Fixed: the weather reading sat at the top of its tile. It is centred in the
+>   space above the forecast now
+> - Fixed: Quick Links and Most visited cut a row in half when it did not fit,
+>   with no way to scroll to it
 >
 > Everything below is from 2.3.0 and still true.
 >
