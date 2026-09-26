@@ -1,6 +1,6 @@
-# Chrome Web Store — publishing Daybreak 2.4.0
+# Chrome Web Store — publishing Daybreak 2.4.1
 
-> **Ready to upload.** 2.3.0 went up on 7 September 2026; this is the next one.
+> **Ready to upload.** 2.4.0 is live; this is the next one, a fix release.
 > Everything below is ready to paste, and the checklist at the end is what is
 > left to do by hand.
 
@@ -23,7 +23,7 @@ Then zip the **contents** of `dist/` so `manifest.json` sits at the root of the
 archive:
 
 ```powershell
-Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-newtab-v2.4.0.zip -Force
+Compress-Archive -Path dist\* -DestinationPath store-assets\daybreak-newtab-v2.4.1.zip -Force
 ```
 
 The zip is git-ignored — rebuild it whenever `dist/` changes. The store rejects an
@@ -31,7 +31,7 @@ archive whose `manifest.json` is nested inside a folder.
 
 ## What the reviewer will see change
 
-| | 2.3.0 (live) | 2.4.0 (this upload) |
+| | 2.4.0 (live) | 2.4.1 (this upload) |
 | --- | --- | --- |
 | Name | Daybreak - New Tab | unchanged |
 | Required permissions | `storage` | unchanged |
@@ -41,12 +41,12 @@ archive whose `manifest.json` is nested inside a folder.
 | Remote code | none | none |
 | Minimum Chrome | 117 | unchanged |
 
-**Nothing in the manifest changed at all** — verified with
-`git diff v2.3.0..v2 -- public/manifest.json`, which is empty. No new
-permission is requested, so this update installs silently for existing users
-and there is no re-enable prompt.
+**Nothing in the manifest changed but the version line** — verified with
+`git diff v2.4.0..v2 -- public/manifest.json`. No new permission is requested,
+so this update installs silently for existing users and there is no re-enable
+prompt.
 
-One thing is new that a reviewer should know about even though it needs no
+Carried over from 2.4.0, and worth knowing even though it needs no
 permission:
 
 - **The News widget can show thumbnails, and they are off by default.** A
@@ -151,6 +151,21 @@ the next bump cannot ship without somebody reading the policy again.
 
 ### What's new (release notes)
 
+> A fix release: a folder picker that closed the form it was in, rows cut in
+> half with no way to scroll to them, and a habit form that pushed the list
+> around.
+>
+> - Adding a habit opens a small window, the same way adding a link does, with
+>   the name, times per week and goal all in it
+> - Fixed: picking a folder while adding a link closed the whole form, so a new
+>   link could not go into a new folder. The link editor had the same problem
+> - Fixed: the weather reading sat at the top of its tile. It is centred in the
+>   space above the forecast now
+> - Fixed: Quick Links and Most visited cut a row in half when it did not fit,
+>   with no way to scroll to it
+>
+> Everything below is from 2.4.0 and still true.
+>
 > Weather in five cities, pictures and previews in the news, and a popup bug
 > that closed the settings drawer out from under whatever you were typing in.
 >
@@ -183,14 +198,6 @@ the next bump cannot ship without somebody reading the policy again.
 > - Fixed: the folder list in Quick Links and Bookmarks pushed every other
 >   setting below the fold; it is at the bottom now
 > - Fixed: hovering a row in a list barely changed it in the light theme
-> - Adding a habit opens a small window, the same way adding a link does, with
->   the name, times per week and goal all in it
-> - Fixed: picking a folder while adding a link closed the whole form, so a new
->   link could not go into a new folder
-> - Fixed: the weather reading sat at the top of its tile. It is centred in the
->   space above the forecast now
-> - Fixed: Quick Links and Most visited cut a row in half when it did not fit,
->   with no way to scroll to it
 >
 > Everything below is from 2.3.0 and still true.
 >
@@ -309,26 +316,23 @@ reaches the developer, who operates no server.
 
 Ticked by me, in the repo:
 
-- [x] `package.json` and `public/manifest.json` both read `2.4.0`, guarded by
+- [x] `package.json` and `public/manifest.json` both read `2.4.1`, guarded by
       a test
-- [x] every widget whose code changed has a bumped manifest version — seven of
-      them. Nothing forces this, and it had been missed for the whole of
-      2.3.0, so it is a line on this list now
-- [x] `privacy-policy.html` re-read rather than re-stamped. Two claims in it
-      had gone stale: it named a "Paste what I copied" button that no longer
-      exists, and said bookmarks are edited from the widget's settings when
-      they are now also edited from the board. Both corrected, and the news
-      thumbnail option is disclosed
-- [x] nothing in `public/manifest.json` changed — `git diff v2.3.0..v2 --
-      public/manifest.json` is empty — so no new permission and a silent
-      update for existing users
+- [x] every widget whose code changed has a bumped manifest version, four of
+      them: Quick Links 3.5.1, Weather 2.5.1 and Most visited 2.5.1 for fixes,
+      Habits 2.7.0 because adding a habit works differently
+- [x] `privacy-policy.html` re-read for 2.4.1. Nothing in this release changes
+      what is read, stored or sent (a popover, two layouts and a scroll), so
+      the text stands and only the version stamp moved
+- [x] nothing in `public/manifest.json` changed but the version, so no new
+      permission and a silent update for existing users
 - [x] lint, 1600+ tests and the build all pass
 - [x] the zip is built with `manifest.json` at the archive root, no source maps
 
 Left for you:
 
 - [ ] publish the updated `privacy-policy.html` to the URL on the listing
-      **before** uploading. The policy is stamped `reviewed for version 2.4.0`
+      **before** uploading. The policy is stamped `reviewed for version 2.4.1`
 - [ ] load the built `dist/` unpacked once and check two things the dev server
       cannot: that the **Bookmarks widget** reads and edits Chrome's real tree,
       and that a **news thumbnail actually loads** with the option on. An
